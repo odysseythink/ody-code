@@ -641,6 +641,7 @@ describe('modeModels: per-mode model routing', () => {
       'mock-model': { provider: 'test-provider', model: 'mock-model', maxContextSize: 1_000_000 },
       'plan-model': { provider: 'test-provider', model: 'plan-model', maxContextSize: 1_000_000 },
       'design-model': { provider: 'test-provider', model: 'design-model', maxContextSize: 1_000_000 },
+      'switched-model': { provider: 'test-provider', model: 'switched-model', maxContextSize: 1_000_000 },
     },
   };
 
@@ -703,6 +704,28 @@ describe('modeModels: per-mode model routing', () => {
     expect(ctx.agent.config.modelAlias).toBe('design-model');
     expect(ctx.agent.planMode.kind).toBe('design');
     expect(ctx.agent.planMode.isActive).toBe(true);
+  });
+
+  it('remembers the model chosen inside plan mode so exit restores it', async () => {
+    const ctx = testAgent({
+      kaos: planKaos,
+      initialConfig: {
+        ...baseConfig,
+        modeModels: { plan: 'plan-model' },
+      },
+    });
+    ctx.configure();
+
+    await ctx.agent.planMode.enter('plan-id', false, false, 'plan');
+    expect(ctx.agent.config.modelAlias).toBe('plan-model');
+
+    // User manually switches model while inside plan mode
+    ctx.agent.rpcMethods.setModel({ model: 'switched-model' });
+    expect(ctx.agent.config.modelAlias).toBe('switched-model');
+
+    // Exit should restore to the model the user had inside plan mode
+    ctx.agent.planMode.exit();
+    expect(ctx.agent.config.modelAlias).toBe('switched-model');
   });
 });
 

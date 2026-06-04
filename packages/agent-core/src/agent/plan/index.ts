@@ -34,6 +34,12 @@ export class PlanMode {
     return generateHeroSlug(randomUUID(), new Set());
   }
 
+  updatePreModeModelAlias(alias: string | undefined): void {
+    if (this._preModeModelAlias !== null) {
+      this._preModeModelAlias = { value: alias };
+    }
+  }
+
   async enter(
     id = this.createPlanId(),
     createFile = false,

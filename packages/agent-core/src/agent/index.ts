@@ -345,6 +345,9 @@ export class Agent {
         const resolved = this.modelProvider?.resolveProviderConfig(payload.model);
         if (this.config.modelAlias !== payload.model) {
           this.config.update({ modelAlias: payload.model });
+          // If the user changes model while inside plan/design mode, update
+          // the pre-mode alias so exit restores the newly chosen model.
+          this.planMode.updatePreModeModelAlias(payload.model);
           this.telemetry.track('model_switch', { model: payload.model });
         }
         return {
