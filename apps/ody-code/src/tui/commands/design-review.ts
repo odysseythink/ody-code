@@ -105,6 +105,16 @@ export async function handleDesignReviewCommand(host: SlashCommandHost, args: st
   }
 
   const escalated = result.findings.filter((finding) => finding.escalate).length;
+  const inDesignMode = host.state.appState.designMode ?? false;
+
+  if (!inDesignMode) {
+    host.showStatus(
+      `Design review (${result.reviewerAlias}, ${result.auditLevel}): ${result.findings.length} finding(s).\n` +
+        `Not in design mode — enter design mode, then re-run /design-review to have the model address the findings.`,
+    );
+    return;
+  }
+
   host.showStatus(
     `Design review (${result.reviewerAlias}, ${result.auditLevel}): ${result.findings.length} finding(s), ${escalated} need your sign-off. Handing to the design model…`,
   );

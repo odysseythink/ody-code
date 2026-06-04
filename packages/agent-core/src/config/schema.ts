@@ -246,6 +246,7 @@ export const KimiConfigPatchSchema = z
     modeModels: z.object({
       plan: z.string().optional(),
       design: z.string().optional(),
+      review: z.string().optional(),
     }).optional(),
   })
   .strict();

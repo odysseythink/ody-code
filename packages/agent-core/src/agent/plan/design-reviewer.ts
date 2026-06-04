@@ -13,6 +13,7 @@
  */
 
 import { createProvider } from '@odysseythink/kosong';
+import type { ProviderRequestAuth } from '@odysseythink/kosong';
 
 import type { Agent } from '..';
 
@@ -189,14 +190,14 @@ export class DesignReviewer {
       { role: 'user' as const, content: [{ type: 'text' as const, text: designContent }], toolCalls: [] },
     ];
     const runOptions = { signal: AbortSignal.timeout(this.options.timeoutMs ?? 60_000) };
-    const call = (auth?: unknown) =>
+    const call = (auth?: ProviderRequestAuth) =>
       this.agent.rawGenerate(
         provider,
         buildCriticPrompt(),
         [],
         messages,
         undefined,
-        auth === undefined ? runOptions : { ...runOptions, auth: auth as never },
+        auth === undefined ? runOptions : { ...runOptions, auth },
       );
 
     let raw: string;

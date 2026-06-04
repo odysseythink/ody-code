@@ -35,7 +35,7 @@ function makeAgent(
     log: { warn: vi.fn(), info: vi.fn(), error: vi.fn(), debug: vi.fn() },
     telemetry: { track },
     modelProvider:
-      overrides.modelProvider !== undefined
+      'modelProvider' in overrides
         ? overrides.modelProvider
         : {
             resolveProviderConfig: vi.fn(() => ({
@@ -126,6 +126,10 @@ describe('parseFindings', () => {
   });
 });
 
+function reviewer(agent: Agent): DesignReviewer {
+  return new DesignReviewer(agent, { reviewerAlias });
+}
+
 describe('DesignReviewer', () => {
   it('runs the critique and returns parsed findings with the file audit level', async () => {
     const { agent, track } = makeAgent();
@@ -164,8 +168,6 @@ describe('DesignReviewer', () => {
 
   it('degrades when no model provider is available', async () => {
     const { agent, track } = makeAgent({ modelProvider: undefined });
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (agent as any).modelProvider = undefined;
     const result = await reviewer(agent).review('design');
 
     expect(result.ok).toBe(false);
@@ -207,6 +209,3 @@ describe('DesignReviewer', () => {
   });
 });
 
-function reviewer(agent: Agent): DesignReviewer {
-  return new DesignReviewer(agent, { reviewerAlias });
-}

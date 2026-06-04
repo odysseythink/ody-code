@@ -412,7 +412,14 @@ export class Agent {
         let content: string;
         let path: string;
         if (payload.path !== undefined && payload.path.length > 0) {
-          content = await this.kaos.readText(payload.path, { errors: 'ignore' });
+          try {
+            content = await this.kaos.readText(payload.path);
+          } catch {
+            throw new KimiError(
+              ErrorCodes.SESSION_PLAN_MODE_INVALID,
+              `Design file not found or unreadable: ${payload.path}`,
+            );
+          }
           path = payload.path;
         } else {
           const data = await this.planMode.data();
