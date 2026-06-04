@@ -28,6 +28,15 @@ function makeAgent(mode: PermissionMode): {
     permission: { mode },
     rpc: { requestApproval },
     telemetry: { track: telemetryTrack },
+    context: { history: [] },
+    config: {
+      get provider() {
+        return { name: 'mock', modelName: 'mock-model' };
+      },
+    },
+    generate: vi.fn().mockResolvedValue({
+      message: { content: [{ type: 'text', text: '' }] },
+    }),
   } as unknown as Agent;
   return { agent, requestApproval, telemetryTrack };
 }

@@ -20,22 +20,24 @@ function makeAgent(
     readonly mode?: PermissionMode;
     readonly planFilePath?: string | null;
     readonly enter?: () => Promise<void>;
-    readonly emit?: (event: unknown) => void;
+    readonly generate?: () => Promise<{
+      message: { content: Array<{ type: string; text: string }> };
+    }>;
+    readonly history?: Array<{
+      role: string;
+      content: Array<{ type: string; text: string }>;
+      origin?: { kind: string };
+    }>;
   } = {},
-): { agent: Agent; requestApproval: ReturnType<typeof vi.fn>; emit: ReturnType<typeof vi.fn> } {
+): { agent: Agent; requestApproval: ReturnType<typeof vi.fn>; enterSpy: ReturnType<typeof vi.fn> } {
   let active = input.active ?? false;
   const requestApproval = vi.fn(async () => {
     return { decision: 'approved' };
   });
-  const emit = vi.fn((event: unknown) => {
-    input.emit?.(event);
-    if ((event as { type?: string }).type === 'plan_mode.enter') active = true;
+  const enterSpy = vi.fn(async () => {
+    active = true;
+    if (input.enter) await input.enter();
   });
-  const enter =
-    input.enter ??
-    vi.fn(async () => {
-      active = true;
-    });
   const agent = {
     planMode: {
       get isActive() {
@@ -44,17 +46,26 @@ function makeAgent(
       get planFilePath() {
         return input.planFilePath ?? null;
       },
-      enter: async (id = 'mock-plan') => {
-        emit({ type: 'plan_mode.enter', id });
-        await enter();
-      },
+      enter: enterSpy,
     },
     permission: { mode: input.mode ?? 'manual' },
     rpc: { requestApproval },
     telemetry: { track: vi.fn() },
-    emit,
+    context: {
+      history: input.history ?? [],
+    },
+    config: {
+      get provider() {
+        return { name: 'mock', modelName: 'mock-model' };
+      },
+    },
+    generate:
+      input.generate ??
+      vi.fn().mockResolvedValue({
+        message: { content: [{ type: 'text', text: 'user-dashboard' }] },
+      }),
   } as unknown as Agent;
-  return { agent, requestApproval, emit };
+  return { agent, requestApproval, enterSpy };
 }
 
 describe('EnterPlanModeTool', () => {
@@ -69,9 +80,12 @@ describe('EnterPlanModeTool', () => {
     expect(tool.description).toContain('When NOT to use');
     expect(tool.description).toContain('subagent_type="explore"');
     expect(EnterPlanModeInputSchema.safeParse({}).success).toBe(true);
+    expect(EnterPlanModeInputSchema.safeParse({ topic: 'Auth Refactor' }).success).toBe(true);
     expect(tool.parameters).toMatchObject({
       type: 'object',
-      properties: {},
+      properties: {
+        topic: { type: 'string' },
+      },
     });
     expect((tool.parameters['properties'] as Record<string, unknown>)['reason']).toBeUndefined();
   });
@@ -90,9 +104,14 @@ describe('EnterPlanModeTool', () => {
   });
 
   it.each(['manual', 'auto', 'yolo'] satisfies PermissionMode[])(
-    'enters in %s mode without an approval request',
+    'enters in %s mode without an approval request and auto-generates topic filename',
     async (mode) => {
-      const { agent, requestApproval, emit } = makeAgent({ mode });
+      const { agent, requestApproval, enterSpy } = makeAgent({
+        mode,
+        history: [
+          { role: 'user', content: [{ type: 'text', text: 'Build a user dashboard' }], origin: { kind: 'user' } },
+        ],
+      });
 
       const result = await executeTool(new EnterPlanModeTool(agent), {
         turnId: '0',
@@ -104,9 +123,58 @@ describe('EnterPlanModeTool', () => {
       expect(result.isError).toBeFalsy();
       expect(result.output).toContain('Plan mode is now active');
       expect(requestApproval).not.toHaveBeenCalled();
-      expect(emit).toHaveBeenCalledWith({ type: 'plan_mode.enter', id: expect.any(String) });
+      expect(enterSpy).toHaveBeenCalledWith(
+        undefined,
+        undefined,
+        undefined,
+        'plan',
+        expect.stringMatching(/^user-dashboard-\d{8}-\d{6}$/),
+      );
     },
   );
+
+  it('uses user-provided topic when given', async () => {
+    const { agent, enterSpy } = makeAgent({ mode: 'yolo' });
+
+    const result = await executeTool(new EnterPlanModeTool(agent), {
+      turnId: '0',
+      toolCallId: 'tc_topic',
+      args: { topic: 'User Profile' },
+      signal,
+    });
+
+    expect(result.isError).toBeFalsy();
+    expect(enterSpy).toHaveBeenCalledWith(
+      undefined,
+      undefined,
+      undefined,
+      'plan',
+      expect.stringMatching(/^user-profile-\d{8}-\d{6}$/),
+    );
+  });
+
+  it('falls back to plan-timestamp when topic generation fails', async () => {
+    const { agent, enterSpy } = makeAgent({
+      mode: 'yolo',
+      generate: vi.fn().mockRejectedValue(new Error('Timeout')),
+    });
+
+    const result = await executeTool(new EnterPlanModeTool(agent), {
+      turnId: '0',
+      toolCallId: 'tc_fallback',
+      args: {},
+      signal,
+    });
+
+    expect(result.isError).toBeFalsy();
+    expect(enterSpy).toHaveBeenCalledWith(
+      undefined,
+      undefined,
+      undefined,
+      'plan',
+      expect.stringMatching(/^plan-\d{8}-\d{6}$/),
+    );
+  });
 
   it('uses inline guidance when no plan file path is available', async () => {
     const { agent } = makeAgent({ mode: 'yolo', planFilePath: null });
@@ -134,7 +202,6 @@ describe('EnterPlanModeTool', () => {
     });
 
     expect(result.output).toContain('Plan file: /tmp/kimi/plans/example.md');
-    // The entry message now carries the full writing-plans rubric from the contract.
     expect(result.output).toContain('Write the plan — incrementally');
     expect(result.output).toContain('Depends on:');
   });

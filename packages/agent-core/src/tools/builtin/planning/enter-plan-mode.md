@@ -30,3 +30,6 @@ In plan mode, you will:
 3. Design an implementation approach based on your findings
 4. Write your plan to the current plan file with Write or Edit
 5. Present your plan to the user via ExitPlanMode for approval
+
+Optional parameter:
+- `topic` — A short topic phrase (2–5 words) to include in the plan filename. If omitted, the topic is inferred automatically from the conversation.

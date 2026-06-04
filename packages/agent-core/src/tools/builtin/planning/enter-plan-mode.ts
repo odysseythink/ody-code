@@ -5,11 +5,15 @@
  * does not require approval in any permission mode.
  */
 
-
 import type { Agent } from '#/agent';
 import { z } from 'zod';
 
 import { planModeEntryMessage } from '../../../agent/injection/plan-mode-contract';
+import {
+  cleanupTopic,
+  formatUtcTimestamp,
+  TopicGenerator,
+} from '../../../agent/plan/topic-generator';
 import type { BuiltinTool } from '../../../agent/tool';
 import type { ToolExecution } from '../../../loop/types';
 import { toInputJsonSchema } from '../../support/input-schema';
@@ -17,7 +21,11 @@ import DESCRIPTION from './enter-plan-mode.md';
 
 // ── Input schema ─────────────────────────────────────────────────────
 
-export const EnterPlanModeInputSchema = z.object({}).strict();
+export const EnterPlanModeInputSchema = z
+  .object({
+    topic: z.string().max(100).optional(),
+  })
+  .strict();
 export type EnterPlanModeInput = z.infer<typeof EnterPlanModeInputSchema>;
 
 export class EnterPlanModeTool implements BuiltinTool<EnterPlanModeInput> {
@@ -40,8 +48,20 @@ export class EnterPlanModeTool implements BuiltinTool<EnterPlanModeInput> {
           };
         }
 
+        let topic: string | null = null;
+        if (_args.topic !== undefined) {
+          topic = cleanupTopic(_args.topic);
+        } else {
+          const generator = new TopicGenerator(this.agent);
+          topic = await generator.generate();
+        }
+        if (topic === null) {
+          topic = 'plan';
+        }
+        const fileStem = `${topic}-${formatUtcTimestamp(new Date())}`;
+
         try {
-          await this.agent.planMode.enter();
+          await this.agent.planMode.enter(undefined, undefined, undefined, 'plan', fileStem);
         } catch (error) {
           const message = error instanceof Error ? error.message : 'Failed to enter plan mode.';
           return { isError: true, output: `Failed to enter plan mode: ${message}` };
