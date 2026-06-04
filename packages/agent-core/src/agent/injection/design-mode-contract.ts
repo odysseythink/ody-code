@@ -23,7 +23,8 @@ import type { PlanFilePath } from '../plan';
 const INTRO_ACTIVE = `Design mode is active. This is a brainstorming / spec-exploration session — NOT an implementation session. You MUST NOT make any edits (with the exception of the current design file) or otherwise change the system. Prefer read-only tools. Use Bash only when needed; Bash follows the normal permission mode and rules. This supersedes any other instructions you have received.`;
 
 const HARD_GATE = `<HARD-GATE>
-Do NOT write code, scaffold, refactor, or take ANY implementation action until you have presented a design AND the user has approved it via ExitDesignMode. This applies to EVERY task regardless of how simple it seems. "Too simple to need a design" is never a valid reason to skip the process — simple tasks are exactly where unexamined assumptions waste the most work. The design itself may be short for simple tasks, but you MUST present it and get approval.
+Do NOT write code, scaffold, refactor, or take ANY implementation action until you have presented a design AND the user has approved it via ExitDesignMode. This applies to EVERY task regardless of how simple it seems — "too simple to need a design" is exactly where unexamined assumptions waste the most work; the design may be short, but you MUST present it and get approval.
+EXCEPTION — verification is not implementation: checking a pure predicate, regex, or small algorithm with an EPHEMERAL evaluation that writes no files (e.g. \`node -e\`/\`python -c\` printing a value) is allowed and encouraged. It is the only reliable way to catch a filter, regex, or test that contradicts itself — do NOT simulate such logic in your head. Materialising the design into source files is still forbidden.
 </HARD-GATE>`;
 
 const STEP_0_AUDIT = `## Step 0 — Audit strategy gate (BLOCKING, ask ONCE, before anything else)
@@ -75,8 +76,8 @@ The design file must be concrete enough that an implementer can code from it wit
   - Test plan mapping each test to specific assertions (not "boundary tests" but the exact asserts), plus Done criteria: the exact test/build commands that must pass.
   - Risk register: numbered risk → likelihood → impact → specific mitigation.`;
 
-const STEP_4_5_REVIEW_AUDIT = `## Step 4.5 — Self-review, then the consolidated audit gate (before ExitDesignMode)
-First re-read the design file with fresh eyes and fix inline: placeholders/TODOs, internal contradictions, scope creep, and any requirement open to two readings. Then present a CONSOLIDATED audit summary via AskUserQuestion, scaled to the recorded level:
+const STEP_4_5_REVIEW_AUDIT = `## Step 4.5 — Adversarial self-review, then the consolidated audit gate (before ExitDesignMode)
+First name the 1-3 decisions where being wrong is most expensive (a filter, regex, matching rule, parsing step, or fallback path) — these get the deepest scrutiny. For EACH, write 3 concrete inputs (real-world AND adversarial) with the output you expect; a surprising result means the design is wrong, so fix it. Where the logic is a pure predicate/regex/small algorithm, VERIFY it with an ephemeral \`node -e\`/\`python -c\` (no file writes) instead of trusting a mental trace — e.g. confirm a substring filter does not reject inputs that must survive. Then check every test assertion you wrote against the constants/logic it depends on: a "must-survive" case your own rule would reject (or any assertion that contradicts a constant) is a HARD failure. Also fix inline: placeholders/TODOs, internal contradictions, scope creep, and any requirement open to two readings. Then present a CONSOLIDATED audit summary via AskUserQuestion, scaled to the recorded level:
   - Basic — confirm only the high-stakes [C:INFERRED] items (architecture / security / data / ops).
   - Standard — surface EVERY [C:INFERRED] assumption; the user accepts / defers / corrects each.
   - Deep — confirm each numbered section's key claim PLUS every assumption.

@@ -115,6 +115,33 @@ describe('DesignModeInjector content', () => {
     expect(entry).toContain('Design mode is now active');
   });
 
+  // Regression guard for the anti-self-deception "blades" (see design-mode-contract.ts).
+  // These are the safeguards that catch the class of bug where a design bakes in a
+  // too-broad filter / a test that contradicts its own constants. This test does NOT
+  // prove the model behaves better — it only fails loudly if a future edit silently
+  // strips a blade. Behavioural confidence requires the eval harness (see repo notes).
+  it('carries the adversarial-review blades in both the entry message and the full reminder', async () => {
+    const agent = designAgent({ isActive: true, planFilePath: '/tmp/design.md' });
+    const injector = new DesignModeInjector(agent);
+    await injector.inject();
+    const full = lastReminder(agent);
+    const entry = designModeEntryMessage('/tmp/design.md', false);
+
+    for (const marker of [
+      // Blade A — ephemeral verification is explicitly allowed (not "implementation").
+      'verification is not implementation',
+      'node -e',
+      // Blade B — Step 4.5 is adversarial: triage + concrete-input trace + test-vs-constant check.
+      'Adversarial self-review',
+      'most expensive',
+      '3 concrete inputs',
+      'HARD failure',
+    ]) {
+      expect(full).toContain(marker);
+      expect(entry).toContain(marker);
+    }
+  });
+
   it('tells the model ShowDesignMockup IS available when the host advertises openExternal', async () => {
     const agent = designAgent({
       isActive: true,
