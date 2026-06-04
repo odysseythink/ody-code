@@ -1,4 +1,4 @@
-import { writeFileSync } from 'node:fs';
+import { existsSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import {
@@ -1030,6 +1030,12 @@ export class KimiTUI {
         ? session.getGoal()
         : Promise.resolve({ goal: null }),
     ]);
+
+    let planFilePath = status.planFilePath;
+    if (planFilePath !== null && planFilePath !== undefined && !existsSync(planFilePath)) {
+      planFilePath = null;
+    }
+
     this.setAppState({
       sessionId: session.id,
       model: status.model ?? '',
@@ -1037,6 +1043,7 @@ export class KimiTUI {
       permissionMode: status.permission,
       planMode: status.planMode && status.planKind !== 'design',
       designMode: status.planMode && status.planKind === 'design',
+      planFilePath,
       contextTokens: status.contextTokens,
       maxContextTokens: status.maxContextTokens,
       contextUsage: status.contextUsage,
