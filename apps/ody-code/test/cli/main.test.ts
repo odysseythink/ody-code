@@ -139,6 +139,8 @@ function defaultOpts(): CLIOptions {
     outputFormat: undefined,
     prompt: undefined,
     skillsDirs: [],
+    loginProvider: undefined,
+    logoutProvider: undefined,
   };
 }
 

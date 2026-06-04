@@ -22,6 +22,8 @@ function makeStartupInput(): KimiTUIStartupInput {
       outputFormat: undefined,
       prompt: undefined,
       skillsDirs: [],
+      loginProvider: undefined,
+      logoutProvider: undefined,
     },
     tuiConfig: {
       theme: 'dark',

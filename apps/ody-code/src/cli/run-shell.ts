@@ -23,10 +23,15 @@ import type { CLIOptions } from './options';
 import { createCliTelemetryBootstrap, initializeCliTelemetry } from './telemetry';
 import { createKimiCodeHostIdentity } from './version';
 
+export interface AuthIntent {
+  readonly kind: 'login' | 'logout';
+  readonly providerType: string;
+}
+
 export async function runShell(
   opts: CLIOptions,
   version: string,
-  runOptions: { readonly migrateOnly?: boolean } = {},
+  runOptions: { readonly migrateOnly?: boolean; readonly authIntent?: AuthIntent } = {},
 ): Promise<void> {
   const startedAt = Date.now();
   const configStartedAt = startedAt;
@@ -95,6 +100,7 @@ export async function runShell(
     resolvedTheme,
     migrationPlan,
     migrateOnly: runOptions.migrateOnly,
+    authIntent: runOptions.authIntent,
   });
 
   initializeCliTelemetry({

@@ -65,14 +65,15 @@ async function fetchOpenAICompatibleModels(
     .map((item) => {
       if (!isRecord(item) || typeof item['id'] !== 'string') return undefined;
       const contextLength = Number(item['context_length']);
+      const displayName = typeof item['display_name'] === 'string' ? item['display_name'] : undefined;
       return {
         id: item['id'],
-        displayName: typeof item['display_name'] === 'string' ? item['display_name'] : undefined,
         contextLength: Number.isInteger(contextLength) && contextLength > 0 ? contextLength : 64000,
         supportsToolUse: true,
         supportsReasoning: false,
         supportsImageIn: false,
         supportsVideoIn: false,
+        ...(displayName !== undefined ? { displayName } : {}),
       };
     })
     .filter((m): m is ProviderModelInfo => m !== undefined);
@@ -101,14 +102,15 @@ async function fetchAnthropicModels(
   return payload['data']
     .map((item) => {
       if (!isRecord(item) || typeof item['id'] !== 'string') return undefined;
+      const displayName = typeof item['display_name'] === 'string' ? item['display_name'] : undefined;
       return {
         id: item['id'],
-        displayName: typeof item['display_name'] === 'string' ? item['display_name'] : undefined,
         contextLength: 200000,
         supportsToolUse: true,
         supportsReasoning: item['id'].toLowerCase().includes('claude'),
         supportsImageIn: item['id'].toLowerCase().includes('claude'),
         supportsVideoIn: false,
+        ...(displayName !== undefined ? { displayName } : {}),
       };
     })
     .filter((m): m is ProviderModelInfo => m !== undefined);
@@ -184,7 +186,6 @@ export function applyProviderLoginConfig(
   const hasDefault = config.defaultModel !== undefined && config.defaultModel.trim().length > 0;
   if (!hasDefault) {
     config.defaultModel = modelKey;
-    config.defaultProvider = providerKey;
     config.defaultThinking = options.thinking;
   }
 
@@ -208,9 +209,6 @@ export function removeProviderConfig(
 
   if (removedDefault) {
     config.defaultModel = undefined;
-  }
-  if (config.defaultProvider === providerId) {
-    config.defaultProvider = undefined;
   }
 }
 

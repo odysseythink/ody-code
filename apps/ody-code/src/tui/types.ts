@@ -180,6 +180,7 @@ export interface TUIStartupOptions {
   readonly design?: boolean;
   readonly model?: string;
   readonly startupNotice?: string;
+  readonly authIntent?: { readonly kind: 'login' | 'logout'; readonly providerType: string };
 }
 
 export type TUIStartupState = 'pending' | 'ready' | 'picker';

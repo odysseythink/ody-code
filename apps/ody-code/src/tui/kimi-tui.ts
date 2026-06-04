@@ -144,6 +144,7 @@ export interface KimiTUIStartupInput {
   readonly migrationPlan?: MigrationPlan | null;
   /** When true, run only the migration screen, then exit (the `ody migrate` command). */
   readonly migrateOnly?: boolean;
+  readonly authIntent?: { readonly kind: 'login' | 'logout'; readonly providerType: string };
 }
 
 type EffectiveActivityPaneMode = ActivityPaneMode | 'idle' | 'session';

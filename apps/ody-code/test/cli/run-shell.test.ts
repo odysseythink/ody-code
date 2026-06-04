@@ -180,6 +180,8 @@ describe('runShell', () => {
       outputFormat: undefined,
       prompt: undefined,
       skillsDirs: [],
+      loginProvider: undefined,
+      logoutProvider: undefined,
     };
 
     await runShell(cliOptions, '1.2.3-test');
@@ -269,6 +271,8 @@ describe('runShell', () => {
         outputFormat: undefined,
         prompt: undefined,
         skillsDirs: [],
+      loginProvider: undefined,
+      logoutProvider: undefined,
       },
       '1.2.3-test',
     );
@@ -309,6 +313,8 @@ describe('runShell', () => {
         outputFormat: undefined,
         prompt: undefined,
         skillsDirs: [],
+      loginProvider: undefined,
+      logoutProvider: undefined,
       },
       '1.2.3-test',
     );
@@ -347,6 +353,8 @@ describe('runShell', () => {
         outputFormat: undefined,
         prompt: undefined,
         skillsDirs: [],
+      loginProvider: undefined,
+      logoutProvider: undefined,
       },
       '1.2.3-test',
     );
@@ -385,6 +393,8 @@ describe('runShell', () => {
         outputFormat: undefined,
         prompt: undefined,
         skillsDirs: [],
+      loginProvider: undefined,
+      logoutProvider: undefined,
       },
       '1.2.3-test',
     );
@@ -418,6 +428,8 @@ describe('runShell', () => {
         outputFormat: undefined,
         prompt: undefined,
         skillsDirs: [],
+      loginProvider: undefined,
+      logoutProvider: undefined,
       },
       '1.2.3-test',
     );
@@ -469,6 +481,8 @@ describe('runShell', () => {
         outputFormat: undefined,
         prompt: undefined,
         skillsDirs: [],
+      loginProvider: undefined,
+      logoutProvider: undefined,
       },
       '1.2.3-test',
     );
@@ -506,6 +520,8 @@ describe('runShell', () => {
           outputFormat: undefined,
           prompt: undefined,
           skillsDirs: [],
+      loginProvider: undefined,
+      logoutProvider: undefined,
         },
         '1.2.3-test',
       ),
@@ -543,6 +559,8 @@ describe('runShell', () => {
           outputFormat: undefined,
           prompt: undefined,
           skillsDirs: [],
+      loginProvider: undefined,
+      logoutProvider: undefined,
         },
         '1.2.3-test',
       );
@@ -596,6 +614,8 @@ describe('runShell', () => {
           outputFormat: undefined,
           prompt: undefined,
           skillsDirs: [],
+      loginProvider: undefined,
+      logoutProvider: undefined,
         },
         '1.2.3-test',
         { migrateOnly: true },

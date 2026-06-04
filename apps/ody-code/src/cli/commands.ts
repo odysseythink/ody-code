@@ -75,7 +75,19 @@ export function createProgram(
     .addOption(new Option('--yes').hideHelp().default(false))
     .addOption(new Option('--auto-approve').hideHelp().default(false))
     .option('--plan', 'Start in plan mode.', false)
-    .option('--design', 'Start in design mode (brainstorming / spec exploration).', false);
+    .option('--design', 'Start in design mode (brainstorming / spec exploration).', false)
+    .addOption(
+      new Option(
+        '-L, --login <provider-type>',
+        'Interactive login for a supported LLM provider (deepseek, openai, anthropic, kimi, openai_responses).',
+      ),
+    )
+    .addOption(
+      new Option(
+        '-O, --logout <provider-type>',
+        'Interactive logout for providers of the given type.',
+      ),
+    );
 
   registerExportCommand(program);
   registerProviderCommand(program);
@@ -115,6 +127,8 @@ export function createProgram(
       outputFormat: raw['outputFormat'] as CLIOptions['outputFormat'],
       prompt: raw['prompt'] as string | undefined,
       skillsDirs: raw['skillsDir'] as string[],
+      loginProvider: raw['login'] as string | undefined,
+      logoutProvider: raw['logout'] as string | undefined,
     };
 
     onMain(opts);

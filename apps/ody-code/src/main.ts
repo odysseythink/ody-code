@@ -58,6 +58,19 @@ export async function handleMainCommand(opts: CLIOptions, version: string): Prom
     process.exit(0);
   }
 
+  if (opts.loginProvider !== undefined || opts.logoutProvider !== undefined) {
+    if (validated.uiMode === 'print') {
+      process.stderr.write('error: --login and --logout require interactive shell mode.\n');
+      process.exit(1);
+    }
+    await runShell(validated.options, version, {
+      authIntent: opts.loginProvider !== undefined
+        ? { kind: 'login', providerType: opts.loginProvider }
+        : { kind: 'logout', providerType: opts.logoutProvider! },
+    });
+    return;
+  }
+
   if (validated.uiMode === 'print') {
     await runPrompt(validated.options, version);
     return;
@@ -113,6 +126,8 @@ const MIGRATE_CLI_OPTIONS: CLIOptions = {
   outputFormat: undefined,
   prompt: undefined,
   skillsDirs: [],
+  loginProvider: undefined,
+  logoutProvider: undefined,
 };
 
 export function main(): void {

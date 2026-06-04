@@ -12,6 +12,8 @@ export interface CLIOptions {
   outputFormat: PromptOutputFormat | undefined;
   prompt: string | undefined;
   skillsDirs: string[];
+  loginProvider: string | undefined;
+  logoutProvider: string | undefined;
 }
 
 export interface ValidatedOptions {
