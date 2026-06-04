@@ -34,6 +34,9 @@ describe('Session plan, compact, usage, and resume APIs', () => {
         planMode: true,
       });
 
+      const status = await session.getStatus();
+      expect(status.planFilePath).toMatch(/\.md$/);
+
       await expect(session.clearPlan()).resolves.toBeUndefined();
       await expect(session.getPlan()).resolves.toMatchObject({
         content: '',
@@ -49,6 +52,9 @@ describe('Session plan, compact, usage, and resume APIs', () => {
         type: 'agent.status.updated',
         planMode: false,
       });
+
+      const statusOff = await session.getStatus();
+      expect(statusOff.planFilePath).toBeNull();
     } finally {
       await harness.close();
     }

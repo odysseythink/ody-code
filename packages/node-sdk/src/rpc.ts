@@ -404,6 +404,7 @@ export class SDKRpcClient {
       permission: permission.mode,
       planMode: plan !== null,
       planKind: plan?.kind,
+      planFilePath: plan?.path ?? null,
       contextTokens,
       maxContextTokens,
       contextUsage,
