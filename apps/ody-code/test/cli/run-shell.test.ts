@@ -187,7 +187,7 @@ describe('runShell', () => {
     expect(mocks.kimiHarnessConstructor).toHaveBeenCalledWith(
       expect.objectContaining({
         identity: expect.objectContaining({
-          userAgentProduct: 'ody-code-cli',
+          userAgentProduct: 'kimi-code-cli',
           version: '1.2.3-test',
         }),
       }),
@@ -206,7 +206,7 @@ describe('runShell', () => {
       homeDir: '/tmp/kimi-code-test-home',
       deviceId: 'device-1',
       enabled: true,
-      appName: 'ody-code-cli',
+      appName: 'kimi-code-cli',
       version: '1.2.3-test',
       uiMode: 'shell',
       model: 'k2',

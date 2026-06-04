@@ -20,9 +20,9 @@ describe('cli version helpers', () => {
     expect(getVersion()).toBe(pkg.version);
   });
 
-  it('builds default headers with the ody-code-cli user-agent', () => {
+  it('builds default headers with the kimi-code-cli user-agent', () => {
     const headers = buildKimiDefaultHeaders('1.2.3');
 
-    expect(headers['User-Agent']).toBe('ody-code-cli/1.2.3');
+    expect(headers['User-Agent']).toBe('kimi-code-cli/1.2.3');
   });
 });

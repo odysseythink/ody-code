@@ -408,7 +408,7 @@ describe('ody export', () => {
       homeDir: '/tmp/kimi-export-home',
       deviceId: 'device-1',
       enabled: true,
-      appName: 'ody-code-cli',
+      appName: 'kimi-code-cli',
       version: expect.any(String),
       uiMode: 'shell',
       model: 'k2',
