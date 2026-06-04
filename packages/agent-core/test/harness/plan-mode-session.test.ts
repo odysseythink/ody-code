@@ -98,3 +98,72 @@ describe('plan-mode bootstrap from config.defaultPlanMode', () => {
     });
   }
 });
+
+describe('modeModels runtime config propagation', () => {
+  let tmp: string;
+  let homeDir: string;
+  let workDir: string;
+  let configPath: string;
+
+  beforeEach(async () => {
+    tmp = await mkdtemp(join(tmpdir(), 'kimi-mode-models-'));
+    homeDir = join(tmp, 'home');
+    workDir = join(tmp, 'work');
+    configPath = join(tmp, 'config.toml');
+    await mkdir(workDir, { recursive: true });
+  });
+
+  afterEach(async () => {
+    await rm(tmp, { recursive: true, force: true });
+  });
+
+  it('picks up modeModels added after session creation', async () => {
+    await writeFile(
+      configPath,
+      `
+default_model = "kimi-code/kimi-for-coding"
+
+[providers."managed:ody-code"]
+type = "kimi"
+api_key = "test-key"
+base_url = "https://api.example/v1"
+
+[models."kimi-code/kimi-for-coding"]
+provider = "managed:ody-code"
+model = "kimi-for-coding"
+max_context_size = 1000000
+
+[models."plan-only-model"]
+provider = "managed:ody-code"
+model = "plan-only-model"
+max_context_size = 1000000
+`,
+    );
+
+    const [coreRpc, sdkRpc] = createRPC<CoreAPI, SDKAPI>();
+    const core = new KimiCore(coreRpc, { homeDir, configPath });
+    const sdk = await sdkRpc({
+      emitEvent: vi.fn(),
+      requestApproval: vi.fn(async () => ({ decision: 'rejected' as const })),
+      requestQuestion: vi.fn(async () => null),
+      openExternal: vi.fn(async () => ({ opened: false })),
+      toolCall: vi.fn(async () => ({ output: '' })),
+    });
+
+    const session = await core.createSession({ workDir });
+
+    // At this point modeModels is not configured.
+    // Now add it via setKimiConfig (simulating a manual config edit or UI action).
+    await core.setKimiConfig({
+      modeModels: { plan: 'plan-only-model' },
+    });
+
+    // Enter plan mode — the Agent should see the newly added modeModels.
+    await sdk.enterPlan({ sessionId: session.id, agentId: 'main', kind: 'plan' });
+
+    const model = await sdk.getModel({ sessionId: session.id, agentId: 'main' });
+    expect(model).toBe('plan-only-model');
+
+    await core.closeSession({ sessionId: session.id });
+  });
+});

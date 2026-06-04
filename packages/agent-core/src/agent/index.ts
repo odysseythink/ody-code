@@ -100,7 +100,7 @@ export interface AgentOptions {
 export class Agent {
   readonly type: AgentType;
   readonly kaos: Kaos;
-  readonly kimiConfig?: KimiConfig;
+  kimiConfig?: KimiConfig;
   readonly homedir?: string;
   readonly rpc?: Partial<SDKAgentRPC>;
   readonly toolServices?: ToolServices;
