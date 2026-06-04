@@ -50,6 +50,7 @@ export interface AgentStatusUpdatedEvent {
   readonly contextUsage?: number | undefined;
   readonly planMode?: boolean | undefined;
   readonly planKind?: PlanKind | undefined;
+  readonly planFilePath?: string | null;
   readonly permission?: PermissionMode | undefined;
   readonly usage?: UsageStatus | undefined;
 }

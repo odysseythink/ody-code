@@ -18,6 +18,7 @@ export interface AppState {
   sessionId: string;
   permissionMode: PermissionMode;
   planMode: boolean;
+  planFilePath?: string | null;
   designMode?: boolean;
   thinking: boolean;
   contextUsage: number;

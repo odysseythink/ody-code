@@ -439,6 +439,7 @@ export class Agent {
       contextUsage,
       planMode: this.planMode.isActive,
       planKind: this.planMode.kind,
+      planFilePath: this.planMode.planFilePath,
       permission: this.permission.mode,
       usage,
     });

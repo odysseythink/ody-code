@@ -546,6 +546,7 @@ export class SessionEventHandler {
     if (event.contextTokens !== undefined) patch.contextTokens = event.contextTokens;
     if (event.maxContextTokens !== undefined) patch.maxContextTokens = event.maxContextTokens;
     if (event.planMode !== undefined) patch.planMode = event.planMode;
+    if (event.planFilePath !== undefined) patch.planFilePath = event.planFilePath;
     if (event.permission !== undefined) {
       patch.permissionMode = event.permission;
     }
