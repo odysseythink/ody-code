@@ -115,6 +115,21 @@ export type {
   CustomRegistrySource,
 } from './custom-registry';
 
+export {
+  applyProviderLoginConfig,
+  fetchProviderModels,
+  getProviderLoginDefinition,
+  isSupportedProviderLoginType,
+  removeProviderConfig,
+  SUPPORTED_PROVIDER_LOGINS,
+  validateProviderName,
+} from './provider-login';
+export type {
+  ApplyProviderLoginResult,
+  ProviderLoginDefinition,
+  ProviderModelInfo,
+} from './provider-login';
+
 export { KimiOAuthToolkit, resolveKimiTokenStorageName } from './toolkit';
 export type {
   AuthManagedUsageResult,
