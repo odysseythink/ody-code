@@ -1,0 +1,53 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+dist-native/
+apps/ody-code/dist-native/
+
+# TypeScript
+coverage/
+*.tsbuildinfo
+
+# Vite / Vitest
+.vitest-results/
+
+# API Extractor
+.tmp-api-extractor/
+
+# Playwright
+.playwright-mcp/
+
+# Logs
+*.log
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# IDE
+.idea/
+
+# Nix
+result
+result-*
+
+# Temp files
+*.tmp
+*.temp
+
+# OS files
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Internal / ephemeral
+.claude
+.conductor
+.kimi-stash-dir
+plugins/cdn/
+superpowers
+ody-export-session_*.md
