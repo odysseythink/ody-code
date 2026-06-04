@@ -136,6 +136,9 @@ describe('DesignModeInjector content', () => {
       'most expensive',
       '3 concrete inputs',
       'HARD failure',
+      // Blade C — fixed multi-lens sweep so coverage does not depend on the model picking the right focus.
+      'four fixed lenses',
+      'false positives',
     ]) {
       expect(full).toContain(marker);
       expect(entry).toContain(marker);
