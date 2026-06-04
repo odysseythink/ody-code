@@ -13,6 +13,11 @@ import type { Agent } from '#/agent';
 import { z } from 'zod';
 
 import { designModeEntryMessage } from '../../../agent/injection/design-mode-contract';
+import {
+  cleanupTopic,
+  formatUtcTimestamp,
+  TopicGenerator,
+} from '../../../agent/plan/topic-generator';
 import type { BuiltinTool } from '../../../agent/tool';
 import type { ToolExecution } from '../../../loop/types';
 import { toInputJsonSchema } from '../../support/input-schema';
@@ -20,7 +25,11 @@ import DESCRIPTION from './enter-design-mode.md';
 
 // ── Input schema ─────────────────────────────────────────────────────
 
-export const EnterDesignModeInputSchema = z.object({}).strict();
+export const EnterDesignModeInputSchema = z
+  .object({
+    topic: z.string().max(100).optional(),
+  })
+  .strict();
 export type EnterDesignModeInput = z.infer<typeof EnterDesignModeInputSchema>;
 
 export class EnterDesignModeTool implements BuiltinTool<EnterDesignModeInput> {
@@ -44,8 +53,20 @@ export class EnterDesignModeTool implements BuiltinTool<EnterDesignModeInput> {
           };
         }
 
+        let topic: string | null = null;
+        if (_args.topic !== undefined) {
+          topic = cleanupTopic(_args.topic);
+        } else {
+          const generator = new TopicGenerator(this.agent);
+          topic = await generator.generate();
+        }
+        if (topic === null) {
+          topic = 'design';
+        }
+        const fileStem = `${topic}-${formatUtcTimestamp(new Date())}`;
+
         try {
-          await this.agent.planMode.enter(undefined, undefined, undefined, 'design');
+          await this.agent.planMode.enter(undefined, undefined, undefined, 'design', fileStem);
         } catch (error) {
           const message = error instanceof Error ? error.message : 'Failed to enter design mode.';
           return { isError: true, output: `Failed to enter design mode: ${message}` };

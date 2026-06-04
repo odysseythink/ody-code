@@ -20,3 +20,6 @@ Permission mode notes:
 3. Explore 2-3 genuinely different approaches and weigh their trade-offs — do not pad with trivial variations.
 4. Write the design document to the design file with Write or Edit. Tag each decision [C:USER] or [C:INFERRED], and include an ## Assumptions section for anything still unverified.
 5. Present the design via ExitDesignMode for approval. After approval, suggest `/plan` to turn the chosen direction into a concrete implementation plan.
+
+Optional parameter:
+- `topic` — A short topic phrase (2–5 words) to include in the design filename. If omitted, the topic is inferred automatically from the conversation.
