@@ -61,6 +61,13 @@ export const BUILTIN_SLASH_COMMANDS = [
     availability: (args) => (args.trim().toLowerCase() === 'clear' ? 'idle-only' : 'always'),
   },
   {
+    name: 'design-review',
+    aliases: [],
+    description: 'Critique the current design with the reviewer model (second-model review)',
+    priority: 95,
+    availability: 'idle-only',
+  },
+  {
     name: 'model',
     aliases: [],
     description: 'Switch LLM model',
