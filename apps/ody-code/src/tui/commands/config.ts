@@ -1,4 +1,5 @@
 import type { PermissionMode, Session } from '@odysseythink/kimi-code-sdk';
+import { log } from '@odysseythink/kimi-code-sdk';
 
 import { EditorSelectorComponent } from '../components/dialogs/editor-selector';
 import { TabbedModelSelectorComponent } from '../components/dialogs/tabbed-model-selector';
@@ -50,12 +51,14 @@ async function applyPlanMode(host: SlashCommandHost, session: Session, enabled: 
     host.setAppState({ planMode: enabled, designMode: false });
     if (enabled) {
       const plan = await session.getPlan().catch(() => null);
+      log.debug('Mode toggled', { mode: 'plan', enabled, planFilePath: plan?.path ?? null });
       host.showNotice(
         'Plan mode: ON',
         plan?.path !== undefined ? `Plan will be created here: ${plan.path}` : undefined,
       );
       return;
     }
+    log.debug('Mode toggled', { mode: 'plan', enabled });
     host.showNotice('Plan mode: OFF');
   } catch (error) {
     const msg = formatErrorMessage(error);
@@ -95,12 +98,14 @@ async function applyDesignMode(host: SlashCommandHost, session: Session, enabled
     host.setAppState({ designMode: enabled, planMode: false });
     if (enabled) {
       const plan = await session.getPlan().catch(() => null);
+      log.debug('Mode toggled', { mode: 'design', enabled, planFilePath: plan?.path ?? null });
       host.showNotice(
         'Design mode: ON',
         plan?.path !== undefined ? `Design will be created here: ${plan.path}` : undefined,
       );
       return;
     }
+    log.debug('Mode toggled', { mode: 'design', enabled });
     host.showNotice('Design mode: OFF');
   } catch (error) {
     const msg = formatErrorMessage(error);
