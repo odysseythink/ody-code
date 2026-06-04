@@ -9,8 +9,6 @@ import { dirname, resolve } from 'node:path';
 
 import { createKimiDefaultHeaders, type KimiHostIdentity } from '@odysseythink/kimi-code-oauth';
 
-import { CLI_USER_AGENT_PRODUCT } from '#/constant/app';
-
 import { getDataDir } from '../utils/paths';
 import { KIMI_BUILD_INFO } from './build-info';
 
@@ -50,7 +48,7 @@ export function getVersion(): string {
 
 export function createKimiCodeHostIdentity(version = getVersion()): KimiHostIdentity {
   return {
-    userAgentProduct: CLI_USER_AGENT_PRODUCT,
+    userAgentProduct: 'kimi-code-cli',
     version,
   };
 }
