@@ -25,6 +25,44 @@ import { safeUsageRatio } from '#/utils/usage/usage-format';
 const MAX_CWD_SEGMENTS = 3;
 const GOAL_TIMER_INTERVAL_MS = 1_000;
 
+const EMOJIS: Record<string, string> = { build: '⚒️', plan: '📝', design: '✏️' };
+
+function planFileName(path: string | null | undefined): string | null {
+  if (!path) return null;
+  const name = path.split('/').pop() ?? path;
+  return name || null;
+}
+
+function luminance(hex: string): number {
+  const rgb = [hex.slice(1, 3), hex.slice(3, 5), hex.slice(5, 7)].map((h) => {
+    const c = parseInt(h, 16) / 255;
+    return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+  });
+  return 0.2126 * rgb[0]! + 0.7152 * rgb[1]! + 0.0722 * rgb[2]!;
+}
+
+function renderModeBadge(
+  mode: 'build' | 'plan' | 'design',
+  colors: ColorPalette,
+  fileName?: string,
+): string {
+  const emoji = EMOJIS[mode] ?? '';
+  const bgColor =
+    mode === 'design' ? colors.accent : mode === 'plan' ? colors.primary : colors.textMuted;
+
+  let textColor: string;
+  try {
+    textColor = luminance(bgColor) > 0.5 ? '#000000' : '#ffffff';
+  } catch {
+    textColor = '#ffffff';
+  }
+
+  const label = fileName ? `${emoji} ${mode} · ${fileName}` : `${emoji} ${mode}`;
+  const padded = ` ${label} `;
+
+  return chalk.bgHex(bgColor).hex(textColor)(`【${padded}】`);
+}
+
 // Toolbar tips — rotates every 10s. Most tips are short and pair up (two
 // joined by " | ") when space allows; tips flagged `solo` are long or
 // important enough to take the whole slot on their own. A `priority` weight
@@ -287,15 +325,6 @@ export class FooterComponent implements Component {
 
     // ── Line 1: mode badges + model + [N task(s) running] + [N agent(s) running] + cwd + git + hints ──
     const left: string[] = [];
-    // Mode badge — always visible so the user knows which mode is active.
-    const mode = state.designMode ? 'design' : state.planMode ? 'plan' : 'build';
-    const modeColor = state.designMode
-      ? colors.accent
-      : state.planMode
-        ? colors.primary
-        : colors.textMuted;
-    left.push(chalk.hex(modeColor).bold(mode));
-
     if (state.permissionMode === 'auto') left.push(chalk.hex(colors.warning).bold('auto'));
     if (state.permissionMode === 'yolo') left.push(chalk.hex(colors.warning).bold('yolo'));
 
@@ -361,29 +390,38 @@ export class FooterComponent implements Component {
       line1 = truncateToWidth(leftLine, width, '…');
     }
 
-    // ── Line 2: transient hint (bottom-left) + context (right) ──
+    // ── Line 2: inverted mode badge (left) + transient hint + context (right) ──
+    const mode = state.designMode ? 'design' : state.planMode ? 'plan' : 'build';
+    const fileName = planFileName(state.planFilePath);
+    let badge = renderModeBadge(mode, colors, fileName ?? undefined);
+    let badgeWidth = visibleWidth(badge);
+    const maxBadgeWidth = Math.floor(width / 2);
+    if (badgeWidth > maxBadgeWidth) {
+      badge = truncateToWidth(badge, maxBadgeWidth, '…');
+      badgeWidth = visibleWidth(badge);
+    }
+
     const contextText = formatContextStatus(
       state.contextUsage,
       state.contextTokens,
       state.maxContextTokens,
     );
     const contextWidth = visibleWidth(contextText);
+    const contextStr = chalk.hex(colors.text)(contextText);
+
     let line2: string;
     if (this.transientHint) {
-      const maxHintWidth = Math.max(0, width - contextWidth - 1);
+      const hint = this.transientHint;
+      const maxHintWidth = Math.max(0, width - badgeWidth - contextWidth - 2);
       const shownHint =
-        visibleWidth(this.transientHint) <= maxHintWidth
-          ? this.transientHint
-          : truncateToWidth(this.transientHint, maxHintWidth, '…');
-      const hintWidth = visibleWidth(shownHint);
-      const pad = Math.max(0, width - hintWidth - contextWidth);
-      line2 =
-        chalk.hex(colors.warning).bold(shownHint) +
-        ' '.repeat(pad) +
-        chalk.hex(colors.text)(contextText);
+        visibleWidth(hint) <= maxHintWidth ? hint : truncateToWidth(hint, maxHintWidth, '…');
+      const hintStr = chalk.hex(colors.warning).bold(shownHint);
+      const hintWidthActual = visibleWidth(shownHint);
+      const pad = Math.max(0, width - badgeWidth - hintWidthActual - contextWidth - 1);
+      line2 = badge + ' '.repeat(pad) + hintStr + ' ' + contextStr;
     } else {
-      const leftPad = Math.max(0, width - contextWidth);
-      line2 = ' '.repeat(leftPad) + chalk.hex(colors.text)(contextText);
+      const pad = Math.max(0, width - badgeWidth - contextWidth);
+      line2 = badge + ' '.repeat(pad) + contextStr;
     }
 
     return [truncateToWidth(line1, width), truncateToWidth(line2, width)];

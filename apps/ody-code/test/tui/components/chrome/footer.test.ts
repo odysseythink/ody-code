@@ -89,3 +89,122 @@ describe('FooterComponent', () => {
     expect(codes.has(RAINBOW_GREEN)).toBe(false);
   });
 });
+
+function stripAnsi(text: string): string {
+  // eslint-disable-next-line no-control-regex
+  return text.replace(/\u001b\[[0-9;]*m/g, '');
+}
+
+const baseAppState: AppState = {
+  version: '1.2.3',
+  workDir: '/tmp/project',
+  sessionId: 'ses-1',
+  sessionTitle: null,
+  model: 'kimi-k2',
+  permissionMode: 'manual',
+  thinking: false,
+  contextUsage: 0.452,
+  contextTokens: 12_300,
+  maxContextTokens: 27_300,
+  isCompacting: false,
+  isReplaying: false,
+  streamingPhase: 'idle',
+  streamingStartTime: 0,
+  planMode: false,
+  theme: 'dark',
+  editorCommand: null,
+  notifications: { enabled: true, condition: 'unfocused' },
+  upgrade: { autoInstall: true },
+  availableModels: {},
+  availableProviders: {},
+  mcpServersSummary: null,
+};
+
+describe('FooterComponent mode badge', () => {
+  it('renders inverted plan badge with filename on Line 2', () => {
+    const state = { ...baseAppState, planMode: true, planFilePath: 'plan.md' };
+    const footer = new FooterComponent(state, darkColors);
+    const lines = footer.render(120);
+    const line2 = stripAnsi(lines[1]!);
+    expect(line2).toContain('📝');
+    expect(line2).toContain('plan');
+    expect(line2).toContain('plan.md');
+    expect(line2).toContain('【');
+    expect(line2).toContain('】');
+  });
+
+  it('renders inverted design badge with filename on Line 2', () => {
+    const state = { ...baseAppState, designMode: true, planFilePath: 'design.md' };
+    const footer = new FooterComponent(state, darkColors);
+    const lines = footer.render(120);
+    const line2 = stripAnsi(lines[1]!);
+    expect(line2).toContain('✏️');
+    expect(line2).toContain('design');
+    expect(line2).toContain('design.md');
+  });
+
+  it('renders build badge without filename when no mode is active', () => {
+    const state = { ...baseAppState, planMode: false, designMode: false };
+    const footer = new FooterComponent(state, darkColors);
+    const lines = footer.render(120);
+    const line2 = stripAnsi(lines[1]!);
+    expect(line2).toContain('⚒️');
+    expect(line2).toContain('build');
+    expect(line2).not.toContain('·');
+  });
+
+  it('falls back to mode-only badge when planFilePath is null', () => {
+    const state = { ...baseAppState, planMode: true, planFilePath: null };
+    const footer = new FooterComponent(state, darkColors);
+    const lines = footer.render(120);
+    const line2 = stripAnsi(lines[1]!);
+    expect(line2).toContain('📝');
+    expect(line2).toContain('plan');
+    expect(line2).not.toContain('·');
+  });
+
+  it('truncates long filenames on the badge', () => {
+    const longName = 'very-long-file-name-that-exceeds-the-available-space.md';
+    const state = { ...baseAppState, planMode: true, planFilePath: longName };
+    const footer = new FooterComponent(state, darkColors);
+    const lines = footer.render(120);
+    const line2 = stripAnsi(lines[1]!);
+    expect(line2).toContain('…');
+    expect(line2).not.toContain(longName);
+  });
+
+  it('places transient hint on the right when space allows', () => {
+    const state = { ...baseAppState, planMode: true, planFilePath: 'plan.md' };
+    const footer = new FooterComponent(state, darkColors);
+    footer.setTransientHint('Press Ctrl+C again');
+    const lines = footer.render(120);
+    const line2 = stripAnsi(lines[1]!);
+    const hintIndex = line2.indexOf('Press Ctrl+C again');
+    const contextIndex = line2.indexOf('context:');
+    expect(hintIndex).toBeGreaterThan(-1);
+    expect(contextIndex).toBeGreaterThan(-1);
+    expect(hintIndex).toBeLessThan(contextIndex);
+  });
+
+  it('hides hint on narrow terminals while keeping badge and context', () => {
+    const state = { ...baseAppState, planMode: true, planFilePath: 'plan.md' };
+    const footer = new FooterComponent(state, darkColors);
+    footer.setTransientHint('Press Ctrl+C again to exit');
+    const lines = footer.render(40);
+    const line2 = stripAnsi(lines[1]!);
+    expect(line2).toContain('📝');
+    expect(line2).toContain('context:');
+    expect(line2).not.toContain('Press Ctrl+C');
+  });
+
+  it('does not render plain mode badge on Line 1', () => {
+    const state = { ...baseAppState, planMode: true, planFilePath: 'plan.md' };
+    const footer = new FooterComponent(state, darkColors);
+    const lines = footer.render(120);
+    const line1 = stripAnsi(lines[0]!);
+    const line1Words = line1.split(/\s+/);
+    expect(line1Words).not.toContain('plan');
+    expect(line1Words).not.toContain('design');
+    expect(line1Words).not.toContain('build');
+  });
+});
