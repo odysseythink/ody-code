@@ -294,10 +294,10 @@ async function handleBuiltInSlashCommand(
       await handleExportDebugZipCommand(host);
       return;
     case 'login':
-      await handleLoginCommand(host);
+      await handleLoginCommand(host, args);
       return;
     case 'logout':
-      await handleLogoutCommand(host);
+      await handleLogoutCommand(host, args);
       return;
     case 'undo':
       await handleUndoCommand(host, args);

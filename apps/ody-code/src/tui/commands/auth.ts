@@ -307,7 +307,10 @@ async function handleProviderLogin(
   host.showStatus(`Setup complete: ${definition.displayName} · ${selection.model.id}`);
 }
 
-export async function handleLogoutCommand(host: SlashCommandHost): Promise<void> {
+export async function handleLogoutCommand(
+  host: SlashCommandHost,
+  providerTypeArg?: string,
+): Promise<void> {
   const oauthStatus = await host.harness.auth.status(DEFAULT_OAUTH_PROVIDER_NAME);
   const hasOAuthToken = oauthStatus.providers.some(
     (p) => p.providerName === DEFAULT_OAUTH_PROVIDER_NAME && p.hasToken,
@@ -315,9 +318,23 @@ export async function handleLogoutCommand(host: SlashCommandHost): Promise<void>
   const config = await host.harness.getConfig();
   const hasManagedRemnant =
     hasOAuthToken || config.providers[DEFAULT_OAUTH_PROVIDER_NAME] !== undefined;
-  const apiKeyProviderIds = Object.keys(config.providers ?? {})
-    .filter((id) => id !== DEFAULT_OAUTH_PROVIDER_NAME)
-    .toSorted();
+
+  const providerType = providerTypeArg?.trim().toLowerCase();
+
+  let apiKeyProviderIds: string[];
+  if (providerType !== undefined && providerType.length > 0) {
+    apiKeyProviderIds = Object.keys(config.providers ?? {})
+      .filter((id) => id !== DEFAULT_OAUTH_PROVIDER_NAME)
+      .filter((id) => config.providers[id]?.type === providerType);
+    if (apiKeyProviderIds.length === 0) {
+      apiKeyProviderIds = Object.keys(config.providers ?? {})
+        .filter((id) => id !== DEFAULT_OAUTH_PROVIDER_NAME);
+    }
+  } else {
+    apiKeyProviderIds = Object.keys(config.providers ?? {})
+      .filter((id) => id !== DEFAULT_OAUTH_PROVIDER_NAME)
+      .toSorted();
+  }
 
   const options: ChoiceOption[] = [];
   if (hasManagedRemnant) {
@@ -329,10 +346,11 @@ export async function handleLogoutCommand(host: SlashCommandHost): Promise<void>
   }
   for (const id of apiKeyProviderIds) {
     const baseUrl = config.providers[id]?.baseUrl;
+    const pType = config.providers[id]?.type;
     options.push({
       value: id,
       label: id,
-      description: typeof baseUrl === 'string' && baseUrl.length > 0 ? baseUrl : undefined,
+      description: `${pType ?? 'unknown'} · ${typeof baseUrl === 'string' && baseUrl.length > 0 ? baseUrl : 'no base_url'}`,
     });
   }
 
@@ -364,7 +382,10 @@ export async function handleLogoutCommand(host: SlashCommandHost): Promise<void>
     });
   }
 
-  host.track('logout', { provider: target });
+  host.track('logout', {
+    provider: target,
+    provider_type: config.providers[target]?.type,
+  });
   const label = target === DEFAULT_OAUTH_PROVIDER_NAME ? PRODUCT_NAME : target;
   host.showStatus(`Logged out from ${label}.`);
 }
