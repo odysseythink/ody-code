@@ -39,10 +39,13 @@ export { handleUndoCommand } from './undo';
 export {
   promptApiKey,
   promptCatalogProviderSelection,
+  promptCustomBaseUrl,
+  promptCustomProviderName,
   promptFeedbackInput,
   promptLogoutProviderSelection,
   promptModelSelectionForCatalog,
   promptModelSelectionForOpenPlatform,
+  promptModelSelectionForProviderLogin,
   promptPlatformSelection,
   runModelSelector,
 } from './prompts';

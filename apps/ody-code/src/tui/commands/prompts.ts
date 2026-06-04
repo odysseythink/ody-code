@@ -16,6 +16,7 @@ import { ChoicePickerComponent, type ChoiceOption } from '../components/dialogs/
 import { FeedbackInputDialogComponent, type FeedbackInputDialogResult } from '../components/dialogs/feedback-input-dialog';
 import { ModelSelectorComponent } from '../components/dialogs/model-selector';
 import { PlatformSelectorComponent } from '../components/dialogs/platform-selector';
+import { TextInputDialogComponent, type TextInputResult } from '../components/dialogs/text-input-dialog';
 import type { SlashCommandHost } from './dispatch';
 
 export function promptPlatformSelection(host: SlashCommandHost): Promise<string | undefined> {
@@ -157,6 +158,87 @@ export async function promptModelSelectionForCatalog(
   const selection = await runModelSelector(host, modelDict);
   if (selection === undefined) return undefined;
   const model = models.find((m) => `${providerId}/${m.id}` === selection.alias);
+  return model ? { model, thinking: selection.thinking } : undefined;
+}
+
+export function promptCustomProviderName(
+  host: SlashCommandHost,
+  existingProviders: Record<string, unknown>,
+): Promise<string | undefined> {
+  return new Promise((resolve) => {
+    const dialog = new TextInputDialogComponent({
+      title: 'Provider name',
+      subtitleLines: ['Letters, digits, and underscores only. Must start with a letter.'],
+      footer: 'Enter to confirm  ·  Esc to cancel',
+      validate: (value) => {
+        const re = /^[a-zA-Z][a-zA-Z0-9_]*$/;
+        if (!re.test(value)) return 'Must start with a letter and contain only letters, digits, and underscores.';
+        if (value === 'managed:ody-code') return 'This name is reserved.';
+        if (existingProviders[value] !== undefined) return `Provider "${value}" already exists.`;
+        return undefined;
+      },
+      onDone: (result: TextInputResult) => {
+        host.restoreEditor();
+        resolve(result.kind === 'ok' ? result.value : undefined);
+      },
+      colors: host.state.theme.colors,
+    });
+    host.mountEditorReplacement(dialog);
+  });
+}
+
+export function promptCustomBaseUrl(
+  host: SlashCommandHost,
+  defaultBaseUrl: string,
+): Promise<string | undefined> {
+  return new Promise((resolve) => {
+    const dialog = new TextInputDialogComponent({
+      title: 'Base URL (optional)',
+      subtitleLines: [`Default: ${defaultBaseUrl}`],
+      footer: 'Enter to use default  ·  Esc to cancel',
+      defaultValue: defaultBaseUrl,
+      validate: (value) => {
+        if (value.length === 0) return 'Base URL cannot be empty.';
+        try {
+          new URL(value);
+          return undefined;
+        } catch {
+          return 'Invalid URL.';
+        }
+      },
+      onDone: (result: TextInputResult) => {
+        host.restoreEditor();
+        resolve(result.kind === 'ok' ? result.value : undefined);
+      },
+      colors: host.state.theme.colors,
+    });
+    host.mountEditorReplacement(dialog);
+  });
+}
+
+export async function promptModelSelectionForProviderLogin(
+  host: SlashCommandHost,
+  providerName: string,
+  models: import('@odysseythink/kimi-code-oauth').ProviderModelInfo[],
+): Promise<{ model: import('@odysseythink/kimi-code-oauth').ProviderModelInfo; thinking: boolean } | undefined> {
+  const modelDict: Record<string, import('@odysseythink/kimi-code-sdk').ModelAlias> = {};
+  for (const m of models) {
+    modelDict[`${providerName}/${m.id}`] = {
+      provider: providerName,
+      model: m.id,
+      maxContextSize: m.contextLength,
+      capabilities: [
+        ...(m.supportsToolUse ? ['tool_use'] : []),
+        ...(m.supportsReasoning ? ['thinking'] : []),
+        ...(m.supportsImageIn ? ['image_in'] : []),
+        ...(m.supportsVideoIn ? ['video_in'] : []),
+      ],
+      displayName: m.displayName,
+    };
+  }
+  const selection = await runModelSelector(host, modelDict);
+  if (selection === undefined) return undefined;
+  const model = models.find((m) => `${providerName}/${m.id}` === selection.alias);
   return model ? { model, thinking: selection.thinking } : undefined;
 }
 
