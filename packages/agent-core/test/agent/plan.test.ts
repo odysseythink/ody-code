@@ -111,14 +111,16 @@ describe('manual plan entry', () => {
     await ctx.rpc.setPermission({ mode: 'yolo' });
 
     ctx.mockNextResponse({ type: 'text', text: 'I will enter plan mode.' }, enterPlanModeCall);
+    // TopicGenerator consumes one generate call during tool execution
+    ctx.mockNextResponse({ type: 'text', text: 'user-dashboard' });
     ctx.mockNextResponse({ type: 'text', text: 'Plan mode is active now.' });
     await ctx.rpc.prompt({ input: [{ type: 'text', text: 'Plan first' }] });
 
     await ctx.untilTurnEnd();
     await delay(10);
     expect(ctx.agent.planMode.isActive).toBe(true);
-    expect(ctx.llmCalls).toHaveLength(2);
-    expect(toolResultText(ctx.llmCalls[1]!.history)).toContain('Plan mode is now active');
+    expect(ctx.llmCalls).toHaveLength(3);
+    expect(toolResultText(ctx.llmCalls[2]!.history)).toContain('Plan mode is now active');
     await ctx.expectResumeMatches();
   });
 });
