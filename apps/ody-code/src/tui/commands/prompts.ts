@@ -60,6 +60,28 @@ export function promptLogoutProviderSelection(
   });
 }
 
+export function promptLoginProviderSelection(
+  host: SlashCommandHost,
+  options: readonly ChoiceOption[],
+): Promise<string | undefined> {
+  return new Promise((resolve) => {
+    const picker = new ChoicePickerComponent({
+      title: 'Select a provider to log in',
+      options,
+      colors: host.state.theme.colors,
+      onSelect: (value) => {
+        host.restoreEditor();
+        resolve(value);
+      },
+      onCancel: () => {
+        host.restoreEditor();
+        resolve(undefined);
+      },
+    });
+    host.mountEditorReplacement(picker);
+  });
+}
+
 export function promptFeedbackInput(host: SlashCommandHost): Promise<string | undefined> {
   return new Promise((resolve) => {
     const dialog = new FeedbackInputDialogComponent((result: FeedbackInputDialogResult) => {

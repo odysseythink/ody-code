@@ -8,6 +8,30 @@ import {
   isSupportedProviderLoginType,
 } from '@odysseythink/kimi-code-oauth';
 
+vi.mock('../../../src/tui/commands/prompts', async (importOriginal) => {
+  const mod = await importOriginal<typeof import('../../../src/tui/commands/prompts')>();
+  return {
+    ...mod,
+    promptCustomProviderName: vi.fn(async () => 'deepseek_1'),
+    promptApiKey: vi.fn(async () => 'sk-test'),
+    promptCustomBaseUrl: vi.fn(async () => 'https://api.deepseek.com/v1'),
+    promptModelSelectionForProviderLogin: vi.fn(async () => ({
+      model: { id: 'deepseek-chat', contextLength: 64000, supportsToolUse: true, supportsReasoning: false, supportsImageIn: false, supportsVideoIn: false },
+      thinking: false,
+    })),
+  };
+});
+
+vi.mock('@odysseythink/kimi-code-oauth', async (importOriginal) => {
+  const mod = await importOriginal<typeof import('@odysseythink/kimi-code-oauth')>();
+  return {
+    ...mod,
+    fetchProviderModels: vi.fn(async () => [
+      { id: 'deepseek-chat', contextLength: 64000, supportsToolUse: true, supportsReasoning: false, supportsImageIn: false, supportsVideoIn: false },
+    ]),
+  };
+});
+
 describe('handleLoginCommand provider-type argument', () => {
   it('shows error for unsupported provider type', async () => {
     const showError = vi.fn();
@@ -20,16 +44,61 @@ describe('handleLoginCommand provider-type argument', () => {
     );
   });
 
-  it('delegates to legacy flow when no arg', async () => {
+  it('shows all supported providers when no arg', async () => {
     const showError = vi.fn();
-    const mountEditorReplacement = vi.fn();
+    let capturedOptions: any[] | undefined;
+    const mountEditorReplacement = vi.fn((component: any) => {
+      if (typeof component.handleInput === 'function') {
+        capturedOptions = component.opts?.options;
+        component.handleInput('\u001B');
+      }
+    });
     const host = makeMockHost({ showError, mountEditorReplacement });
 
-    // Legacy flow shows platform selector; with no mocked dialog it hangs.
-    // Start the command but don't await it; just verify no immediate error.
-    const promise = handleLoginCommand(host);
+    await handleLoginCommand(host);
+
     expect(showError).not.toHaveBeenCalled();
     expect(mountEditorReplacement).toHaveBeenCalled();
+    expect(capturedOptions).toBeDefined();
+    const labels = capturedOptions!.map((o: any) => o.label);
+    expect(labels).toContain('Kimi Code (OAuth)');
+    expect(labels).toContain('DeepSeek');
+    expect(labels).toContain('OpenAI');
+    expect(labels).toContain('Kimi (Open Platform)');
+    expect(labels).toContain('OpenAI (Responses API)');
+    expect(labels).toContain('Anthropic');
+  });
+
+  it('saves deepseek_1 provider via setConfig', async () => {
+    const setConfig = vi.fn(async (patch: any) => ({
+      providers: patch.providers ?? {},
+      models: patch.models ?? {},
+      defaultModel: patch.defaultModel,
+      defaultThinking: patch.defaultThinking,
+    }));
+    const getConfig = vi.fn(async () => ({
+      providers: {},
+      models: {},
+    }));
+    const host = makeMockHost({
+      harness: {
+        auth: { status: vi.fn(async () => ({ providers: [] })), login: vi.fn(), logout: vi.fn() },
+        getConfig,
+        setConfig,
+        removeProvider: vi.fn(),
+        track: vi.fn(),
+      },
+    });
+
+    await handleLoginCommand(host, 'deepseek');
+
+    expect(setConfig).toHaveBeenCalled();
+    const patch = setConfig.mock.calls[0][0];
+    expect(patch.providers?.deepseek_1).toMatchObject({
+      type: 'deepseek',
+      baseUrl: 'https://api.deepseek.com/v1',
+      apiKey: 'sk-test',
+    });
   });
 });
 
@@ -64,6 +133,79 @@ describe('handleLogoutCommand provider-type argument', () => {
 
     expect(showStatus).not.toHaveBeenCalledWith(expect.stringContaining('error'));
     expect(mountEditorReplacement).toHaveBeenCalled();
+  });
+
+  it('shows deepseek_1 provider with correct label and description', async () => {
+    let capturedOptions: any[] | undefined;
+    const getConfig = vi.fn(async () => ({
+      providers: {
+        deepseek_1: { type: 'deepseek', baseUrl: 'https://api.deepseek.com/v1' },
+      },
+      models: {},
+    }));
+    const mountEditorReplacement = vi.fn((component: any) => {
+      if (typeof component.handleInput === 'function') {
+        capturedOptions = component.opts?.options;
+        component.handleInput('\u001B');
+      }
+    });
+    const host = makeMockHost({
+      mountEditorReplacement,
+      harness: {
+        auth: { status: vi.fn(async () => ({ providers: [] })), login: vi.fn(), logout: vi.fn() },
+        getConfig,
+        setConfig: vi.fn(),
+        removeProvider: vi.fn(),
+        track: vi.fn(),
+      },
+    });
+
+    await handleLogoutCommand(host);
+
+    expect(mountEditorReplacement).toHaveBeenCalled();
+    expect(capturedOptions).toBeDefined();
+    expect(capturedOptions!.length).toBe(1);
+    expect(capturedOptions![0]).toMatchObject({
+      value: 'deepseek_1',
+      label: 'deepseek_1',
+      description: 'deepseek · https://api.deepseek.com/v1',
+    });
+  });
+
+  it('filters by provider type when arg is given', async () => {
+    let capturedOptions: any[] | undefined;
+    const getConfig = vi.fn(async () => ({
+      providers: {
+        deepseek_1: { type: 'deepseek', baseUrl: 'https://api.deepseek.com/v1' },
+        openai_main: { type: 'openai', baseUrl: 'https://api.openai.com/v1' },
+      },
+      models: {},
+    }));
+    const mountEditorReplacement = vi.fn((component: any) => {
+      if (typeof component.handleInput === 'function') {
+        capturedOptions = component.opts?.options;
+        component.handleInput('\u001B');
+      }
+    });
+    const host = makeMockHost({
+      mountEditorReplacement,
+      harness: {
+        auth: { status: vi.fn(async () => ({ providers: [] })), login: vi.fn(), logout: vi.fn() },
+        getConfig,
+        setConfig: vi.fn(),
+        removeProvider: vi.fn(),
+        track: vi.fn(),
+      },
+    });
+
+    await handleLogoutCommand(host, 'deepseek');
+
+    expect(capturedOptions).toBeDefined();
+    expect(capturedOptions!.length).toBe(1);
+    expect(capturedOptions![0]).toMatchObject({
+      value: 'deepseek_1',
+      label: 'deepseek_1',
+    });
   });
 });
 

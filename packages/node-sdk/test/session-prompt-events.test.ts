@@ -3,8 +3,6 @@ import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
-
-import { ODY_CODE_PLATFORM } from '@odysseythink/kimi-code-oauth';
 import type * as KosongModule from '@odysseythink/kosong';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -215,8 +213,8 @@ describe('Session.prompt events', () => {
       expect(fakeProviderState.providerConfigs[0]).toMatchObject({
         type: 'kimi',
         defaultHeaders: expect.objectContaining({
-          'X-Msh-Platform': ODY_CODE_PLATFORM,
-          'User-Agent': 'ody-code-cli/0.0.0-test',
+          'X-Msh-Platform': 'kimi_code_cli',
+          'User-Agent': 'kimi-code-cli/0.0.0-test',
         }),
       });
       expect(existsSync(join(homeDir, 'device_id'))).toBe(true);

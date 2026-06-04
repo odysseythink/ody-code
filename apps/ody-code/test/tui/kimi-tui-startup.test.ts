@@ -697,7 +697,7 @@ describe("KimiTUI startup", () => {
       model: "",
       sessionTitle: null,
     });
-    expect(harness.track).toHaveBeenCalledWith("logout", { provider: "managed:ody-code" });
+    expect(harness.track).toHaveBeenCalledWith("logout", { provider: "managed:ody-code", provider_type: "kimi" });
   });
 
   it("keeps the active session when logging out a different provider", async () => {
@@ -738,7 +738,7 @@ describe("KimiTUI startup", () => {
       sessionId: "ses-1",
       model: "k2",
     });
-    expect(harness.track).toHaveBeenCalledWith("logout", { provider: "openai" });
+    expect(harness.track).toHaveBeenCalledWith("logout", { provider: "openai", provider_type: "openai" });
   });
 
   it("can log out a stale managed entry even after the OAuth token is gone", async () => {

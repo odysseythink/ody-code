@@ -121,12 +121,14 @@ export async function fetchProviderModels(
   apiKey: string,
   fetchImpl: typeof fetch = fetch,
   signal?: AbortSignal,
+  baseUrl?: string,
 ): Promise<ProviderModelInfo[]> {
+  const resolvedBaseUrl = baseUrl ?? definition.defaultBaseUrl;
   switch (definition.modelListStrategy) {
     case 'openai-compatible':
-      return fetchOpenAICompatibleModels(definition.defaultBaseUrl, apiKey, fetchImpl, signal);
+      return fetchOpenAICompatibleModels(resolvedBaseUrl, apiKey, fetchImpl, signal);
     case 'anthropic-sdk':
-      return fetchAnthropicModels(definition.defaultBaseUrl, apiKey, fetchImpl, signal);
+      return fetchAnthropicModels(resolvedBaseUrl, apiKey, fetchImpl, signal);
     case 'none':
       return [];
     default:

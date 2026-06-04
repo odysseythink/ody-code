@@ -72,3 +72,8 @@ This is a TypeScript monorepo built for agent-assisted development. Keep the roo
 - After finishing a task and before submitting a PR, you must run the `gen-changesets` skill (see `.agents/skills/gen-changesets/SKILL.md`) and generate a changeset under `.changeset/` according to its rules.
 - When generating a changeset, **never** decide on a `major` bump on your own. When you judge a change to meet the major criteria (breaking changes, incompatible user configuration, renamed or removed commands/arguments, changed behavior semantics, etc.), you must stop and explain it to the user and ask for confirmation. **Only write `major` after the user has explicitly agreed.** Otherwise default to `minor` (and fall back to `patch` if `minor` is unclear). See the "Hard rule: confirm with the user before writing `major`" section in `.agents/skills/gen-changesets/SKILL.md` for details.
 - Prefer importing via `import ... from '#/...'`, which serves the same purpose as `import ... from '@/...'`.
+
+## 调试与修复问题规范
+
+- **严禁凭空猜测**: 在问题修复、Bug定位等场景中，如果缺过缺乏明确的代码或日志支撑，禁止仅凭假设推断根因。
+- **日志驱动分析**: 当无法直接确定问题时，应先在关键代码路径中添加日志（如入口参数、分支判断、错误返回值等），然后要求用户重新运行并采集日志，再基于实际输出进行辅助分析。

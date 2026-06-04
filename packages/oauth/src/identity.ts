@@ -15,8 +15,6 @@ import { join } from 'node:path';
 
 import type { DeviceHeaders } from './types';
 
-export const ODY_CODE_PLATFORM = 'kimi_code_cli';
-
 export interface KimiHostIdentity {
   readonly userAgentProduct: string;
   readonly version: string;
@@ -68,7 +66,7 @@ export function createKimiDeviceHeaders(options: {
   readonly version: string;
 }): DeviceHeaders {
   return {
-    'X-Msh-Platform': ODY_CODE_PLATFORM,
+    'X-Msh-Platform': 'kimi_code_cli',
     'X-Msh-Version': requiredAsciiHeader(options.version, 'Kimi identity version'),
     'X-Msh-Device-Name': asciiHeader(hostname()),
     'X-Msh-Device-Model': asciiHeader(deviceModel()),

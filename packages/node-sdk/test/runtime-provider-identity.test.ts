@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import type { KimiConfig } from '@odysseythink/agent-core';
-import { createKimiDefaultHeaders, ODY_CODE_PLATFORM } from '@odysseythink/kimi-code-oauth';
+import { createKimiDefaultHeaders } from '@odysseythink/kimi-code-oauth';
 
 import { ProviderManager } from '../../agent-core/src/session/provider-manager';
 import { TEST_IDENTITY } from './test-identity';
@@ -67,8 +67,8 @@ describe('runtime provider identity headers', () => {
     expect(resolved.provider).toMatchObject({
       type: 'kimi',
       defaultHeaders: expect.objectContaining({
-        'User-Agent': 'ody-code-cli/0.0.0-test',
-        'X-Msh-Platform': ODY_CODE_PLATFORM,
+        'User-Agent': 'kimi-code-cli/0.0.0-test',
+        'X-Msh-Platform': 'kimi_code_cli',
         'X-Msh-Version': '0.0.0-test',
         'X-Msh-Device-Name': expect.any(String),
         'X-Msh-Device-Model': expect.any(String),
@@ -113,7 +113,7 @@ describe('runtime provider identity headers', () => {
       defaultHeaders: expect.objectContaining({
         'User-Agent': 'Custom/1',
         'X-Msh-Version': 'override-version',
-        'X-Msh-Platform': ODY_CODE_PLATFORM,
+        'X-Msh-Platform': 'kimi_code_cli',
       }),
     });
   });

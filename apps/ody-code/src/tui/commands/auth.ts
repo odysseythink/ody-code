@@ -3,6 +3,7 @@ import {
   fetchOpenPlatformModels,
   filterModelsByPrefix,
   getOpenPlatformById,
+  OPEN_PLATFORMS,
   OpenPlatformApiError,
   type ManagedKimiCodeModelInfo,
   type ManagedKimiConfigShape,
@@ -27,10 +28,10 @@ import {
   promptApiKey,
   promptCustomBaseUrl,
   promptCustomProviderName,
+  promptLoginProviderSelection,
   promptLogoutProviderSelection,
   promptModelSelectionForOpenPlatform,
   promptModelSelectionForProviderLogin,
-  promptPlatformSelection,
 } from './prompts';
 import type { SlashCommandHost } from './dispatch';
 
@@ -62,15 +63,27 @@ export async function handleLoginCommand(
 }
 
 async function handleLegacyLoginCommand(host: SlashCommandHost): Promise<void> {
-  const platformId = await promptPlatformSelection(host);
-  if (platformId === undefined) return;
+  const options: ChoiceOption[] = [
+    { value: 'kimi-code', label: 'Kimi Code (OAuth)' },
+    ...SUPPORTED_PROVIDER_LOGINS.map((p) => ({ value: p.type, label: p.displayName })),
+    ...OPEN_PLATFORMS.map((p) => ({ value: p.id, label: p.name })),
+  ];
 
-  if (platformId === 'kimi-code') {
+  const selected = await promptLoginProviderSelection(host, options);
+  if (selected === undefined) return;
+
+  if (selected === 'kimi-code') {
     await handleKimiCodeOAuthLogin(host);
     return;
   }
 
-  const platform = getOpenPlatformById(platformId);
+  if (isSupportedProviderLoginType(selected)) {
+    const definition = getProviderLoginDefinition(selected)!;
+    await handleProviderLogin(host, definition);
+    return;
+  }
+
+  const platform = getOpenPlatformById(selected);
   if (platform === undefined) return;
   await handleOpenPlatformLogin(host, platform);
 }
@@ -254,7 +267,7 @@ async function handleProviderLogin(
 
   let models: import('@odysseythink/kimi-code-oauth').ProviderModelInfo[];
   try {
-    models = await fetchProviderModels(definition, apiKey, fetch, controller.signal);
+    models = await fetchProviderModels(definition, apiKey, fetch, controller.signal, baseUrl);
   } catch (error) {
     if (controller.signal.aborted) return;
     const msg = formatErrorMessage(error);

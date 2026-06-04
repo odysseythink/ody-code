@@ -76,7 +76,7 @@ export class TextInputDialogComponent extends Container implements Focusable {
     this.input.focused = this.focused && !this.done;
 
     const safeWidth = Math.max(28, width);
-    const innerWidth = Math.max(10, safeWidth - 4);
+    const innerWidth = Math.max(10, safeWidth - 6);
     const pad = '  ';
 
     const border = (s: string): string => chalk.hex(this.colors.primary)(s);
