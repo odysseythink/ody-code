@@ -376,15 +376,34 @@ async function performModelSwitch(host: SlashCommandHost, alias: string, thinkin
   host.showStatus(status, host.state.theme.colors.success);
 }
 
-async function persistModelSelection(host: SlashCommandHost, alias: string, thinking: boolean): Promise<boolean> {
+export async function persistModelSelection(host: SlashCommandHost, alias: string, thinking: boolean): Promise<boolean> {
   const config = await host.harness.getConfig({ reload: true });
-  if (config.defaultModel === alias && config.defaultThinking === thinking) {
-    return false;
+
+  if (host.state.appState.planMode) {
+    if (config.modeModels?.plan === alias && config.defaultThinking === thinking) {
+      return false;
+    }
+    await host.harness.setConfig({
+      modeModels: { ...(config.modeModels ?? {}), plan: alias },
+      defaultThinking: thinking,
+    });
+  } else if (host.state.appState.designMode) {
+    if (config.modeModels?.design === alias && config.defaultThinking === thinking) {
+      return false;
+    }
+    await host.harness.setConfig({
+      modeModels: { ...(config.modeModels ?? {}), design: alias },
+      defaultThinking: thinking,
+    });
+  } else {
+    if (config.defaultModel === alias && config.defaultThinking === thinking) {
+      return false;
+    }
+    await host.harness.setConfig({
+      defaultModel: alias,
+      defaultThinking: thinking,
+    });
   }
-  await host.harness.setConfig({
-    defaultModel: alias,
-    defaultThinking: thinking,
-  });
   return true;
 }
 
