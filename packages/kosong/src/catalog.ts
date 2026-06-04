@@ -53,6 +53,7 @@ const KNOWN_WIRE_TYPES = [
   'google-genai',
   'openai_responses',
   'vertexai',
+  'deepseek',
 ] as const satisfies readonly ProviderType[];
 
 function isWireType(value: unknown): value is ProviderType {
@@ -92,6 +93,7 @@ export function inferWireType(entry: CatalogProviderEntry): ProviderType | undef
     return 'google-genai';
   }
   if (npm.includes('openai') || id.includes('openai')) return 'openai';
+  if (id.includes('deepseek')) return 'deepseek';
   return undefined;
 }
 
