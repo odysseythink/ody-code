@@ -213,6 +213,7 @@ export class KimiTUI {
   private isShuttingDown = false;
   private readonly migrationPlan: MigrationPlan | null;
   private readonly migrateOnly: boolean;
+  private readonly authIntent: { readonly kind: 'login' | 'logout'; readonly providerType: string } | undefined;
   private startupNotice: string | undefined;
   private lastActivityMode: string | undefined;
   private lastHistoryContent: string | undefined;
@@ -259,12 +260,14 @@ export class KimiTUI {
         design: startupInput.cliOptions.design,
         model: startupInput.cliOptions.model,
         startupNotice: startupInput.startupNotice,
+        authIntent: startupInput.authIntent,
       },
       resolvedTheme: startupInput.resolvedTheme,
     };
     this.options = tuiOptions;
     this.migrationPlan = startupInput.migrationPlan ?? null;
     this.migrateOnly = startupInput.migrateOnly ?? false;
+    this.authIntent = startupInput.authIntent;
     this.startupNotice = startupInput.startupNotice;
     this.state = createTUIState(tuiOptions);
     this.uninstallRainbowDance = installRainbowDance(() => {
@@ -465,6 +468,11 @@ export class KimiTUI {
       this.refreshSessionTitle();
     }
     void this.refreshSkillCommands(this.session);
+
+    if (this.authIntent !== undefined) {
+      const command = this.authIntent.kind === 'login' ? '/login' : '/logout';
+      slashCommands.dispatchInput(this, `${command} ${this.authIntent.providerType}`);
+    }
   }
 
   private async showTmuxKeyboardWarningIfNeeded(): Promise<void> {
