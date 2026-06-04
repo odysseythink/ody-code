@@ -6,7 +6,6 @@ export const DEFAULT_SENSITIVE_WORDS = [
   'password',
   'secret',
   'credential',
-  'auth',
 ] as const;
 
 export interface TopicGeneratorOptions {

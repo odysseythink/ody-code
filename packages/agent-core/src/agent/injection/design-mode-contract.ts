@@ -97,9 +97,10 @@ ShowDesignMockup is NOT available in this host; describe visuals in text (ASCII 
   }
   return `## Visual companion
 ✓ ShowDesignMockup IS available in this host right now.
-- When a layout / visual / UI-appearance decision is in play, you SHOULD call ShowDesignMockup to render it **before** asking the related question — seeing beats reading for layouts and side-by-side visual options. Use the terminal only for conceptual / trade-off / scope questions.
+- **ONLY use ShowDesignMockup when the user must compare rendered visual appearances to make a choice** — e.g., two UI layout variants, side-by-side color/spacing options, or interaction states. Seeing beats reading for visual decisions.
 - When the choice is between multiple visual / layout options, render the candidates as REAL effects, not words: put 2-3 variants **side by side in a single HTML document** so the user compares actual rendered output, then ask which they prefer via AskUserQuestion. Do NOT replace the render with a textual description of the options.
 - If the user's request is literally to render / show / draw a mockup or UI, lead with ShowDesignMockup and render the real thing now (you may still run the audit gate first, but do NOT defer the actual render to a post-approval "implementation" step).
+- **DO NOT use ShowDesignMockup for non-visual content.** The following belong in the design file as markdown, not in the browser: architecture diagrams, data-flow descriptions, sequence diagrams, data structures, interfaces, type/function signatures, numbered flow steps, algorithm pseudocode, error-handling tables, test plans, and risk registers. If you are presenting design content to explain or confirm it (not to compare visual appearances), write it to the design file instead.
 - Rendering is a tool call *within* a turn — it does NOT end the turn. After rendering, the same turn still ends with AskUserQuestion (ask about what you just showed) or ExitDesignMode. You do not need a separate "offer" message; just render and ask.`;
 }
 
@@ -148,7 +149,7 @@ export function designModeSparseReminder(
   mockupAvailable: boolean,
 ): string {
   const mockupPointer = mockupAvailable
-    ? '\n\nShowDesignMockup is available — render layouts instead of describing them.'
+    ? '\n\nShowDesignMockup is available — use ONLY for UI/visual appearance comparisons (layout variants, side-by-side renders). Architecture, interfaces, flows, and tables go in the design file as markdown.'
     : '';
   const body = `Design mode still active (see full instructions earlier). This is a brainstorming session, NOT implementation — no code until the user approves the design via ExitDesignMode. Confirm the audit level (Basic/Standard/Deep) was asked; clarify one question per turn until all seven decision dimensions are settled (and verify any data source / hook point the design relies on actually exists in code); propose 2-3 approaches; present the design section by section for approval; then write the design file with [C:USER]/[C:INFERRED]/[C:DEFERRED]/[C:UPSTREAM] tags and an ## Assumptions chapter. Pass options to ExitDesignMode when there is a real choice. End every turn with AskUserQuestion or ExitDesignMode — never any other way.
 

@@ -163,6 +163,7 @@ export interface CancelPlanPayload {
 }
 export interface EnterPlanPayload {
   readonly kind?: PlanKind;
+  readonly fileStem?: string;
 }
 export interface BeginCompactionPayload {
   readonly instruction?: string;

@@ -127,8 +127,8 @@ describe('DesignModeInjector content', () => {
     const text = lastReminder(agent);
 
     expect(text).toContain('ShowDesignMockup IS available');
-    expect(text).toContain('you SHOULD call ShowDesignMockup');
-    expect(text).toContain('before** asking the related question');
+    expect(text).toContain('ONLY use ShowDesignMockup when');
+    expect(text).toContain('DO NOT use ShowDesignMockup for non-visual content');
     // Multi-scheme guidance: render candidates side by side, do not describe them.
     expect(text).toContain('side by side in a single HTML document');
     expect(text).not.toContain('ShowDesignMockup is NOT available');
@@ -176,7 +176,7 @@ describe('DesignModeInjector content', () => {
 
     for (const marker of [
       'ShowDesignMockup IS available',
-      'you SHOULD call ShowDesignMockup',
+      'ONLY use ShowDesignMockup when',
       'lead with ShowDesignMockup',
     ]) {
       expect(full).toContain(marker);

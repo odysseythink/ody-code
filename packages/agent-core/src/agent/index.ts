@@ -38,6 +38,11 @@ import { CronManager } from './cron';
 import { ConfigState } from './config';
 import { ContextMemory } from './context';
 import { HookEngine } from '../session/hooks';
+import {
+  cleanupTopic,
+  formatUtcTimestamp,
+  TopicGenerator,
+} from './plan/topic-generator';
 import { InjectionManager } from './injection/manager';
 import { PermissionManager, type PermissionManagerOptions } from './permission';
 import { PlanMode } from './plan';
@@ -351,7 +356,14 @@ export class Agent {
         return this.config.modelAlias ?? '';
       },
       enterPlan: async (payload) => {
-        await this.planMode.enter(undefined, undefined, undefined, payload.kind ?? 'plan');
+        let fileStem = payload.fileStem;
+        if (fileStem === undefined || fileStem.length === 0) {
+          const generator = new TopicGenerator(this);
+          const topic = await generator.generate();
+          const fallback = payload.kind === 'design' ? 'design' : 'plan';
+          fileStem = `${topic ?? fallback}-${formatUtcTimestamp(new Date())}`;
+        }
+        await this.planMode.enter(undefined, undefined, undefined, payload.kind ?? 'plan', fileStem);
       },
       cancelPlan: (payload) => {
         this.planMode.cancel(payload.id);
