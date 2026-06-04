@@ -1,4 +1,5 @@
-import { existsSync, writeFileSync } from 'node:fs';
+import { writeFileSync } from 'node:fs';
+import { access } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import {
@@ -1032,8 +1033,12 @@ export class KimiTUI {
     ]);
 
     let planFilePath = status.planFilePath;
-    if (planFilePath !== null && planFilePath !== undefined && !existsSync(planFilePath)) {
-      planFilePath = null;
+    if (planFilePath !== null && planFilePath !== undefined) {
+      try {
+        await access(planFilePath);
+      } catch {
+        planFilePath = null;
+      }
     }
 
     this.setAppState({

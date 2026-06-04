@@ -9,6 +9,7 @@
 import type { Component } from '@earendil-works/pi-tui';
 import { truncateToWidth, visibleWidth } from '@earendil-works/pi-tui';
 import chalk from 'chalk';
+import { basename } from 'node:path';
 
 import { isRainbowDancing, renderDanceFooterModel } from '#/tui/easter-eggs/dance';
 import type { ColorPalette } from '#/tui/theme/colors';
@@ -29,11 +30,14 @@ const EMOJIS: Record<string, string> = { build: '⚒️', plan: '📝', design: 
 
 function planFileName(path: string | null | undefined): string | null {
   if (!path) return null;
-  const name = path.split('/').pop() ?? path;
+  const name = basename(path);
   return name || null;
 }
 
 function luminance(hex: string): number {
+  if (!/^#[0-9a-fA-F]{6}$/.test(hex)) {
+    throw new Error(`Invalid hex color: ${hex}`);
+  }
   const rgb = [hex.slice(1, 3), hex.slice(3, 5), hex.slice(5, 7)].map((h) => {
     const c = parseInt(h, 16) / 255;
     return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);

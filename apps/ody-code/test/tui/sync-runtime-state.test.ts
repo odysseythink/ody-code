@@ -2,15 +2,15 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { KimiTUI, type KimiTUIStartupInput, type TUIState } from '#/tui/kimi-tui';
 
-vi.mock('node:fs', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('node:fs')>();
+vi.mock('node:fs/promises', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('node:fs/promises')>();
   return {
     ...actual,
-    existsSync: vi.fn(),
+    access: vi.fn(),
   };
 });
 
-import { existsSync } from 'node:fs';
+import { access } from 'node:fs/promises';
 
 interface SyncDriver {
   state: TUIState;
@@ -91,7 +91,7 @@ describe('KimiTUI syncRuntimeState', () => {
     vi.spyOn(driver.state.ui, 'requestRender').mockImplementation(() => {});
     vi.spyOn(driver.state.terminal, 'setProgress').mockImplementation(() => {});
 
-    vi.mocked(existsSync).mockReturnValue(true);
+    vi.mocked(access).mockResolvedValue(undefined);
 
     await driver.syncRuntimeState(session as never);
 
@@ -105,7 +105,7 @@ describe('KimiTUI syncRuntimeState', () => {
     vi.spyOn(driver.state.ui, 'requestRender').mockImplementation(() => {});
     vi.spyOn(driver.state.terminal, 'setProgress').mockImplementation(() => {});
 
-    vi.mocked(existsSync).mockReturnValue(false);
+    vi.mocked(access).mockRejectedValue(new Error('ENOENT'));
 
     await driver.syncRuntimeState(session as never);
 
