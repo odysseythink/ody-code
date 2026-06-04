@@ -301,6 +301,33 @@ export interface RemoveKimiProviderPayload {
   readonly providerId: string;
 }
 
+export interface ReviewDesignPayload {
+  /** Design file to review. Defaults to the current plan/design-mode file. */
+  readonly path?: string;
+  /** Reviewer model alias. Defaults to mode_models.review → .plan → default_model. */
+  readonly modelAlias?: string;
+}
+
+export interface ReviewFindingData {
+  readonly severity: 'high' | 'med' | 'low';
+  readonly title: string;
+  readonly detail: string;
+  readonly location?: string;
+  readonly suggestedFix?: string;
+  /** Whether this finding must be escalated to the human (severity × audit level). */
+  readonly escalate: boolean;
+}
+
+export interface DesignReviewData {
+  readonly path: string;
+  readonly auditLevel: 'Basic' | 'Standard' | 'Deep';
+  readonly reviewerAlias: string;
+  /** false when the reviewer could not run or its output was unusable. */
+  readonly ok: boolean;
+  readonly note?: string;
+  readonly findings: readonly ReviewFindingData[];
+}
+
 export interface AgentAPI {
   prompt: (payload: PromptPayload) => void;
   steer: (payload: SteerPayload) => void;
@@ -326,6 +353,7 @@ export interface AgentAPI {
   getConfig: (payload: EmptyPayload) => AgentConfigData;
   getPermission: (payload: EmptyPayload) => PermissionData;
   getPlan: (payload: EmptyPayload) => PlanData;
+  reviewDesign: (payload: ReviewDesignPayload) => DesignReviewData;
   getUsage: (payload: EmptyPayload) => UsageStatus;
   getTools: (payload: EmptyPayload) => readonly ToolInfo[];
   getBackground: (payload: GetBackgroundPayload) => readonly BackgroundTaskInfo[];

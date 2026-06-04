@@ -20,6 +20,7 @@ import type {
   PromptInput,
   ReloadSummary,
   ResumedSessionState,
+  DesignReviewData,
   SessionPlan,
   SessionStatus,
   SessionSummary,
@@ -169,6 +170,13 @@ export class Session {
   async getPlan(): Promise<SessionPlan> {
     this.ensureOpen();
     return this.rpc.getPlan({ sessionId: this.id });
+  }
+
+  async reviewDesign(
+    input: { path?: string; modelAlias?: string } = {},
+  ): Promise<DesignReviewData> {
+    this.ensureOpen();
+    return this.rpc.reviewDesign({ sessionId: this.id, ...input });
   }
 
   async clearPlan(): Promise<void> {

@@ -7,6 +7,7 @@ import type {
   CancelPlanPayload,
   CreateGoalPayload,
   EmptyPayload,
+  ReviewDesignPayload,
   GoalControlPayload,
   GetBackgroundOutputPayload,
   GetBackgroundPayload,
@@ -252,6 +253,10 @@ export class SessionAPIImpl implements PromisableMethods<SessionAPI> {
 
   getPlan({ agentId, ...payload }: AgentScopedPayload<EmptyPayload>) {
     return this.getAgent(agentId).getPlan(payload);
+  }
+
+  reviewDesign({ agentId, ...payload }: AgentScopedPayload<ReviewDesignPayload>) {
+    return this.getAgent(agentId).reviewDesign(payload);
   }
 
   getUsage({ agentId, ...payload }: AgentScopedPayload<EmptyPayload>) {

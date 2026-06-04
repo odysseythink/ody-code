@@ -8,6 +8,7 @@ import {
   type ApprovalRequest,
   type ApprovalResponse,
   type CoreAPI,
+  type DesignReviewData,
   type Event,
   type ExperimentalFlagMap,
   type OAuthTokenProviderResolver,
@@ -109,6 +110,11 @@ export interface ActivateSkillRpcInput extends SessionIdRpcInput {
 
 export interface ReconnectMcpServerRpcInput extends SessionIdRpcInput {
   readonly name: string;
+}
+
+export interface ReviewDesignRpcInput extends SessionIdRpcInput {
+  readonly path?: string;
+  readonly modelAlias?: string;
 }
 
 type ResolvedCoreAPI = Awaited<ReturnType<SDKRPCClient>>;
@@ -325,6 +331,16 @@ export class SDKRpcClient {
     await rpc.clearPlan({
       sessionId: input.sessionId,
       agentId: this.interactiveAgentId,
+    });
+  }
+
+  async reviewDesign(input: ReviewDesignRpcInput): Promise<DesignReviewData> {
+    const rpc = await this.getRpc();
+    return rpc.reviewDesign({
+      sessionId: input.sessionId,
+      agentId: this.interactiveAgentId,
+      path: input.path,
+      modelAlias: input.modelAlias,
     });
   }
 

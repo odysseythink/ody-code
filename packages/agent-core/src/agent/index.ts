@@ -43,6 +43,7 @@ import {
   formatUtcTimestamp,
   TopicGenerator,
 } from './plan/topic-generator';
+import { DesignReviewer, escalatedSeverities } from './plan/design-reviewer';
 import { InjectionManager } from './injection/manager';
 import { PermissionManager, type PermissionManagerOptions } from './permission';
 import { PlanMode } from './plan';
@@ -407,6 +408,53 @@ export class Agent {
       getConfig: () => this.config.data(),
       getPermission: () => this.permission.data(),
       getPlan: () => this.planMode.data(),
+      reviewDesign: async (payload) => {
+        let content: string;
+        let path: string;
+        if (payload.path !== undefined && payload.path.length > 0) {
+          content = await this.kaos.readText(payload.path, { errors: 'ignore' });
+          path = payload.path;
+        } else {
+          const data = await this.planMode.data();
+          if (data === null || data.content.trim().length === 0) {
+            throw new KimiError(
+              ErrorCodes.SESSION_PLAN_MODE_INVALID,
+              'No design file to review. Enter design mode or pass a file path.',
+            );
+          }
+          content = data.content;
+          path = data.path;
+        }
+        if (content.trim().length === 0) {
+          throw new KimiError(ErrorCodes.SESSION_PLAN_MODE_INVALID, `Design file is empty: ${path}`);
+        }
+
+        const reviewerAlias =
+          payload.modelAlias ??
+          this.kimiConfig?.modeModels?.review ??
+          this.kimiConfig?.modeModels?.plan ??
+          this.kimiConfig?.defaultModel;
+        if (reviewerAlias === undefined || reviewerAlias.length === 0) {
+          throw new KimiError(
+            ErrorCodes.CONFIG_INVALID,
+            'No reviewer model configured. Set mode_models.review (or default_model) in config.toml.',
+          );
+        }
+
+        const result = await new DesignReviewer(this, { reviewerAlias }).review(content);
+        const escalate = new Set(escalatedSeverities(result.auditLevel));
+        return {
+          path,
+          auditLevel: result.auditLevel,
+          reviewerAlias,
+          ok: result.ok,
+          ...(result.note !== undefined ? { note: result.note } : {}),
+          findings: result.findings.map((finding) => ({
+            ...finding,
+            escalate: escalate.has(finding.severity),
+          })),
+        };
+      },
       getUsage: () => this.usage.data(),
       getTools: () => this.tools.data(),
       getBackground: (payload) => this.background.list(payload.activeOnly ?? false, payload.limit),

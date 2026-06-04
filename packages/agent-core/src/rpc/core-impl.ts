@@ -51,6 +51,7 @@ import type {
   CreateGoalPayload,
   CreateSessionPayload,
   EmptyPayload,
+  ReviewDesignPayload,
   EnterPlanPayload,
   GoalControlPayload,
   GoalSnapshot,
@@ -537,6 +538,10 @@ export class KimiCore implements PromisableMethods<CoreAPI> {
 
   getPlan({ sessionId, ...payload }: SessionAgentPayload<EmptyPayload>) {
     return this.sessionApi(sessionId).getPlan(payload);
+  }
+
+  reviewDesign({ sessionId, ...payload }: SessionAgentPayload<ReviewDesignPayload>) {
+    return this.sessionApi(sessionId).reviewDesign(payload);
   }
 
   getUsage({ sessionId, ...payload }: SessionAgentPayload<EmptyPayload>) {

@@ -204,6 +204,7 @@ export const KimiConfigSchema = z.object({
   modeModels: z.object({
     plan: z.string().optional(),
     design: z.string().optional(),
+    review: z.string().optional(),
   }).optional(),
   raw: z.record(z.string(), z.unknown()).optional(),
 });
