@@ -270,6 +270,14 @@ function toKosongProviderConfig(
         location: vertexAILocation(provider),
       };
     }
+    case 'deepseek':
+      return {
+        type: 'deepseek',
+        model,
+        baseUrl: providerValue(provider.baseUrl, provider.env, 'DEEPSEEK_BASE_URL'),
+        apiKey: providerApiKey(provider),
+        ...defaultHeadersField(provider.customHeaders),
+      };
     default: {
       const exhaustive: never = provider.type;
       throw new KimiError(
@@ -315,6 +323,8 @@ function providerApiKey(provider: ProviderConfig): string | undefined {
         envValue(provider.env, 'VERTEXAI_API_KEY') ??
         envValue(provider.env, 'GOOGLE_API_KEY')
       );
+    case 'deepseek':
+      return providerValue(provider.apiKey, provider.env, 'DEEPSEEK_API_KEY');
     default: {
       const exhaustive: never = provider.type;
       throw new KimiError(
