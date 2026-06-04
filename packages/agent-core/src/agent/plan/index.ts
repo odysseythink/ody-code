@@ -42,7 +42,11 @@ export class PlanMode {
     fileStem?: string,
   ): Promise<void> {
     if (this._isActive) {
-      throw new Error('Already in plan mode');
+      if (this._kind === kind) {
+        return;
+      }
+      // Switching directly between plan and design: exit current first.
+      this.exit();
     }
 
     this._isActive = true;

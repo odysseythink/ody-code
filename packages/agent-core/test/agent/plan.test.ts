@@ -639,6 +639,7 @@ describe('modeModels: per-mode model routing', () => {
     providers: { 'test-provider': { type: 'kimi' as const, apiKey: 'test-key' } },
     models: {
       'mock-model': { provider: 'test-provider', model: 'mock-model', maxContextSize: 1_000_000 },
+      'plan-model': { provider: 'test-provider', model: 'plan-model', maxContextSize: 1_000_000 },
       'design-model': { provider: 'test-provider', model: 'design-model', maxContextSize: 1_000_000 },
     },
   };
@@ -680,6 +681,27 @@ describe('modeModels: per-mode model routing', () => {
     await ctx.agent.planMode.enter('plan-id', false, false, 'design');
 
     expect(ctx.agent.config.modelAlias).toBe('mock-model');
+    expect(ctx.agent.planMode.isActive).toBe(true);
+  });
+
+  it('allows switching directly from plan to design without throwing', async () => {
+    const ctx = testAgent({
+      kaos: planKaos,
+      initialConfig: {
+        ...baseConfig,
+        modeModels: { plan: 'plan-model', design: 'design-model' },
+      },
+    });
+    ctx.configure();
+
+    await ctx.agent.planMode.enter('plan-id', false, false, 'plan');
+    expect(ctx.agent.config.modelAlias).toBe('plan-model');
+    expect(ctx.agent.planMode.kind).toBe('plan');
+
+    // This used to throw "Already in plan mode"
+    await ctx.agent.planMode.enter('design-id', false, false, 'design');
+    expect(ctx.agent.config.modelAlias).toBe('design-model');
+    expect(ctx.agent.planMode.kind).toBe('design');
     expect(ctx.agent.planMode.isActive).toBe(true);
   });
 });
