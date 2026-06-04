@@ -66,6 +66,35 @@ describe('manual plan entry', () => {
     expect(resumed.agent.planMode.planFilePath).toBe(livePath);
   });
 
+  it('uses fileStem for plan path when provided and restores it from wire records', async () => {
+    const ctx = testAgent({
+      kaos: createPlanKaos(),
+    });
+    await ctx.agent.planMode.enter('plan-id', false, true, 'plan', 'custom-stem');
+
+    expect(ctx.agent.planMode.planFilePath).toBe('/workspace/plan/custom-stem.md');
+    expect(ctx.agent.planMode.fileStem).toBe('custom-stem');
+
+    const enterRecord = ctx.allEvents.find(
+      (event) => event.type === '[wire]' && event.event === 'plan_mode.enter',
+    );
+    expect(enterRecord?.args).toMatchObject({
+      id: 'plan-id',
+      kind: 'plan',
+      fileStem: 'custom-stem',
+    });
+
+    const resumed = testAgent({ kaos: createFakeKaos() });
+    resumed.dispatch({
+      type: 'plan_mode.enter',
+      id: 'plan-id',
+      fileStem: 'custom-stem',
+    });
+
+    expect(resumed.agent.planMode.planFilePath).toBe('/workspace/plan/custom-stem.md');
+    expect(resumed.agent.planMode.fileStem).toBe('custom-stem');
+  });
+
   it('enters plan mode through the EnterPlanMode tool and reminds the next step', async () => {
     const enterPlanModeCall: ToolCall = {
       type: 'function',

@@ -60,7 +60,11 @@ function restoreAgentRecord(agent: Agent, input: AgentRecord): void {
       agent.microCompaction.apply(input.cutoff);
       return;
     case 'plan_mode.enter':
-      agent.planMode.restoreEnter({ id: input.id, kind: input.kind ?? 'plan' });
+      agent.planMode.restoreEnter({
+        id: input.id,
+        kind: input.kind ?? 'plan',
+        fileStem: input.fileStem,
+      });
       return;
     case 'plan_mode.cancel':
       agent.planMode.cancel(input.id);

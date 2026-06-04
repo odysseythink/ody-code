@@ -41,6 +41,7 @@ export interface AgentRecordEvents {
   'plan_mode.enter': {
     id: string;
     kind?: PlanKind;
+    fileStem?: string;
   };
   'plan_mode.cancel': {
     id?: string;

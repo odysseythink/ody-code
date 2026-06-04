@@ -25,6 +25,7 @@ export class PlanMode {
   protected _planId: null | string = null;
   protected _planFilePath: PlanFilePath = null;
   protected _kind: PlanKind = 'plan';
+  protected _fileStem: string | null = null;
   private _preModeModelAlias: { value: string | undefined } | null = null;
 
   constructor(protected readonly agent: Agent) {}
@@ -38,6 +39,7 @@ export class PlanMode {
     createFile = false,
     emitStatus = true,
     kind: PlanKind = 'plan',
+    fileStem?: string,
   ): Promise<void> {
     if (this._isActive) {
       throw new Error('Already in plan mode');
@@ -47,6 +49,7 @@ export class PlanMode {
     this._planId = id;
     this._kind = kind;
     this._planFilePath = null;
+    this._fileStem = fileStem ?? id;
 
     const modeModel = this.agent.kimiConfig?.modeModels?.[kind];
     if (modeModel !== undefined && modeModel !== this.agent.config.modelAlias) {
@@ -62,10 +65,15 @@ export class PlanMode {
 
     let enterRecorded = false;
     try {
-      const planFilePath = this.planFilePathFor(id);
+      const planFilePath = this.planFilePathFor(this._fileStem);
       this._planFilePath = planFilePath;
       await this.ensurePlanDirectory(planFilePath);
-      this.agent.records.logRecord({ type: 'plan_mode.enter', id, kind });
+      this.agent.records.logRecord({
+        type: 'plan_mode.enter',
+        id,
+        kind,
+        ...(this._fileStem !== id ? { fileStem: this._fileStem } : {}),
+      });
       enterRecorded = true;
       if (createFile) {
         await this.writeEmptyPlanFile(planFilePath);
@@ -81,6 +89,7 @@ export class PlanMode {
         this._isActive = false;
         this._planId = null;
         this._planFilePath = null;
+        this._fileStem = null;
         this._kind = 'plan';
       }
       throw error;
@@ -89,7 +98,15 @@ export class PlanMode {
     if (emitStatus) this.agent.emitStatusUpdated();
   }
 
-  restoreEnter({ id, kind = 'plan' }: { readonly id: string; readonly kind?: PlanKind }): void {
+  restoreEnter({
+    id,
+    kind = 'plan',
+    fileStem,
+  }: {
+    readonly id: string;
+    readonly kind?: PlanKind;
+    readonly fileStem?: string;
+  }): void {
     this.agent.replayBuilder.push({
       type: 'plan_updated',
       enabled: true,
@@ -99,7 +116,8 @@ export class PlanMode {
     this._isActive = true;
     this._planId = id;
     this._kind = kind;
-    this._planFilePath = this.planFilePathFor(id);
+    this._fileStem = fileStem ?? id;
+    this._planFilePath = this.planFilePathFor(this._fileStem);
   }
 
   cancel(id?: string): void {
@@ -116,6 +134,7 @@ export class PlanMode {
     this._isActive = false;
     this._planId = null;
     this._planFilePath = null;
+    this._fileStem = null;
     this._kind = 'plan';
     this.agent.emitStatusUpdated();
   }
@@ -139,6 +158,7 @@ export class PlanMode {
     this._isActive = false;
     this._planId = null;
     this._planFilePath = null;
+    this._fileStem = null;
     this._kind = 'plan';
     this.agent.emitStatusUpdated();
   }
@@ -149,6 +169,10 @@ export class PlanMode {
 
   get kind(): PlanKind {
     return this._kind;
+  }
+
+  get fileStem(): string | null {
+    return this._fileStem;
   }
 
   get planFilePath(): PlanFilePath {
@@ -203,14 +227,14 @@ export class PlanMode {
     });
   }
 
-  private planFilePathFor(id: string): string {
+  private planFilePathFor(stem: string): string {
     const cwdSubdir = this._kind === 'design' ? 'design' : 'plan';
     const homeSubdir = this._kind === 'design' ? 'designs' : 'plans';
     const plansDir =
       this.agent.homedir === undefined
         ? join(this.agent.config.cwd, cwdSubdir)
         : join(this.agent.homedir, homeSubdir);
-    return join(plansDir, `${id}.md`);
+    return join(plansDir, `${stem}.md`);
   }
 }
 
