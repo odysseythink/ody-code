@@ -70,7 +70,7 @@ export function renderFinding(finding: ReviewFindingData, index: number): string
   return `${index}. [${SEVERITY_LABEL[finding.severity]}]${tag} ${finding.title}${specTag}${location}\n   ${finding.detail}${fix}`;
 }
 
-function buildFollowupMessage(result: DesignReviewData, label: string): string {
+export function buildFollowupMessage(result: DesignReviewData, label: string): string {
   const body = result.findings.map((finding, i) => renderFinding(finding, i + 1)).join('\n');
   const escalated = result.findings.filter((finding) => finding.escalate).length;
   const escalationLine =
@@ -83,7 +83,7 @@ function buildFollowupMessage(result: DesignReviewData, label: string): string {
     body,
     '',
     escalationLine,
-    `Fix the findings NOT marked [ESCALATE] directly in the ${label} file. Do not implement anything beyond updating the ${label}.`,
+    `These findings are against the reviewed ${label} file: \`${result.path}\`. Apply every fix to THAT file — do not search for or recreate the ${label} file. Do not implement anything beyond updating the ${label}.`,
   ].join('\n');
 }
 
