@@ -3,9 +3,12 @@
  *
  * Design mode runs on a cheap model; this runs a SINGLE pass of an independent,
  * usually more capable model over the finished design to catch what the design
- * model's own (correlated) blind spots miss. The reviewer only flags — it never
- * edits — and findings are severity-tagged so the caller can escalate the risky
- * ones to a human while merely listing the rest.
+ * model's own (correlated) blind spots miss. The reviewer is primed as an
+ * ADVERSARY, not a neutral reviewer — its win condition is to break the design
+ * with a concrete trigger, which fights the confirmation bias a same-stance
+ * review inherits. It only flags — it never edits — and findings are
+ * severity-tagged so the caller can escalate the risky ones to a human while
+ * merely listing the rest.
  *
  * The reviewer model is a different configured alias than the session model, so
  * we resolve ITS provider + auth explicitly (the session model's auth must not
@@ -77,16 +80,16 @@ export function parseAuditLevel(content: string): AuditLevel {
 }
 
 export function buildCriticPrompt(): string {
-  return `You are an independent senior reviewer auditing a DESIGN DOCUMENT that was written by a different, less capable model. Your job is to find what that model's own blind spots missed — concrete, checkable defects, not vibes.
+  return `You are an ADVERSARY, not a reviewer. A different, less capable model wrote the DESIGN DOCUMENT below, and your goal is to BREAK it. You win only by producing a concrete defect with a trigger that proves it. "Looks fine" / "no issues" is a LOSING answer — if you cannot break the design, you have not attacked it hard enough. Stay honest, though: a fabricated or unfalsifiable defect is also a loss.
 
-Apply these lenses and report only REAL problems:
+Attack surface — hunt along every one of these, because the author's correlated blind spots cluster here:
 - Security: every filter/regex/matching rule for false positives (rejects valid input) and false negatives (lets through what must be caught); secrets or PII leaking into a log or filename.
 - Logic & correctness: algorithms that produce a wrong result on a realistic input; off-by-one, ordering, null/empty, concurrency, collision/uniqueness of generated identifiers.
 - Tests: every behaviour needs a must-pass AND a must-reject case; an assertion that contradicts a constant it depends on is a defect.
-- Integration: any data source, field, event, or hook the design relies on that may not actually exist.
-- Internal consistency: sections that contradict each other; decisions stated one way in one place and another elsewhere.
+- Integration: any data source, field, event, hook, or guard the design relies on that may not exist — or that keys off a DIFFERENT value than the producer writes (e.g. a file written under one identifier but authorized by a guard matching another). Open it and trace one concrete value through; do not assume it "continues to work".
+- Internal consistency: sections that contradict each other; a decision stated one way here and another way there.
 
-Discipline: do NOT mentally hand-wave. For any filter, regex, or test assertion, give a CONCRETE input that breaks it (e.g. "the substring filter rejects 'auth-refactor' because it contains 'auth'"). A finding without a concrete trigger is not a finding.
+Rules of engagement: every finding MUST carry a CONCRETE input that breaks it (e.g. "the substring filter rejects 'auth-refactor' because it contains 'auth'") or a concrete trace (e.g. "a file written under fileStem is denied by the guard matching planId"). A finding without a concrete trigger does not count and must be dropped — it loses you the round.
 
 Severity:
 - high: will cause a real bug, wrong behaviour, security/data issue, or a self-contradiction that blocks implementation.
@@ -95,7 +98,7 @@ Severity:
 
 Output STRICT JSON and nothing else (no prose, no markdown fences):
 {"findings":[{"severity":"high|med|low","title":"<short>","detail":"<what's wrong + the concrete trigger>","location":"<section/line if known, else omit>","suggestedFix":"<one line, else omit>"}]}
-If the design has no real problems, output {"findings":[]}.`;
+If — after a genuine attack — the design truly has no breakable defect, output {"findings":[]}.`;
 }
 
 /**

@@ -82,6 +82,20 @@ describe('buildCriticPrompt', () => {
     expect(prompt).toContain('false positives');
     expect(prompt).toContain('CONCRETE input that breaks it');
   });
+
+  // Regression guard for the adversarial stance-cut. The reviewer must be primed
+  // as an attacker whose win condition is breaking the design — this fights the
+  // confirmation bias a neutral "review" persona inherits. Fails loudly if the
+  // stance is softened back to evaluator; does NOT prove a behavioral lift (that
+  // needs an eval harness feeding designs with known defects).
+  it('primes an adversary stance with a win/lose framing', () => {
+    const prompt = buildCriticPrompt();
+    expect(prompt).toContain('ADVERSARY');
+    expect(prompt).toContain('BREAK it');
+    expect(prompt).toContain('LOSING answer');
+    // A finding without a concrete trigger loses the round (kills vibe-only output).
+    expect(prompt).toContain('does not count');
+  });
 });
 
 describe('parseFindings', () => {
