@@ -123,6 +123,32 @@ describe('PlanModeInjector content', () => {
     }
   });
 
+  // Regression guard for the Integration lens ported into self-review item 5.
+  // Catches the class of bug where a task changes an identifier/path/filename but
+  // its runtime consumer (a permission guard, a path matcher, a field a lookup
+  // keys on) still validates a different value — compile-clean, type-consistent,
+  // and therefore invisible to the shared-signature/type checks (e.g. a plan file
+  // written under `fileStem` but authorized by `isWritablePlanPath` matching
+  // `planId`). Fails loudly if a future edit strips the blade; does NOT prove the
+  // model behaves better — that requires a behavioral eval harness.
+  it('carries the consumer-reconciliation blade in both the entry message and the full reminder', async () => {
+    const agent = planAgent({ isActive: true, planFilePath: '/tmp/plan.md' });
+    const injector = new PlanModeInjector(agent);
+    await injector.inject();
+    const full = lastReminder(agent);
+    const entry = planModeEntryMessage('/tmp/plan.md');
+
+    for (const marker of [
+      'open the runtime consumer',
+      'keys off a different value',
+      'Verify the consumer with Read/Grep',
+      'never assume it',
+    ]) {
+      expect(full).toContain(marker);
+      expect(entry).toContain(marker);
+    }
+  });
+
   it('uses the inline reminder when no plan file path is available', async () => {
     const agent = planAgent({ isActive: true, planFilePath: null });
     const injector = new PlanModeInjector(agent);
