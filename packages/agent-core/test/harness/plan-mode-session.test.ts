@@ -20,7 +20,7 @@ model = "kimi-for-coding"
 max_context_size = 1000000
 `;
 
-describe('plan-mode bootstrap from config.defaultPlanMode', () => {
+describe('plan-mode bootstrap from config.defaultSessionMode', () => {
   let tmp: string;
   let homeDir: string;
   let workDir: string;
@@ -38,7 +38,7 @@ describe('plan-mode bootstrap from config.defaultPlanMode', () => {
     await rm(tmp, { recursive: true, force: true });
   });
 
-  it('activates plan mode on a new session when config.defaultPlanMode is true', async () => {
+  it('activates plan mode on a new session when config.defaultSessionMode is true', async () => {
     await writeFile(configPath, `default_plan_mode = true\n${BASE_CONFIG}`);
     const rpc = await createTestRpc();
     const created = await rpc.createSession({ workDir });
@@ -47,7 +47,7 @@ describe('plan-mode bootstrap from config.defaultPlanMode', () => {
     expect(await countPlanModeEnters()).toBe(1);
   });
 
-  it('leaves plan mode inactive when config.defaultPlanMode is absent', async () => {
+  it('leaves plan mode inactive when config.defaultSessionMode is absent', async () => {
     await writeFile(configPath, BASE_CONFIG);
     const rpc = await createTestRpc();
     const created = await rpc.createSession({ workDir });
@@ -56,7 +56,7 @@ describe('plan-mode bootstrap from config.defaultPlanMode', () => {
     expect(await countPlanModeEnters()).toBe(0);
   });
 
-  it('does not apply config.defaultPlanMode when resuming an existing session', async () => {
+  it('does not apply config.defaultSessionMode when resuming an existing session', async () => {
     await writeFile(configPath, BASE_CONFIG);
     const rpc = await createTestRpc();
     const created = await rpc.createSession({ workDir });

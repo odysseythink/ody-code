@@ -88,7 +88,7 @@ describe('SDK config TOML', () => {
     expect(config.defaultModel).toBe('kimi-for-coding');
     expect(config.defaultThinking).toBe(false);
     expect(config.defaultPermissionMode).toBe('auto');
-    expect(config.defaultPlanMode).toBe(false);
+    expect(config.defaultSessionMode).toBe(false);
     expect(config.mergeAllAvailableSkills).toBe(true);
     expect(config.extraSkillDirs).toEqual(['~/team-skills', '.agents/team-skills']);
 

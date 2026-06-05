@@ -241,10 +241,10 @@ export class KimiCore implements PromisableMethods<CoreAPI> {
       if (permissionMode !== undefined) {
         mainAgent.permission.setMode(permissionMode);
       }
-      // Honor config.defaultPlanMode for fresh sessions. Resumed sessions
+      // Honor config.defaultSessionMode for fresh sessions. Resumed sessions
       // restore their own plan state from records and never re-apply this.
-      if (config.defaultPlanMode === true) {
-        await mainAgent.sessionMode.enter();
+      if (config.defaultSessionMode !== undefined) {
+        await mainAgent.sessionMode.enter(undefined, undefined, undefined, config.defaultSessionMode);
       }
       await session.writeMetadata();
       await session.flushMetadata();

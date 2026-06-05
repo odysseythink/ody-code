@@ -14,7 +14,7 @@ import type { ToolExecutionHookContext } from '../../src/loop';
 
 const signal = new AbortController().signal;
 
-async function activePlanAgent(): Promise<{ agent: Agent; planMode: SessionMode }> {
+async function activePlanAgent(): Promise<{ agent: Agent; sessionMode: SessionMode }> {
   const agent = {
     homedir: '/tmp/kimi-plan-test',
     emitStatusUpdated: vi.fn(),
