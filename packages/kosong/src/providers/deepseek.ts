@@ -41,6 +41,15 @@ const DEEPSEEK_CHAT_CAPABILITY: ModelCapability = Object.freeze({
   max_context_tokens: 0,
 });
 
+const DEEPSEEK_V4_CAPABILITY: ModelCapability = Object.freeze({
+  image_in: false,
+  video_in: false,
+  audio_in: false,
+  thinking: true,
+  tool_use: true,
+  max_context_tokens: 1_000_000,
+});
+
 export class DeepSeekChatProvider implements ChatProvider {
   readonly name: string = 'deepseek';
 
@@ -81,6 +90,9 @@ export class DeepSeekChatProvider implements ChatProvider {
     }
     if (normalized.startsWith('deepseek-chat')) {
       return DEEPSEEK_CHAT_CAPABILITY;
+    }
+    if (normalized.startsWith('deepseek-v4-')) {
+      return DEEPSEEK_V4_CAPABILITY;
     }
     return UNKNOWN_CAPABILITY;
   }

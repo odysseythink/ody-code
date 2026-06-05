@@ -276,6 +276,7 @@ function toKosongProviderConfig(
         model,
         baseUrl: providerValue(provider.baseUrl, provider.env, 'DEEPSEEK_BASE_URL'),
         apiKey: providerApiKey(provider),
+        ...(maxOutputSize !== undefined ? { maxTokens: maxOutputSize } : {}),
         ...defaultHeadersField(provider.customHeaders),
       };
     default: {

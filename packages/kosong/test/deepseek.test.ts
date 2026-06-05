@@ -72,6 +72,20 @@ describe('DeepSeekChatProvider', () => {
       expect(provider.getCapability('deepseek-reasoner').tool_use).toBe(false);
     });
 
+    it('deepseek-v4-pro → thinking, tool_use, 1M context', () => {
+      const cap = makeProvider({ model: 'deepseek-v4-pro' }).getCapability();
+      expect(cap.thinking).toBe(true);
+      expect(cap.tool_use).toBe(true);
+      expect(cap.max_context_tokens).toBe(1_000_000);
+    });
+
+    it('deepseek-v4-flash → thinking, tool_use, 1M context', () => {
+      const cap = makeProvider({ model: 'deepseek-v4-flash' }).getCapability();
+      expect(cap.thinking).toBe(true);
+      expect(cap.tool_use).toBe(true);
+      expect(cap.max_context_tokens).toBe(1_000_000);
+    });
+
     it('unknown model → UNKNOWN_CAPABILITY (no throw)', () => {
       const cap = makeProvider({ model: 'deepseek-unknown' }).getCapability();
       expect(cap).toEqual(UNKNOWN_CAPABILITY);
