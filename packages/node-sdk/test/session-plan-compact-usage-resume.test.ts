@@ -26,12 +26,12 @@ describe('Session plan, compact, usage, and resume APIs', () => {
 
       const planOn = waitForSessionEvent(
         session,
-        (event) => event.type === 'agent.status.updated' && event.planMode === true,
+        (event) => event.type === 'agent.status.updated' && event.sessionMode === 'plan',
       );
-      await session.setPlanMode(true);
+      await session.setSessionMode('plan');
       await expect(planOn).resolves.toMatchObject({
         type: 'agent.status.updated',
-        planMode: true,
+        sessionMode: 'plan',
       });
 
       const status = await session.getStatus();
@@ -45,12 +45,12 @@ describe('Session plan, compact, usage, and resume APIs', () => {
 
       const planOff = waitForSessionEvent(
         session,
-        (event) => event.type === 'agent.status.updated' && event.planMode === false,
+        (event) => event.type === 'agent.status.updated' && event.sessionMode === 'normal',
       );
-      await session.setPlanMode(false);
+      await session.setSessionMode('normal');
       await expect(planOff).resolves.toMatchObject({
         type: 'agent.status.updated',
-        planMode: false,
+        sessionMode: 'normal',
       });
 
       const statusOff = await session.getStatus();
@@ -69,14 +69,14 @@ describe('Session plan, compact, usage, and resume APIs', () => {
     try {
       const session = await harness.createSession({ id: 'ses_plan_toggle_runtime', workDir });
 
-      await session.setPlanMode(true);
+      await session.setSessionMode('plan');
       const firstPlan = await session.getPlan();
       if (firstPlan === null) throw new Error('expected first plan');
       const plansDir = dirname(firstPlan.path);
       await expect(markdownFiles(plansDir)).resolves.toEqual([]);
 
-      await session.setPlanMode(false);
-      await session.setPlanMode(true);
+      await session.setSessionMode('normal');
+      await session.setSessionMode('plan');
       const secondPlan = await session.getPlan();
       if (secondPlan === null) throw new Error('expected second plan');
 
@@ -133,7 +133,7 @@ describe('Session plan, compact, usage, and resume APIs', () => {
         workDir,
         model: 'test-model',
       });
-      await created.setPlanMode(true);
+      await created.setSessionMode('plan');
       await expect(created.getPlan()).resolves.toMatchObject({
         content: '',
       });
@@ -146,7 +146,7 @@ describe('Session plan, compact, usage, and resume APIs', () => {
       expect(resumed.workDir).toBe(workDir);
       await expect(resumed.getStatus()).resolves.toMatchObject({
         model: 'test-model',
-        planMode: true,
+        sessionMode: 'plan',
       });
       await expect(resumed.getPlan()).resolves.toMatchObject({
         content: '',
@@ -172,7 +172,7 @@ describe('Session plan, compact, usage, and resume APIs', () => {
         workDir,
         model: 'test-model',
       });
-      await created.setPlanMode(true);
+      await created.setSessionMode('plan');
       const summary = created.summary;
       expect(summary).toBeDefined();
       sessionId = created.id;
@@ -188,7 +188,7 @@ describe('Session plan, compact, usage, and resume APIs', () => {
       const resumed = await resumedHarness.resumeSession({ id: sessionId });
 
       await expect(resumed.getStatus()).resolves.toMatchObject({
-        planMode: true,
+        sessionMode: 'plan',
       });
       await expect(resumed.getPlan()).resolves.toBeNull();
     } finally {
@@ -209,7 +209,7 @@ describe('Session plan, compact, usage, and resume APIs', () => {
         model: 'test-model',
         metadata: { source: true },
       });
-      await source.setPlanMode(true);
+      await source.setSessionMode('plan');
       const sourcePlan = await source.getPlan();
       if (sourcePlan === null) throw new Error('expected source plan');
       await mkdir(dirname(sourcePlan.path), { recursive: true });

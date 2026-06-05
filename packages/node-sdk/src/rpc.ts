@@ -95,12 +95,8 @@ export interface SetSessionPermissionRpcInput extends SessionIdRpcInput {
   readonly mode: PermissionMode;
 }
 
-export interface SetSessionPlanModeRpcInput extends SessionIdRpcInput {
-  readonly enabled: boolean;
-}
-
-export interface SetSessionDesignModeRpcInput extends SessionIdRpcInput {
-  readonly enabled: boolean;
+export interface SetSessionModeRpcInput extends SessionIdRpcInput {
+  readonly mode: 'plan' | 'design' | 'normal';
 }
 
 export interface ActivateSkillRpcInput extends SessionIdRpcInput {
@@ -162,8 +158,8 @@ export class SDKRpcClient {
 
   async createSession(input: CreateSessionOptions): Promise<SessionSummary> {
     const rpc = await this.getRpc();
-    const { planMode, ...coreInput } = input;
-    void planMode;
+    const { sessionMode, ...coreInput } = input;
+    void sessionMode;
     return rpc.createSession(coreInput);
   }
 
@@ -290,9 +286,9 @@ export class SDKRpcClient {
     });
   }
 
-  async setPlanMode(input: SetSessionPlanModeRpcInput): Promise<void> {
+  async setSessionMode(input: SetSessionModeRpcInput): Promise<void> {
     const rpc = await this.getRpc();
-    if (!input.enabled) {
+    if (input.mode === 'normal') {
       return rpc.cancelPlan({
         sessionId: input.sessionId,
         agentId: this.interactiveAgentId,
@@ -301,22 +297,7 @@ export class SDKRpcClient {
     return rpc.enterPlan({
       sessionId: input.sessionId,
       agentId: this.interactiveAgentId,
-      kind: 'plan',
-    });
-  }
-
-  async setDesignMode(input: SetSessionDesignModeRpcInput): Promise<void> {
-    const rpc = await this.getRpc();
-    if (!input.enabled) {
-      return rpc.cancelPlan({
-        sessionId: input.sessionId,
-        agentId: this.interactiveAgentId,
-      });
-    }
-    return rpc.enterPlan({
-      sessionId: input.sessionId,
-      agentId: this.interactiveAgentId,
-      kind: 'design',
+      kind: input.mode,
     });
   }
 
@@ -422,9 +403,8 @@ export class SDKRpcClient {
       model: config.modelAlias ?? config.provider?.model,
       thinkingLevel: config.thinkingLevel,
       permission: permission.mode,
-      planMode: plan !== null,
-      planKind: plan?.kind,
-      advancedSessionModeFilePath: plan?.path ?? null,
+      sessionMode: plan !== null ? plan.kind : 'normal',
+      sessionModeFilePath: plan?.path ?? null,
       contextTokens,
       maxContextTokens,
       contextUsage,

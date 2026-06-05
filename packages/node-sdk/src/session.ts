@@ -145,26 +145,13 @@ export class Session {
     await this.rpc.setPermission({ sessionId: this.id, mode });
   }
 
-  async setPlanMode(enabled: boolean): Promise<void> {
+  async setSessionMode(mode: 'plan' | 'design' | 'normal'): Promise<void> {
     this.ensureOpen();
-    if (typeof enabled !== 'boolean') {
-      throw new KimiError(
-        ErrorCodes.SESSION_PLAN_MODE_INVALID,
-        'Session plan mode must be a boolean',
-      );
+    if (mode === 'normal') {
+      await this.rpc.setSessionMode({ sessionId: this.id, mode: 'normal' });
+      return;
     }
-    await this.rpc.setPlanMode({ sessionId: this.id, enabled });
-  }
-
-  async setDesignMode(enabled: boolean): Promise<void> {
-    this.ensureOpen();
-    if (typeof enabled !== 'boolean') {
-      throw new KimiError(
-        ErrorCodes.SESSION_PLAN_MODE_INVALID,
-        'Session design mode must be a boolean',
-      );
-    }
-    await this.rpc.setDesignMode({ sessionId: this.id, enabled });
+    await this.rpc.setSessionMode({ sessionId: this.id, mode });
   }
 
   async getPlan(): Promise<SessionPlan> {
