@@ -1,3 +1,4 @@
+import type { Confidence } from '#/agent/plan/design-reviewer';
 import type { AgentConfigData } from '#/agent/config';
 import type { AgentContextData } from '#/agent/context';
 import type { BackgroundTaskInfo } from '#/agent/background';
@@ -321,7 +322,7 @@ export interface ReviewDesignPayload {
 
 export interface ReviewFindingData {
   readonly severity: 'high' | 'med' | 'low';
-  readonly confidence?: 'certain' | 'likely' | 'speculative';
+  readonly confidence?: Confidence;
   readonly title: string;
   readonly detail: string;
   readonly location?: string;

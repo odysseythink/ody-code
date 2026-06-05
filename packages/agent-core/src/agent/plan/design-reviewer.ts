@@ -293,8 +293,19 @@ export class DesignReviewer {
 
     const findings = parseFindings(raw);
     if (findings === null) {
+      let dumpPath: string | undefined;
+      if (this.agent.homedir !== undefined) {
+        dumpPath = `${this.agent.homedir}/logs/design-reviewer-fail-${Date.now()}.txt`;
+        try {
+          await this.agent.kaos.mkdir(`${this.agent.homedir}/logs`, { parents: true, existOk: true });
+          await this.agent.kaos.writeText(dumpPath, raw);
+        } catch {
+          dumpPath = undefined;
+        }
+      }
       this.agent.log.warn(
-        `DesignReviewer: reviewer output could not be parsed as findings. Raw output (${raw.length} chars):\n${raw.slice(0, 2000)}`,
+        'DesignReviewer: reviewer output could not be parsed as findings.',
+        { rawLength: raw.length, dumpPath },
       );
       return fail('Reviewer output could not be parsed as findings.', 'unparseable');
     }

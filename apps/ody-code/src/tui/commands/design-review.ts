@@ -62,12 +62,12 @@ const SEVERITY_LABEL: Record<ReviewFindingData['severity'], string> = {
   low: 'LOW',
 };
 
-function renderFinding(finding: ReviewFindingData, index: number): string {
+export function renderFinding(finding: ReviewFindingData, index: number): string {
   const tag = finding.escalate ? ' [ESCALATE]' : '';
   const specTag = finding.confidence === 'speculative' ? ' ~spec' : '';
   const location = finding.location !== undefined ? ` (${finding.location})` : '';
   const fix = finding.suggestedFix !== undefined ? `\n   fix: ${finding.suggestedFix}` : '';
-  return `${index}. [${SEVERITY_LABEL[finding.severity]}]${tag}${specTag} ${finding.title}${location}\n   ${finding.detail}${fix}`;
+  return `${index}. [${SEVERITY_LABEL[finding.severity]}]${tag} ${finding.title}${specTag}${location}\n   ${finding.detail}${fix}`;
 }
 
 function buildFollowupMessage(result: DesignReviewData, label: string): string {
