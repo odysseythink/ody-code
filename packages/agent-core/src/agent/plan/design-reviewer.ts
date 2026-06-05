@@ -129,14 +129,16 @@ Output STRICT JSON and nothing else (no prose, no markdown fences):
 If — after a genuine attack — the ${shortNoun} truly has no breakable defect, output {"findings":[]}.`;
 }
 
-/** Adversarial critic prompt for a DESIGN document. */
-export function buildCriticPrompt(): string {
-  return composeCriticPrompt('DESIGN DOCUMENT', 'design', DESIGN_ATTACK_SURFACE);
-}
-
-/** Adversarial critic prompt for an EXECUTION PLAN (plan-mode output). */
-export function buildPlanCriticPrompt(): string {
-  return composeCriticPrompt('EXECUTION PLAN', 'plan', PLAN_ATTACK_SURFACE);
+/**
+ * Adversarial critic prompt for the given document kind. `design` (default)
+ * targets spec/architecture failure modes; `plan` targets execution-plan failure
+ * modes (dependency soundness, phantom tasks, placeholders, callers, filter
+ * blades, spec-coverage GAPs).
+ */
+export function buildCriticPrompt(kind: 'plan' | 'design' = 'design'): string {
+  return kind === 'plan'
+    ? composeCriticPrompt('EXECUTION PLAN', 'plan', PLAN_ATTACK_SURFACE)
+    : composeCriticPrompt('DESIGN DOCUMENT', 'design', DESIGN_ATTACK_SURFACE);
 }
 
 /**
@@ -231,8 +233,7 @@ export class DesignReviewer {
       { role: 'user' as const, content: [{ type: 'text' as const, text: designContent }], toolCalls: [] },
     ];
     const runOptions = { signal: AbortSignal.timeout(this.options.timeoutMs ?? 60_000) };
-    const criticPrompt =
-      this.options.kind === 'plan' ? buildPlanCriticPrompt() : buildCriticPrompt();
+    const criticPrompt = buildCriticPrompt(this.options.kind);
     const call = (auth?: ProviderRequestAuth) =>
       this.agent.rawGenerate(
         provider,

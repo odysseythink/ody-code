@@ -3,7 +3,6 @@ import { describe, expect, it, vi } from 'vitest';
 import type { Agent } from '../../../src/agent';
 import {
   buildCriticPrompt,
-  buildPlanCriticPrompt,
   DesignReviewer,
   escalatedSeverities,
   parseAuditLevel,
@@ -99,9 +98,9 @@ describe('buildCriticPrompt', () => {
   });
 });
 
-describe('buildPlanCriticPrompt', () => {
+describe("buildCriticPrompt('plan')", () => {
   it('shares the adversary stance and JSON envelope with the design prompt', () => {
-    const prompt = buildPlanCriticPrompt();
+    const prompt = buildCriticPrompt('plan');
     expect(prompt).toContain('ADVERSARY');
     expect(prompt).toContain('STRICT JSON');
     expect(prompt).toContain('does not count');
@@ -110,7 +109,7 @@ describe('buildPlanCriticPrompt', () => {
   });
 
   it('targets execution-plan failure modes, not design lenses', () => {
-    const prompt = buildPlanCriticPrompt();
+    const prompt = buildCriticPrompt('plan');
     expect(prompt).toContain('Depends on:');
     expect(prompt).toContain('--allow-empty');
     expect(prompt).toContain('EVERY caller');
@@ -184,8 +183,8 @@ describe('DesignReviewer', () => {
     );
   });
 
-  it('routes the critic prompt by document kind', async () => {
-    // Default (design): the system prompt is the design attack surface.
+  it('routes the critic prompt by document kind (default is design)', async () => {
+    // Default (no kind): the system prompt is the design attack surface.
     const design = makeAgent();
     await new DesignReviewer(design.agent, { reviewerAlias }).review('a design');
     expect(design.rawGenerate.mock.calls[0]?.[1]).toContain('DESIGN DOCUMENT');

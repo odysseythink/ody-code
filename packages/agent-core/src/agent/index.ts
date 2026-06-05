@@ -469,7 +469,24 @@ export class Agent {
           );
         }
 
-        const result = await new DesignReviewer(this, { reviewerAlias, kind }).review(reviewContent);
+        // Warn when the concatenated content exceeds a rough context-window budget.
+        // 300 K characters ≈ 75–100 K tokens — most reviewer models will truncate
+        // or error above this. We surface a clear message rather than letting the
+        // reviewer silently fail on an oversized payload.
+        const REVIEW_CONTENT_WARN_CHARS = 300_000;
+        if (reviewContent.length > REVIEW_CONTENT_WARN_CHARS) {
+          this.log?.warn(
+            `plan-review: combined plan content is ${reviewContent.length} chars (>${REVIEW_CONTENT_WARN_CHARS}); ` +
+              'the reviewer model may truncate or time out. Consider reviewing index + parts separately.',
+          );
+        }
+
+        const defaultTimeoutMs = kind === 'plan' ? 120_000 : 60_000;
+        const result = await new DesignReviewer(this, {
+          reviewerAlias,
+          kind,
+          timeoutMs: payload.timeoutMs ?? defaultTimeoutMs,
+        }).review(reviewContent);
         const escalate = new Set(escalatedSeverities(result.auditLevel));
         return {
           path,

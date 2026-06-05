@@ -116,6 +116,7 @@ export interface ReviewDesignRpcInput extends SessionIdRpcInput {
   readonly path?: string;
   readonly modelAlias?: string;
   readonly kind?: 'plan' | 'design';
+  readonly timeoutMs?: number;
 }
 
 type ResolvedCoreAPI = Awaited<ReturnType<SDKRPCClient>>;
@@ -343,6 +344,7 @@ export class SDKRpcClient {
       path: input.path,
       modelAlias: input.modelAlias,
       kind: input.kind,
+      timeoutMs: input.timeoutMs,
     });
   }
 

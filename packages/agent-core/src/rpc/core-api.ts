@@ -312,6 +312,11 @@ export interface ReviewDesignPayload {
    * kind, or `design` when reviewing an explicit path.
    */
   readonly kind?: 'plan' | 'design';
+  /**
+   * Hard cap on the reviewer generation in milliseconds. Defaults to 60 s for
+   * designs and 120 s for plans (which may include multiple concatenated files).
+   */
+  readonly timeoutMs?: number;
 }
 
 export interface ReviewFindingData {

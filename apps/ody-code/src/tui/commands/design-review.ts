@@ -91,6 +91,21 @@ async function runSecondModelReview(
   const label = kind === 'plan' ? 'plan' : 'design';
   const Cap = kind === 'plan' ? 'Plan' : 'Design';
   const { path, modelAlias } = parseArgs(args);
+
+  // Pre-flight: when no explicit file path is given, the review will use the current
+  // plan/design-mode file. If the user is not in that mode, there is nothing to
+  // review and no point charging the reviewer model. Show the guard message early.
+  const inMode =
+    kind === 'plan'
+      ? (host.state.appState.planMode ?? false)
+      : (host.state.appState.designMode ?? false);
+  if (!inMode && path === undefined) {
+    host.showStatus(
+      `Not in ${label} mode — enter ${label} mode first, or pass an explicit file path: /${label}-review <path>.`,
+    );
+    return;
+  }
+
   host.showStatus(`Running ${label} review on the reviewer model…`);
 
   let result: DesignReviewData;
@@ -117,10 +132,6 @@ async function runSecondModelReview(
   }
 
   const escalated = result.findings.filter((finding) => finding.escalate).length;
-  const inMode =
-    kind === 'plan'
-      ? (host.state.appState.planMode ?? false)
-      : (host.state.appState.designMode ?? false);
 
   if (!inMode) {
     host.showStatus(

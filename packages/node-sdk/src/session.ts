@@ -173,7 +173,7 @@ export class Session {
   }
 
   async reviewDesign(
-    input: { path?: string; modelAlias?: string; kind?: 'plan' | 'design' } = {},
+    input: { path?: string; modelAlias?: string; kind?: 'plan' | 'design'; timeoutMs?: number } = {},
   ): Promise<DesignReviewData> {
     this.ensureOpen();
     return this.rpc.reviewDesign({ sessionId: this.id, ...input });
@@ -181,7 +181,7 @@ export class Session {
 
   /** Convenience wrapper: a second-model review of the current EXECUTION PLAN. */
   async reviewPlan(
-    input: { path?: string; modelAlias?: string } = {},
+    input: { path?: string; modelAlias?: string; timeoutMs?: number } = {},
   ): Promise<DesignReviewData> {
     return this.reviewDesign({ ...input, kind: 'plan' });
   }
