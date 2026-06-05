@@ -3,8 +3,12 @@ import {
   TopicGenerator,
   buildTopicPrompt,
   cleanupTopic,
+  extractFirstHeading,
   extractTopicFromMessage,
+  formatDatePrefix,
   formatUtcTimestamp,
+  slugifyTitle,
+  stripMarkdownFormatting,
 } from '../../../src/agent/plan/topic-generator';
 import type { Agent } from '../../../src/agent';
 
@@ -250,5 +254,35 @@ describe('extractTopicFromMessage', () => {
   });
   it('respects maxWords limit', () => {
     expect(extractTopicFromMessage('one two three four five six', 3)).toBe('one-two-three');
+  });
+});
+
+
+describe('heading & slug helpers', () => {
+  it('extractFirstHeading finds first H1', () => {
+    expect(extractFirstHeading('# Hello World')).toBe('Hello World');
+    expect(extractFirstHeading('## No H1\n# Yes')).toBe('Yes');
+    expect(extractFirstHeading('no heading')).toBeNull();
+    expect(extractFirstHeading('```\n# not a heading\n```\n# Real')).toBe('Real');
+    expect(extractFirstHeading('# **Bold** Title')).toBe('Bold Title');
+    expect(extractFirstHeading('# *Italic* _Plan_')).toBe('Italic Plan');
+    expect(extractFirstHeading('#   ')).toBeNull();
+    expect(extractFirstHeading('#aNoSpace')).toBeNull();
+  });
+
+  it('stripMarkdownFormatting removes inline syntax', () => {
+    expect(stripMarkdownFormatting('**Bold** Title')).toBe('Bold Title');
+    expect(stripMarkdownFormatting('Title-With-Hyphens')).toBe('Title-With-Hyphens');
+    expect(stripMarkdownFormatting('中文标题')).toBe('中文标题');
+  });
+
+  it('slugifyTitle produces kebab-case slugs', () => {
+    expect(slugifyTitle('Implement GLM Provider!')).toBe('implement-glm-provider');
+    expect(slugifyTitle('中文标题')).toBe('中文标题');
+    expect(slugifyTitle('a'.repeat(100))).toBe('a'.repeat(50));
+  });
+
+  it('formatDatePrefix returns YYYY-MM-DD', () => {
+    expect(formatDatePrefix(new Date('2024-06-05T12:00:00Z'))).toBe('2024-06-05');
   });
 });

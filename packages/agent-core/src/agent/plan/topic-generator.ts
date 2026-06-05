@@ -104,6 +104,35 @@ export function formatUtcTimestamp(date: Date): string {
   );
 }
 
+export function formatDatePrefix(date: Date): string {
+  return date.toISOString().slice(0, 10);
+}
+
+export function stripMarkdownFormatting(text: string): string {
+  return text.replace(/[*_`{}\[\]()#]+/g, '').trim();
+}
+
+export function extractFirstHeading(content: string): string | null {
+  const stripped = content.replace(/```[\s\S]*?```/g, '');
+  const match = stripped.match(/^#\s+(.+)$/m);
+  const raw = match?.[1]?.trim();
+  if (!raw || raw.length === 0) return null;
+  const cleaned = stripMarkdownFormatting(raw);
+  return cleaned.length > 0 ? cleaned : null;
+}
+
+export function slugifyTitle(title: string): string {
+  let s = title
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, '-')
+    .replace(/^-+|-+$/g, '')
+    .replace(/-+/g, '-');
+  if (s.length > 50) {
+    s = s.slice(0, 50).replace(/-+$/, '');
+  }
+  return s;
+}
+
 export class TopicGenerator {
   constructor(
     private readonly agent: Agent,
