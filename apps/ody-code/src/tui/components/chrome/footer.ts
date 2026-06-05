@@ -396,7 +396,7 @@ export class FooterComponent implements Component {
 
     // ── Line 2: inverted mode badge (left) + transient hint + context (right) ──
     const mode = state.designMode ? 'design' : state.planMode ? 'plan' : 'build';
-    const fileName = planFileName(state.planFilePath);
+    const fileName = mode === 'build' ? planFileName(state.planFilePath) : null;
     let badge = renderModeBadge(mode, colors, fileName ?? undefined);
     let badgeWidth = visibleWidth(badge);
     const maxBadgeWidth = Math.floor(width / 2);

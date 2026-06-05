@@ -121,29 +121,31 @@ const baseAppState: AppState = {
 };
 
 describe('FooterComponent mode badge', () => {
-  it('renders inverted plan badge with filename on Line 2', () => {
+  it('renders inverted plan badge without filename on Line 2', () => {
     const state = { ...baseAppState, planMode: true, planFilePath: 'plan.md' };
     const footer = new FooterComponent(state, darkColors);
     const lines = footer.render(120);
     const line2 = stripAnsi(lines[1]!);
     expect(line2).toContain('📝');
     expect(line2).toContain('plan');
-    expect(line2).toContain('plan.md');
+    expect(line2).not.toContain('plan.md');
+    expect(line2).not.toContain('·');
     expect(line2).toContain('【');
     expect(line2).toContain('】');
   });
 
-  it('renders inverted design badge with filename on Line 2', () => {
+  it('renders inverted design badge without filename on Line 2', () => {
     const state = { ...baseAppState, designMode: true, planFilePath: 'design.md' };
     const footer = new FooterComponent(state, darkColors);
     const lines = footer.render(120);
     const line2 = stripAnsi(lines[1]!);
     expect(line2).toContain('✏️');
     expect(line2).toContain('design');
-    expect(line2).toContain('design.md');
+    expect(line2).not.toContain('design.md');
+    expect(line2).not.toContain('·');
   });
 
-  it('renders build badge without filename when no mode is active', () => {
+  it('renders build badge without filename when no planFilePath is set', () => {
     const state = { ...baseAppState, planMode: false, designMode: false };
     const footer = new FooterComponent(state, darkColors);
     const lines = footer.render(120);
@@ -151,6 +153,17 @@ describe('FooterComponent mode badge', () => {
     expect(line2).toContain('⚒️');
     expect(line2).toContain('build');
     expect(line2).not.toContain('·');
+  });
+
+  it('renders build badge with filename when planFilePath is set', () => {
+    const state = { ...baseAppState, planMode: false, designMode: false, planFilePath: 'build.md' };
+    const footer = new FooterComponent(state, darkColors);
+    const lines = footer.render(120);
+    const line2 = stripAnsi(lines[1]!);
+    expect(line2).toContain('⚒️');
+    expect(line2).toContain('build');
+    expect(line2).toContain('build.md');
+    expect(line2).toContain('·');
   });
 
   it('falls back to mode-only badge when planFilePath is null', () => {
@@ -165,7 +178,7 @@ describe('FooterComponent mode badge', () => {
 
   it('truncates long filenames on the badge', () => {
     const longName = 'very-long-file-name-that-exceeds-the-available-space.md';
-    const state = { ...baseAppState, planMode: true, planFilePath: longName };
+    const state = { ...baseAppState, planMode: false, designMode: false, planFilePath: longName };
     const footer = new FooterComponent(state, darkColors);
     const lines = footer.render(120);
     const line2 = stripAnsi(lines[1]!);
