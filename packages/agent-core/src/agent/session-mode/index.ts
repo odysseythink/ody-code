@@ -137,7 +137,7 @@ export class SessionMode {
     readonly fileStem?: string;
   }): void {
     this.agent.replayBuilder.push({
-      type: 'plan_updated',
+      type: 'session_mode_updated',
       enabled: true,
       kind,
     });
@@ -156,7 +156,7 @@ export class SessionMode {
     }
     this.agent.records.logRecord({ type: 'session_mode.cancel', id });
     this.agent.replayBuilder.push({
-      type: 'plan_updated',
+      type: 'session_mode_updated',
       enabled: false,
       kind: this._kind,
     });
@@ -181,7 +181,7 @@ export class SessionMode {
     }
     this.agent.records.logRecord({ type: 'session_mode.exit', id });
     this.agent.replayBuilder.push({
-      type: 'plan_updated',
+      type: 'session_mode_updated',
       enabled: false,
       kind: this._kind,
     });

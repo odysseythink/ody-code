@@ -877,7 +877,7 @@ async function resumeSessionResult(
     const config = await api.getConfig({ agentId });
     const context = await api.getContext({ agentId });
     const permission = await api.getPermission({ agentId });
-    const plan = await api.getPlan({ agentId });
+    const sessionMode = await api.getPlan({ agentId });
     const usage = await api.getUsage({ agentId });
     agents[agentId] = {
       type: agent.type,
@@ -885,7 +885,7 @@ async function resumeSessionResult(
       context,
       replay: agent.replayBuilder.buildResult(),
       permission,
-      plan,
+      sessionMode,
       usage,
       tools: await api.getTools({ agentId }),
       toolStore: agent.tools.storeData(),

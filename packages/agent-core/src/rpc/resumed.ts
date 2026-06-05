@@ -15,7 +15,7 @@ import type { SessionMeta } from '#/session';
 
 export type AgentReplayRecord =
   | { type: 'message'; message: ContextMessage }
-  | { type: 'plan_updated'; enabled: boolean; kind?: SessionModeKind }
+  | { type: 'session_mode_updated'; enabled: boolean; kind?: SessionModeKind }
   | { type: 'config_updated'; config: AgentConfigUpdateData }
   | { type: 'permission_updated'; mode: PermissionMode }
   | { type: 'approval_result'; record: PermissionApprovalResultRecord };
@@ -26,7 +26,7 @@ export interface ResumedAgentState {
   readonly context: AgentContextData;
   readonly replay: readonly AgentReplayRecord[];
   readonly permission: PermissionData;
-  readonly plan: SessionModeData;
+  readonly sessionMode: SessionModeData;
   readonly usage: UsageStatus;
   readonly tools: readonly ToolInfo[];
   readonly toolStore?: Readonly<Record<string, unknown>>;

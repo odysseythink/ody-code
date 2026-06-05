@@ -171,7 +171,7 @@ export class SessionReplayRenderer {
       case 'message':
         this.renderMessage(context, record.message);
         return;
-      case 'plan_updated': {
+      case 'session_mode_updated': {
         this.flushAssistant(context);
         if (!record.enabled && context.suppressNextPlanModeOffNotice) {
           context.suppressNextPlanModeOffNotice = false;

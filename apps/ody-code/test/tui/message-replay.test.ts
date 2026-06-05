@@ -609,7 +609,7 @@ describe('KimiTUI resume message replay', () => {
 
   it('renders plan permission and approval replay notices', async () => {
     const driver = await replayIntoDriver([
-      { type: 'plan_updated', enabled: true },
+      { type: 'session_mode_updated', enabled: true },
       { type: 'permission_updated', mode: 'auto' },
       { type: 'permission_updated', mode: 'yolo' },
       { type: 'permission_updated', mode: 'manual' },
@@ -627,7 +627,7 @@ describe('KimiTUI resume message replay', () => {
           },
         },
       },
-      { type: 'plan_updated', enabled: false },
+      { type: 'session_mode_updated', enabled: false },
     ]);
 
     const transcript = driver.state.transcriptContainer.render(120).join('\n');
@@ -685,7 +685,7 @@ describe('KimiTUI resume message replay', () => {
         ],
         { toolCallId: 'call_exit_final' },
       ),
-      { type: 'plan_updated', enabled: false },
+      { type: 'session_mode_updated', enabled: false },
     ]);
 
     const transcript = driver.state.transcriptContainer.render(120).join('\n');
