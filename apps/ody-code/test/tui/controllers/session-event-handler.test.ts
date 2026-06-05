@@ -89,7 +89,7 @@ function makeHost(): SessionEventHost {
 }
 
 describe('SessionEventHandler handleStatusUpdate', () => {
-  it('propagates advancedSessionModeFilePath from agent.status.updated event', () => {
+  it('propagates sessionModeFilePath from agent.status.updated event', () => {
     const host = makeHost();
     const handler = new SessionEventHandler(host);
 
@@ -97,19 +97,19 @@ describe('SessionEventHandler handleStatusUpdate', () => {
       type: 'agent.status.updated',
       agentId: 'main',
       sessionId: 'ses-1',
-      advancedSessionModeFilePath: '/tmp/plans/test-plan.md',
+      sessionModeFilePath: '/tmp/plans/test-plan.md',
     } as Event;
 
     handler.handleEvent(event, vi.fn());
 
     expect(host.setAppState).toHaveBeenCalledWith(
       expect.objectContaining({
-        advancedSessionModeFilePath: '/tmp/plans/test-plan.md',
+        sessionModeFilePath: '/tmp/plans/test-plan.md',
       }),
     );
   });
 
-  it('does not include advancedSessionModeFilePath when event lacks it', () => {
+  it('does not include sessionModeFilePath when event lacks it', () => {
     const host = makeHost();
     const handler = new SessionEventHandler(host);
 
@@ -124,6 +124,6 @@ describe('SessionEventHandler handleStatusUpdate', () => {
 
     expect(host.setAppState).toHaveBeenCalledTimes(1);
     const patch = vi.mocked(host.setAppState).mock.calls[0]![0] as Record<string, unknown>;
-    expect('advancedSessionModeFilePath' in patch).toBe(false);
+    expect('sessionModeFilePath' in patch).toBe(false);
   });
 });

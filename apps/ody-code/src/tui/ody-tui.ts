@@ -161,8 +161,7 @@ function createInitialAppState(input: KimiTUIStartupInput): AppState {
     workDir: input.workDir,
     sessionId: '',
     permissionMode: startupPermission,
-    planMode: input.cliOptions.plan,
-    designMode: input.cliOptions.design ?? false,
+    sessionMode: input.cliOptions.sessionMode,
     thinking: false,
     contextUsage: 0,
     contextTokens: 0,
@@ -257,8 +256,7 @@ export class KimiTUI {
         continueLast: startupInput.cliOptions.continue,
         yolo: startupInput.cliOptions.yolo,
         auto: startupInput.cliOptions.auto,
-        plan: startupInput.cliOptions.plan,
-        design: startupInput.cliOptions.design,
+        sessionMode: startupInput.cliOptions.sessionMode,
         model: startupInput.cliOptions.model,
         startupNotice: startupInput.startupNotice,
         authIntent: startupInput.authIntent,
@@ -496,8 +494,7 @@ export class KimiTUI {
       workDir,
       model: startup.model,
       permission: startup.auto ? 'auto' : startup.yolo ? 'yolo' : undefined,
-      planMode: startup.plan ? true : undefined,
-      designMode: startup.design ? true : undefined,
+      sessionMode: startup.sessionMode === 'normal' ? undefined : startup.sessionMode,
     };
 
     try {
@@ -969,7 +966,7 @@ export class KimiTUI {
     if (!hasPatchChanges(this.state.appState, patch)) return;
     const busyChanged = 'streamingPhase' in patch || 'isCompacting' in patch;
     Object.assign(this.state.appState, patch);
-    if ('planMode' in patch) this.updateEditorBorderHighlight();
+    if ('sessionMode' in patch) this.updateEditorBorderHighlight();
     this.state.footer.setState(this.state.appState);
     this.updateActivityPane();
     if (busyChanged) this.updateQueueDisplay();
@@ -1011,8 +1008,7 @@ export class KimiTUI {
       thinking:
         this.session === undefined ? undefined : this.state.appState.thinking ? 'on' : 'off',
       permission: this.state.appState.permissionMode,
-      planMode: this.state.appState.planMode ? true : undefined,
-      designMode: this.state.appState.designMode ? true : undefined,
+      sessionMode: this.state.appState.sessionMode === 'normal' ? undefined : this.state.appState.sessionMode,
     });
   }
 
@@ -1032,12 +1028,12 @@ export class KimiTUI {
         : Promise.resolve({ goal: null }),
     ]);
 
-    let advancedSessionModeFilePath = status.advancedSessionModeFilePath;
-    if (advancedSessionModeFilePath !== null && advancedSessionModeFilePath !== undefined) {
+    let sessionModeFilePath = status.sessionModeFilePath;
+    if (sessionModeFilePath !== null && sessionModeFilePath !== undefined) {
       try {
-        await access(advancedSessionModeFilePath);
+        await access(sessionModeFilePath);
       } catch {
-        advancedSessionModeFilePath = null;
+        sessionModeFilePath = null;
       }
     }
 
@@ -1574,7 +1570,7 @@ export class KimiTUI {
   updateEditorBorderHighlight(text?: string): void {
     const trimmed = (text ?? this.state.editor.getText()).trimStart();
     const colorToken =
-      this.state.appState.planMode || trimmed.startsWith('/')
+      this.state.appState.sessionMode !== 'normal' || trimmed.startsWith('/')
         ? this.state.theme.colors.primary
         : this.state.theme.colors.border;
     this.state.editor.borderColor = (s: string) => chalk.hex(colorToken)(s);

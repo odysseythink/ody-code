@@ -17,9 +17,8 @@ export interface AppState {
   workDir: string;
   sessionId: string;
   permissionMode: PermissionMode;
-  planMode: boolean;
-  advancedSessionModeFilePath?: string | null;
-  designMode?: boolean;
+  sessionMode: 'normal' | 'plan' | 'design';
+  sessionModeFilePath?: string | null;
   thinking: boolean;
   contextUsage: number;
   contextTokens: number;
@@ -177,8 +176,7 @@ export interface TUIStartupOptions {
   readonly continueLast: boolean;
   readonly yolo: boolean;
   readonly auto: boolean;
-  readonly plan: boolean;
-  readonly design?: boolean;
+  readonly sessionMode: 'normal' | 'plan' | 'design';
   readonly model?: string;
   readonly startupNotice?: string;
   readonly authIntent?: { readonly kind: 'login' | 'logout'; readonly providerType: string };
