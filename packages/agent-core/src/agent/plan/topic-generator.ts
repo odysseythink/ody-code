@@ -33,7 +33,7 @@ export function cleanupTopic(
   const words = sensitiveWords ?? DEFAULT_SENSITIVE_WORDS;
 
   let topic = raw.trim().toLowerCase();
-  topic = topic.replace(/[^a-z0-9]+/g, '-');
+  topic = topic.replace(/[^\p{L}\p{N}]+/gu, '-');
   topic = topic.replace(/^-+|-+$/g, '');
   topic = topic.replace(/-+/g, '-');
 

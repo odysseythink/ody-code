@@ -60,8 +60,8 @@ describe('cleanupTopic', () => {
   });
 
   it('handles non-ASCII input', () => {
-    expect(cleanupTopic('用户仪表盘')).toBeNull();
-    expect(cleanupTopic('hello 世界 world')).toBe('hello-world');
+    expect(cleanupTopic('用户仪表盘')).toBe('用户仪表盘');
+    expect(cleanupTopic('hello 世界 world')).toBe('hello-世界-world');
   });
 
   it('collapses multiple hyphens and trims edges', () => {
