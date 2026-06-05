@@ -2,6 +2,10 @@ import { randomUUID } from 'node:crypto';
 import { basename, dirname, join } from 'pathe';
 
 import type { Agent } from '..';
+import {
+  formatDatePrefix,
+  slugifyTitle,
+} from './topic-generator';
 import { generateHeroSlug } from '../../utils/hero-slug';
 
 /**
@@ -26,6 +30,8 @@ export class PlanMode {
   protected _planFilePath: PlanFilePath = null;
   protected _kind: PlanKind = 'plan';
   protected _fileStem: string | null = null;
+  protected _lastDesignFileStem: string | null = null;
+  protected _manualTopicSlug: string | null = null;
   private _preModeModelAlias: { value: string | undefined } | null = null;
 
   constructor(protected readonly agent: Agent) {}
@@ -59,7 +65,18 @@ export class PlanMode {
     this._planId = id;
     this._kind = kind;
     this._planFilePath = null;
-    this._fileStem = fileStem ?? id;
+
+    let effectiveStem = fileStem;
+    if (!effectiveStem) {
+      if (kind === 'plan' && this._lastDesignFileStem) {
+        const designSlug = extractSlugFromDatedStem(this._lastDesignFileStem);
+        effectiveStem = `${formatDatePrefix(new Date())}-${designSlug}`;
+      }
+    }
+    if (fileStem) {
+      this._manualTopicSlug = slugifyTitle(fileStem);
+    }
+    this._fileStem = effectiveStem ?? id;
 
     const modeModel = this.agent.kimiConfig?.modeModels?.[kind];
     if (modeModel !== undefined && modeModel !== this.agent.config.modelAlias) {
@@ -165,6 +182,10 @@ export class PlanMode {
       enabled: false,
       kind: this._kind,
     });
+    if (this._kind === 'design' && this._fileStem) {
+      this._lastDesignFileStem = this._fileStem;
+    }
+    this._manualTopicSlug = null;
     this._isActive = false;
     this._planId = null;
     this._planFilePath = null;
@@ -246,6 +267,11 @@ export class PlanMode {
         : join(this.agent.homedir, homeSubdir);
     return join(plansDir, `${stem}.md`);
   }
+}
+
+function extractSlugFromDatedStem(stem: string): string {
+  const m = stem.match(/^\d{4}-\d{2}-\d{2}-(.+)$/);
+  return m ? m[1] : stem;
 }
 
 function isMissingFileError(error: unknown): boolean {

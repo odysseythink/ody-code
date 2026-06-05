@@ -768,3 +768,44 @@ function toolResultText(history: readonly { role: string; content: readonly unkn
     })
     .join('\n');
 }
+
+
+describe('lazy fileStem and design reuse', () => {
+  it('enter uses planId as fileStem when none provided', async () => {
+    const ctx = testAgent({
+      kaos: createPlanKaos(),
+    });
+    await ctx.agent.planMode.enter('brave-fox-1234', false, false, 'plan');
+    expect(ctx.agent.planMode.fileStem).toBe('brave-fox-1234');
+    expect(ctx.agent.planMode.planFilePath).toContain('plan/brave-fox-1234.md');
+  });
+
+  it('enter stores manual topic slug', async () => {
+    const ctx = testAgent({
+      kaos: createPlanKaos(),
+    });
+    await ctx.agent.planMode.enter('brave-fox-1234', false, false, 'plan', 'my-feature');
+    expect((ctx.agent.planMode as any)._manualTopicSlug).toBe('my-feature');
+  });
+
+  it('enter reuses design title for plan mode', async () => {
+    const ctx = testAgent({
+      kaos: createPlanKaos(),
+    });
+    // simulate a prior design exit
+    (ctx.agent.planMode as any)._lastDesignFileStem = '2024-06-05-implement-glm';
+    await ctx.agent.planMode.enter('brave-fox-1234', false, false, 'plan');
+    const today = new Date().toISOString().slice(0, 10);
+    expect(ctx.agent.planMode.fileStem).toBe(`${today}-implement-glm`);
+  });
+
+  it('exit saves design fileStem for reuse', async () => {
+    const ctx = testAgent({
+      kaos: createPlanKaos(),
+    });
+    await ctx.agent.planMode.enter('brave-fox-1234', false, false, 'design', 'my-design');
+    ctx.agent.planMode.exit();
+    expect((ctx.agent.planMode as any)._lastDesignFileStem).toBe('my-design');
+    expect((ctx.agent.planMode as any)._manualTopicSlug).toBeNull();
+  });
+});
