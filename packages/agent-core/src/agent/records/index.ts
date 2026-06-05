@@ -59,17 +59,17 @@ function restoreAgentRecord(agent: Agent, input: AgentRecord): void {
     case 'micro_compaction.apply':
       agent.microCompaction.apply(input.cutoff);
       return;
-    case 'plan_mode.enter':
+    case 'session_mode.enter':
       agent.sessionMode.restoreEnter({
         id: input.id,
         kind: input.kind ?? 'plan',
         fileStem: input.fileStem,
       });
       return;
-    case 'plan_mode.cancel':
+    case 'session_mode.cancel':
       agent.sessionMode.cancel(input.id);
       return;
-    case 'plan_mode.exit':
+    case 'session_mode.exit':
       agent.sessionMode.exit(input.id);
       return;
     case 'context.append_message':

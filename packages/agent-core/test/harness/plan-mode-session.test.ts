@@ -82,7 +82,7 @@ describe('plan-mode bootstrap from config.defaultPlanMode', () => {
     const lines = (await readFile(join(homeDir, match), 'utf-8'))
       .split('\n')
       .filter((line) => line.trim().length > 0);
-    return lines.filter((line) => (JSON.parse(line) as { type?: string }).type === 'plan_mode.enter')
+    return lines.filter((line) => (JSON.parse(line) as { type?: string }).type === 'session_mode.enter')
       .length;
   }
 

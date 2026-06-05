@@ -38,15 +38,15 @@ export interface AgentRecordEvents {
 
   'full_compaction.begin': CompactionBeginData;
 
-  'plan_mode.enter': {
+  'session_mode.enter': {
     id: string;
     kind?: SessionModeKind;
     fileStem?: string;
   };
-  'plan_mode.cancel': {
+  'session_mode.cancel': {
     id?: string;
   };
-  'plan_mode.exit': {
+  'session_mode.exit': {
     id?: string;
   };
 

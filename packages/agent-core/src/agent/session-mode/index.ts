@@ -98,7 +98,7 @@ export class SessionMode {
       this._sessionModeFilePath = sessionModeFilePath;
       await this.ensureSessionModeDirectory(sessionModeFilePath);
       this.agent.records.logRecord({
-        type: 'plan_mode.enter',
+        type: 'session_mode.enter',
         id,
         kind,
         ...(this._fileStem !== id ? { fileStem: this._fileStem } : {}),
@@ -154,7 +154,7 @@ export class SessionMode {
       this.agent.config.update({ modelAlias: this._preModeModelAlias.value });
       this._preModeModelAlias = null;
     }
-    this.agent.records.logRecord({ type: 'plan_mode.cancel', id });
+    this.agent.records.logRecord({ type: 'session_mode.cancel', id });
     this.agent.replayBuilder.push({
       type: 'plan_updated',
       enabled: false,
@@ -179,7 +179,7 @@ export class SessionMode {
       this.agent.config.update({ modelAlias: this._preModeModelAlias.value });
       this._preModeModelAlias = null;
     }
-    this.agent.records.logRecord({ type: 'plan_mode.exit', id });
+    this.agent.records.logRecord({ type: 'session_mode.exit', id });
     this.agent.replayBuilder.push({
       type: 'plan_updated',
       enabled: false,

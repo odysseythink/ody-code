@@ -30,7 +30,7 @@ function makeAgent(
   const requestApproval = vi.fn(async () => ({ decision: 'approved' }));
   const emit = vi.fn((event: unknown) => {
     input.emit?.(event);
-    if ((event as { type?: string }).type === 'plan_mode.exit') active = false;
+    if ((event as { type?: string }).type === 'session_mode.exit') active = false;
   });
   const agent = {
     sessionMode: {
@@ -49,7 +49,7 @@ function makeAgent(
       }),
       finalizeFileName: vi.fn().mockResolvedValue(null),
       exit: () => {
-        emit({ type: 'plan_mode.exit' });
+        emit({ type: 'session_mode.exit' });
       },
     },
     rpc: { requestApproval },
@@ -159,7 +159,7 @@ describe('ExitPlanMode option output', () => {
     });
 
     expect(requestApproval).not.toHaveBeenCalled();
-    expect(emit).toHaveBeenCalledWith({ type: 'plan_mode.exit' });
+    expect(emit).toHaveBeenCalledWith({ type: 'session_mode.exit' });
     expect(result.output).toContain('Exited plan mode');
   });
 

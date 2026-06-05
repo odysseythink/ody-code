@@ -291,7 +291,7 @@ export function renderHeadline(r: AgentRecord): HeadlineRender {
     case 'full_compaction.complete':
       return { main: <Dim>completed</Dim> };
 
-    case 'plan_mode.enter':
+    case 'session_mode.enter':
       return {
         main: (
           <span className="flex items-center gap-2">
@@ -303,16 +303,16 @@ export function renderHeadline(r: AgentRecord): HeadlineRender {
         ),
       };
 
-    case 'plan_mode.cancel':
-    case 'plan_mode.exit':
+    case 'session_mode.cancel':
+    case 'session_mode.exit':
       return {
         main: (
           <span className="flex items-center gap-2">
             <Pill
-              tone={r.type === 'plan_mode.exit' ? 'success' : 'warning'}
+              tone={r.type === 'session_mode.exit' ? 'success' : 'warning'}
               variant="soft"
             >
-              {r.type === 'plan_mode.exit' ? 'exit' : 'cancel'}
+              {r.type === 'session_mode.exit' ? 'exit' : 'cancel'}
             </Pill>
             <Mono>{r.id ?? '(latest)'}</Mono>
           </span>

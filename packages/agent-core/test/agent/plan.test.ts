@@ -49,7 +49,7 @@ describe('manual plan entry', () => {
     expect(livePath).toBe('/workspace/plan/stable-plan.md');
 
     const enterRecord = ctx.allEvents.find(
-      (event) => event.type === '[wire]' && event.event === 'plan_mode.enter',
+      (event) => event.type === '[wire]' && event.event === 'session_mode.enter',
     );
     expect(enterRecord?.args).toEqual({
       id: 'stable-plan',
@@ -59,7 +59,7 @@ describe('manual plan entry', () => {
 
     const resumed = testAgent({ kaos: createFakeKaos() });
     resumed.dispatch({
-      type: 'plan_mode.enter',
+      type: 'session_mode.enter',
       id: 'stable-plan',
     });
 
@@ -76,7 +76,7 @@ describe('manual plan entry', () => {
     expect(ctx.agent.sessionMode.fileStem).toBe('custom-stem');
 
     const enterRecord = ctx.allEvents.find(
-      (event) => event.type === '[wire]' && event.event === 'plan_mode.enter',
+      (event) => event.type === '[wire]' && event.event === 'session_mode.enter',
     );
     expect(enterRecord?.args).toMatchObject({
       id: 'plan-id',
@@ -86,7 +86,7 @@ describe('manual plan entry', () => {
 
     const resumed = testAgent({ kaos: createFakeKaos() });
     resumed.dispatch({
-      type: 'plan_mode.enter',
+      type: 'session_mode.enter',
       id: 'plan-id',
       fileStem: 'custom-stem',
     });
@@ -583,7 +583,7 @@ describe('plan mode injection cadence', () => {
     });
     ctx.configure();
     ctx.dispatch({
-      type: 'plan_mode.enter',
+      type: 'session_mode.enter',
       id: 'restored-plan',
     });
 

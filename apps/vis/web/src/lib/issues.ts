@@ -98,11 +98,11 @@ export function computeIssues(
         lastCompactionBegin = null;
         break;
 
-      case 'plan_mode.enter':
+      case 'session_mode.enter':
         lastPlanEnter = { lineNo, id: r.id };
         break;
-      case 'plan_mode.cancel':
-      case 'plan_mode.exit':
+      case 'session_mode.cancel':
+      case 'session_mode.exit':
         lastPlanEnter = null;
         break;
 

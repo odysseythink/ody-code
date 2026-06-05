@@ -569,7 +569,7 @@ function resumeHistory(): AgentRecord[] {
       tokensAfter: 4,
     },
     {
-      type: 'plan_mode.enter',
+      type: 'session_mode.enter',
       id: 'resume-plan',
     },
   ];

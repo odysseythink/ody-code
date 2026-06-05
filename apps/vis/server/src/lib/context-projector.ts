@@ -188,10 +188,10 @@ export function projectContext(entries: ReadonlyArray<WireEntry>): ContextProjec
       case 'permission.set_mode':
         permissionMode = rec.mode;
         break;
-      case 'plan_mode.enter':
+      case 'session_mode.enter':
         planActive = true; planId = rec.id; break;
-      case 'plan_mode.cancel':
-      case 'plan_mode.exit':
+      case 'session_mode.cancel':
+      case 'session_mode.exit':
         planActive = false; planId = undefined; break;
       default:
         break;
