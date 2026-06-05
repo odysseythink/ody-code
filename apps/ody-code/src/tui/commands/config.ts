@@ -52,10 +52,7 @@ async function applyPlanMode(host: SlashCommandHost, session: Session, enabled: 
     if (enabled) {
       const plan = await session.getPlan().catch(() => null);
       log.debug('Mode toggled', { mode: 'plan', enabled, planFilePath: plan?.path ?? null });
-      host.showNotice(
-        'Plan mode: ON',
-        plan?.path !== undefined ? `Plan will be created here: ${plan.path}` : undefined,
-      );
+      host.showNotice('Plan mode: ON');
       return;
     }
     log.debug('Mode toggled', { mode: 'plan', enabled });
@@ -99,10 +96,7 @@ async function applyDesignMode(host: SlashCommandHost, session: Session, enabled
     if (enabled) {
       const plan = await session.getPlan().catch(() => null);
       log.debug('Mode toggled', { mode: 'design', enabled, planFilePath: plan?.path ?? null });
-      host.showNotice(
-        'Design mode: ON',
-        plan?.path !== undefined ? `Design will be created here: ${plan.path}` : undefined,
-      );
+      host.showNotice('Design mode: ON');
       return;
     }
     log.debug('Mode toggled', { mode: 'design', enabled });
