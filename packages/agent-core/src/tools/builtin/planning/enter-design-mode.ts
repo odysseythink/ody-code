@@ -13,11 +13,7 @@ import type { Agent } from '#/agent';
 import { z } from 'zod';
 
 import { designModeEntryMessage } from '../../../agent/injection/design-mode-contract';
-import {
-  cleanupTopic,
-  formatUtcTimestamp,
-  TopicGenerator,
-} from '../../../agent/plan/topic-generator';
+import { cleanupTopic } from '../../../agent/plan/topic-generator';
 import type { BuiltinTool } from '../../../agent/tool';
 import type { ToolExecution } from '../../../loop/types';
 import { toInputJsonSchema } from '../../support/input-schema';
@@ -53,17 +49,13 @@ export class EnterDesignModeTool implements BuiltinTool<EnterDesignModeInput> {
           };
         }
 
-        let topic: string | null = null;
+        let fileStem: string | undefined;
         if (_args.topic !== undefined) {
-          topic = cleanupTopic(_args.topic);
-        } else {
-          const generator = new TopicGenerator(this.agent);
-          topic = await generator.generate();
+          const cleaned = cleanupTopic(_args.topic);
+          if (cleaned !== null) {
+            fileStem = cleaned;
+          }
         }
-        if (topic === null) {
-          topic = 'design';
-        }
-        const fileStem = `${topic}-${formatUtcTimestamp(new Date())}`;
 
         try {
           await this.agent.planMode.enter(undefined, undefined, undefined, 'design', fileStem);

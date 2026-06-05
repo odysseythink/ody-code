@@ -104,7 +104,7 @@ describe('EnterPlanModeTool', () => {
   });
 
   it.each(['manual', 'auto', 'yolo'] satisfies PermissionMode[])(
-    'enters in %s mode without an approval request and auto-generates topic filename',
+    'enters in %s mode without an approval request and defers filename to planId',
     async (mode) => {
       const { agent, requestApproval, enterSpy } = makeAgent({
         mode,
@@ -128,7 +128,7 @@ describe('EnterPlanModeTool', () => {
         undefined,
         undefined,
         'plan',
-        expect.stringMatching(/^user-dashboard-\d{8}-\d{6}$/),
+        undefined,
       );
     },
   );
@@ -149,30 +149,7 @@ describe('EnterPlanModeTool', () => {
       undefined,
       undefined,
       'plan',
-      expect.stringMatching(/^user-profile-\d{8}-\d{6}$/),
-    );
-  });
-
-  it('falls back to plan-timestamp when topic generation fails', async () => {
-    const { agent, enterSpy } = makeAgent({
-      mode: 'yolo',
-      generate: vi.fn().mockRejectedValue(new Error('Timeout')),
-    });
-
-    const result = await executeTool(new EnterPlanModeTool(agent), {
-      turnId: '0',
-      toolCallId: 'tc_fallback',
-      args: {},
-      signal,
-    });
-
-    expect(result.isError).toBeFalsy();
-    expect(enterSpy).toHaveBeenCalledWith(
-      undefined,
-      undefined,
-      undefined,
-      'plan',
-      expect.stringMatching(/^plan-\d{8}-\d{6}$/),
+      'user-profile',
     );
   });
 
