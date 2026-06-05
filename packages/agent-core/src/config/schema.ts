@@ -11,6 +11,7 @@ export const ProviderTypeSchema = z.enum([
   'openai_responses',
   'vertexai',
   'deepseek',
+  'glm',
 ]);
 
 export type ProviderType = z.infer<typeof ProviderTypeSchema>;

@@ -279,6 +279,15 @@ function toKosongProviderConfig(
         ...(maxOutputSize !== undefined ? { maxTokens: maxOutputSize } : {}),
         ...defaultHeadersField(provider.customHeaders),
       };
+    case 'glm':
+      return {
+        type: 'glm',
+        model,
+        baseUrl: providerValue(provider.baseUrl, provider.env, 'GLM_BASE_URL'),
+        apiKey: providerApiKey(provider),
+        ...(maxOutputSize !== undefined ? { maxTokens: maxOutputSize } : {}),
+        ...defaultHeadersField(provider.customHeaders),
+      };
     default: {
       const exhaustive: never = provider.type;
       throw new KimiError(
@@ -326,6 +335,8 @@ function providerApiKey(provider: ProviderConfig): string | undefined {
       );
     case 'deepseek':
       return providerValue(provider.apiKey, provider.env, 'DEEPSEEK_API_KEY');
+    case 'glm':
+      return providerValue(provider.apiKey, provider.env, 'GLM_API_KEY');
     default: {
       const exhaustive: never = provider.type;
       throw new KimiError(
