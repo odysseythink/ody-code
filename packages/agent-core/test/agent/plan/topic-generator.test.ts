@@ -152,7 +152,7 @@ describe('TopicGenerator', () => {
     });
   });
 
-  it('returns null and tracks on LLM error', async () => {
+  it('falls back to message extraction and tracks on LLM error', async () => {
     const agent = makeAgent({
       generate: vi.fn().mockRejectedValue(new Error('Timeout')),
       history: [
@@ -161,13 +161,29 @@ describe('TopicGenerator', () => {
     });
     const generator = new TopicGenerator(agent);
     const topic = await generator.generate();
-    expect(topic).toBeNull();
+    expect(topic).toBe('some-request');
     expect(agent.telemetry.track).toHaveBeenCalledWith('topic_generation_failed', {
       reason: 'Error',
     });
   });
 
-  it('returns null when LLM returns empty text', async () => {
+  it('falls back to message extraction when LLM fails', async () => {
+    const agent = makeAgent({
+      generate: vi.fn().mockRejectedValue(new Error('Timeout')),
+      history: [
+        {
+          role: 'user',
+          content: [{ type: 'text', text: 'Build a user dashboard for analytics' }],
+          origin: { kind: 'user' },
+        },
+      ],
+    });
+    const generator = new TopicGenerator(agent);
+    const topic = await generator.generate();
+    expect(topic).toBe('build-a-user-dashboard-for');
+  });
+
+  it('falls back to message extraction when LLM returns empty text', async () => {
     const agent = makeAgent({
       generate: vi.fn().mockResolvedValue({
         message: { content: [{ type: 'text', text: '   ' }] },
@@ -178,13 +194,13 @@ describe('TopicGenerator', () => {
     });
     const generator = new TopicGenerator(agent);
     const topic = await generator.generate();
-    expect(topic).toBeNull();
+    expect(topic).toBe('some-request');
     expect(agent.telemetry.track).toHaveBeenCalledWith('topic_generation_failed', {
       reason: 'empty_result',
     });
   });
 
-  it('returns null when cleaned topic contains sensitive words', async () => {
+  it('falls back to message extraction when cleaned topic contains sensitive words', async () => {
     const agent = makeAgent({
       generate: vi.fn().mockResolvedValue({
         message: { content: [{ type: 'text', text: 'password-reset' }] },
@@ -195,7 +211,7 @@ describe('TopicGenerator', () => {
     });
     const generator = new TopicGenerator(agent);
     const topic = await generator.generate();
-    expect(topic).toBeNull();
+    expect(topic).toBe('some-request');
     expect(agent.telemetry.track).toHaveBeenCalledWith('topic_generation_failed', {
       reason: 'sensitive_content_or_invalid',
     });

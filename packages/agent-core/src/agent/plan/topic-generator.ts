@@ -10,6 +10,7 @@ export const DEFAULT_SENSITIVE_WORDS = [
 
 export interface TopicGeneratorOptions {
   readonly maxLength?: number;
+  readonly maxWords?: number;
   readonly sensitiveWords?: readonly string[];
 }
 
@@ -131,7 +132,7 @@ export class TopicGenerator {
       return null;
     }
 
-    let rawTopic: string;
+    let rawTopic: string | undefined;
     try {
       const provider = this.agent.config.provider;
       const result = await this.agent.generate(
@@ -150,22 +151,32 @@ export class TopicGenerator {
     } catch (error) {
       const reason = error instanceof Error ? error.name : 'unknown_error';
       this.agent.telemetry.track('topic_generation_failed', { reason });
-      return null;
     }
 
-    if (rawTopic.length === 0) {
-      this.agent.telemetry.track('topic_generation_failed', { reason: 'empty_result' });
-      return null;
-    }
-
-    const topic = cleanupTopic(rawTopic, this.options.maxLength, this.options.sensitiveWords);
-    if (topic === null) {
+    if (rawTopic !== undefined && rawTopic.length > 0) {
+      const topic = cleanupTopic(rawTopic, this.options.maxLength, this.options.sensitiveWords);
+      if (topic !== null) {
+        return topic;
+      }
       this.agent.telemetry.track('topic_generation_failed', {
         reason: 'sensitive_content_or_invalid',
       });
-      return null;
+    } else if (rawTopic === undefined) {
+      // LLM threw — already tracked above
+    } else {
+      this.agent.telemetry.track('topic_generation_failed', { reason: 'empty_result' });
     }
 
-    return topic;
+    // Fallback: extract directly from user message without LLM
+    const fallback = extractTopicFromMessage(
+      userMessageText,
+      this.options.maxWords ?? 5,
+      this.options.maxLength ?? 50,
+      this.options.sensitiveWords,
+    );
+    if (fallback !== null) {
+      this.agent.telemetry.track('topic_generation_fallback', { topic: fallback });
+    }
+    return fallback;
   }
 }
