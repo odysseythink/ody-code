@@ -154,7 +154,7 @@ export async function runShell(
       resumed,
       yolo: opts.yolo,
       auto: opts.auto,
-      plan: opts.plan,
+      sessionMode: opts.sessionMode,
       afk: false,
     });
     const startupSessionId = tui.getCurrentSessionId();

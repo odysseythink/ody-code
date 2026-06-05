@@ -34,7 +34,7 @@ describe('CLI options parsing', () => {
     it('returns defaults when no arguments are given', () => {
       const opts = parse([]);
       expect(opts.yolo).toBe(false);
-      expect(opts.plan).toBe(false);
+      expect(opts.sessionMode).toBe('normal');
       expect(opts.continue).toBe(false);
       expect(opts.session).toBeUndefined();
       expect(opts.model).toBeUndefined();
@@ -155,9 +155,19 @@ describe('CLI options parsing', () => {
     });
   });
 
-  describe('--plan', () => {
-    it('sets plan mode flag', () => {
-      expect(parse(['--plan']).plan).toBe(true);
+  describe('--session-mode', () => {
+    it('defaults to normal', () => {
+      expect(parse([]).sessionMode).toBe('normal');
+    });
+    it('accepts plan', () => {
+      expect(parse(['--session-mode', 'plan']).sessionMode).toBe('plan');
+    });
+    it('accepts design', () => {
+      expect(parse(['--session-mode', 'design']).sessionMode).toBe('design');
+    });
+    it('rejects invalid mode in validateOptions', () => {
+      const opts = parse(['--session-mode', 'invalid']);
+      expect(() => validateOptions(opts)).toThrow(OptionConflictError);
     });
   });
 
@@ -220,10 +230,10 @@ describe('CLI options parsing', () => {
       expect(() => validateOptions(opts)).toThrow('Cannot combine --prompt with --yolo.');
     });
 
-    it('rejects prompt mode with --plan', () => {
-      const opts = parse(['-p', 'run this', '--plan']);
+    it('rejects prompt mode with --session-mode', () => {
+      const opts = parse(['-p', 'run this', '--session-mode', 'plan']);
       expect(() => validateOptions(opts)).toThrow(OptionConflictError);
-      expect(() => validateOptions(opts)).toThrow('Cannot combine --prompt with --plan.');
+      expect(() => validateOptions(opts)).toThrow('Cannot combine --prompt with --session-mode.');
     });
 
     it('parses --output-format=stream-json in prompt mode', () => {

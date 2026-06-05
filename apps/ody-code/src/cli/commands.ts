@@ -74,8 +74,7 @@ export function createProgram(
     )
     .addOption(new Option('--yes').hideHelp().default(false))
     .addOption(new Option('--auto-approve').hideHelp().default(false))
-    .option('--plan', 'Start in plan mode.', false)
-    .option('--design', 'Start in design mode (brainstorming / spec exploration).', false)
+    .option('--session-mode <mode>', 'Start in session mode: plan, design, or normal.', 'normal')
     .addOption(
       new Option(
         '-L, --login <provider-type>',
@@ -121,8 +120,7 @@ export function createProgram(
       continue: raw['continue'] as boolean,
       yolo: yoloValue,
       auto: autoValue,
-      plan: raw['plan'] as boolean,
-      design: raw['design'] as boolean,
+      sessionMode: (raw['sessionMode'] as 'normal' | 'plan' | 'design') ?? 'normal',
       model: raw['model'] as string | undefined,
       outputFormat: raw['outputFormat'] as CLIOptions['outputFormat'],
       prompt: raw['prompt'] as string | undefined,

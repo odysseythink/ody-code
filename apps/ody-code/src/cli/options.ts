@@ -6,8 +6,7 @@ export interface CLIOptions {
   continue: boolean;
   yolo: boolean;
   auto: boolean;
-  plan: boolean;
-  design?: boolean;
+  sessionMode: 'normal' | 'plan' | 'design';
   model: string | undefined;
   outputFormat: PromptOutputFormat | undefined;
   prompt: string | undefined;
@@ -46,11 +45,11 @@ export function validateOptions(opts: CLIOptions): ValidatedOptions {
   if (promptMode && opts.auto) {
     throw new OptionConflictError('Cannot combine --prompt with --auto.');
   }
-  if (promptMode && opts.plan) {
-    throw new OptionConflictError('Cannot combine --prompt with --plan.');
+  if (!['normal', 'plan', 'design'].includes(opts.sessionMode)) {
+    throw new OptionConflictError(`Invalid --session-mode: ${opts.sessionMode}. Must be normal, plan, or design.`);
   }
-  if (promptMode && opts.design) {
-    throw new OptionConflictError('Cannot combine --prompt with --design.');
+  if (promptMode && opts.sessionMode !== 'normal') {
+    throw new OptionConflictError('Cannot combine --prompt with --session-mode.');
   }
   if (promptMode && opts.session === '') {
     throw new OptionConflictError('Cannot use --session without an id in prompt mode.');
@@ -67,14 +66,8 @@ export function validateOptions(opts: CLIOptions): ValidatedOptions {
   if (!promptMode && (opts.continue || opts.session !== undefined) && opts.auto) {
     throw new OptionConflictError('Cannot combine --auto with --continue or --session.');
   }
-  if (!promptMode && (opts.continue || opts.session !== undefined) && opts.plan) {
-    throw new OptionConflictError('Cannot combine --plan with --continue or --session.');
-  }
-  if (!promptMode && (opts.continue || opts.session !== undefined) && opts.design) {
-    throw new OptionConflictError('Cannot combine --design with --continue or --session.');
-  }
-  if (opts.plan && opts.design) {
-    throw new OptionConflictError('Cannot combine --plan with --design.');
+  if (!promptMode && (opts.continue || opts.session !== undefined) && opts.sessionMode !== 'normal') {
+    throw new OptionConflictError('Cannot combine --session-mode with --continue or --session.');
   }
   return { options: opts, uiMode: promptMode ? 'print' : 'shell' };
 }
