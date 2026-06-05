@@ -16,6 +16,7 @@ export const SUPPORTED_PROVIDER_LOGINS: readonly ProviderLoginDefinition[] = [
   { type: 'kimi', displayName: 'Kimi (Open Platform)', defaultBaseUrl: 'https://api.moonshot.cn/v1', modelListStrategy: 'openai-compatible' },
   { type: 'openai_responses', displayName: 'OpenAI (Responses API)', defaultBaseUrl: 'https://api.openai.com/v1', modelListStrategy: 'openai-compatible' },
   { type: 'anthropic', displayName: 'Anthropic', defaultBaseUrl: 'https://api.anthropic.com', modelListStrategy: 'anthropic-sdk' },
+  { type: 'glm', displayName: 'GLM (Zhipu AI)', defaultBaseUrl: 'https://api.z.ai/api/paas/v4', modelListStrategy: 'openai-compatible' },
 ];
 
 export function getProviderLoginDefinition(type: string): ProviderLoginDefinition | undefined {
