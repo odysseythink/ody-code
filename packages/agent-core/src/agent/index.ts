@@ -357,6 +357,12 @@ export class Agent {
         return this.config.modelAlias ?? '';
       },
       enterPlan: async (payload) => {
+        if (
+          this.planMode.isActive &&
+          this.planMode.kind !== (payload.kind ?? 'plan')
+        ) {
+          await this.planMode.finalizeFileName();
+        }
         await this.planMode.enter(
           undefined,
           undefined,
@@ -365,7 +371,8 @@ export class Agent {
           payload.fileStem,
         );
       },
-      cancelPlan: (payload) => {
+      cancelPlan: async (payload) => {
+        await this.planMode.finalizeFileName();
         this.planMode.cancel(payload.id);
       },
       clearPlan: () => this.planMode.clear(),

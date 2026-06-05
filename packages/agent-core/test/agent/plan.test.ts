@@ -951,3 +951,105 @@ describe('finalizeFileName', () => {
     expect(ctx.agent.planMode.isWritablePlanPath(ctx.agent.planMode.planFilePath!)).toBe(true);
   });
 });
+
+
+describe('code review fixes', () => {
+  it('cancel resets manual topic slug', async () => {
+    const ctx = testAgent({
+      kaos: createPlanKaos(),
+    });
+    await ctx.agent.planMode.enter('brave-fox-1234', false, false, 'plan', 'custom-topic');
+    expect((ctx.agent.planMode as any)._manualTopicSlug).toBe('custom-topic');
+    ctx.agent.planMode.cancel();
+    expect((ctx.agent.planMode as any)._manualTopicSlug).toBeNull();
+  });
+
+  it('finalizeFileName falls back to existing fileStem slug when no H1 and no manual topic', async () => {
+    const files = new Map<string, string>();
+    const mkdir = vi.fn().mockResolvedValue(undefined);
+    const readText = vi.fn(async (path: string) => files.get(path) ?? '');
+    const writeText = vi.fn(async (path: string, content: string) => {
+      files.set(path, content);
+      return content.length;
+    });
+    const ctx = testAgent({
+      kaos: createFakeKaos({ mkdir, readText, writeText }),
+    });
+    // simulate a resumed session with a dated fileStem
+    ctx.agent.planMode.restoreEnter({ id: 'restored-id', kind: 'plan', fileStem: '2024-06-05-my-feature' });
+    const tempPath = ctx.agent.planMode.planFilePath!;
+    await writeText(tempPath, 'no heading here');
+
+    const finalPath = await ctx.agent.planMode.finalizeFileName();
+
+    const today = new Date().toISOString().slice(0, 10);
+    expect(finalPath).toContain(`plan/${today}-my-feature.md`);
+  });
+
+  it('finalizeFileName handles empty manualTopicSlug with || fallback', async () => {
+    const files = new Map<string, string>();
+    const mkdir = vi.fn().mockResolvedValue(undefined);
+    const readText = vi.fn(async (path: string) => files.get(path) ?? '');
+    const writeText = vi.fn(async (path: string, content: string) => {
+      files.set(path, content);
+      return content.length;
+    });
+    const ctx = testAgent({
+      kaos: createFakeKaos({ mkdir, readText, writeText }),
+    });
+    await ctx.agent.planMode.enter('brave-fox-1234', false, false, 'plan');
+    // simulate an edge case where manualTopicSlug is empty string
+    (ctx.agent.planMode as any)._manualTopicSlug = '';
+    const tempPath = ctx.agent.planMode.planFilePath!;
+    await writeText(tempPath, 'no heading here');
+
+    const finalPath = await ctx.agent.planMode.finalizeFileName();
+
+    const today = new Date().toISOString().slice(0, 10);
+    expect(finalPath).toContain(`plan/${today}-brave-fox-1234.md`);
+  });
+
+  it('cancelPlan RPC handler calls finalizeFileName before cancel', async () => {
+    const files = new Map<string, string>();
+    const mkdir = vi.fn().mockResolvedValue(undefined);
+    const readText = vi.fn(async (path: string) => files.get(path) ?? '');
+    const writeText = vi.fn(async (path: string, content: string) => {
+      files.set(path, content);
+      return content.length;
+    });
+    const ctx = testAgent({
+      kaos: createFakeKaos({ mkdir, readText, writeText }),
+    });
+    await ctx.agent.planMode.enter('brave-fox-1234', false, false, 'plan');
+    const tempPath = ctx.agent.planMode.planFilePath!;
+    await writeText(tempPath, '# My Plan\n\ncontent');
+
+    await ctx.rpc.cancelPlan({ id: 'brave-fox-1234' });
+
+    const today = new Date().toISOString().slice(0, 10);
+    expect(files.has(`/workspace/plan/${today}-my-plan.md`)).toBe(true);
+    expect(ctx.agent.planMode.isActive).toBe(false);
+  });
+
+  it('enterPlan RPC handler finalizes before switching kind', async () => {
+    const files = new Map<string, string>();
+    const mkdir = vi.fn().mockResolvedValue(undefined);
+    const readText = vi.fn(async (path: string) => files.get(path) ?? '');
+    const writeText = vi.fn(async (path: string, content: string) => {
+      files.set(path, content);
+      return content.length;
+    });
+    const ctx = testAgent({
+      kaos: createFakeKaos({ mkdir, readText, writeText }),
+    });
+    await ctx.agent.planMode.enter('brave-fox-1234', false, false, 'plan');
+    const planPath = ctx.agent.planMode.planFilePath!;
+    await writeText(planPath, '# Plan Title\n\ncontent');
+
+    await ctx.rpc.enterPlan({ kind: 'design' });
+
+    const today = new Date().toISOString().slice(0, 10);
+    expect(files.has(`/workspace/plan/${today}-plan-title.md`)).toBe(true);
+    expect(ctx.agent.planMode.kind).toBe('design');
+  });
+});

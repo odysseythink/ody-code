@@ -75,7 +75,8 @@ export class PlanMode {
       }
     }
     if (fileStem) {
-      this._manualTopicSlug = slugifyTitle(fileStem);
+      const slug = slugifyTitle(fileStem);
+      if (slug) this._manualTopicSlug = slug;
     }
     this._fileStem = effectiveStem ?? id;
 
@@ -159,6 +160,7 @@ export class PlanMode {
       enabled: false,
       kind: this._kind,
     });
+    this._manualTopicSlug = null;
     this._isActive = false;
     this._planId = null;
     this._planFilePath = null;
@@ -287,7 +289,12 @@ export class PlanMode {
     const today = formatDatePrefix(new Date());
     const slug = heading
       ? slugifyTitle(heading)
-      : (this._manualTopicSlug ?? this._planId ?? 'untitled');
+      : (this._manualTopicSlug ||
+         (this._fileStem && this._fileStem !== this._planId
+           ? extractSlugFromDatedStem(this._fileStem)
+           : null) ||
+         this._planId ||
+         'untitled');
 
     let finalStem = `${today}-${slug}`;
     finalStem = await this.findUniqueStem(finalStem);
