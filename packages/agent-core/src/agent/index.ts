@@ -38,10 +38,7 @@ import { CronManager } from './cron';
 import { ConfigState } from './config';
 import { ContextMemory } from './context';
 import { HookEngine } from '../session/hooks';
-import {
-  formatUtcTimestamp,
-  TopicGenerator,
-} from './plan/topic-generator';
+
 import { parseManifestFiles } from './injection/plan-mode-contract';
 import { DesignReviewer, shouldEscalate } from './plan/design-reviewer';
 import { InjectionManager } from './injection/manager';
@@ -360,14 +357,13 @@ export class Agent {
         return this.config.modelAlias ?? '';
       },
       enterPlan: async (payload) => {
-        let fileStem = payload.fileStem;
-        if (fileStem === undefined || fileStem.length === 0) {
-          const generator = new TopicGenerator(this);
-          const topic = await generator.generate();
-          const fallback = payload.kind === 'design' ? 'design' : 'plan';
-          fileStem = `${topic ?? fallback}-${formatUtcTimestamp(new Date())}`;
-        }
-        await this.planMode.enter(undefined, undefined, undefined, payload.kind ?? 'plan', fileStem);
+        await this.planMode.enter(
+          undefined,
+          undefined,
+          undefined,
+          payload.kind ?? 'plan',
+          payload.fileStem,
+        );
       },
       cancelPlan: (payload) => {
         this.planMode.cancel(payload.id);
