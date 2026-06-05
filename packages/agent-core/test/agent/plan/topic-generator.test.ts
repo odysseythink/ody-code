@@ -3,6 +3,7 @@ import {
   TopicGenerator,
   buildTopicPrompt,
   cleanupTopic,
+  extractTopicFromMessage,
   formatUtcTimestamp,
 } from '../../../src/agent/plan/topic-generator';
 import type { Agent } from '../../../src/agent';
@@ -212,5 +213,26 @@ describe('TopicGenerator', () => {
     const generator = new TopicGenerator(agent, { maxLength: 10 });
     const topic = await generator.generate();
     expect(topic).toBe('very-long');
+  });
+});
+
+describe('extractTopicFromMessage', () => {
+  it('extracts first few words from English message', () => {
+    expect(extractTopicFromMessage('Build a user dashboard for analytics')).toBe('build-a-user-dashboard-for');
+  });
+  it('extracts Chinese words', () => {
+    expect(extractTopicFromMessage('新增对GLM模型的支持')).toBe('新增对glm模型的支持');
+  });
+  it('returns null for empty text', () => {
+    expect(extractTopicFromMessage('')).toBeNull();
+  });
+  it('returns null for too-short text', () => {
+    expect(extractTopicFromMessage('a')).toBeNull();
+  });
+  it('filters sensitive words', () => {
+    expect(extractTopicFromMessage('my password reset')).toBeNull();
+  });
+  it('respects maxWords limit', () => {
+    expect(extractTopicFromMessage('one two three four five six', 3)).toBe('one-two-three');
   });
 });

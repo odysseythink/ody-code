@@ -53,6 +53,43 @@ export function cleanupTopic(
   return topic;
 }
 
+export function extractTopicFromMessage(
+  text: string,
+  maxWords = 5,
+  maxLength = 50,
+  sensitiveWords?: readonly string[],
+): string | null {
+  const words = sensitiveWords ?? DEFAULT_SENSITIVE_WORDS;
+
+  let topic = text.trim().toLowerCase();
+  topic = topic.replace(/[^\p{L}\p{N}]+/gu, '-');
+  topic = topic.replace(/^-+|-+$/g, '');
+  topic = topic.replace(/-+/g, '-');
+
+  if (topic.length === 0) return null;
+
+  // Limit to maxWords
+  const parts = topic.split('-');
+  if (parts.length > maxWords) {
+    topic = parts.slice(0, maxWords).join('-');
+  }
+
+  if (words.some((w) => topic.includes(w))) {
+    return null;
+  }
+
+  if (topic.length > maxLength) {
+    topic = topic.slice(0, maxLength);
+    topic = topic.replace(/-+$/, '');
+  }
+
+  if (topic.length < 2) {
+    return null;
+  }
+
+  return topic;
+}
+
 export function formatUtcTimestamp(date: Date): string {
   const iso = date.toISOString();
   return (
