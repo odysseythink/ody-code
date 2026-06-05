@@ -113,10 +113,10 @@ describe('GLMChatProvider', () => {
 
       await provider.generate('', [], history);
 
-      const callArgs = createSpy.mock.calls[0][0] as Record<string, unknown>;
+      const callArgs = (createSpy.mock.calls[0]!)[0] as Record<string, unknown>;
       const msgs = callArgs['messages'] as Array<Record<string, unknown>>;
       expect(msgs).toHaveLength(1);
-      expect(msgs[0]['content']).toBe('hello');
+      expect((msgs[0]!)['content']).toBe('hello');
     });
 
     it('preserves whitespace-only text parts', async () => {
@@ -139,9 +139,9 @@ describe('GLMChatProvider', () => {
 
       await provider.generate('', [], history);
 
-      const callArgs = createSpy.mock.calls[0][0] as Record<string, unknown>;
+      const callArgs = (createSpy.mock.calls[0]!)[0] as Record<string, unknown>;
       const msgs = callArgs['messages'] as Array<Record<string, unknown>>;
-      expect(msgs[0]['content']).toBe(' ');
+      expect((msgs[0]!)['content']).toBe(' ');
     });
 
     it('drops a message whose only text part is empty string', async () => {
@@ -164,9 +164,9 @@ describe('GLMChatProvider', () => {
 
       await provider.generate('', [], history);
 
-      const callArgs = createSpy.mock.calls[0][0] as Record<string, unknown>;
+      const callArgs = (createSpy.mock.calls[0]!)[0] as Record<string, unknown>;
       const msgs = callArgs['messages'] as Array<Record<string, unknown>>;
-      expect(msgs[0]['content']).toBeUndefined();
+      expect((msgs[0]!)['content']).toBeUndefined();
     });
 
     it('throws for non-text multimodal content parts', () => {
@@ -202,7 +202,7 @@ describe('GLMChatProvider', () => {
 
       await provider.generate('', [], history);
 
-      const callArgs = createSpy.mock.calls[0][0] as Record<string, unknown>;
+      const callArgs = (createSpy.mock.calls[0]!)[0] as Record<string, unknown>;
       expect(callArgs['thinking']).toEqual({ type: 'disabled' });
     });
 
@@ -222,7 +222,7 @@ describe('GLMChatProvider', () => {
 
       await provider.generate('', [], history);
 
-      const callArgs = createSpy.mock.calls[0][0] as Record<string, unknown>;
+      const callArgs = (createSpy.mock.calls[0]!)[0] as Record<string, unknown>;
       expect(callArgs['thinking']).toBeUndefined();
     });
 
@@ -242,7 +242,7 @@ describe('GLMChatProvider', () => {
 
       await provider.generate('', [], history);
 
-      const callArgs = createSpy.mock.calls[0][0] as Record<string, unknown>;
+      const callArgs = (createSpy.mock.calls[0]!)[0] as Record<string, unknown>;
       expect(callArgs['thinking']).toBeUndefined();
     });
   });
