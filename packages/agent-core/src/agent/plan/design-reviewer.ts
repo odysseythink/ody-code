@@ -51,7 +51,7 @@ export interface DesignReviewerOptions {
    * `design` (spec/architecture) or `plan` (execution plan). Defaults to `design`.
    */
   readonly kind?: 'plan' | 'design';
-  /** Hard cap on the critique generation. Defaults to 60s. */
+  /** Hard cap on the critique generation. Defaults to 120s. */
   readonly timeoutMs?: number;
 }
 
@@ -220,7 +220,13 @@ export class DesignReviewer {
     let withAuth;
     try {
       const resolved = this.agent.modelProvider.resolveProviderConfig(this.options.reviewerAlias);
-      provider = createProvider(resolved.provider);
+      // Disable extended thinking on the reviewer. The critique is a single-shot
+      // structured task (emit a JSON findings array) — the model can still reason
+      // inside its answer, but a long streamed reasoning_content trace is pure
+      // latency here and is the usual cause of the review tripping its timeout
+      // (e.g. GLM-5.1, which defaults thinking ON). Any reasoning the model needs
+      // happens in the response itself, not a separate exposed CoT stream.
+      provider = createProvider(resolved.provider).withThinking('off');
       withAuth = this.agent.modelProvider.resolveAuth?.(this.options.reviewerAlias, {
         log: this.agent.log,
       });
@@ -232,7 +238,7 @@ export class DesignReviewer {
     const messages = [
       { role: 'user' as const, content: [{ type: 'text' as const, text: designContent }], toolCalls: [] },
     ];
-    const runOptions = { signal: AbortSignal.timeout(this.options.timeoutMs ?? 60_000) };
+    const runOptions = { signal: AbortSignal.timeout(this.options.timeoutMs ?? 120_000) };
     const criticPrompt = buildCriticPrompt(this.options.kind);
     const call = (auth?: ProviderRequestAuth) =>
       this.agent.rawGenerate(

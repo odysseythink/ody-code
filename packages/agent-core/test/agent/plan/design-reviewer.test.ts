@@ -197,6 +197,26 @@ describe('DesignReviewer', () => {
     expect(plan.rawGenerate.mock.calls[0]?.[1]).toContain('Depends on:');
   });
 
+  it('disables extended thinking on the reviewer provider (latency / timeout guard)', async () => {
+    // The critique is a single-shot JSON task; a long streamed reasoning trace is
+    // pure latency and the usual cause of the review tripping its timeout (this is
+    // exactly how GLM-5.1, which defaults thinking ON, blows past the deadline).
+    // The provider handed to rawGenerate must have thinking turned off.
+    const { agent, rawGenerate } = makeAgent({
+      modelProvider: {
+        resolveProviderConfig: vi.fn(() => ({
+          providerName: 'glm_1',
+          provider: { type: 'glm', model: 'glm-5.1', apiKey: 'k' },
+          modelCapabilities: {},
+        })),
+        resolveAuth: vi.fn(() => undefined),
+      },
+    });
+    await new DesignReviewer(agent, { reviewerAlias }).review('a design');
+    const provider = rawGenerate.mock.calls[0]?.[0] as { thinkingEffort?: unknown };
+    expect(provider.thinkingEffort).toBe('off');
+  });
+
   it('resolves the reviewer model auth and threads it through to rawGenerate', async () => {
     const withAuth = vi.fn((req: (auth: unknown) => unknown) => req({ apiKey: 'reviewer-token' }));
     const { agent, rawGenerate } = makeAgent({
