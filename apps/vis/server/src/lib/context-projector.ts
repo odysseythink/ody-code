@@ -34,7 +34,7 @@ export interface ContextProjection {
   usage: UsageTotals;
   config: ConfigSnapshot;
   permission: { mode: PermissionMode | null };
-  planMode: { active: boolean; id?: string };
+  sessionMode: { active: boolean; id?: string };
 }
 
 const ZERO: TokenUsage = { inputOther: 0, output: 0, inputCacheRead: 0, inputCacheCreation: 0 };
@@ -203,7 +203,7 @@ export function projectContext(entries: ReadonlyArray<WireEntry>): ContextProjec
     usage,
     config,
     permission: { mode: permissionMode },
-    planMode: { active: planActive, id: planId },
+    sessionMode: { active: planActive, id: planId },
   };
 }
 

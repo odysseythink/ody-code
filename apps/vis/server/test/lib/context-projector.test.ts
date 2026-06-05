@@ -32,7 +32,7 @@ describe('context-projector', () => {
     expect(proj.config.systemPrompt).toBe('You are Kimi.');
     expect(proj.config.profileName).toBe('agent');
     expect(proj.permission.mode).toBe('manual');
-    expect(proj.planMode.active).toBe(false);
+    expect(proj.sessionMode.active).toBe(false);
   });
 
   it('reconstructs assistant tool-call messages and separates tool results', async () => {

@@ -28,7 +28,7 @@ export function ContextTab({ sessionId, initialAgentId = 'main' }: ContextTabPro
   const session = ctx?.usage.byScope.session ?? EMPTY_USAGE;
   const config = ctx?.config ?? {};
   const permissionMode = ctx?.permission.mode ?? null;
-  const planActive = ctx?.planMode.active ?? false;
+  const planActive = ctx?.sessionMode.active ?? false;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">

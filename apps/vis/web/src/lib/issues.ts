@@ -20,7 +20,7 @@ export type IssueKind =
   | 'missing_tool_result'
   | 'incomplete_step'
   | 'incomplete_compaction'
-  | 'active_plan_mode'
+  | 'active_session_mode'
   | 'rejected_approval'
   | 'wire_warning';
 
@@ -153,7 +153,7 @@ export function computeIssues(
   if (lastPlanEnter !== null) {
     out.push({
       severity: 'info',
-      kind: 'active_plan_mode',
+      kind: 'active_session_mode',
       lineNo: lastPlanEnter.lineNo,
       summary: `plan mode still active: ${lastPlanEnter.id}`,
     });

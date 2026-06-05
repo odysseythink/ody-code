@@ -48,5 +48,5 @@ export interface ContextResponse {
   usage: import('../../server/src/lib/context-projector').UsageTotals;
   config: import('../../server/src/lib/context-projector').ConfigSnapshot;
   permission: { mode: import('../../server/src/lib/agent-record-types').PermissionMode | null };
-  planMode: { active: boolean; id?: string };
+  sessionMode: { active: boolean; id?: string };
 }
