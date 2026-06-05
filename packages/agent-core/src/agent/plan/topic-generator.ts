@@ -105,11 +105,17 @@ export function formatUtcTimestamp(date: Date): string {
 }
 
 export function formatDatePrefix(date: Date): string {
-  return date.toISOString().slice(0, 10);
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
 }
 
 export function stripMarkdownFormatting(text: string): string {
-  return text.replace(/[*_`{}\[\]()#]+/g, '').trim();
+  return text
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1') // [text](url) → text only
+    .replace(/[*_`{}\[\]()#]+/g, '')
+    .trim();
 }
 
 export function extractFirstHeading(content: string): string | null {

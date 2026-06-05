@@ -274,15 +274,29 @@ describe('heading & slug helpers', () => {
     expect(stripMarkdownFormatting('**Bold** Title')).toBe('Bold Title');
     expect(stripMarkdownFormatting('Title-With-Hyphens')).toBe('Title-With-Hyphens');
     expect(stripMarkdownFormatting('中文标题')).toBe('中文标题');
+    // [text](url) must yield only the link text, not text+url concatenated.
+    expect(stripMarkdownFormatting('[RFC-42](https://example.com)')).toBe('RFC-42');
+    expect(stripMarkdownFormatting('[Visit site](http://x.com) now')).toBe('Visit site now');
   });
 
   it('slugifyTitle produces kebab-case slugs', () => {
     expect(slugifyTitle('Implement GLM Provider!')).toBe('implement-glm-provider');
     expect(slugifyTitle('中文标题')).toBe('中文标题');
     expect(slugifyTitle('a'.repeat(100))).toBe('a'.repeat(50));
+    // All-separator input returns "". Call sites must guard against empty result.
+    expect(slugifyTitle('---')).toBe('');
+    expect(slugifyTitle('')).toBe('');
   });
 
-  it('formatDatePrefix returns YYYY-MM-DD', () => {
-    expect(formatDatePrefix(new Date('2024-06-05T12:00:00Z'))).toBe('2024-06-05');
+  it('extractFirstHeading returns null when heading is all inline markup (cleaned is empty)', () => {
+    // After stripMarkdownFormatting the cleaned string may be empty even when raw was non-empty.
+    expect(extractFirstHeading('# ```')).toBeNull();
+  });
+
+  it('formatDatePrefix returns local YYYY-MM-DD, not UTC date', () => {
+    // Use a fixed date object where local and UTC would differ at timezone boundaries.
+    // getFullYear/Month/Date extract local-calendar components regardless of timezone.
+    const d = new Date(2024, 5, 5); // local 2024-06-05, month is 0-indexed
+    expect(formatDatePrefix(d)).toBe('2024-06-05');
   });
 });

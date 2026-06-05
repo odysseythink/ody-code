@@ -19,7 +19,7 @@ describe('buildFollowupMessage', () => {
     const result = makeResult({ path: '/absolute/path/to/design.md' });
     const msg = buildFollowupMessage(result, 'design');
     expect(msg).toContain('/absolute/path/to/design.md');
-    expect(msg).toContain('Apply every fix to THAT file');
+    expect(msg).toContain('Apply every fix NOT marked [ESCALATE] to THAT file directly');
     expect(msg).toContain('do not search for or recreate');
   });
 

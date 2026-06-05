@@ -83,7 +83,7 @@ export function buildFollowupMessage(result: DesignReviewData, label: string): s
     body,
     '',
     escalationLine,
-    `These findings are against the reviewed ${label} file: \`${result.path}\`. Apply every fix to THAT file — do not search for or recreate the ${label} file. Do not implement anything beyond updating the ${label}.`,
+    `These findings are against the reviewed ${label} file: \`${result.path}\`. Apply every fix NOT marked [ESCALATE] to THAT file directly — do not search for or recreate the ${label} file. Do not implement anything beyond updating the ${label}.`,
   ].join('\n');
 }
 
