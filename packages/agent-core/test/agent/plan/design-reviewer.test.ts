@@ -7,6 +7,7 @@ import {
   escalatedSeverities,
   parseAuditLevel,
   parseFindings,
+  shouldEscalate,
 } from '../../../src/agent/plan/design-reviewer';
 
 function makeAgent(
@@ -96,9 +97,30 @@ describe('buildCriticPrompt', () => {
     // A finding without a concrete trigger loses the round (kills vibe-only output).
     expect(prompt).toContain('does not count');
   });
+
+  it('includes the self-falsification gate to kill self-contradictory findings', () => {
+    const prompt = buildCriticPrompt();
+    // Gate: mentally execute trigger → if output is correct, discard the finding.
+    expect(prompt).toContain('the output you describe is actually correct');
+    expect(prompt).toContain('discard the finding');
+  });
+
+  it('includes the confidence schema and rubric', () => {
+    const prompt = buildCriticPrompt();
+    expect(prompt).toContain('"confidence"');
+    expect(prompt).toContain('speculative');
+    expect(prompt).toContain('certain');
+    expect(prompt).toContain('likely');
+  });
 });
 
 describe("buildCriticPrompt('plan')", () => {
+  it('also includes the self-falsification gate and confidence schema', () => {
+    const prompt = buildCriticPrompt('plan');
+    expect(prompt).toContain('the output you describe is actually correct');
+    expect(prompt).toContain('"confidence"');
+    expect(prompt).toContain('speculative');
+  });
   it('shares the adversary stance and JSON envelope with the design prompt', () => {
     const prompt = buildCriticPrompt('plan');
     expect(prompt).toContain('ADVERSARY');
@@ -160,6 +182,61 @@ describe('parseFindings', () => {
     expect(parseFindings('not json at all')).toBeNull();
     expect(parseFindings('')).toBeNull();
     expect(parseFindings('{"notFindings": 1}')).toBeNull();
+  });
+
+  it('parses a valid confidence field', () => {
+    const findings = parseFindings(
+      '{"findings":[{"severity":"high","confidence":"speculative","title":"t","detail":"d"}]}',
+    );
+    expect(findings?.[0]?.confidence).toBe('speculative');
+  });
+
+  it('parses certain and likely confidence values', () => {
+    const certain = parseFindings(
+      '{"findings":[{"severity":"med","confidence":"certain","title":"t","detail":"d"}]}',
+    );
+    expect(certain?.[0]?.confidence).toBe('certain');
+    const likely = parseFindings(
+      '{"findings":[{"severity":"low","confidence":"likely","title":"t","detail":"d"}]}',
+    );
+    expect(likely?.[0]?.confidence).toBe('likely');
+  });
+
+  it('omits confidence when the field is missing or invalid', () => {
+    const missing = parseFindings('{"findings":[{"severity":"high","title":"t","detail":"d"}]}');
+    expect(missing?.[0]).not.toHaveProperty('confidence');
+
+    const invalid = parseFindings(
+      '{"findings":[{"severity":"high","confidence":"unknown","title":"t","detail":"d"}]}',
+    );
+    expect(invalid?.[0]).not.toHaveProperty('confidence');
+  });
+});
+
+describe('shouldEscalate', () => {
+  it('escalates high/certain at Standard level', () => {
+    expect(shouldEscalate('high', 'certain', 'Standard')).toBe(true);
+  });
+
+  it('never escalates speculative findings regardless of severity or level', () => {
+    expect(shouldEscalate('high', 'speculative', 'Deep')).toBe(false);
+    expect(shouldEscalate('med', 'speculative', 'Standard')).toBe(false);
+    expect(shouldEscalate('low', 'speculative', 'Deep')).toBe(false);
+  });
+
+  it('treats undefined confidence as non-speculative (no regression)', () => {
+    // A reviewer that omits the field should not have its findings silently suppressed.
+    expect(shouldEscalate('high', undefined, 'Standard')).toBe(true);
+    expect(shouldEscalate('med', undefined, 'Standard')).toBe(true);
+    expect(shouldEscalate('low', undefined, 'Standard')).toBe(false); // low not in Standard
+  });
+
+  it('respects audit level thresholds', () => {
+    expect(shouldEscalate('low', 'certain', 'Basic')).toBe(false);
+    expect(shouldEscalate('low', 'certain', 'Standard')).toBe(false);
+    expect(shouldEscalate('low', 'certain', 'Deep')).toBe(true);
+    expect(shouldEscalate('med', 'certain', 'Basic')).toBe(false);
+    expect(shouldEscalate('med', 'certain', 'Standard')).toBe(true);
   });
 });
 

@@ -43,7 +43,7 @@ import {
   TopicGenerator,
 } from './plan/topic-generator';
 import { parseManifestFiles } from './injection/plan-mode-contract';
-import { DesignReviewer, escalatedSeverities } from './plan/design-reviewer';
+import { DesignReviewer, shouldEscalate } from './plan/design-reviewer';
 import { InjectionManager } from './injection/manager';
 import { PermissionManager, type PermissionManagerOptions } from './permission';
 import { PlanMode } from './plan';
@@ -487,7 +487,6 @@ export class Agent {
           kind,
           timeoutMs: payload.timeoutMs ?? defaultTimeoutMs,
         }).review(reviewContent);
-        const escalate = new Set(escalatedSeverities(result.auditLevel));
         return {
           path,
           auditLevel: result.auditLevel,
@@ -496,7 +495,7 @@ export class Agent {
           ...(result.note !== undefined ? { note: result.note } : {}),
           findings: result.findings.map((finding) => ({
             ...finding,
-            escalate: escalate.has(finding.severity),
+            escalate: shouldEscalate(finding.severity, finding.confidence, result.auditLevel),
           })),
         };
       },

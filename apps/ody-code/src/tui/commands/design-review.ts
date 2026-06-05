@@ -64,9 +64,10 @@ const SEVERITY_LABEL: Record<ReviewFindingData['severity'], string> = {
 
 function renderFinding(finding: ReviewFindingData, index: number): string {
   const tag = finding.escalate ? ' [ESCALATE]' : '';
+  const specTag = finding.confidence === 'speculative' ? ' ~spec' : '';
   const location = finding.location !== undefined ? ` (${finding.location})` : '';
   const fix = finding.suggestedFix !== undefined ? `\n   fix: ${finding.suggestedFix}` : '';
-  return `${index}. [${SEVERITY_LABEL[finding.severity]}]${tag} ${finding.title}${location}\n   ${finding.detail}${fix}`;
+  return `${index}. [${SEVERITY_LABEL[finding.severity]}]${tag}${specTag} ${finding.title}${location}\n   ${finding.detail}${fix}`;
 }
 
 function buildFollowupMessage(result: DesignReviewData, label: string): string {
@@ -74,7 +75,7 @@ function buildFollowupMessage(result: DesignReviewData, label: string): string {
   const escalated = result.findings.filter((finding) => finding.escalate).length;
   const escalationLine =
     escalated > 0
-      ? `For each of the ${escalated} finding(s) marked [ESCALATE], you MUST confirm with me via AskUserQuestion — fix it, skip it, or change the approach — BEFORE editing the ${label}. Verify each flagged claim against the code first (run an ephemeral node -e / python -c when it is a filter, regex, or test assertion).`
+      ? `For each of the ${escalated} finding(s) marked [ESCALATE], verify the claim against the code first (run an ephemeral node -e / python -c when it is a filter, regex, or test assertion). If verification DISPROVES a finding — the trigger does not fire, or the output it describes is actually correct — report it as a disproven false-positive and skip AskUserQuestion for it. Only CONFIRMED [ESCALATE] findings must be confirmed with me via AskUserQuestion — fix it, skip it, or change the approach — BEFORE editing the ${label}.`
       : 'None of the findings require my sign-off.';
   return [
     `A second-model ${label} review of the current ${label} (reviewer: ${result.reviewerAlias}, audit level: ${result.auditLevel}) found ${result.findings.length} issue(s):`,

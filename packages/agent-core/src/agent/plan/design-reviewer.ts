@@ -24,9 +24,11 @@ import type { Agent } from '..';
 
 export type Severity = 'high' | 'med' | 'low';
 export type AuditLevel = 'Basic' | 'Standard' | 'Deep';
+export type Confidence = 'certain' | 'likely' | 'speculative';
 
 export interface ReviewFinding {
   readonly severity: Severity;
+  readonly confidence?: Confidence;
   readonly title: string;
   readonly detail: string;
   readonly location?: string;
@@ -70,6 +72,21 @@ export function escalatedSeverities(level: AuditLevel): readonly Severity[] {
     case 'Deep':
       return ['high', 'med', 'low'];
   }
+}
+
+/**
+ * Whether a finding should be escalated to the human for confirmation.
+ * `speculative` findings never escalate regardless of severity — the reviewer
+ * itself flagged them as unverified assumptions, so they must not block the
+ * human sign-off path. `undefined` confidence is treated as non-speculative
+ * (preserves existing behaviour for reviewers that omit the field).
+ */
+export function shouldEscalate(
+  severity: Severity,
+  confidence: Confidence | undefined,
+  level: AuditLevel,
+): boolean {
+  return escalatedSeverities(level).includes(severity) && confidence !== 'speculative';
 }
 
 /** Reads the `## Audit Level` line the design contract requires; falls back to Standard. */
@@ -117,15 +134,20 @@ function composeCriticPrompt(docNoun: string, shortNoun: string, attackSurface: 
 Attack surface — hunt along every one of these, because the author's correlated blind spots cluster here:
 ${attackSurface}
 
-Rules of engagement: every finding MUST carry a CONCRETE input that breaks it (e.g. "the substring filter rejects 'auth-refactor' because it contains 'auth'") or a concrete trace (e.g. "a file written under fileStem is denied by the guard matching planId"). A finding without a concrete trigger does not count and must be dropped — it loses you the round.
+Rules of engagement: every finding MUST carry a CONCRETE input that breaks it (e.g. "the substring filter rejects 'auth-refactor' because it contains 'auth'") or a concrete trace (e.g. "a file written under fileStem is denied by the guard matching planId"). A finding without a concrete trigger does not count and must be dropped — it loses you the round. Self-falsification gate: before writing down any finding, mentally execute its trigger and read the result — if the output you describe is actually correct or expected, you have NOT broken anything; discard the finding. A finding whose own trigger produces the right answer is self-contradictory and counts as a fabricated defect (a loss).
 
 Severity:
 - high: will cause a real bug, wrong behaviour, security/data issue, or a self-contradiction that blocks implementation.
 - med: a likely edge-case failure, a missing test case, or a maintainability/scope problem.
 - low: a nit, naming, or minor clarity issue.
 
+Confidence — rate how thoroughly you verified the trigger (be honest; over-claiming burns credibility):
+- certain: you traced the trigger end-to-end through the text and confirmed it would fire.
+- likely: strong evidence but you did not fully trace every branch.
+- speculative: an untested assumption ("if X then…" where you did not verify X exists or holds).
+
 Output STRICT JSON and nothing else (no prose, no markdown fences):
-{"findings":[{"severity":"high|med|low","title":"<short>","detail":"<what's wrong + the concrete trigger>","location":"<section/line if known, else omit>","suggestedFix":"<one line, else omit>"}]}
+{"findings":[{"severity":"high|med|low","confidence":"certain|likely|speculative","title":"<short>","detail":"<what's wrong + the concrete trigger>","location":"<section/line if known, else omit>","suggestedFix":"<one line, else omit>"}]}
 If — after a genuine attack — the ${shortNoun} truly has no breakable defect, output {"findings":[]}.`;
 }
 
@@ -185,8 +207,14 @@ function coerceFinding(entry: unknown): ReviewFinding | null {
   if (title.length === 0 && detail.length === 0) return null;
   const location = typeof record['location'] === 'string' ? record['location'].trim() : '';
   const suggestedFix = typeof record['suggestedFix'] === 'string' ? record['suggestedFix'].trim() : '';
+  const rawConfidence = record['confidence'];
+  const confidence: Confidence | undefined =
+    rawConfidence === 'certain' || rawConfidence === 'likely' || rawConfidence === 'speculative'
+      ? rawConfidence
+      : undefined;
   return {
     severity,
+    ...(confidence !== undefined ? { confidence } : {}),
     title: title.length > 0 ? title : detail.slice(0, 60),
     detail,
     ...(location.length > 0 ? { location } : {}),
@@ -265,6 +293,9 @@ export class DesignReviewer {
 
     const findings = parseFindings(raw);
     if (findings === null) {
+      this.agent.log.warn(
+        `DesignReviewer: reviewer output could not be parsed as findings. Raw output (${raw.length} chars):\n${raw.slice(0, 2000)}`,
+      );
       return fail('Reviewer output could not be parsed as findings.', 'unparseable');
     }
 

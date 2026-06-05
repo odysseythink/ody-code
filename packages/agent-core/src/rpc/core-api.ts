@@ -321,11 +321,12 @@ export interface ReviewDesignPayload {
 
 export interface ReviewFindingData {
   readonly severity: 'high' | 'med' | 'low';
+  readonly confidence?: 'certain' | 'likely' | 'speculative';
   readonly title: string;
   readonly detail: string;
   readonly location?: string;
   readonly suggestedFix?: string;
-  /** Whether this finding must be escalated to the human (severity × audit level). */
+  /** Whether this finding must be escalated to the human (severity × audit level × confidence). */
   readonly escalate: boolean;
 }
 
