@@ -2,7 +2,7 @@
 
 **Goal:** Generate plan and design mode filenames from an LLM-extracted topic slug plus UTC timestamp, while keeping `planId` as an independent random slug for records, replay, and permission guards.
 
-**Architecture:** A new `TopicGenerator` class lives in `agent/plan/` and is invoked from the tool layer (`EnterDesignModeTool` / `EnterPlanModeTool`). It extracts a kebab-case topic from the most recent user message via a lightweight LLM call, then applies a cleanup pipeline (slugify, sensitive-word filter, truncate). The tools compose `fileStem = "<topic>-YYYYMMDD-HHMMSS"` and pass it to `PlanMode.enter()`. `PlanMode` stores `_fileStem` separately from `_planId`, persists it in the wire record, and uses it for the on-disk filename. All existing callers of `PlanMode.enter` remain valid because `fileStem` is an optional trailing parameter.
+**Architecture:** A new `TopicGenerator` class lives in `agent/plan/` and is invoked from the tool layer (`EnterDesignModeTool` / `EnterPlanModeTool`). It extracts a kebab-case topic from the most recent user message via a lightweight LLM call, then applies a cleanup pipeline (slugify, sensitive-word filter, truncate). The tools compose `fileStem = "<topic>-YYYYMMDD-HHMMSS"` and pass it to `PlanMode.enter()`. `PlanMode` stores `_fileStem` separately from `_sessionModeId`, persists it in the wire record, and uses it for the on-disk filename. All existing callers of `PlanMode.enter` remain valid because `fileStem` is an optional trailing parameter.
 
 **Tech Stack:** TypeScript, Vitest, pnpm workspaces (`packages/agent-core`, `apps/ody-code`).
 
@@ -446,7 +446,7 @@ git commit -m "feat(agent-core): add TopicGenerator for LLM-based topic extracti
     });
     await ctx.agent.planMode.enter('plan-id', false, true, 'plan', 'custom-stem');
 
-    expect(ctx.agent.planMode.planFilePath).toBe('/workspace/plan/custom-stem.md');
+    expect(ctx.agent.planMode.advancedSessionModeFilePath).toBe('/workspace/plan/custom-stem.md');
     expect(ctx.agent.planMode.fileStem).toBe('custom-stem');
 
     const enterRecord = ctx.allEvents.find(
@@ -465,7 +465,7 @@ git commit -m "feat(agent-core): add TopicGenerator for LLM-based topic extracti
       fileStem: 'custom-stem',
     });
 
-    expect(resumed.agent.planMode.planFilePath).toBe('/workspace/plan/custom-stem.md');
+    expect(resumed.agent.planMode.advancedSessionModeFilePath).toBe('/workspace/plan/custom-stem.md');
     expect(resumed.agent.planMode.fileStem).toBe('custom-stem');
   });
 ```
@@ -476,7 +476,7 @@ git commit -m "feat(agent-core): add TopicGenerator for LLM-based topic extracti
 pnpm vitest run packages/agent-core/test/agent/plan.test.ts -t "uses fileStem"
 ```
 
-Expected failure: `TypeError: Cannot read properties of undefined (reading 'planFilePath')` or similar because `fileStem` parameter and `_fileStem` field do not exist yet.
+Expected failure: `TypeError: Cannot read properties of undefined (reading 'advancedSessionModeFilePath')` or similar because `fileStem` parameter and `_fileStem` field do not exist yet.
 
 - [ ] Write the minimal implementation changes.
 
@@ -497,10 +497,10 @@ Add `fileStem` getter after `kind` getter (after line 126):
 Update `enter` signature and body (lines 35–73):
 ```ts
   async enter(
-    id = this.createPlanId(),
+    id = this.createAdvancedSessionModeId(),
     createFile = false,
     emitStatus = true,
-    kind: PlanKind = 'plan',
+    kind: AdvancedSessionModeKind = 'plan',
     fileStem?: string,
   ): Promise<void> {
     if (this._isActive) {
@@ -508,16 +508,16 @@ Update `enter` signature and body (lines 35–73):
     }
 
     this._isActive = true;
-    this._planId = id;
+    this._sessionModeId = id;
     this._kind = kind;
-    this._planFilePath = null;
+    this._SessionModeFilePath = null;
     this._fileStem = fileStem ?? id;
 
     let enterRecorded = false;
     try {
-      const planFilePath = this.planFilePathFor(this._fileStem);
-      this._planFilePath = planFilePath;
-      await this.ensurePlanDirectory(planFilePath);
+      const advancedSessionModeFilePath = this.advancedSessionModeFilePathFor(this._fileStem);
+      this._SessionModeFilePath = advancedSessionModeFilePath;
+      await this.ensureAdvancedSessionModeDirectory(advancedSessionModeFilePath);
       this.agent.records.logRecord({
         type: 'plan_mode.enter',
         id,
@@ -526,15 +526,15 @@ Update `enter` signature and body (lines 35–73):
       });
       enterRecorded = true;
       if (createFile) {
-        await this.writeEmptyPlanFile(planFilePath);
+        await this.writeEmptyAdvancedSessionModeFile(advancedSessionModeFilePath);
       }
     } catch (error) {
       if (enterRecorded) {
         this.cancel(id);
       } else {
         this._isActive = false;
-        this._planId = null;
-        this._planFilePath = null;
+        this._sessionModeId = null;
+        this._SessionModeFilePath = null;
         this._fileStem = null;
         this._kind = 'plan';
       }
@@ -553,7 +553,7 @@ Update `restoreEnter` (lines 75–86):
     fileStem,
   }: {
     readonly id: string;
-    readonly kind?: PlanKind;
+    readonly kind?: AdvancedSessionModeKind;
     readonly fileStem?: string;
   }): void {
     this.agent.replayBuilder.push({
@@ -563,10 +563,10 @@ Update `restoreEnter` (lines 75–86):
     });
 
     this._isActive = true;
-    this._planId = id;
+    this._sessionModeId = id;
     this._kind = kind;
     this._fileStem = fileStem ?? id;
-    this._planFilePath = this.planFilePathFor(this._fileStem);
+    this._SessionModeFilePath = this.advancedSessionModeFilePathFor(this._fileStem);
   }
 ```
 
@@ -580,8 +580,8 @@ Update `cancel` (lines 88–99) to clear `_fileStem`:
       kind: this._kind,
     });
     this._isActive = false;
-    this._planId = null;
-    this._planFilePath = null;
+    this._sessionModeId = null;
+    this._SessionModeFilePath = null;
     this._fileStem = null;
     this._kind = 'plan';
     this.agent.emitStatusUpdated();
@@ -598,17 +598,17 @@ Update `exit` (lines 107–119) to clear `_fileStem`:
       kind: this._kind,
     });
     this._isActive = false;
-    this._planId = null;
-    this._planFilePath = null;
+    this._sessionModeId = null;
+    this._SessionModeFilePath = null;
     this._fileStem = null;
     this._kind = 'plan';
     this.agent.emitStatusUpdated();
   }
 ```
 
-Update `planFilePathFor` parameter name (lines 181–189):
+Update `advancedSessionModeFilePathFor` parameter name (lines 181–189):
 ```ts
-  private planFilePathFor(stem: string): string {
+  private advancedSessionModeFilePathFor(stem: string): string {
     const cwdSubdir = this._kind === 'design' ? 'design' : 'plan';
     const homeSubdir = this._kind === 'design' ? 'designs' : 'plans';
     const plansDir =
@@ -623,7 +623,7 @@ Update `planFilePathFor` parameter name (lines 181–189):
 ```ts
   'plan_mode.enter': {
     id: string;
-    kind?: PlanKind;
+    kind?: AdvancedSessionModeKind;
     fileStem?: string;
   };
 ```
@@ -762,7 +762,7 @@ export class EnterDesignModeTool implements BuiltinTool<EnterDesignModeInput> {
         this.agent.telemetry.track('design_enter_resolved', { outcome: 'auto_approved' });
         return {
           output: designModeEntryMessage(
-            this.agent.planMode.planFilePath,
+            this.agent.planMode.advancedSessionModeFilePath,
             this.agent.rpc?.openExternal !== undefined,
           ),
         };
@@ -800,7 +800,7 @@ function makeAgent(
     readonly active?: boolean;
     readonly kind?: 'plan' | 'design';
     readonly mode?: PermissionMode;
-    readonly planFilePath?: string | null;
+    readonly advancedSessionModeFilePath?: string | null;
     readonly enter?: () => Promise<void>;
     readonly generate?: () => Promise<{
       message: { content: Array<{ type: string; text: string }> };
@@ -826,8 +826,8 @@ function makeAgent(
       get kind() {
         return input.kind ?? 'design';
       },
-      get planFilePath() {
-        return input.planFilePath ?? null;
+      get advancedSessionModeFilePath() {
+        return input.advancedSessionModeFilePath ?? null;
       },
       enter: enterSpy,
     },
@@ -1083,7 +1083,7 @@ export class EnterPlanModeTool implements BuiltinTool<EnterPlanModeInput> {
         }
 
         this.agent.telemetry.track('plan_enter_resolved', { outcome: 'auto_approved' });
-        return { output: planModeEntryMessage(this.agent.planMode.planFilePath) };
+        return { output: planModeEntryMessage(this.agent.planMode.advancedSessionModeFilePath) };
       },
     };
   }
@@ -1121,7 +1121,7 @@ function makeAgent(
   input: {
     readonly active?: boolean;
     readonly mode?: PermissionMode;
-    readonly planFilePath?: string | null;
+    readonly advancedSessionModeFilePath?: string | null;
     readonly enter?: () => Promise<void>;
     readonly generate?: () => Promise<{
       message: { content: Array<{ type: string; text: string }> };
@@ -1146,8 +1146,8 @@ function makeAgent(
       get isActive() {
         return active;
       },
-      get planFilePath() {
-        return input.planFilePath ?? null;
+      get advancedSessionModeFilePath() {
+        return input.advancedSessionModeFilePath ?? null;
       },
       enter: enterSpy,
     },
@@ -1275,7 +1275,7 @@ describe('EnterPlanModeTool', () => {
   });
 
   it('uses inline guidance when no plan file path is available', async () => {
-    const { agent } = makeAgent({ mode: 'yolo', planFilePath: null });
+    const { agent } = makeAgent({ mode: 'yolo', advancedSessionModeFilePath: null });
 
     const result = await executeTool(new EnterPlanModeTool(agent), {
       turnId: '0',
@@ -1290,7 +1290,7 @@ describe('EnterPlanModeTool', () => {
   });
 
   it('uses plan-file guidance when the host provides a plan file path', async () => {
-    const { agent } = makeAgent({ mode: 'yolo', planFilePath: '/tmp/kimi/plans/example.md' });
+    const { agent } = makeAgent({ mode: 'yolo', advancedSessionModeFilePath: '/tmp/kimi/plans/example.md' });
 
     const result = await executeTool(new EnterPlanModeTool(agent), {
       turnId: '0',
@@ -1354,7 +1354,7 @@ function makeAgent(mode: PermissionMode): {
       get isActive() {
         return active;
       },
-      get planFilePath() {
+      get advancedSessionModeFilePath() {
         return '/tmp/kimi-plan.md';
       },
       enter: vi.fn(async () => {
@@ -1487,7 +1487,7 @@ Expected: zero type errors.
 pnpm test --filter ody-code
 ```
 
-Expected: all tests pass. The ody-code Footer rendering only reads `planFilePath` as an opaque string; the filename format change does not affect it.
+Expected: all tests pass. The ody-code Footer rendering only reads `advancedSessionModeFilePath` as an opaque string; the filename format change does not affect it.
 
 - [ ] Commit:
 
@@ -1512,7 +1512,7 @@ git commit -m "test(agent-core): update harness test for TopicGenerator LLM call
 | Prompt security instruction + code-level sensitive word filter | Task 1 | covered |
 | Telemetry `topic_generation_failed` with reason | Task 1 | covered |
 | Wire record persists `fileStem` for resume compatibility | Task 2 | covered |
-| `isWritablePlanPath` continues to use `planId` | Task 2 (no change) | covered |
+| `isWritableAdvancedSessionModePath` continues to use `planId` | Task 2 (no change) | covered |
 
 - [ ] 2. Placeholder scan: no TODO/TBD, no deferred-by-dependency excuses, no dead-code placeholders.
 - [ ] 3. No phantom tasks: every task produces a verifiable change; zero `--allow-empty`.
@@ -1529,6 +1529,6 @@ git commit -m "test(agent-core): update harness test for TopicGenerator LLM call
 |---|---|---|
 | 1 | `agent.generate` called during tool execution consumes a mocked response in harness tests | Add an extra `mockNextResponse` before existing mocks in affected harness tests; document the exact change in Task 2 |
 | 2 | Old wire records lack `fileStem`; restore must fall back gracefully | `restoreEnter` uses `fileStem ?? id`; wire type keeps `fileStem` optional |
-| 3 | `isWritablePlanPath` must continue to use `planId`, not `fileStem` | No code change to `isWritablePlanPath`; verified by existing tests |
+| 3 | `isWritableAdvancedSessionModePath` must continue to use `planId`, not `fileStem` | No code change to `isWritableAdvancedSessionModePath`; verified by existing tests |
 | 4 | Extra LLM call adds latency to plan/design entry | Lightweight prompt (< 200 tokens) + 3 s timeout; failure telemetry emitted |
 

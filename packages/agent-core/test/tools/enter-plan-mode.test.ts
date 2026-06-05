@@ -18,7 +18,7 @@ function makeAgent(
   input: {
     readonly active?: boolean;
     readonly mode?: PermissionMode;
-    readonly planFilePath?: string | null;
+    readonly advancedSessionModeFilePath?: string | null;
     readonly enter?: () => Promise<void>;
     readonly generate?: () => Promise<{
       message: { content: Array<{ type: string; text: string }> };
@@ -43,8 +43,8 @@ function makeAgent(
       get isActive() {
         return active;
       },
-      get planFilePath() {
-        return input.planFilePath ?? null;
+      get advancedSessionModeFilePath() {
+        return input.advancedSessionModeFilePath ?? null;
       },
       enter: enterSpy,
     },
@@ -154,7 +154,7 @@ describe('EnterPlanModeTool', () => {
   });
 
   it('uses inline guidance when no plan file path is available', async () => {
-    const { agent } = makeAgent({ mode: 'yolo', planFilePath: null });
+    const { agent } = makeAgent({ mode: 'yolo', advancedSessionModeFilePath: null });
 
     const result = await executeTool(new EnterPlanModeTool(agent), {
       turnId: '0',
@@ -169,7 +169,7 @@ describe('EnterPlanModeTool', () => {
   });
 
   it('uses plan-file guidance when the host provides a plan file path', async () => {
-    const { agent } = makeAgent({ mode: 'yolo', planFilePath: '/tmp/kimi/plans/example.md' });
+    const { agent } = makeAgent({ mode: 'yolo', advancedSessionModeFilePath: '/tmp/kimi/plans/example.md' });
 
     const result = await executeTool(new EnterPlanModeTool(agent), {
       turnId: '0',

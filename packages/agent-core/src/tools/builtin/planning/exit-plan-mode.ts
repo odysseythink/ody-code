@@ -7,7 +7,7 @@
  */
 
 import type { Agent } from '#/agent';
-import type { PlanData } from '#/agent/plan';
+import type { AdvancedSessionModeData } from '#/agent/advanced-session-mode';
 import { z } from 'zod';
 
 import type { BuiltinTool } from '../../../agent/tool';
@@ -99,7 +99,7 @@ export class ExitPlanModeTool implements BuiltinTool<ExitPlanModeInput> {
     args: ExitPlanModeInput,
   ): Promise<ToolInputDisplay | undefined> {
     if (!this.agent.planMode.isActive) return undefined;
-    let data: PlanData;
+    let data: AdvancedSessionModeData;
     try {
       data = await this.agent.planMode.data();
     } catch {
@@ -178,7 +178,7 @@ export class ExitPlanModeTool implements BuiltinTool<ExitPlanModeInput> {
       };
     }
 
-    const path = source?.path ?? this.agent.planMode.planFilePath;
+    const path = source?.path ?? this.agent.planMode.advancedSessionModeFilePath;
     return {
       ok: false,
       error: {

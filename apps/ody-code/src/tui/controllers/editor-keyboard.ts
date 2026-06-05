@@ -10,7 +10,7 @@ import {
   EXIT_CONFIRM_WINDOW_MS,
   LLM_NOT_SET_MESSAGE,
   NO_ACTIVE_SESSION_MESSAGE,
-} from '../constant/kimi-tui';
+} from '../constant/ody-tui';
 import { formatErrorMessage } from '../utils/event-payload';
 import type { ImageAttachmentStore } from '../utils/image-attachment-store';
 import type { PendingExit } from '../types';
@@ -124,7 +124,7 @@ export class EditorKeyboardController {
       const { planMode } = host.state.appState;
       const designMode = host.state.appState.designMode ?? false;
       if (!planMode && !designMode) {
-        // build → plan
+        // normal → plan
         host.track('shortcut_plan_toggle', { enabled: true });
         host.track('shortcut_mode_switch', { to_mode: 'plan' });
         host.handlePlanToggle(true);
@@ -133,7 +133,7 @@ export class EditorKeyboardController {
         host.track('shortcut_mode_switch', { to_mode: 'design' });
         host.handleDesignToggle(true);
       } else {
-        // design → build
+        // design → normal
         host.track('shortcut_mode_switch', { to_mode: 'agent' });
         host.handleDesignToggle(false);
       }

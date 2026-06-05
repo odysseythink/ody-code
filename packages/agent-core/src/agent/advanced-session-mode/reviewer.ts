@@ -1,5 +1,5 @@
 /**
- * design-reviewer.ts — a second-model critique of a design document OR an
+ * reviewer.ts — a second-model critique of a design document OR an
  * execution plan (the `kind` option selects the attack surface).
  *
  * Plan/design mode runs on a cheap model; this runs a SINGLE pass of an
@@ -35,7 +35,7 @@ export interface ReviewFinding {
   readonly suggestedFix?: string;
 }
 
-export interface DesignReviewResult {
+export interface AdvancedSessionReviewResult {
   /** Audit level read from the design file (drives human escalation). */
   readonly auditLevel: AuditLevel;
   readonly findings: readonly ReviewFinding[];
@@ -45,7 +45,7 @@ export interface DesignReviewResult {
   readonly note?: string;
 }
 
-export interface DesignReviewerOptions {
+export interface AdvancedSessionReviewerOptions {
   /** Configured model alias to run the critique on (e.g. "ody-code/kimi-for-coding"). */
   readonly reviewerAlias: string;
   /**
@@ -232,15 +232,15 @@ function stripCodeFences(raw: string): string {
   return trimmed.slice(start, end).trimEnd();
 }
 
-export class DesignReviewer {
+export class AdvancedSessionReviewer {
   constructor(
     private readonly agent: Agent,
-    private readonly options: DesignReviewerOptions,
+    private readonly options: AdvancedSessionReviewerOptions,
   ) {}
 
-  async review(designContent: string): Promise<DesignReviewResult> {
+  async review(designContent: string): Promise<AdvancedSessionReviewResult> {
     const auditLevel = parseAuditLevel(designContent);
-    const fail = (note: string, reason: string): DesignReviewResult => {
+    const fail = (note: string, reason: string): AdvancedSessionReviewResult => {
       this.agent.telemetry.track('design_review_failed', { reason });
       return { auditLevel, findings: [], ok: false, note };
     };
@@ -300,7 +300,7 @@ export class DesignReviewer {
     if (findings === null) {
       let dumpPath: string | undefined;
       if (this.agent.homedir !== undefined) {
-        dumpPath = `${this.agent.homedir}/logs/design-reviewer-fail-${Date.now()}.txt`;
+        dumpPath = `${this.agent.homedir}/logs/reviewer-fail-${Date.now()}.txt`;
         try {
           await this.agent.kaos.mkdir(`${this.agent.homedir}/logs`, { parents: true, existOk: true });
           await this.agent.kaos.writeText(dumpPath, raw);
@@ -309,13 +309,13 @@ export class DesignReviewer {
         }
       }
       this.agent.log.warn(
-        'DesignReviewer: reviewer output could not be parsed as findings.',
+        'AdvancedSessionReviewer: reviewer output could not be parsed as findings.',
         { rawLength: raw.length, dumpPath },
       );
       return fail('Reviewer output could not be parsed as findings.', 'unparseable');
     }
 
-    this.agent.telemetry.track('design_review_completed', {
+    this.agent.telemetry.track('advanced_session_review_completed', {
       auditLevel,
       findingCount: String(findings.length),
     });

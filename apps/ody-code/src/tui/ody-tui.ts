@@ -86,7 +86,7 @@ import {
   LLM_NOT_SET_MESSAGE,
   MAIN_AGENT_ID,
   NO_ACTIVE_SESSION_MESSAGE,
-} from './constant/kimi-tui';
+} from './constant/ody-tui';
 import { combineStartupNotice, isOAuthLoginRequiredError } from './utils/startup';
 import { adaptPanelResponse } from './reverse-rpc/approval/adapter';
 import { ApprovalController } from './reverse-rpc/approval/controller';
@@ -1032,12 +1032,12 @@ export class KimiTUI {
         : Promise.resolve({ goal: null }),
     ]);
 
-    let planFilePath = status.planFilePath;
-    if (planFilePath !== null && planFilePath !== undefined) {
+    let advancedSessionModeFilePath = status.advancedSessionModeFilePath;
+    if (advancedSessionModeFilePath !== null && advancedSessionModeFilePath !== undefined) {
       try {
-        await access(planFilePath);
+        await access(advancedSessionModeFilePath);
       } catch {
-        planFilePath = null;
+        advancedSessionModeFilePath = null;
       }
     }
 
@@ -1048,7 +1048,7 @@ export class KimiTUI {
       permissionMode: status.permission,
       planMode: status.planMode && status.planKind !== 'design',
       designMode: status.planMode && status.planKind === 'design',
-      planFilePath,
+      advancedSessionModeFilePath,
       contextTokens: status.contextTokens,
       maxContextTokens: status.maxContextTokens,
       contextUsage: status.contextUsage,

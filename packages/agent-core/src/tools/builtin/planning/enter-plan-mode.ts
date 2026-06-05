@@ -9,7 +9,7 @@ import type { Agent } from '#/agent';
 import { z } from 'zod';
 
 import { planModeEntryMessage } from '../../../agent/injection/plan-mode-contract';
-import { cleanupTopic } from '../../../agent/plan/topic-generator';
+import { cleanupTopic } from '../../../agent/advanced-session-mode/topic-generator';
 import type { BuiltinTool } from '../../../agent/tool';
 import type { ToolExecution } from '../../../loop/types';
 import { toInputJsonSchema } from '../../support/input-schema';
@@ -60,7 +60,7 @@ export class EnterPlanModeTool implements BuiltinTool<EnterPlanModeInput> {
         }
 
         this.agent.telemetry.track('plan_enter_resolved', { outcome: 'auto_approved' });
-        return { output: planModeEntryMessage(this.agent.planMode.planFilePath) };
+        return { output: planModeEntryMessage(this.agent.planMode.advancedSessionModeFilePath) };
       },
     };
   }

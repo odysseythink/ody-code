@@ -10,7 +10,7 @@ import type {
 } from '@odysseythink/kimi-code-sdk';
 import { describe, expect, it, vi } from 'vitest';
 
-import { KimiTUI, type KimiTUIStartupInput, type TUIState } from '#/tui/kimi-tui';
+import { KimiTUI, type KimiTUIStartupInput, type TUIState } from '#/tui/ody-tui';
 import type { SessionEventHandler } from '#/tui/controllers/session-event-handler';
 import type { StreamingUIController } from '#/tui/controllers/streaming-ui';
 import { AgentGroupComponent } from '#/tui/components/messages/agent-group';

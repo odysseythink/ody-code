@@ -4,7 +4,7 @@
 
 **Goal:** 增强 TUI Footer 的模式显示：反色背景标签 + emoji + 文件名，并将模式信息从 Line 1 迁移到 Line 2 左侧。
 
-**Architecture:** 后端三层透传新增 `planFilePath` 字段（agent-core RPC event → node-sdk SessionStatus → ody-code AppState），TUI Footer 从 AppState 读取并渲染反色 ANSI 标签，同时重构 Line 2 布局将 transient hint 迁移到右侧。
+**Architecture:** 后端三层透传新增 `advancedSessionModeFilePath` 字段（agent-core RPC event → node-sdk SessionStatus → ody-code AppState），TUI Footer 从 AppState 读取并渲染反色 ANSI 标签，同时重构 Line 2 布局将 transient hint 迁移到右侧。
 
 **Tech Stack:** TypeScript, chalk (ANSI 颜色), pi-tui (visibleWidth / truncateToWidth), pnpm workspace monorepo
 
@@ -14,12 +14,12 @@
 
 | 包 | 文件 | 职责 |
 |---|---|---|
-| `agent-core` | `packages/agent-core/src/rpc/events.ts` | `AgentStatusUpdatedEvent` 接口新增 `planFilePath` |
-| `agent-core` | `packages/agent-core/src/agent/index.ts` | `emitStatusUpdated()` 组装事件时增加 `planFilePath` |
-| `node-sdk` | `packages/node-sdk/src/types.ts` | `SessionStatus` 接口新增 `planFilePath` |
+| `agent-core` | `packages/agent-core/src/rpc/events.ts` | `AgentStatusUpdatedEvent` 接口新增 `advancedSessionModeFilePath` |
+| `agent-core` | `packages/agent-core/src/agent/index.ts` | `emitStatusUpdated()` 组装事件时增加 `advancedSessionModeFilePath` |
+| `node-sdk` | `packages/node-sdk/src/types.ts` | `SessionStatus` 接口新增 `advancedSessionModeFilePath` |
 | `node-sdk` | `packages/node-sdk/src/rpc.ts` | `getStatus()` 从 `rpc.getPlan()` 结果提取 `path` 字段 |
-| `ody-code` | `apps/ody-code/src/tui/types.ts` | `AppState` 新增 `planFilePath` |
-| `ody-code` | `apps/ody-code/src/tui/kimi-tui.ts` | `syncRuntimeState()` 同步 `planFilePath` |
+| `ody-code` | `apps/ody-code/src/tui/types.ts` | `AppState` 新增 `advancedSessionModeFilePath` |
+| `ody-code` | `apps/ody-code/src/tui/kimi-tui.ts` | `syncRuntimeState()` 同步 `advancedSessionModeFilePath` |
 | `ody-code` | `apps/ody-code/src/tui/components/chrome/footer.ts` | 移除 Line 1 模式徽章；新增 `planFileName()` / `luminance()` / `renderModeBadge()`；重构 Line 2 布局 |
 | `ody-code` | `apps/ody-code/test/tui/components/chrome/footer.test.ts` | Footer 渲染行为测试（build/plan/design × 有/无文件名 × 截断） |
 
@@ -41,7 +41,7 @@ Task 2 (node-sdk types) ────┘         │
                             Task 6 (全项目验证)
 ```
 
-Task 1 和 Task 2 可以并行（不同包，无交叉依赖）。Task 3 依赖 Task 2（ody-code 消费 node-sdk 的 `SessionStatus`）。Task 4 依赖 Task 3（Footer 读取 `AppState.planFilePath`）。Task 5 依赖 Task 4（测试覆盖新渲染逻辑）。Task 6 验证全量编译和测试回归。
+Task 1 和 Task 2 可以并行（不同包，无交叉依赖）。Task 3 依赖 Task 2（ody-code 消费 node-sdk 的 `SessionStatus`）。Task 4 依赖 Task 3（Footer 读取 `AppState.advancedSessionModeFilePath`）。Task 5 依赖 Task 4（测试覆盖新渲染逻辑）。Task 6 验证全量编译和测试回归。
 
 ---
 
@@ -49,7 +49,7 @@ Task 1 和 Task 2 可以并行（不同包，无交叉依赖）。Task 3 依赖 
 
 ## Phase 1: 后端字段暴露（agent-core + node-sdk）
 
-### Task 1: agent-core — `AgentStatusUpdatedEvent` 增加 `planFilePath`
+### Task 1: agent-core — `AgentStatusUpdatedEvent` 增加 `advancedSessionModeFilePath`
 
 **Depends on:** none
 
@@ -69,8 +69,8 @@ export interface AgentStatusUpdatedEvent {
   readonly maxContextTokens?: number | undefined;
   readonly contextUsage?: number | undefined;
   readonly planMode?: boolean | undefined;
-  readonly planKind?: PlanKind | undefined;
-  readonly planFilePath?: string | undefined;   // 新增
+  readonly planKind?: AdvancedSessionModeKind | undefined;
+  readonly advancedSessionModeFilePath?: string | undefined;   // 新增
   readonly permission?: PermissionMode | undefined;
   readonly usage?: UsageStatus | undefined;
 }
@@ -78,7 +78,7 @@ export interface AgentStatusUpdatedEvent {
 
 - [ ] **Step 2: 修改事件组装代码**
 
-在 `packages/agent-core/src/agent/index.ts` 的 `emitStatusUpdated()` 方法中（约第 419–429 行），在 `planKind` 之后增加 `planFilePath`：
+在 `packages/agent-core/src/agent/index.ts` 的 `emitStatusUpdated()` 方法中（约第 419–429 行），在 `planKind` 之后增加 `advancedSessionModeFilePath`：
 
 ```ts
 this.emitEvent({
@@ -89,7 +89,7 @@ this.emitEvent({
   contextUsage,
   planMode: this.planMode.isActive,
   planKind: this.planMode.kind,
-  planFilePath: this.planMode.planFilePath ?? undefined,   // 新增
+  advancedSessionModeFilePath: this.planMode.advancedSessionModeFilePath ?? undefined,   // 新增
   permission: this.permission.mode,
   usage,
 });
@@ -104,12 +104,12 @@ Expected: 编译通过，无类型错误
 
 ```bash
 git add packages/agent-core/src/rpc/events.ts packages/agent-core/src/agent/index.ts
-git commit -m "feat(agent-core): expose planFilePath in status updated event"
+git commit -m "feat(agent-core): expose advancedSessionModeFilePath in status updated event"
 ```
 
 ---
 
-### Task 2: node-sdk — `SessionStatus` 增加 `planFilePath` 并透传
+### Task 2: node-sdk — `SessionStatus` 增加 `advancedSessionModeFilePath` 并透传
 
 **Depends on:** none（可与 Task 1 并行，不同包）
 
@@ -126,7 +126,7 @@ export interface SessionStatus {
   // ... existing fields ...
   readonly planMode: boolean;
   readonly planKind?: 'plan' | 'design';
-  readonly planFilePath?: string;   // 新增
+  readonly advancedSessionModeFilePath?: string;   // 新增
   readonly contextTokens: number;
   readonly maxContextTokens: number;
 }
@@ -134,7 +134,7 @@ export interface SessionStatus {
 
 - [ ] **Step 2: 修改 getStatus() 组装逻辑**
 
-在 `packages/node-sdk/src/rpc.ts` 的 `getStatus()` 方法中（约第 398–408 行），在 `planKind` 之后增加 `planFilePath`：
+在 `packages/node-sdk/src/rpc.ts` 的 `getStatus()` 方法中（约第 398–408 行），在 `planKind` 之后增加 `advancedSessionModeFilePath`：
 
 ```ts
 return {
@@ -143,7 +143,7 @@ return {
   permission: permission.mode,
   planMode: plan !== null,
   planKind: plan?.kind,
-  planFilePath: plan?.path,   // 新增
+  advancedSessionModeFilePath: plan?.path,   // 新增
   contextTokens,
   maxContextTokens,
   contextUsage,
@@ -160,16 +160,16 @@ Expected: 编译通过
 
 ```bash
 git add packages/node-sdk/src/types.ts packages/node-sdk/src/rpc.ts
-git commit -m "feat(node-sdk): add planFilePath to SessionStatus"
+git commit -m "feat(node-sdk): add advancedSessionModeFilePath to SessionStatus"
 ```
 
 ---
 
 ## Phase 2: TUI 状态层（ody-code AppState + sync）
 
-### Task 3: ody-code — `AppState` 增加 `planFilePath` 并同步
+### Task 3: ody-code — `AppState` 增加 `advancedSessionModeFilePath` 并同步
 
-**Depends on:** Task 2（node-sdk `SessionStatus` 已包含 `planFilePath`）
+**Depends on:** Task 2（node-sdk `SessionStatus` 已包含 `advancedSessionModeFilePath`）
 
 **Files:**
 - Modify: `apps/ody-code/src/tui/types.ts`
@@ -184,7 +184,7 @@ export interface AppState {
   // ... existing fields ...
   planMode: boolean;
   designMode?: boolean;
-  planFilePath?: string;   // 新增
+  advancedSessionModeFilePath?: string;   // 新增
   thinking: boolean;
   // ...
 }
@@ -199,7 +199,7 @@ return {
   // ...
   planMode: input.cliOptions.plan,
   designMode: input.cliOptions.design ?? false,
-  planFilePath: undefined,   // 新增
+  advancedSessionModeFilePath: undefined,   // 新增
   // ...
 };
 ```
@@ -213,7 +213,7 @@ this.setAppState({
   // ... existing fields ...
   planMode: status.planMode && status.planKind !== 'design',
   designMode: status.planMode && status.planKind === 'design',
-  planFilePath: status.planFilePath,   // 新增
+  advancedSessionModeFilePath: status.advancedSessionModeFilePath,   // 新增
   contextTokens: status.contextTokens,
   maxContextTokens: status.maxContextTokens,
 });
@@ -228,7 +228,7 @@ Expected: 编译通过（新增可选字段不会破坏现有调用）
 
 ```bash
 git add apps/ody-code/src/tui/types.ts apps/ody-code/src/tui/kimi-tui.ts
-git commit -m "feat(ody-code): add planFilePath to AppState and syncRuntimeState"
+git commit -m "feat(ody-code): add advancedSessionModeFilePath to AppState and syncRuntimeState"
 ```
 
 ---
@@ -237,7 +237,7 @@ git commit -m "feat(ody-code): add planFilePath to AppState and syncRuntimeState
 
 ### Task 4: ody-code — Footer 渲染逻辑重构
 
-**Depends on:** Task 3（`AppState.planFilePath` 已可用）
+**Depends on:** Task 3（`AppState.advancedSessionModeFilePath` 已可用）
 
 **Files:**
 - Modify: `apps/ody-code/src/tui/components/chrome/footer.ts`
@@ -260,7 +260,7 @@ function luminance(hex: string): number {
 }
 
 /**
- * 将完整 planFilePath 截断为文件名。null/undefined → null。
+ * 将完整 advancedSessionModeFilePath 截断为文件名。null/undefined → null。
  */
 function planFileName(path: string | null | undefined): string | null {
   if (!path) return null;
@@ -272,11 +272,11 @@ function planFileName(path: string | null | undefined): string | null {
  * 渲染反色模式标签。返回带 ANSI 背景色 + 前景色的字符串。
  */
 function renderModeBadge(
-  mode: 'build' | 'plan' | 'design',
+  mode: 'normal' | 'plan' | 'design',
   colors: ColorPalette,
   fileName?: string,
 ): string {
-  const EMOJIS: Record<string, string> = { build: '⚒️', plan: '📝', design: '✏️' };
+  const EMOJIS: Record<string, string> = { normal: '⚒️', plan: '📝', design: '✏️' };
   const emoji = EMOJIS[mode]!;
   const bgColor =
     mode === 'design' ? colors.accent : mode === 'plan' ? colors.primary : colors.textMuted;
@@ -294,7 +294,7 @@ function renderModeBadge(
 
 ```ts
 // 删除以下块：
-const mode = state.designMode ? 'design' : state.planMode ? 'plan' : 'build';
+const mode = state.designMode ? 'design' : state.planMode ? 'plan' : 'normal';
 const modeColor = state.designMode
   ? colors.accent
   : state.planMode
@@ -309,10 +309,10 @@ left.push(chalk.hex(modeColor).bold(mode));
 
 ```ts
 // ── Line 2: mode badge (left) + transient hint or context (right) ──
-const mode = state.designMode ? 'design' : state.planMode ? 'plan' : 'build';
+const mode = state.designMode ? 'design' : state.planMode ? 'plan' : 'normal';
 const modeColor =
   mode === 'design' ? colors.accent : mode === 'plan' ? colors.primary : colors.textMuted;
-const fileName = planFileName(state.planFilePath);
+const fileName = planFileName(state.advancedSessionModeFilePath);
 const modeBadge = renderModeBadge(mode, modeColor, fileName ?? undefined);
 const modeBadgeWidth = visibleWidth(modeBadge);
 
@@ -371,26 +371,26 @@ git commit -m "feat(ody-code): refactor footer mode display with inverted badge 
 
 - [ ] **Step 1: 扩展测试基态**
 
-在现有测试文件的 `appState` 常量中新增 `planFilePath: undefined`：
+在现有测试文件的 `appState` 常量中新增 `advancedSessionModeFilePath: undefined`：
 
 ```ts
 const appState: AppState = {
   // ... existing fields ...
   planMode: false,
-  planFilePath: undefined,   // 新增
+  advancedSessionModeFilePath: undefined,   // 新增
   theme: 'dark',
   // ...
 };
 ```
 
-- [ ] **Step 2: 编写 build 模式渲染测试**
+- [ ] **Step 2: 编写 normal 模式渲染测试**
 
 ```ts
-it('renders build mode badge on line 2 with inverted colors', () => {
+it('renders normal mode badge on line 2 with inverted colors', () => {
   const footer = new FooterComponent(appState, darkColors);
   const lines = footer.render(120);
   expect(lines[1]).toContain('⚒️');
-  expect(lines[1]).toContain('build');
+  expect(lines[1]).toContain('normal');
   expect(lines[1]).toContain('【');
 });
 ```
@@ -399,7 +399,7 @@ it('renders build mode badge on line 2 with inverted colors', () => {
 
 ```ts
 it('renders plan mode badge with filename on line 2', () => {
-  const state = { ...appState, planMode: true, planFilePath: '/home/alice/project/plans/fearless-mako.md' };
+  const state = { ...appState, planMode: true, advancedSessionModeFilePath: '/home/alice/project/plans/fearless-mako.md' };
   const footer = new FooterComponent(state, darkColors);
   const lines = footer.render(120);
   expect(lines[1]).toContain('📝');
@@ -413,7 +413,7 @@ it('renders plan mode badge with filename on line 2', () => {
 
 ```ts
 it('renders design mode badge with filename on line 2', () => {
-  const state = { ...appState, designMode: true, planFilePath: '/home/alice/project/designs/brave-otter.md' };
+  const state = { ...appState, designMode: true, advancedSessionModeFilePath: '/home/alice/project/designs/brave-otter.md' };
   const footer = new FooterComponent(state, darkColors);
   const lines = footer.render(120);
   expect(lines[1]).toContain('✏️');
@@ -422,11 +422,11 @@ it('renders design mode badge with filename on line 2', () => {
 });
 ```
 
-- [ ] **Step 5: 编写 planFilePath 缺失回退测试**
+- [ ] **Step 5: 编写 advancedSessionModeFilePath 缺失回退测试**
 
 ```ts
-it('falls back to mode-only badge when planFilePath is absent', () => {
-  const state = { ...appState, planMode: true, planFilePath: undefined };
+it('falls back to mode-only badge when advancedSessionModeFilePath is absent', () => {
+  const state = { ...appState, planMode: true, advancedSessionModeFilePath: undefined };
   const footer = new FooterComponent(state, darkColors);
   const lines = footer.render(120);
   expect(lines[1]).toContain('📝');
@@ -440,7 +440,7 @@ it('falls back to mode-only badge when planFilePath is absent', () => {
 ```ts
 it('truncates long filename with ellipsis', () => {
   const longName = 'a'.repeat(200) + '.md';
-  const state = { ...appState, planMode: true, planFilePath: `/plans/${longName}` };
+  const state = { ...appState, planMode: true, advancedSessionModeFilePath: `/plans/${longName}` };
   const footer = new FooterComponent(state, darkColors);
   const lines = footer.render(80);
   expect(lines[1]).toContain('…');
@@ -530,8 +530,8 @@ pnpm test -- --update
 
 - [ ] **4. Dependency soundness:** Task 1 和 Task 2 互相独立（不同包）；Task 3 依赖 Task 2；Task 4 依赖 Task 3；Task 5 依赖 Task 4；Task 6 依赖 Task 1–5。无反向依赖或外部未完成任务引用。
 
-- [ ] **5. Caller & build soundness:** 本次改动仅新增可选字段（`planFilePath?: string`），不修改现有函数签名或接口形状，因此不存在 stale caller 问题。Task 4 修改 Footer 内部辅助函数，无外部调用者。每个任务结束时均要求 `tsc --noEmit` 验证。
+- [ ] **5. Caller & build soundness:** 本次改动仅新增可选字段（`advancedSessionModeFilePath?: string`），不修改现有函数签名或接口形状，因此不存在 stale caller 问题。Task 4 修改 Footer 内部辅助函数，无外部调用者。每个任务结束时均要求 `tsc --noEmit` 验证。
 
-- [ ] **6. Test-the-risk:** Task 5 的测试覆盖了核心渲染逻辑：build/plan/design 三种模式、有/无文件名、文件名截断。这些是状态变更（`AppState.planFilePath` → Footer 渲染输出）的直接断言。
+- [ ] **6. Test-the-risk:** Task 5 的测试覆盖了核心渲染逻辑：build/plan/design 三种模式、有/无文件名、文件名截断。这些是状态变更（`AppState.advancedSessionModeFilePath` → Footer 渲染输出）的直接断言。
 
-- [ ] **7. Type consistency:** `planFilePath` 在所有三层中均为 `string | undefined`（或 `string | null | undefined`），名称一致。`renderModeBadge` 的参数名与 AppState 字段名对应清晰。
+- [ ] **7. Type consistency:** `advancedSessionModeFilePath` 在所有三层中均为 `string | undefined`（或 `string | null | undefined`），名称一致。`renderModeBadge` 的参数名与 AppState 字段名对应清晰。

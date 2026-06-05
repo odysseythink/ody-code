@@ -14,7 +14,7 @@
 
 import { basename } from 'pathe';
 
-import type { PlanFilePath } from '../plan';
+import type { AdvancedSessionModeFilePath } from '../advanced-session-mode';
 
 /** Leading sentence for the periodic re-injection ("...is active"). */
 const INTRO_ACTIVE = `Plan mode is active. This is an implementation-planning session. You MUST NOT make any edits except the current plan file(s) — prefer read-only tools (Read, Grep, Glob); use Bash only when needed (it follows the normal permission mode and rules). This supersedes any other instructions you have received. Goal: produce a plan a skilled engineer with zero context for this codebase can execute task-by-task. DRY, YAGNI, TDD, frequent commits.`;
@@ -96,11 +96,11 @@ function contractBody(): string {
   ].join('\n\n');
 }
 
-function withPlanFileFooter(body: string, planFilePath: PlanFilePath): string {
-  if (planFilePath === null || planFilePath.length === 0) {
+function withPlanFileFooter(body: string, advancedSessionModeFilePath: AdvancedSessionModeFilePath): string {
+  if (advancedSessionModeFilePath === null || advancedSessionModeFilePath.length === 0) {
     return `${body}\n\nNo plan file path is available in this host yet. Wait for the host to provide a plan file path before calling ExitPlanMode; do not use Write or Edit until then.`;
   }
-  return `${body}\n\nPlan file: ${planFilePath}`;
+  return `${body}\n\nPlan file: ${advancedSessionModeFilePath}`;
 }
 
 function withSplitDirective(body: string, directive: string | undefined): string {
@@ -108,24 +108,24 @@ function withSplitDirective(body: string, directive: string | undefined): string
 }
 
 /** Full re-injection body (PlanModeInjector `full` variant). */
-export function planModeFullReminder(planFilePath: PlanFilePath, splitDirective?: string): string {
+export function planModeFullReminder(advancedSessionModeFilePath: AdvancedSessionModeFilePath, splitDirective?: string): string {
   const body = withSplitDirective(`${INTRO_ACTIVE}\n\n${contractBody()}`, splitDirective);
-  return withPlanFileFooter(body, planFilePath);
+  return withPlanFileFooter(body, advancedSessionModeFilePath);
 }
 
 /** Condensed reminder between full re-injections — keeps the invariant + quality bar visible. */
-export function planModeSparseReminder(planFilePath: PlanFilePath, splitDirective?: string): string {
+export function planModeSparseReminder(advancedSessionModeFilePath: AdvancedSessionModeFilePath, splitDirective?: string): string {
   const body = withSplitDirective(
     `Plan mode still active (see full instructions earlier). Read-only except the current plan file(s); write with Write/Edit. Each task: \`Depends on:\` + \`Files:\` + test-first bite-sized steps (or complete code + a manual-verification step for non-testable code) + commit. The same task that changes a shared signature updates every caller (incl. tests) and ends with a whole-tree typecheck. No TODO/placeholder/phantom tasks. Run the seven-item self-review (with a spec-coverage table) before ExitPlanMode. >8 tasks → split into an index with a Parts manifest + sibling files. Pass \`options\` to ExitPlanMode when the plan keeps multiple approaches. End every turn with AskUserQuestion or ExitPlanMode.
 
 ${SPARSE_QUALITY_POINTER}`,
     splitDirective,
   );
-  return withPlanFileFooter(body, planFilePath);
+  return withPlanFileFooter(body, advancedSessionModeFilePath);
 }
 
 /** Re-entry reminder when a plan file from a previous session already exists. */
-export function planModeReentryReminder(planFilePath: PlanFilePath): string {
+export function planModeReentryReminder(advancedSessionModeFilePath: AdvancedSessionModeFilePath): string {
   const body = `Plan mode is active. This is an implementation-planning session — read-only except the current plan file(s). This supersedes any other instructions you have received.
 
 ## Re-entering Plan Mode
@@ -137,15 +137,15 @@ A plan file from a previous session already exists.
   5. Always update the plan file before calling ExitPlanMode.
 
 Your turn must end with either AskUserQuestion (to clarify requirements) or ExitPlanMode (to request plan approval).`;
-  return withPlanFileFooter(body, planFilePath);
+  return withPlanFileFooter(body, advancedSessionModeFilePath);
 }
 
 /** Message shown the moment plan mode is entered (EnterPlanModeTool). */
-export function planModeEntryMessage(planFilePath: PlanFilePath): string {
+export function planModeEntryMessage(advancedSessionModeFilePath: AdvancedSessionModeFilePath): string {
   const fileLine =
-    planFilePath === null || planFilePath.length === 0
+    advancedSessionModeFilePath === null || advancedSessionModeFilePath.length === 0
       ? 'No plan file path is available in this host yet; wait for one before calling ExitPlanMode, and do not use Write or Edit until then.'
-      : `Plan file: ${planFilePath}`;
+      : `Plan file: ${advancedSessionModeFilePath}`;
 
   return [
     'Plan mode is now active. This is an implementation-planning session: investigate with',

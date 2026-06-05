@@ -168,7 +168,7 @@ export interface SessionStatus {
   readonly permission: PermissionMode;
   readonly planMode: boolean;
   readonly planKind?: 'plan' | 'design';
-  readonly planFilePath?: string | null;
+  readonly advancedSessionModeFilePath?: string | null;
   readonly contextTokens: number;
   readonly maxContextTokens: number;
   readonly contextUsage: number;

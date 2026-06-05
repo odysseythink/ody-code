@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { KimiTUI, type KimiTUIStartupInput, type TUIState } from '#/tui/kimi-tui';
+import { KimiTUI, type KimiTUIStartupInput, type TUIState } from '#/tui/ody-tui';
 
 interface SignalDriver {
   state: TUIState;

@@ -40,7 +40,7 @@ import {
   MAIN_AGENT_ID,
   OAUTH_LOGIN_REQUIRED_CODE,
   OAUTH_LOGIN_REQUIRED_STARTUP_NOTICE,
-} from '../constant/kimi-tui';
+} from '../constant/ody-tui';
 import {
   argsRecord,
   isTodoItemShape,
@@ -546,7 +546,7 @@ export class SessionEventHandler {
     if (event.contextTokens !== undefined) patch.contextTokens = event.contextTokens;
     if (event.maxContextTokens !== undefined) patch.maxContextTokens = event.maxContextTokens;
     if (event.planMode !== undefined) patch.planMode = event.planMode;
-    if (event.planFilePath !== undefined) patch.planFilePath = event.planFilePath;
+    if (event.advancedSessionModeFilePath !== undefined) patch.advancedSessionModeFilePath = event.advancedSessionModeFilePath;
     if (event.permission !== undefined) {
       patch.permissionMode = event.permission;
     }

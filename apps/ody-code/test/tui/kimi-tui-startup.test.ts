@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { MigrationPlan } from "@odysseythink/migration-legacy";
 import { log, type GoalSnapshot } from "@odysseythink/kimi-code-sdk";
 
-import { KimiTUI, type KimiTUIStartupInput, type TUIState } from "#/tui/kimi-tui";
+import { KimiTUI, type KimiTUIStartupInput, type TUIState } from "#/tui/ody-tui";
 import {
   handleLoginCommand,
   handleLogoutCommand,

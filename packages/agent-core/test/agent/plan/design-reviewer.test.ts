@@ -3,12 +3,12 @@ import { describe, expect, it, vi } from 'vitest';
 import type { Agent } from '../../../src/agent';
 import {
   buildCriticPrompt,
-  DesignReviewer,
+  AdvancedSessionReviewer,
   escalatedSeverities,
   parseAuditLevel,
   parseFindings,
   shouldEscalate,
-} from '../../../src/agent/plan/design-reviewer';
+} from '../../../src/agent/advanced-session-mode/reviewer';
 
 function makeAgent(
   overrides: {
@@ -250,14 +250,14 @@ describe('shouldEscalate', () => {
   });
 });
 
-function reviewer(agent: Agent): DesignReviewer {
-  return new DesignReviewer(agent, { reviewerAlias });
+function reviewer(agent: Agent): AdvancedSessionReviewer {
+  return new AdvancedSessionReviewer(agent, { reviewerAlias });
 }
 
-describe('DesignReviewer', () => {
+describe('AdvancedSessionReviewer', () => {
   it('runs the critique and returns parsed findings with the file audit level', async () => {
     const { agent, track } = makeAgent();
-    const reviewer = new DesignReviewer(agent, { reviewerAlias });
+    const reviewer = new AdvancedSessionReviewer(agent, { reviewerAlias });
     const result = await reviewer.review('## Audit Level\n**Deep**\n\nsome design');
 
     expect(result.ok).toBe(true);
@@ -265,7 +265,7 @@ describe('DesignReviewer', () => {
     expect(result.findings).toHaveLength(1);
     expect(result.findings[0]?.severity).toBe('high');
     expect(track).toHaveBeenCalledWith(
-      'design_review_completed',
+      'advanced_session_review_completed',
       expect.objectContaining({ auditLevel: 'Deep' }),
     );
   });
@@ -273,13 +273,13 @@ describe('DesignReviewer', () => {
   it('routes the critic prompt by document kind (default is design)', async () => {
     // Default (no kind): the system prompt is the design attack surface.
     const design = makeAgent();
-    await new DesignReviewer(design.agent, { reviewerAlias }).review('a design');
+    await new AdvancedSessionReviewer(design.agent, { reviewerAlias }).review('a design');
     expect(design.rawGenerate.mock.calls[0]?.[1]).toContain('DESIGN DOCUMENT');
     expect(design.rawGenerate.mock.calls[0]?.[1]).not.toContain('EXECUTION PLAN');
 
     // kind:'plan' selects the execution-plan attack surface instead.
     const plan = makeAgent();
-    await new DesignReviewer(plan.agent, { reviewerAlias, kind: 'plan' }).review('a plan');
+    await new AdvancedSessionReviewer(plan.agent, { reviewerAlias, kind: 'plan' }).review('a plan');
     expect(plan.rawGenerate.mock.calls[0]?.[1]).toContain('EXECUTION PLAN');
     expect(plan.rawGenerate.mock.calls[0]?.[1]).toContain('Depends on:');
   });
@@ -299,7 +299,7 @@ describe('DesignReviewer', () => {
         resolveAuth: vi.fn(() => undefined),
       },
     });
-    await new DesignReviewer(agent, { reviewerAlias }).review('a design');
+    await new AdvancedSessionReviewer(agent, { reviewerAlias }).review('a design');
     const provider = rawGenerate.mock.calls[0]?.[0] as { thinkingEffort?: unknown };
     expect(provider.thinkingEffort).toBe('off');
   });
@@ -316,7 +316,7 @@ describe('DesignReviewer', () => {
         resolveAuth: vi.fn(() => withAuth),
       },
     });
-    const reviewer = new DesignReviewer(agent, { reviewerAlias });
+    const reviewer = new AdvancedSessionReviewer(agent, { reviewerAlias });
     await reviewer.review('design');
 
     expect(withAuth).toHaveBeenCalledTimes(1);

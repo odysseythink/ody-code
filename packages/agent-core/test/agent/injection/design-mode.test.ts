@@ -6,7 +6,7 @@ import { designModeEntryMessage } from '../../../src/agent/injection/design-mode
 
 interface DesignModeStub {
   isActive: boolean;
-  planFilePath?: string | null;
+  advancedSessionModeFilePath?: string | null;
   /** Content returned by planMode.data(); when set, triggers the reentry variant. */
   content?: string;
   /** When true, the host advertises openExternal so ShowDesignMockup is registered. */
@@ -34,13 +34,13 @@ function designAgent(stub: DesignModeStub): Agent {
       get kind() {
         return 'design';
       },
-      get planFilePath() {
-        return stub.planFilePath ?? null;
+      get advancedSessionModeFilePath() {
+        return stub.advancedSessionModeFilePath ?? null;
       },
       data: async () =>
         stub.content === undefined
           ? null
-          : { id: 'd1', content: stub.content, path: stub.planFilePath ?? '', kind: 'design' },
+          : { id: 'd1', content: stub.content, path: stub.advancedSessionModeFilePath ?? '', kind: 'design' },
     },
     context: {
       history,
@@ -65,7 +65,7 @@ function lastReminder(agent: Agent): string {
 
 describe('DesignModeInjector content', () => {
   it('injects the full reminder with the brainstorming contract and design file footer', async () => {
-    const agent = designAgent({ isActive: true, planFilePath: '/tmp/design.md' });
+    const agent = designAgent({ isActive: true, advancedSessionModeFilePath: '/tmp/design.md' });
     const injector = new DesignModeInjector(agent);
 
     await injector.inject();
@@ -94,7 +94,7 @@ describe('DesignModeInjector content', () => {
   });
 
   it('keeps the entry message and the full reminder in sync (shared contract)', async () => {
-    const agent = designAgent({ isActive: true, planFilePath: '/tmp/design.md' });
+    const agent = designAgent({ isActive: true, advancedSessionModeFilePath: '/tmp/design.md' });
     const injector = new DesignModeInjector(agent);
     await injector.inject();
     const full = lastReminder(agent);
@@ -121,7 +121,7 @@ describe('DesignModeInjector content', () => {
   // prove the model behaves better — it only fails loudly if a future edit silently
   // strips a blade. Behavioural confidence requires the eval harness (see repo notes).
   it('carries the adversarial-review blades in both the entry message and the full reminder', async () => {
-    const agent = designAgent({ isActive: true, planFilePath: '/tmp/design.md' });
+    const agent = designAgent({ isActive: true, advancedSessionModeFilePath: '/tmp/design.md' });
     const injector = new DesignModeInjector(agent);
     await injector.inject();
     const full = lastReminder(agent);
@@ -148,7 +148,7 @@ describe('DesignModeInjector content', () => {
   it('tells the model ShowDesignMockup IS available when the host advertises openExternal', async () => {
     const agent = designAgent({
       isActive: true,
-      planFilePath: '/tmp/design.md',
+      advancedSessionModeFilePath: '/tmp/design.md',
       mockupAvailable: true,
     });
     const injector = new DesignModeInjector(agent);
@@ -165,7 +165,7 @@ describe('DesignModeInjector content', () => {
   });
 
   it('tells the model ShowDesignMockup is NOT available when the host lacks openExternal', async () => {
-    const agent = designAgent({ isActive: true, planFilePath: '/tmp/design.md' });
+    const agent = designAgent({ isActive: true, advancedSessionModeFilePath: '/tmp/design.md' });
     const injector = new DesignModeInjector(agent);
 
     await injector.inject();
@@ -178,7 +178,7 @@ describe('DesignModeInjector content', () => {
   it('resolves the turn-discipline / visual-companion contradiction in the full reminder', async () => {
     const agent = designAgent({
       isActive: true,
-      planFilePath: '/tmp/design.md',
+      advancedSessionModeFilePath: '/tmp/design.md',
       mockupAvailable: true,
     });
     const injector = new DesignModeInjector(agent);
@@ -196,7 +196,7 @@ describe('DesignModeInjector content', () => {
   it('keeps the available visual-companion guidance identical between entry and full reminder', async () => {
     const agent = designAgent({
       isActive: true,
-      planFilePath: '/tmp/design.md',
+      advancedSessionModeFilePath: '/tmp/design.md',
       mockupAvailable: true,
     });
     const injector = new DesignModeInjector(agent);
@@ -215,7 +215,7 @@ describe('DesignModeInjector content', () => {
   });
 
   it('injects the sparse reminder with the quality pointer after the short threshold', async () => {
-    const agent = designAgent({ isActive: true, planFilePath: '/tmp/design.md' });
+    const agent = designAgent({ isActive: true, advancedSessionModeFilePath: '/tmp/design.md' });
     const injector = new DesignModeInjector(agent);
 
     await injector.inject();
@@ -233,7 +233,7 @@ describe('DesignModeInjector content', () => {
   it('injects the reentry reminder when prior design content exists', async () => {
     const agent = designAgent({
       isActive: true,
-      planFilePath: '/tmp/design.md',
+      advancedSessionModeFilePath: '/tmp/design.md',
       content: '# Previous design',
     });
     const injector = new DesignModeInjector(agent);
@@ -246,7 +246,7 @@ describe('DesignModeInjector content', () => {
   });
 
   it('injects the exit reminder when design mode turns off after being active', async () => {
-    const stub: DesignModeStub = { isActive: true, planFilePath: '/tmp/design.md' };
+    const stub: DesignModeStub = { isActive: true, advancedSessionModeFilePath: '/tmp/design.md' };
     const agent = designAgent(stub);
     const injector = new DesignModeInjector(agent);
 
@@ -269,7 +269,7 @@ describe('DesignModeInjector content', () => {
 
 describe('DesignModeInjector cadence', () => {
   it('skips reinjection before the assistant-turn threshold', async () => {
-    const agent = designAgent({ isActive: true, planFilePath: '/tmp/design.md' });
+    const agent = designAgent({ isActive: true, advancedSessionModeFilePath: '/tmp/design.md' });
     const injector = new DesignModeInjector(agent);
 
     await injector.inject();
@@ -281,7 +281,7 @@ describe('DesignModeInjector cadence', () => {
   });
 
   it('refreshes the full reminder after the long assistant-turn threshold', async () => {
-    const agent = designAgent({ isActive: true, planFilePath: '/tmp/design.md' });
+    const agent = designAgent({ isActive: true, advancedSessionModeFilePath: '/tmp/design.md' });
     const injector = new DesignModeInjector(agent);
 
     await injector.inject();
@@ -297,7 +297,7 @@ describe('DesignModeInjector cadence', () => {
   });
 
   it('refreshes the full reminder if a user message appears after the last injection', async () => {
-    const agent = designAgent({ isActive: true, planFilePath: '/tmp/design.md' });
+    const agent = designAgent({ isActive: true, advancedSessionModeFilePath: '/tmp/design.md' });
     const injector = new DesignModeInjector(agent);
 
     await injector.inject();

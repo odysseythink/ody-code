@@ -33,7 +33,7 @@ export interface HelpPanelCommand {
 
 /** Static list — keep in sync with the global editor bindings. */
 export const DEFAULT_KEYBOARD_SHORTCUTS: readonly KeyboardShortcut[] = [
-  { keys: 'Shift-Tab', description: 'Cycle mode: build → plan → design → build' },
+  { keys: 'Shift-Tab', description: 'Cycle mode: normal → plan → design → normal' },
   // { keys: 'Ctrl-G', description: 'Edit in external editor ($VISUAL / $EDITOR)' },
   { keys: 'Ctrl-O', description: 'Toggle tool output expansion' },
   { keys: 'Ctrl-S', description: 'Steer — inject a follow-up during streaming' },

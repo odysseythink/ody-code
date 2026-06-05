@@ -6,7 +6,7 @@ import type { Theme } from '../theme';
 import type { ResolvedTheme } from '../theme/colors';
 import {
   LLM_NOT_SET_MESSAGE,
-} from '../constant/kimi-tui';
+} from '../constant/ody-tui';
 import { formatErrorMessage } from '../utils/event-payload';
 import { parseSlashInput } from './parse';
 import {

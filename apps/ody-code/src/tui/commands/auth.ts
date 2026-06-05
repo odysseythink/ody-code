@@ -21,7 +21,7 @@ import {
 import { log } from '@odysseythink/kimi-code-sdk';
 
 import type { ChoiceOption } from '../components/dialogs/choice-picker';
-import { DEFAULT_OAUTH_PROVIDER_NAME, PRODUCT_NAME } from '../constant/kimi-tui';
+import { DEFAULT_OAUTH_PROVIDER_NAME, PRODUCT_NAME } from '../constant/ody-tui';
 import { formatErrorMessage } from '../utils/event-payload';
 import type { LoginProgressSpinnerHandle } from '../types';
 import {

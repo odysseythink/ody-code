@@ -12,7 +12,7 @@ function createPlanKaos(overrides: Parameters<typeof createFakeKaos>[0] = {}) {
 }
 
 describe('manual plan entry', () => {
-  it('keeps permission gating out of the PlanMode state object', () => {
+  it('keeps permission gating out of the AdvancedSessionMode state object', () => {
     const ctx = testAgent();
 
     expect('beforeToolCall' in ctx.agent.planMode).toBe(false);
@@ -29,7 +29,7 @@ describe('manual plan entry', () => {
     await delay(10);
 
     expect(ctx.agent.planMode.isActive).toBe(true);
-    expect(ctx.agent.planMode.planFilePath).toMatch(/\.md$/);
+    expect(ctx.agent.planMode.advancedSessionModeFilePath).toMatch(/\.md$/);
     expect(mkdir).toHaveBeenCalledWith('/workspace/plan', { parents: true, existOk: true });
     expect(writeText).not.toHaveBeenCalled();
     expect(ctx.allEvents.some((event) => event.event === 'turn.started')).toBe(false);
@@ -44,7 +44,7 @@ describe('manual plan entry', () => {
     });
     await ctx.agent.planMode.enter('stable-plan');
 
-    const livePath = ctx.agent.planMode.planFilePath;
+    const livePath = ctx.agent.planMode.advancedSessionModeFilePath;
     if (livePath === null) throw new Error('expected active plan path');
     expect(livePath).toBe('/workspace/plan/stable-plan.md');
 
@@ -63,7 +63,7 @@ describe('manual plan entry', () => {
       id: 'stable-plan',
     });
 
-    expect(resumed.agent.planMode.planFilePath).toBe(livePath);
+    expect(resumed.agent.planMode.advancedSessionModeFilePath).toBe(livePath);
   });
 
   it('uses fileStem for plan path when provided and restores it from wire records', async () => {
@@ -72,7 +72,7 @@ describe('manual plan entry', () => {
     });
     await ctx.agent.planMode.enter('plan-id', false, true, 'plan', 'custom-stem');
 
-    expect(ctx.agent.planMode.planFilePath).toBe('/workspace/plan/custom-stem.md');
+    expect(ctx.agent.planMode.advancedSessionModeFilePath).toBe('/workspace/plan/custom-stem.md');
     expect(ctx.agent.planMode.fileStem).toBe('custom-stem');
 
     const enterRecord = ctx.allEvents.find(
@@ -91,7 +91,7 @@ describe('manual plan entry', () => {
       fileStem: 'custom-stem',
     });
 
-    expect(resumed.agent.planMode.planFilePath).toBe('/workspace/plan/custom-stem.md');
+    expect(resumed.agent.planMode.advancedSessionModeFilePath).toBe('/workspace/plan/custom-stem.md');
     expect(resumed.agent.planMode.fileStem).toBe('custom-stem');
   });
 
@@ -138,7 +138,7 @@ describe('plan clear', () => {
     });
     await ctx.agent.planMode.enter('test-plan', false);
 
-    const planPath = ctx.agent.planMode.planFilePath;
+    const planPath = ctx.agent.planMode.advancedSessionModeFilePath;
     if (planPath === null) throw new Error('expected active plan path');
     files.set(planPath, '# Plan\n\n- Step 1');
 
@@ -147,7 +147,7 @@ describe('plan clear', () => {
     expect(writeText).toHaveBeenCalledWith(planPath, '');
     expect(files.get(planPath)).toBe('');
     expect(ctx.agent.planMode.isActive).toBe(true);
-    expect(ctx.agent.planMode.planFilePath).toBe(planPath);
+    expect(ctx.agent.planMode.advancedSessionModeFilePath).toBe(planPath);
     await expect(ctx.rpc.getPlan({})).resolves.toMatchObject({
       id: 'test-plan',
       content: '',
@@ -168,7 +168,7 @@ describe('plan exit tool', () => {
     await ctx.rpc.setPermission({ mode: 'auto' });
     await ctx.agent.planMode.enter('test-plan', false);
 
-    const planPath = ctx.agent.planMode.planFilePath;
+    const planPath = ctx.agent.planMode.advancedSessionModeFilePath;
     if (planPath === null) throw new Error('expected active plan path');
     files.set(planPath, '# Plan\n\n- Inspect\n- Change\n- Verify');
 
@@ -204,7 +204,7 @@ describe('plan exit tool', () => {
     await ctx.rpc.setPermission({ mode: 'manual' });
     await ctx.agent.planMode.enter('reject-plan', false);
 
-    const planPath = ctx.agent.planMode.planFilePath;
+    const planPath = ctx.agent.planMode.advancedSessionModeFilePath;
     if (planPath === null) throw new Error('expected active plan path');
     files.set(planPath, '# Plan\n\n- Inspect\n- Change\n- Verify');
 
@@ -242,7 +242,7 @@ describe('plan exit tool', () => {
     await ctx.rpc.setPermission({ mode: 'yolo' });
     await ctx.agent.planMode.enter('reject-and-exit-plan', false);
 
-    const planPath = ctx.agent.planMode.planFilePath;
+    const planPath = ctx.agent.planMode.advancedSessionModeFilePath;
     if (planPath === null) throw new Error('expected active plan path');
     files.set(planPath, '# Plan\n\n- Inspect\n- Change\n- Verify');
 
@@ -319,7 +319,7 @@ describe('plan exit tool options', () => {
     await ctx.rpc.setPermission({ mode: 'manual' });
     await ctx.agent.planMode.enter('options-plan', false);
 
-    const planPath = ctx.agent.planMode.planFilePath;
+    const planPath = ctx.agent.planMode.advancedSessionModeFilePath;
     if (planPath === null) throw new Error('expected active plan path');
     files.set(planPath, '# Plan\n\n- Inspect\n- Change\n- Verify');
 
@@ -371,7 +371,7 @@ describe('plan allows safe tool flow', () => {
       ctx.configure({ tools: [toolName] });
       await ctx.agent.planMode.enter('test-plan', false);
 
-      const planPath = ctx.agent.planMode.planFilePath;
+      const planPath = ctx.agent.planMode.advancedSessionModeFilePath;
       if (planPath === null) throw new Error('expected active plan path');
       files.set(planPath, '# Plan\n\n- Draft');
 
@@ -421,7 +421,7 @@ describe('plan allows safe tool flow', () => {
     });
     await ctx.agent.planMode.enter('test-plan', false);
 
-    const planPath = ctx.agent.planMode.planFilePath;
+    const planPath = ctx.agent.planMode.advancedSessionModeFilePath;
     if (planPath === null) throw new Error('expected active plan path');
     const content = '# Plan\n\n- Inspect\n- Verify';
     const writePlanCall: ToolCall = {
@@ -464,9 +464,9 @@ describe('plan allows safe tool flow', () => {
     await ctx.rpc.prompt({ input: [{ type: 'text', text: 'Inspect without mutating files' }] });
     expect(await ctx.untilTurnEnd()).toMatchInlineSnapshot(`
       [wire] permission.set_mode         { "mode": "yolo", "time": "<time>" }
-      [emit] agent.status.updated        { "model": "mock-model", "contextTokens": 0, "maxContextTokens": 1000000, "contextUsage": 0, "planMode": false, "planKind": "plan", "planFilePath": null, "permission": "yolo" }
+      [emit] agent.status.updated        { "model": "mock-model", "contextTokens": 0, "maxContextTokens": 1000000, "contextUsage": 0, "planMode": false, "planKind": "plan", "advancedSessionModeFilePath": null, "permission": "yolo" }
       [wire] plan_mode.enter             { "id": "test-plan", "kind": "plan", "time": "<time>" }
-      [emit] agent.status.updated        { "model": "mock-model", "contextTokens": 0, "maxContextTokens": 1000000, "contextUsage": 0, "planMode": true, "planKind": "plan", "planFilePath": "/Users/ranwei/workspace/ody-code/plan/test-plan.md", "permission": "yolo" }
+      [emit] agent.status.updated        { "model": "mock-model", "contextTokens": 0, "maxContextTokens": 1000000, "contextUsage": 0, "planMode": true, "planKind": "plan", "advancedSessionModeFilePath": "/Users/ranwei/workspace/ody-code/plan/test-plan.md", "permission": "yolo" }
       [wire] turn.prompt                 { "input": [ { "type": "text", "text": "Inspect without mutating files" } ], "origin": { "kind": "user" }, "time": "<time>" }
       [emit] turn.started                { "turnId": 0, "origin": { "kind": "user" } }
       [wire] context.append_message      { "message": { "role": "user", "content": [ { "type": "text", "text": "Inspect without mutating files" } ], "toolCalls": [], "origin": { "kind": "user" } }, "time": "<time>" }
@@ -483,7 +483,7 @@ describe('plan allows safe tool flow', () => {
       [wire] context.append_loop_event   { "event": { "type": "step.end", "uuid": "<uuid-1>", "turnId": "0", "step": 1, "usage": { "inputOther": 2224, "output": 23, "inputCacheRead": 0, "inputCacheCreation": 0 }, "finishReason": "tool_use" }, "time": "<time>" }
       [emit] turn.step.completed         { "turnId": 0, "step": 1, "stepId": "<uuid-1>", "usage": { "inputOther": 2224, "output": 23, "inputCacheRead": 0, "inputCacheCreation": 0 }, "finishReason": "tool_use" }
       [wire] usage.record                { "model": "mock-model", "usage": { "inputOther": 2224, "output": 23, "inputCacheRead": 0, "inputCacheCreation": 0 }, "usageScope": "turn", "time": "<time>" }
-      [emit] agent.status.updated        { "model": "mock-model", "contextTokens": 2247, "maxContextTokens": 1000000, "contextUsage": 0.002247, "planMode": true, "planKind": "plan", "planFilePath": "/Users/ranwei/workspace/ody-code/plan/test-plan.md", "permission": "yolo", "usage": { "byModel": { "mock-model": { "inputOther": 2224, "output": 23, "inputCacheRead": 0, "inputCacheCreation": 0 } }, "total": { "inputOther": 2224, "output": 23, "inputCacheRead": 0, "inputCacheCreation": 0 }, "currentTurn": { "inputOther": 2224, "output": 23, "inputCacheRead": 0, "inputCacheCreation": 0 } } }
+      [emit] agent.status.updated        { "model": "mock-model", "contextTokens": 2247, "maxContextTokens": 1000000, "contextUsage": 0.002247, "planMode": true, "planKind": "plan", "advancedSessionModeFilePath": "/Users/ranwei/workspace/ody-code/plan/test-plan.md", "permission": "yolo", "usage": { "byModel": { "mock-model": { "inputOther": 2224, "output": 23, "inputCacheRead": 0, "inputCacheCreation": 0 } }, "total": { "inputOther": 2224, "output": 23, "inputCacheRead": 0, "inputCacheCreation": 0 }, "currentTurn": { "inputOther": 2224, "output": 23, "inputCacheRead": 0, "inputCacheCreation": 0 } } }
       [wire] context.append_loop_event   { "event": { "type": "step.begin", "uuid": "<uuid-3>", "turnId": "0", "step": 2 }, "time": "<time>" }
       [emit] turn.step.started           { "turnId": 0, "step": 2, "stepId": "<uuid-3>" }
       [emit] assistant.delta             { "turnId": 0, "delta": "The safe command printed plan-safe." }
@@ -491,7 +491,7 @@ describe('plan allows safe tool flow', () => {
       [wire] context.append_loop_event   { "event": { "type": "step.end", "uuid": "<uuid-3>", "turnId": "0", "step": 2, "usage": { "inputOther": 2251, "output": 12, "inputCacheRead": 0, "inputCacheCreation": 0 }, "finishReason": "end_turn" }, "time": "<time>" }
       [emit] turn.step.completed         { "turnId": 0, "step": 2, "stepId": "<uuid-3>", "usage": { "inputOther": 2251, "output": 12, "inputCacheRead": 0, "inputCacheCreation": 0 }, "finishReason": "end_turn" }
       [wire] usage.record                { "model": "mock-model", "usage": { "inputOther": 2251, "output": 12, "inputCacheRead": 0, "inputCacheCreation": 0 }, "usageScope": "turn", "time": "<time>" }
-      [emit] agent.status.updated        { "model": "mock-model", "contextTokens": 2263, "maxContextTokens": 1000000, "contextUsage": 0.002263, "planMode": true, "planKind": "plan", "planFilePath": "/Users/ranwei/workspace/ody-code/plan/test-plan.md", "permission": "yolo", "usage": { "byModel": { "mock-model": { "inputOther": 4475, "output": 35, "inputCacheRead": 0, "inputCacheCreation": 0 } }, "total": { "inputOther": 4475, "output": 35, "inputCacheRead": 0, "inputCacheCreation": 0 }, "currentTurn": { "inputOther": 4475, "output": 35, "inputCacheRead": 0, "inputCacheCreation": 0 } } }
+      [emit] agent.status.updated        { "model": "mock-model", "contextTokens": 2263, "maxContextTokens": 1000000, "contextUsage": 0.002263, "planMode": true, "planKind": "plan", "advancedSessionModeFilePath": "/Users/ranwei/workspace/ody-code/plan/test-plan.md", "permission": "yolo", "usage": { "byModel": { "mock-model": { "inputOther": 4475, "output": 35, "inputCacheRead": 0, "inputCacheCreation": 0 } }, "total": { "inputOther": 4475, "output": 35, "inputCacheRead": 0, "inputCacheCreation": 0 }, "currentTurn": { "inputOther": 4475, "output": 35, "inputCacheRead": 0, "inputCacheCreation": 0 } } }
       [emit] turn.ended                  { "turnId": 0, "reason": "completed" }
     `);
     await ctx.expectResumeMatches();
@@ -517,9 +517,9 @@ describe('plan mode Bash ordinary permission behavior', () => {
 
     expect(await ctx.untilTurnEnd()).toMatchInlineSnapshot(`
       [wire] permission.set_mode         { "mode": "yolo", "time": "<time>" }
-      [emit] agent.status.updated        { "model": "mock-model", "contextTokens": 0, "maxContextTokens": 1000000, "contextUsage": 0, "planMode": false, "planKind": "plan", "planFilePath": null, "permission": "yolo" }
+      [emit] agent.status.updated        { "model": "mock-model", "contextTokens": 0, "maxContextTokens": 1000000, "contextUsage": 0, "planMode": false, "planKind": "plan", "advancedSessionModeFilePath": null, "permission": "yolo" }
       [wire] plan_mode.enter             { "id": "test-plan", "kind": "plan", "time": "<time>" }
-      [emit] agent.status.updated        { "model": "mock-model", "contextTokens": 0, "maxContextTokens": 1000000, "contextUsage": 0, "planMode": true, "planKind": "plan", "planFilePath": "/Users/ranwei/workspace/ody-code/plan/test-plan.md", "permission": "yolo" }
+      [emit] agent.status.updated        { "model": "mock-model", "contextTokens": 0, "maxContextTokens": 1000000, "contextUsage": 0, "planMode": true, "planKind": "plan", "advancedSessionModeFilePath": "/Users/ranwei/workspace/ody-code/plan/test-plan.md", "permission": "yolo" }
       [wire] turn.prompt                 { "input": [ { "type": "text", "text": "Remove forbidden.txt" } ], "origin": { "kind": "user" }, "time": "<time>" }
       [emit] turn.started                { "turnId": 0, "origin": { "kind": "user" } }
       [wire] context.append_message      { "message": { "role": "user", "content": [ { "type": "text", "text": "Remove forbidden.txt" } ], "toolCalls": [], "origin": { "kind": "user" } }, "time": "<time>" }
@@ -536,7 +536,7 @@ describe('plan mode Bash ordinary permission behavior', () => {
       [wire] context.append_loop_event   { "event": { "type": "step.end", "uuid": "<uuid-1>", "turnId": "0", "step": 1, "usage": { "inputOther": 2221, "output": 23, "inputCacheRead": 0, "inputCacheCreation": 0 }, "finishReason": "tool_use" }, "time": "<time>" }
       [emit] turn.step.completed         { "turnId": 0, "step": 1, "stepId": "<uuid-1>", "usage": { "inputOther": 2221, "output": 23, "inputCacheRead": 0, "inputCacheCreation": 0 }, "finishReason": "tool_use" }
       [wire] usage.record                { "model": "mock-model", "usage": { "inputOther": 2221, "output": 23, "inputCacheRead": 0, "inputCacheCreation": 0 }, "usageScope": "turn", "time": "<time>" }
-      [emit] agent.status.updated        { "model": "mock-model", "contextTokens": 2244, "maxContextTokens": 1000000, "contextUsage": 0.002244, "planMode": true, "planKind": "plan", "planFilePath": "/Users/ranwei/workspace/ody-code/plan/test-plan.md", "permission": "yolo", "usage": { "byModel": { "mock-model": { "inputOther": 2221, "output": 23, "inputCacheRead": 0, "inputCacheCreation": 0 } }, "total": { "inputOther": 2221, "output": 23, "inputCacheRead": 0, "inputCacheCreation": 0 }, "currentTurn": { "inputOther": 2221, "output": 23, "inputCacheRead": 0, "inputCacheCreation": 0 } } }
+      [emit] agent.status.updated        { "model": "mock-model", "contextTokens": 2244, "maxContextTokens": 1000000, "contextUsage": 0.002244, "planMode": true, "planKind": "plan", "advancedSessionModeFilePath": "/Users/ranwei/workspace/ody-code/plan/test-plan.md", "permission": "yolo", "usage": { "byModel": { "mock-model": { "inputOther": 2221, "output": 23, "inputCacheRead": 0, "inputCacheCreation": 0 } }, "total": { "inputOther": 2221, "output": 23, "inputCacheRead": 0, "inputCacheCreation": 0 }, "currentTurn": { "inputOther": 2221, "output": 23, "inputCacheRead": 0, "inputCacheCreation": 0 } } }
       [wire] context.append_loop_event   { "event": { "type": "step.begin", "uuid": "<uuid-3>", "turnId": "0", "step": 2 }, "time": "<time>" }
       [emit] turn.step.started           { "turnId": 0, "step": 2, "stepId": "<uuid-3>" }
       [emit] assistant.delta             { "turnId": 0, "delta": "The command completed." }
@@ -544,7 +544,7 @@ describe('plan mode Bash ordinary permission behavior', () => {
       [wire] context.append_loop_event   { "event": { "type": "step.end", "uuid": "<uuid-3>", "turnId": "0", "step": 2, "usage": { "inputOther": 2247, "output": 9, "inputCacheRead": 0, "inputCacheCreation": 0 }, "finishReason": "end_turn" }, "time": "<time>" }
       [emit] turn.step.completed         { "turnId": 0, "step": 2, "stepId": "<uuid-3>", "usage": { "inputOther": 2247, "output": 9, "inputCacheRead": 0, "inputCacheCreation": 0 }, "finishReason": "end_turn" }
       [wire] usage.record                { "model": "mock-model", "usage": { "inputOther": 2247, "output": 9, "inputCacheRead": 0, "inputCacheCreation": 0 }, "usageScope": "turn", "time": "<time>" }
-      [emit] agent.status.updated        { "model": "mock-model", "contextTokens": 2256, "maxContextTokens": 1000000, "contextUsage": 0.002256, "planMode": true, "planKind": "plan", "planFilePath": "/Users/ranwei/workspace/ody-code/plan/test-plan.md", "permission": "yolo", "usage": { "byModel": { "mock-model": { "inputOther": 4468, "output": 32, "inputCacheRead": 0, "inputCacheCreation": 0 } }, "total": { "inputOther": 4468, "output": 32, "inputCacheRead": 0, "inputCacheCreation": 0 }, "currentTurn": { "inputOther": 4468, "output": 32, "inputCacheRead": 0, "inputCacheCreation": 0 } } }
+      [emit] agent.status.updated        { "model": "mock-model", "contextTokens": 2256, "maxContextTokens": 1000000, "contextUsage": 0.002256, "planMode": true, "planKind": "plan", "advancedSessionModeFilePath": "/Users/ranwei/workspace/ody-code/plan/test-plan.md", "permission": "yolo", "usage": { "byModel": { "mock-model": { "inputOther": 4468, "output": 32, "inputCacheRead": 0, "inputCacheCreation": 0 } }, "total": { "inputOther": 4468, "output": 32, "inputCacheRead": 0, "inputCacheCreation": 0 }, "currentTurn": { "inputOther": 4468, "output": 32, "inputCacheRead": 0, "inputCacheCreation": 0 } } }
       [emit] turn.ended                  { "turnId": 0, "reason": "completed" }
     `);
     expect(toolResultText(ctx.agent.context.history)).toContain('removed');
@@ -775,7 +775,7 @@ describe('lazy fileStem and design reuse', () => {
     });
     await ctx.agent.planMode.enter('brave-fox-1234', false, false, 'plan');
     expect(ctx.agent.planMode.fileStem).toBe('brave-fox-1234');
-    expect(ctx.agent.planMode.planFilePath).toContain('plan/brave-fox-1234.md');
+    expect(ctx.agent.planMode.advancedSessionModeFilePath).toContain('plan/brave-fox-1234.md');
   });
 
   it('enter stores manual topic slug', async () => {
@@ -822,14 +822,14 @@ describe('finalizeFileName', () => {
       kaos: createFakeKaos({ mkdir, readText, writeText }),
     });
     await ctx.agent.planMode.enter('brave-fox-1234', false, false, 'plan');
-    const tempPath = ctx.agent.planMode.planFilePath!;
+    const tempPath = ctx.agent.planMode.advancedSessionModeFilePath!;
     await writeText(tempPath, '# My Plan\n\ncontent');
 
     const finalPath = await ctx.agent.planMode.finalizeFileName();
 
     const today = new Date().toISOString().slice(0, 10);
     expect(finalPath).toContain(`plan/${today}-my-plan.md`);
-    expect(ctx.agent.planMode.planFilePath).toBe(finalPath);
+    expect(ctx.agent.planMode.advancedSessionModeFilePath).toBe(finalPath);
     expect(ctx.agent.planMode.fileStem).toBe(`${today}-my-plan`);
   });
 
@@ -866,7 +866,7 @@ describe('finalizeFileName', () => {
     // pre-create the target file
     const targetPath = `/workspace/plan/${today}-my-plan.md`;
     files.set(targetPath, 'existing');
-    const tempPath = ctx.agent.planMode.planFilePath!;
+    const tempPath = ctx.agent.planMode.advancedSessionModeFilePath!;
     await writeText(tempPath, '# My Plan\n\ncontent');
 
     const finalPath = await ctx.agent.planMode.finalizeFileName();
@@ -886,7 +886,7 @@ describe('finalizeFileName', () => {
       kaos: createFakeKaos({ mkdir, readText, writeText }),
     });
     await ctx.agent.planMode.enter('brave-fox-1234', false, false, 'plan', 'custom-topic');
-    const tempPath = ctx.agent.planMode.planFilePath!;
+    const tempPath = ctx.agent.planMode.advancedSessionModeFilePath!;
     await writeText(tempPath, 'no heading here');
 
     const finalPath = await ctx.agent.planMode.finalizeFileName();
@@ -907,7 +907,7 @@ describe('finalizeFileName', () => {
       kaos: createFakeKaos({ mkdir, readText, writeText }),
     });
     await ctx.agent.planMode.enter('brave-fox-1234', false, false, 'plan');
-    const tempPath = ctx.agent.planMode.planFilePath!;
+    const tempPath = ctx.agent.planMode.advancedSessionModeFilePath!;
     await writeText(tempPath, 'no heading here');
 
     const finalPath = await ctx.agent.planMode.finalizeFileName();
@@ -928,12 +928,12 @@ describe('finalizeFileName', () => {
       kaos: createFakeKaos({ mkdir, readText, writeText }),
     });
     await ctx.agent.planMode.enter('brave-fox-1234', false, false, 'plan');
-    const tempPath = ctx.agent.planMode.planFilePath;
+    const tempPath = ctx.agent.planMode.advancedSessionModeFilePath;
     const result = await ctx.agent.planMode.finalizeFileName();
     expect(result).toBe(tempPath);
   });
 
-  it('isWritablePlanPath works after finalize', async () => {
+  it('isWritableAdvancedSessionModePath works after finalize', async () => {
     const files = new Map<string, string>();
     const mkdir = vi.fn().mockResolvedValue(undefined);
     const readText = vi.fn(async (path: string) => files.get(path) ?? '');
@@ -945,10 +945,10 @@ describe('finalizeFileName', () => {
       kaos: createFakeKaos({ mkdir, readText, writeText }),
     });
     await ctx.agent.planMode.enter('brave-fox-1234', false, false, 'plan');
-    const tempPath = ctx.agent.planMode.planFilePath!;
+    const tempPath = ctx.agent.planMode.advancedSessionModeFilePath!;
     await writeText(tempPath, '# My Plan\n');
     await ctx.agent.planMode.finalizeFileName();
-    expect(ctx.agent.planMode.isWritablePlanPath(ctx.agent.planMode.planFilePath!)).toBe(true);
+    expect(ctx.agent.planMode.isWritableAdvancedSessionModePath(ctx.agent.planMode.advancedSessionModeFilePath!)).toBe(true);
   });
 });
 
@@ -977,7 +977,7 @@ describe('code review fixes', () => {
     });
     // simulate a resumed session with a dated fileStem
     ctx.agent.planMode.restoreEnter({ id: 'restored-id', kind: 'plan', fileStem: '2024-06-05-my-feature' });
-    const tempPath = ctx.agent.planMode.planFilePath!;
+    const tempPath = ctx.agent.planMode.advancedSessionModeFilePath!;
     await writeText(tempPath, 'no heading here');
 
     const finalPath = await ctx.agent.planMode.finalizeFileName();
@@ -1000,7 +1000,7 @@ describe('code review fixes', () => {
     await ctx.agent.planMode.enter('brave-fox-1234', false, false, 'plan');
     // simulate an edge case where manualTopicSlug is empty string
     (ctx.agent.planMode as any)._manualTopicSlug = '';
-    const tempPath = ctx.agent.planMode.planFilePath!;
+    const tempPath = ctx.agent.planMode.advancedSessionModeFilePath!;
     await writeText(tempPath, 'no heading here');
 
     const finalPath = await ctx.agent.planMode.finalizeFileName();
@@ -1021,7 +1021,7 @@ describe('code review fixes', () => {
       kaos: createFakeKaos({ mkdir, readText, writeText }),
     });
     await ctx.agent.planMode.enter('brave-fox-1234', false, false, 'plan');
-    const tempPath = ctx.agent.planMode.planFilePath!;
+    const tempPath = ctx.agent.planMode.advancedSessionModeFilePath!;
     await writeText(tempPath, '# My Plan\n\ncontent');
 
     await ctx.rpc.cancelPlan({ id: 'brave-fox-1234' });
@@ -1043,7 +1043,7 @@ describe('code review fixes', () => {
       kaos: createFakeKaos({ mkdir, readText, writeText }),
     });
     await ctx.agent.planMode.enter('brave-fox-1234', false, false, 'plan');
-    const planPath = ctx.agent.planMode.planFilePath!;
+    const planPath = ctx.agent.planMode.advancedSessionModeFilePath!;
     await writeText(planPath, '# Plan Title\n\ncontent');
 
     await ctx.rpc.enterPlan({ kind: 'design' });

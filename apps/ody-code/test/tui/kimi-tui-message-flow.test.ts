@@ -21,7 +21,7 @@ import {
   PluginRemoveConfirmComponent,
   PluginsOverviewSelectorComponent,
 } from '#/tui/components/dialogs/plugins-selector';
-import { KimiTUI, type KimiTUIStartupInput, type TUIState } from '#/tui/kimi-tui';
+import { KimiTUI, type KimiTUIStartupInput, type TUIState } from '#/tui/ody-tui';
 import type { StreamingUIController } from '#/tui/controllers/streaming-ui';
 import { handleFeedbackCommand } from '#/tui/commands/info';
 import {

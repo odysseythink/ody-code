@@ -16,7 +16,7 @@ import {
   feedbackSessionLine,
   withFeedbackVersionPrefix,
 } from '../constant/feedback';
-import { isManagedUsageProvider } from '../constant/kimi-tui';
+import { isManagedUsageProvider } from '../constant/ody-tui';
 import { formatErrorMessage } from '../utils/event-payload';
 import { openUrl } from '../utils/open-url';
 import { promptFeedbackInput } from './prompts';

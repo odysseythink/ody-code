@@ -26,7 +26,7 @@ import { safeUsageRatio } from '#/utils/usage/usage-format';
 const MAX_CWD_SEGMENTS = 3;
 const GOAL_TIMER_INTERVAL_MS = 1_000;
 
-const EMOJIS: Record<string, string> = { build: '⚒️', plan: '📝', design: '✏️' };
+const EMOJIS: Record<string, string> = { normal: '⚒️', plan: '📝', design: '✏️' };
 
 function planFileName(path: string | null | undefined): string | null {
   if (!path) return null;
@@ -46,7 +46,7 @@ function luminance(hex: string): number {
 }
 
 function renderModeBadge(
-  mode: 'build' | 'plan' | 'design',
+  mode: 'normal' | 'plan' | 'design',
   colors: ColorPalette,
   fileName?: string,
 ): string {
@@ -395,8 +395,8 @@ export class FooterComponent implements Component {
     }
 
     // ── Line 2: inverted mode badge (left) + transient hint + context (right) ──
-    const mode = state.designMode ? 'design' : state.planMode ? 'plan' : 'build';
-    const fileName = mode === 'build' ? planFileName(state.planFilePath) : null;
+    const mode = state.designMode ? 'design' : state.planMode ? 'plan' : 'normal';
+    const fileName = mode === 'normal' ? planFileName(state.advancedSessionModeFilePath) : null;
     let badge = renderModeBadge(mode, colors, fileName ?? undefined);
     let badgeWidth = visibleWidth(badge);
     const maxBadgeWidth = Math.floor(width / 2);

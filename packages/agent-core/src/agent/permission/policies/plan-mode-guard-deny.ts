@@ -16,11 +16,11 @@ export class PlanModeGuardDenyPermissionPolicy implements PermissionPolicy {
     const toolName = context.toolCall.name;
 
     if (toolName === 'Write' || toolName === 'Edit') {
-      const planFilePath = this.agent.planMode.planFilePath;
-      if (planFilePath === null) {
+      const advancedSessionModeFilePath = this.agent.planMode.advancedSessionModeFilePath;
+      if (advancedSessionModeFilePath === null) {
         return {
           kind: 'deny',
-          message: modeWriteDeniedMessage(modeLabel, planFilePath),
+          message: modeWriteDeniedMessage(modeLabel, advancedSessionModeFilePath),
         };
       }
       if (writesOnlyPlanFileset(context, this.agent)) {
@@ -28,7 +28,7 @@ export class PlanModeGuardDenyPermissionPolicy implements PermissionPolicy {
       }
       return {
         kind: 'deny',
-        message: modeWriteDeniedMessage(modeLabel, planFilePath),
+        message: modeWriteDeniedMessage(modeLabel, advancedSessionModeFilePath),
       };
     }
 
@@ -55,14 +55,14 @@ function writesOnlyPlanFileset(context: PermissionPolicyContext, agent: Agent): 
   if (writeAccesses.length === 0) return false;
   // The plan's writable set is the main plan file plus its split siblings
   // (`<id>-*.md` in the same directory); everything else stays denied.
-  return writeAccesses.every((access) => agent.planMode.isWritablePlanPath(access.path));
+  return writeAccesses.every((access) => agent.planMode.isWritableAdvancedSessionModePath(access.path));
 }
 
-function modeWriteDeniedMessage(modeLabel: string, planFilePath: string | null): string {
+function modeWriteDeniedMessage(modeLabel: string, advancedSessionModeFilePath: string | null): string {
   const Mode = modeLabel.charAt(0).toUpperCase() + modeLabel.slice(1);
   const exitTool = modeLabel === 'design' ? 'ExitDesignMode' : 'ExitPlanMode';
   return (
-    `${Mode} mode is active. You may only write to the current ${modeLabel} file: ${planFilePath ?? `(no ${modeLabel} file selected yet)`}. ` +
+    `${Mode} mode is active. You may only write to the current ${modeLabel} file: ${advancedSessionModeFilePath ?? `(no ${modeLabel} file selected yet)`}. ` +
     `Call ${exitTool} to exit ${modeLabel} mode before editing other files.`
   );
 }

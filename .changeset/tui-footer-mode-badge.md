@@ -4,4 +4,4 @@
 "@odysseythink/kimi-code": minor
 ---
 
-Add inverted-color mode badge to footer Line 2 displaying the active mode and plan file name, and wire planFilePath through the agent event pipeline.
+Add inverted-color mode badge to footer Line 2 displaying the active mode and plan file name, and wire advancedSessionModeFilePath through the agent event pipeline.

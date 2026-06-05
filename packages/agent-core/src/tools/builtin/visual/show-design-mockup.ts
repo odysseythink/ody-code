@@ -99,7 +99,7 @@ export class ShowDesignMockupTool implements BuiltinTool<ShowDesignMockupInput> 
   }
 
   private async writeMockup(html: string, title: string): Promise<string> {
-    const designPath = this.agent.planMode.planFilePath;
+    const designPath = this.agent.planMode.advancedSessionModeFilePath;
     const baseDir =
       designPath !== null && designPath.length > 0
         ? join(dirname(designPath), '.mockups')

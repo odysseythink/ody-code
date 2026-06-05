@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { KimiTUI, type KimiTUIStartupInput, type TUIState } from '#/tui/kimi-tui';
+import { KimiTUI, type KimiTUIStartupInput, type TUIState } from '#/tui/ody-tui';
 
 vi.mock('node:fs/promises', async (importOriginal) => {
   const actual = await importOriginal<typeof import('node:fs/promises')>();
@@ -27,7 +27,7 @@ function makeSession(overrides: Record<string, unknown> = {}) {
       permission: 'manual',
       planMode: true,
       planKind: 'plan',
-      planFilePath: '/tmp/plans/test-plan.md',
+      advancedSessionModeFilePath: '/tmp/plans/test-plan.md',
       contextTokens: 10,
       maxContextTokens: 100,
       contextUsage: 0.1,
@@ -84,7 +84,7 @@ function makeStartupInput(): KimiTUIStartupInput {
 }
 
 describe('KimiTUI syncRuntimeState', () => {
-  it('propagates planFilePath when the file exists', async () => {
+  it('propagates advancedSessionModeFilePath when the file exists', async () => {
     const session = makeSession();
     const harness = makeHarness(session);
     const driver = new KimiTUI(harness as never, makeStartupInput()) as unknown as SyncDriver;
@@ -95,7 +95,7 @@ describe('KimiTUI syncRuntimeState', () => {
 
     await driver.syncRuntimeState(session as never);
 
-    expect(driver.state.appState.planFilePath).toBe('/tmp/plans/test-plan.md');
+    expect(driver.state.appState.advancedSessionModeFilePath).toBe('/tmp/plans/test-plan.md');
   });
 
   it('falls back to null when the plan file does not exist', async () => {
@@ -109,6 +109,6 @@ describe('KimiTUI syncRuntimeState', () => {
 
     await driver.syncRuntimeState(session as never);
 
-    expect(driver.state.appState.planFilePath).toBeNull();
+    expect(driver.state.appState.advancedSessionModeFilePath).toBeNull();
   });
 });

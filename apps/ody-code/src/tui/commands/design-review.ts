@@ -15,7 +15,7 @@
 
 import type { DesignReviewData, ReviewFindingData } from '@odysseythink/kimi-code-sdk';
 
-import { NO_ACTIVE_SESSION_MESSAGE } from '../constant/kimi-tui';
+import { NO_ACTIVE_SESSION_MESSAGE } from '../constant/ody-tui';
 import type { SlashCommandHost } from './dispatch';
 
 type ReviewKind = 'plan' | 'design';

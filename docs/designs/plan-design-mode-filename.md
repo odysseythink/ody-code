@@ -30,7 +30,7 @@
 - [C:USER] EnterDesignModeTool 和 EnterPlanModeTool 新增可选 `topic?: string` 参数。
 - [C:USER] 工具层调用 LLM 根据最近对话生成英文 kebab-case 主题 slug（最大 50 字符）。
 - [C:USER] 文件名格式：`<topic>-YYYYMMDD-HHMMSS.md`（design 存 `designs/`，plan 存 `plans/`）。
-- [C:USER] planId 保持独立随机 hero slug，用于 records / replay / 权限守卫 (`isWritablePlanPath`)。
+- [C:USER] planId 保持独立随机 hero slug，用于 records / replay / 权限守卫 (`isWritableAdvancedSessionModePath`)。
 - [C:USER] LLM 生成失败时回退到 `design-YYYYMMDD-HHMMSS.md` 或 `plan-YYYYMMDD-HHMMSS.md`。
 - [C:USER] Prompt 安全指令 + 代码层敏感词过滤（`key`, `token`, `password`, `secret`, `credential` 等）。
 - [C:USER] Telemetry：`topic_generation_failed` 事件，附 `reason` 字段。
@@ -67,9 +67,9 @@ User → EnterDesignModeTool / EnterPlanModeTool
         │
         ├─ planId = generateHeroSlug()  // 随机，不变
         ├─ _fileStem = fileStem ?? planId
-        ├─ planFilePath = planFilePathFor(_fileStem)
+        ├─ advancedSessionModeFilePath = advancedSessionModeFilePathFor(_fileStem)
         │     └─ 使用 _fileStem 作为文件名 stem（替代原来的 planId）
-        ├─ _planFilePath = planFilePath
+        ├─ _SessionModeFilePath = advancedSessionModeFilePath
         ├─ records.logRecord({ type: 'plan_mode.enter', id: planId, kind })
         └─ emitStatusUpdated()
 ```
@@ -112,10 +112,10 @@ export class TopicGenerator {
 // packages/agent-core/src/agent/plan/index.ts
 
 async enter(
-  id = this.createPlanId(),
+  id = this.createAdvancedSessionModeId(),
   createFile = false,
   emitStatus = true,
-  kind: PlanKind = 'plan',
+  kind: AdvancedSessionModeKind = 'plan',
   fileStem?: string,  // [C:USER] 新增
 ): Promise<void>
 ```
@@ -272,13 +272,13 @@ execute: async () => {
 **变更前：**
 ```ts
 async enter(
-  id = this.createPlanId(),
+  id = this.createAdvancedSessionModeId(),
   createFile = false,
   emitStatus = true,
-  kind: PlanKind = 'plan',
+  kind: AdvancedSessionModeKind = 'plan',
 ): Promise<void> {
   ...
-  const planFilePath = this.planFilePathFor(id);
+  const advancedSessionModeFilePath = this.advancedSessionModeFilePathFor(id);
   ...
 }
 ```
@@ -286,26 +286,26 @@ async enter(
 **变更后：**
 ```ts
 async enter(
-  id = this.createPlanId(),
+  id = this.createAdvancedSessionModeId(),
   createFile = false,
   emitStatus = true,
-  kind: PlanKind = 'plan',
+  kind: AdvancedSessionModeKind = 'plan',
   fileStem?: string,
 ): Promise<void> {
   ...
   this._fileStem = fileStem ?? id;  // [C:USER] 新增字段
-  const planFilePath = this.planFilePathFor(this._fileStem);
+  const advancedSessionModeFilePath = this.advancedSessionModeFilePathFor(this._fileStem);
   ...
 }
 ```
 
-### 4. PlanMode.planFilePathFor — `packages/agent-core/src/agent/plan/index.ts`
+### 4. PlanMode.advancedSessionModeFilePathFor — `packages/agent-core/src/agent/plan/index.ts`
 
 **Line range:** ~181-189
 
 **变更前：**
 ```ts
-private planFilePathFor(id: string): string {
+private advancedSessionModeFilePathFor(id: string): string {
   const cwdSubdir = this._kind === 'design' ? 'design' : 'plan';
   const homeSubdir = this._kind === 'design' ? 'designs' : 'plans';
   const plansDir =
@@ -318,7 +318,7 @@ private planFilePathFor(id: string): string {
 
 **变更后：** 方法参数名从 `id` 改为 `stem` 以提高可读性（功能不变）：
 ```ts
-private planFilePathFor(stem: string): string {
+private advancedSessionModeFilePathFor(stem: string): string {
   const cwdSubdir = this._kind === 'design' ? 'design' : 'plan';
   const homeSubdir = this._kind === 'design' ? 'designs' : 'plans';
   const plansDir =
@@ -369,16 +369,16 @@ get fileStem(): string | null {
 | 测试文件 | 断言 |
 |---|---|
 | `packages/agent-core/test/agent/plan/topic-generator.test.ts`（新增） | `generate()` 从用户消息返回 kebab-case 主题；敏感词输入返回 `null`；超长输入截断到 50；空输入返回 `null`；非 ASCII 输入返回合法 slug 或 `null` |
-| `packages/agent-core/test/tools/enter-design-mode.test.ts` | 无 `topic` 参数时，mock `TopicGenerator.generate` 返回 `'temp-dashboard'`，断言 `planFilePath` 匹配 `/temp-dashboard-\d{8}-\d{6}\.md$/`；传入 `topic: 'Auth Refactor'` 断言路径包含 `auth-refactor` |
+| `packages/agent-core/test/tools/enter-design-mode.test.ts` | 无 `topic` 参数时，mock `TopicGenerator.generate` 返回 `'temp-dashboard'`，断言 `advancedSessionModeFilePath` 匹配 `/temp-dashboard-\d{8}-\d{6}\.md$/`；传入 `topic: 'Auth Refactor'` 断言路径包含 `auth-refactor` |
 | `packages/agent-core/test/tools/enter-plan-mode.test.ts` | 同上，kind 为 `plan`，回退前缀为 `plan` |
-| `packages/agent-core/test/agent/plan.test.ts` | `planId` 仍是随机 hero slug（如 `silver-surfer-deadpool`）；`fileStem` 是 topic + 时间戳；`isWritablePlanPath` 仍基于 `planId` |
-| `packages/agent-core/test/agent/injection/design-mode.test.ts` | mock `planFilePath` 现在包含 topic 时间戳格式而非 hero slug |
+| `packages/agent-core/test/agent/plan.test.ts` | `planId` 仍是随机 hero slug（如 `silver-surfer-deadpool`）；`fileStem` 是 topic + 时间戳；`isWritableAdvancedSessionModePath` 仍基于 `planId` |
+| `packages/agent-core/test/agent/injection/design-mode.test.ts` | mock `advancedSessionModeFilePath` 现在包含 topic 时间戳格式而非 hero slug |
 | `packages/agent-core/test/agent/injection/plan-mode.test.ts` | 同上 |
 
 **Done Criteria：**
 - `pnpm test --filter agent-core` 全部通过
 - `pnpm tsc --noEmit --filter agent-core` 无类型错误
-- `pnpm test --filter ody-code` 通过（Footer 渲染不依赖文件名格式，只透传 `planFilePath`）
+- `pnpm test --filter ody-code` 通过（Footer 渲染不依赖文件名格式，只透传 `advancedSessionModeFilePath`）
 
 ---
 
@@ -388,7 +388,7 @@ get fileStem(): string | null {
 |---|---|---|---|---|
 | 1 | LLM 主题生成增加进入模式延迟（+200-500ms） | Medium | Medium | 轻量 prompt（<200 tokens）；设置 3s 超时；异步不阻塞 UI 渲染 |
 | 2 | LLM 生成主题不可靠（乱码、非英文、含敏感词） | Medium | Low | Prompt 明确约束 + 代码层清理/过滤/截断；失败回退到默认文件名 |
-| 3 | `planId` 与 `fileStem` 分离导致 `isWritablePlanPath` 不匹配 | Low | High | 保持 `isWritablePlanPath` 基于 `planId` 不变；`fileStem` 仅影响文件名生成 |
+| 3 | `planId` 与 `fileStem` 分离导致 `isWritableAdvancedSessionModePath` 不匹配 | Low | High | 保持 `isWritableAdvancedSessionModePath` 基于 `planId` 不变；`fileStem` 仅影响文件名生成 |
 | 4 | 时间戳使用本地时区导致跨时区协作混乱 | Low | Low | 使用 UTC 时间 |
 | 5 | designs/plans 目录文件堆积 | Medium | Low | 现有清理机制不变；文件名可读性提高反而便于用户手动清理 |
 
@@ -401,7 +401,7 @@ get fileStem(): string | null {
 | 1 | `agent.generate` 可以在工具执行期间被同步调用（不引发重入问题） | Medium | High（主题生成无法进行） | 在测试中验证 `EnterDesignModeTool` 中调用 `agent.generate` 不会死锁或报错 |
 | 2 | `agent.context.history` 中至少包含一条用户消息（否则 TopicGenerator 回退） | High | Low | 测试覆盖空历史场景 |
 | 3 | 轻量 prompt（<200 tokens）的成本和延迟在用户可接受范围内 | Medium | Medium | 通过手动测试测量延迟；若 >1s 考虑添加 feature flag |
-| 4 | 现有 `PlanData.path` 的消费者只读取路径字符串，不解析文件名 stem | High | Low | 全局搜索 `planFilePath` / `plan.path` 的使用点，确认无解析逻辑 |
+| 4 | 现有 `AdvancedSessionModeData.path` 的消费者只读取路径字符串，不解析文件名 stem | High | Low | 全局搜索 `advancedSessionModeFilePath` / `plan.path` 的使用点，确认无解析逻辑 |
 | 5 | 内置敏感词列表足够覆盖常见场景，不会误杀合法主题 | Medium | Low | 审计敏感词列表；留好扩展接口 |
 
 ---

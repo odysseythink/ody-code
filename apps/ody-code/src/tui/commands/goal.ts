@@ -8,7 +8,7 @@ import {
   GoalSetMessageComponent,
   GoalStatusMessageComponent,
 } from '../components/messages/goal-panel';
-import { LLM_NOT_SET_MESSAGE } from '../constant/kimi-tui';
+import { LLM_NOT_SET_MESSAGE } from '../constant/ody-tui';
 import { formatErrorMessage } from '../utils/event-payload';
 import type { SlashCommandHost } from './dispatch';
 

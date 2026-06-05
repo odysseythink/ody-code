@@ -25,7 +25,7 @@ import {
   type ProviderManagerOptions,
 } from '../components/dialogs/provider-manager';
 import { TabbedModelSelectorComponent } from '../components/dialogs/tabbed-model-selector';
-import { DEFAULT_OAUTH_PROVIDER_NAME } from '../constant/kimi-tui';
+import { DEFAULT_OAUTH_PROVIDER_NAME } from '../constant/ody-tui';
 import { formatErrorMessage } from '../utils/event-payload';
 import {
   promptApiKey,

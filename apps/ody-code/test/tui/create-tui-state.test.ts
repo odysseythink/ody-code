@@ -1,7 +1,7 @@
 
 import { describe, it, expect } from 'vitest';
 
-import { createTUIState, type KimiTUIOptions } from '#/tui/kimi-tui';
+import { createTUIState, type KimiTUIOptions } from '#/tui/ody-tui';
 import type { AppState } from '#/tui/types';
 
 function fakeInitialAppState(): AppState {

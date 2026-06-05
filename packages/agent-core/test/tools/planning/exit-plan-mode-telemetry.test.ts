@@ -37,7 +37,7 @@ function makeAgent(input: {
       get isActive() {
         return active;
       },
-      get planFilePath() {
+      get advancedSessionModeFilePath() {
         return '/tmp/kimi-plan.md';
       },
       data: vi.fn(async () => ({

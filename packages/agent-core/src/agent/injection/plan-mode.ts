@@ -32,7 +32,7 @@ export class PlanModeInjector extends DynamicInjector {
 
   override async getInjection(): Promise<string | undefined> {
     const isPlanActive = this.agent.planMode.isActive && this.agent.planMode.kind !== 'design';
-    const { planFilePath } = this.agent.planMode;
+    const { advancedSessionModeFilePath } = this.agent.planMode;
     if (!isPlanActive) {
       if (!this.wasActive) {
         return undefined;
@@ -46,17 +46,17 @@ export class PlanModeInjector extends DynamicInjector {
       this.injectedAt = null;
       this.wasActive = true;
       if (content.trim().length > 0) {
-        return planModeReentryReminder(planFilePath);
+        return planModeReentryReminder(advancedSessionModeFilePath);
       }
     }
     const variant = this.getVariant();
     if (variant === null) return undefined;
-    if (variant === 'reentry') return planModeReentryReminder(planFilePath);
+    if (variant === 'reentry') return planModeReentryReminder(advancedSessionModeFilePath);
 
     const directive = splitDirectiveFor(content);
     return variant === 'full'
-      ? planModeFullReminder(planFilePath, directive)
-      : planModeSparseReminder(planFilePath, directive);
+      ? planModeFullReminder(advancedSessionModeFilePath, directive)
+      : planModeSparseReminder(advancedSessionModeFilePath, directive);
   }
 
   protected getVariant(): PlanModeVariant | null {

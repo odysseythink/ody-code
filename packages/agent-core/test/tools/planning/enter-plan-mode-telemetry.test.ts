@@ -18,7 +18,7 @@ function makeAgent(mode: PermissionMode): {
       get isActive() {
         return active;
       },
-      get planFilePath() {
+      get advancedSessionModeFilePath() {
         return '/tmp/kimi-plan.md';
       },
       enter: vi.fn(async () => {

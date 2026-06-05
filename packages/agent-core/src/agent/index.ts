@@ -40,10 +40,10 @@ import { ContextMemory } from './context';
 import { HookEngine } from '../session/hooks';
 
 import { parseManifestFiles } from './injection/plan-mode-contract';
-import { DesignReviewer, shouldEscalate } from './plan/design-reviewer';
+import { AdvancedSessionReviewer, shouldEscalate } from './advanced-session-mode/reviewer';
 import { InjectionManager } from './injection/manager';
 import { PermissionManager, type PermissionManagerOptions } from './permission';
-import { PlanMode } from './plan';
+import { AdvancedSessionMode } from './advanced-session-mode';
 import {
   AgentRecords,
   BlobStore,
@@ -122,7 +122,7 @@ export class Agent {
   readonly turn: TurnFlow;
   readonly injection: InjectionManager;
   readonly permission: PermissionManager;
-  readonly planMode: PlanMode;
+  readonly planMode: AdvancedSessionMode;
   readonly usage: UsageRecorder;
   readonly skills: SkillManager | null;
   readonly tools: ToolManager;
@@ -172,7 +172,7 @@ export class Agent {
     this.turn = new TurnFlow(this);
     this.injection = new InjectionManager(this);
     this.permission = new PermissionManager(this, options.permission);
-    this.planMode = new PlanMode(this);
+    this.planMode = new AdvancedSessionMode(this);
     this.usage = new UsageRecorder(this);
     this.skills = options.skills ? new SkillManager(this, options.skills) : null;
     this.tools = new ToolManager(this);
@@ -485,7 +485,7 @@ export class Agent {
         }
 
         const defaultTimeoutMs = 120_000;
-        const result = await new DesignReviewer(this, {
+        const result = await new AdvancedSessionReviewer(this, {
           reviewerAlias,
           kind,
           timeoutMs: payload.timeoutMs ?? defaultTimeoutMs,
@@ -534,7 +534,7 @@ export class Agent {
       contextUsage,
       planMode: this.planMode.isActive,
       planKind: this.planMode.kind,
-      planFilePath: this.planMode.planFilePath,
+      advancedSessionModeFilePath: this.planMode.advancedSessionModeFilePath,
       permission: this.permission.mode,
       usage,
     });

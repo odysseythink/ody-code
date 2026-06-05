@@ -98,6 +98,9 @@ pnpm run test
 
 # 5. 代码检查
 pnpm run lint
+
+
+pnpm -C apps/ody-code run build:native:sea
 ```
 
 ### 使用 Nix 构建（可选）

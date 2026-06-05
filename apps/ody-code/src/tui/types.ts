@@ -18,7 +18,7 @@ export interface AppState {
   sessionId: string;
   permissionMode: PermissionMode;
   planMode: boolean;
-  planFilePath?: string | null;
+  advancedSessionModeFilePath?: string | null;
   designMode?: boolean;
   thinking: boolean;
   contextUsage: number;
@@ -169,7 +169,7 @@ export const INITIAL_LIVE_PANE: LivePaneState = {
 };
 
 // ---------------------------------------------------------------------------
-// TUI startup / options types (extracted from kimi-tui.ts)
+// TUI startup / options types (extracted from ody-tui.ts)
 // ---------------------------------------------------------------------------
 
 export interface TUIStartupOptions {

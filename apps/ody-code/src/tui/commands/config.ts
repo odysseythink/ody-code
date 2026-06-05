@@ -9,7 +9,7 @@ import { ThemeSelectorComponent } from '../components/dialogs/theme-selector';
 import { UpdatePreferenceSelectorComponent } from '../components/dialogs/update-preference-selector';
 import { saveTuiConfig } from '../config';
 import type { Theme } from '../theme';
-import { NO_ACTIVE_SESSION_MESSAGE } from '../constant/kimi-tui';
+import { NO_ACTIVE_SESSION_MESSAGE } from '../constant/ody-tui';
 import { isTheme } from '../theme/index';
 import { formatErrorMessage } from '../utils/event-payload';
 import { showUsage } from './info';
@@ -51,7 +51,7 @@ async function applyPlanMode(host: SlashCommandHost, session: Session, enabled: 
     host.setAppState({ planMode: enabled, designMode: false });
     if (enabled) {
       const plan = await session.getPlan().catch(() => null);
-      log.debug('Mode toggled', { mode: 'plan', enabled, planFilePath: plan?.path ?? null });
+      log.debug('Mode toggled', { mode: 'plan', enabled, advancedSessionModeFilePath: plan?.path ?? null });
       host.showNotice('Plan mode: ON');
       return;
     }
@@ -95,7 +95,7 @@ async function applyDesignMode(host: SlashCommandHost, session: Session, enabled
     host.setAppState({ designMode: enabled, planMode: false });
     if (enabled) {
       const plan = await session.getPlan().catch(() => null);
-      log.debug('Mode toggled', { mode: 'design', enabled, planFilePath: plan?.path ?? null });
+      log.debug('Mode toggled', { mode: 'design', enabled, advancedSessionModeFilePath: plan?.path ?? null });
       host.showNotice('Design mode: ON');
       return;
     }

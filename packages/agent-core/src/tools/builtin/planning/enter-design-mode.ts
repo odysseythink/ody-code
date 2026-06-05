@@ -3,7 +3,7 @@
  *
  * Design mode is the brainstorming / spec-exploration sibling of plan mode.
  * It reuses the same read-only-with-one-writable-file machinery as plan mode
- * (see {@link PlanMode}) but enters with `kind: 'design'`, which routes the
+ * (see {@link AdvancedSessionMode}) but enters with `kind: 'design'`, which routes the
  * design document to the `designs/` directory and swaps the plan-mode prompt
  * for the brainstorming workflow. Entering design mode does not require
  * approval in any permission mode.
@@ -13,7 +13,7 @@ import type { Agent } from '#/agent';
 import { z } from 'zod';
 
 import { designModeEntryMessage } from '../../../agent/injection/design-mode-contract';
-import { cleanupTopic } from '../../../agent/plan/topic-generator';
+import { cleanupTopic } from '../../../agent/advanced-session-mode/topic-generator';
 import type { BuiltinTool } from '../../../agent/tool';
 import type { ToolExecution } from '../../../loop/types';
 import { toInputJsonSchema } from '../../support/input-schema';
@@ -67,7 +67,7 @@ export class EnterDesignModeTool implements BuiltinTool<EnterDesignModeInput> {
         this.agent.telemetry.track('design_enter_resolved', { outcome: 'auto_approved' });
         return {
           output: designModeEntryMessage(
-            this.agent.planMode.planFilePath,
+            this.agent.planMode.advancedSessionModeFilePath,
             this.agent.rpc?.openExternal !== undefined,
           ),
         };

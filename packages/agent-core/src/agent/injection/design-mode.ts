@@ -21,7 +21,7 @@ export class DesignModeInjector extends DynamicInjector {
 
   override async getInjection(): Promise<string | undefined> {
     const isDesignActive = this.agent.planMode.isActive && this.agent.planMode.kind === 'design';
-    const { planFilePath } = this.agent.planMode;
+    const { advancedSessionModeFilePath } = this.agent.planMode;
     // Machine signal: ShowDesignMockup is usable only when it is BOTH registered
     // (host advertises openExternal, see ToolManager.initializeBuiltinTools) AND
     // enabled by the active profile — otherwise it never reaches the model's tool
@@ -39,16 +39,16 @@ export class DesignModeInjector extends DynamicInjector {
       this.injectedAt = null;
       this.wasActive = true;
       if (await this.hasCurrentDesignContent()) {
-        return designModeReentryReminder(planFilePath, mockupAvailable);
+        return designModeReentryReminder(advancedSessionModeFilePath, mockupAvailable);
       }
     }
     const variant = this.getVariant();
     if (variant === null) return undefined;
     return variant === 'full'
-      ? designModeFullReminder(planFilePath, mockupAvailable)
+      ? designModeFullReminder(advancedSessionModeFilePath, mockupAvailable)
       : variant === 'sparse'
-        ? designModeSparseReminder(planFilePath, mockupAvailable)
-        : designModeReentryReminder(planFilePath, mockupAvailable);
+        ? designModeSparseReminder(advancedSessionModeFilePath, mockupAvailable)
+        : designModeReentryReminder(advancedSessionModeFilePath, mockupAvailable);
   }
 
   protected getVariant(): DesignModeVariant | null {
