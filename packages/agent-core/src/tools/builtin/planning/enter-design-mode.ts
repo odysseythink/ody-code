@@ -3,7 +3,7 @@
  *
  * Design mode is the brainstorming / spec-exploration sibling of plan mode.
  * It reuses the same read-only-with-one-writable-file machinery as plan mode
- * (see {@link AdvancedSessionMode}) but enters with `kind: 'design'`, which routes the
+ * (see {@link SessionMode}) but enters with `kind: 'design'`, which routes the
  * design document to the `designs/` directory and swaps the plan-mode prompt
  * for the brainstorming workflow. Entering design mode does not require
  * approval in any permission mode.
@@ -13,7 +13,7 @@ import type { Agent } from '#/agent';
 import { z } from 'zod';
 
 import { designModeEntryMessage } from '../../../agent/injection/design-mode-contract';
-import { cleanupTopic } from '../../../agent/advanced-session-mode/topic-generator';
+import { cleanupTopic } from '../../../agent/session-mode/topic-generator';
 import type { BuiltinTool } from '../../../agent/tool';
 import type { ToolExecution } from '../../../loop/types';
 import { toInputJsonSchema } from '../../support/input-schema';
@@ -41,8 +41,8 @@ export class EnterDesignModeTool implements BuiltinTool<EnterDesignModeInput> {
       approvalRule: this.name,
       execute: async () => {
         // Guard: already in plan/design mode
-        if (this.agent.planMode.isActive) {
-          const active = this.agent.planMode.kind === 'design' ? 'Design' : 'Plan';
+        if (this.agent.sessionMode.isActive) {
+          const active = this.agent.sessionMode.kind === 'design' ? 'Design' : 'Plan';
           return {
             isError: true,
             output: `${active} mode is already active. Use ExitDesignMode when the design is ready, or exit first.`,
@@ -58,7 +58,7 @@ export class EnterDesignModeTool implements BuiltinTool<EnterDesignModeInput> {
         }
 
         try {
-          await this.agent.planMode.enter(undefined, undefined, undefined, 'design', fileStem);
+          await this.agent.sessionMode.enter(undefined, undefined, undefined, 'design', fileStem);
         } catch (error) {
           const message = error instanceof Error ? error.message : 'Failed to enter design mode.';
           return { isError: true, output: `Failed to enter design mode: ${message}` };
@@ -67,7 +67,7 @@ export class EnterDesignModeTool implements BuiltinTool<EnterDesignModeInput> {
         this.agent.telemetry.track('design_enter_resolved', { outcome: 'auto_approved' });
         return {
           output: designModeEntryMessage(
-            this.agent.planMode.advancedSessionModeFilePath,
+            this.agent.sessionMode.sessionModeFilePath,
             this.agent.rpc?.openExternal !== undefined,
           ),
         };

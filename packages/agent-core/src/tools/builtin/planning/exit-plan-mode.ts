@@ -7,7 +7,7 @@
  */
 
 import type { Agent } from '#/agent';
-import type { AdvancedSessionModeData } from '#/agent/advanced-session-mode';
+import type { SessionModeData } from '#/agent/session-mode';
 import { z } from 'zod';
 
 import type { BuiltinTool } from '../../../agent/tool';
@@ -98,10 +98,10 @@ export class ExitPlanModeTool implements BuiltinTool<ExitPlanModeInput> {
   private async resolvePlanReviewDisplay(
     args: ExitPlanModeInput,
   ): Promise<ToolInputDisplay | undefined> {
-    if (!this.agent.planMode.isActive) return undefined;
-    let data: AdvancedSessionModeData;
+    if (!this.agent.sessionMode.isActive) return undefined;
+    let data: SessionModeData;
     try {
-      data = await this.agent.planMode.data();
+      data = await this.agent.sessionMode.data();
     } catch {
       return undefined;
     }
@@ -118,7 +118,7 @@ export class ExitPlanModeTool implements BuiltinTool<ExitPlanModeInput> {
   }
 
   private async execution(args: ExitPlanModeInput): Promise<ExecutableToolResult> {
-    if (!this.agent.planMode.isActive) {
+    if (!this.agent.sessionMode.isActive) {
       return {
         isError: true,
         output:
@@ -126,7 +126,7 @@ export class ExitPlanModeTool implements BuiltinTool<ExitPlanModeInput> {
       };
     }
 
-    await this.agent.planMode.finalizeFileName();
+    await this.agent.sessionMode.finalizeFileName();
     const resolvedPlan = await this.resolvePlan();
     if (!resolvedPlan.ok) return resolvedPlan.error;
 
@@ -147,7 +147,7 @@ export class ExitPlanModeTool implements BuiltinTool<ExitPlanModeInput> {
 
   private exitPlanMode(): ExecutableToolResult | undefined {
     try {
-      this.agent.planMode.exit();
+      this.agent.sessionMode.exit();
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to exit plan mode.';
       return {
@@ -160,7 +160,7 @@ export class ExitPlanModeTool implements BuiltinTool<ExitPlanModeInput> {
   private async resolvePlan(): Promise<ResolvePlanResult> {
     let source: ExitPlanModePlanSource | null;
     try {
-      const data = await this.agent.planMode.data();
+      const data = await this.agent.sessionMode.data();
       source = data === null ? null : { plan: data.content, path: data.path };
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to read plan file.';
@@ -178,7 +178,7 @@ export class ExitPlanModeTool implements BuiltinTool<ExitPlanModeInput> {
       };
     }
 
-    const path = source?.path ?? this.agent.planMode.advancedSessionModeFilePath;
+    const path = source?.path ?? this.agent.sessionMode.sessionModeFilePath;
     return {
       ok: false,
       error: {

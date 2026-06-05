@@ -8,7 +8,7 @@ import {
   parseAuditLevel,
   parseFindings,
   shouldEscalate,
-} from '../../../src/agent/advanced-session-mode/reviewer';
+} from '../../../src/agent/session-mode/reviewer';
 
 function makeAgent(
   overrides: {

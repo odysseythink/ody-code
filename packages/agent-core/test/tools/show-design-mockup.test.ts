@@ -9,15 +9,15 @@ import type { OpenExternalRequest, OpenExternalResponse } from '../../src/rpc';
 import { ShowDesignMockupTool } from '../../src/tools/builtin/visual/show-design-mockup';
 
 interface MockupAgentStub {
-  advancedSessionModeFilePath: string | null;
+  sessionModeFilePath: string | null;
   openExternal?: (request: OpenExternalRequest) => Promise<OpenExternalResponse>;
 }
 
 function mockupAgent(stub: MockupAgentStub): Agent {
   return {
-    planMode: {
-      get advancedSessionModeFilePath() {
-        return stub.advancedSessionModeFilePath;
+    sessionMode: {
+      get sessionModeFilePath() {
+        return stub.sessionModeFilePath;
       },
     },
     rpc: stub.openExternal === undefined ? {} : { openExternal: stub.openExternal },
@@ -43,7 +43,7 @@ afterEach(async () => {
 describe('ShowDesignMockupTool', () => {
   it('writes the mockup next to the design file and opens it via openExternal', async () => {
     const openExternal = vi.fn(async (_request: OpenExternalRequest) => ({ opened: true }));
-    const agent = mockupAgent({ advancedSessionModeFilePath: join(dir, 'design.md'), openExternal });
+    const agent = mockupAgent({ sessionModeFilePath: join(dir, 'design.md'), openExternal });
     const tool = new ShowDesignMockupTool(agent);
 
     const result = await run(tool, '<html><body>Hi</body></html>', 'Footer layout');
@@ -62,7 +62,7 @@ describe('ShowDesignMockupTool', () => {
   });
 
   it('reports a graceful error when the host has no openExternal', async () => {
-    const agent = mockupAgent({ advancedSessionModeFilePath: join(dir, 'design.md') });
+    const agent = mockupAgent({ sessionModeFilePath: join(dir, 'design.md') });
     const tool = new ShowDesignMockupTool(agent);
 
     const result = await run(tool, '<html></html>');
@@ -76,7 +76,7 @@ describe('ShowDesignMockupTool', () => {
       opened: false,
       error: 'no browser',
     }));
-    const agent = mockupAgent({ advancedSessionModeFilePath: join(dir, 'design.md'), openExternal });
+    const agent = mockupAgent({ sessionModeFilePath: join(dir, 'design.md'), openExternal });
     const tool = new ShowDesignMockupTool(agent);
 
     const result = await run(tool, '<html></html>', 'X');

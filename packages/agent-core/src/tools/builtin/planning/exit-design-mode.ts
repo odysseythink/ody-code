@@ -8,7 +8,7 @@
  */
 
 import type { Agent } from '#/agent';
-import type { AdvancedSessionModeData } from '#/agent/advanced-session-mode';
+import type { SessionModeData } from '#/agent/session-mode';
 import { z } from 'zod';
 
 import type { BuiltinTool } from '../../../agent/tool';
@@ -91,10 +91,10 @@ export class ExitDesignModeTool implements BuiltinTool<ExitDesignModeInput> {
   private async resolveDesignReviewDisplay(
     args: ExitDesignModeInput,
   ): Promise<ToolInputDisplay | undefined> {
-    if (!this.agent.planMode.isActive) return undefined;
-    let data: AdvancedSessionModeData;
+    if (!this.agent.sessionMode.isActive) return undefined;
+    let data: SessionModeData;
     try {
-      data = await this.agent.planMode.data();
+      data = await this.agent.sessionMode.data();
     } catch {
       return undefined;
     }
@@ -111,7 +111,7 @@ export class ExitDesignModeTool implements BuiltinTool<ExitDesignModeInput> {
   }
 
   private async execution(args: ExitDesignModeInput): Promise<ExecutableToolResult> {
-    if (!this.agent.planMode.isActive) {
+    if (!this.agent.sessionMode.isActive) {
       return {
         isError: true,
         output:
@@ -119,7 +119,7 @@ export class ExitDesignModeTool implements BuiltinTool<ExitDesignModeInput> {
       };
     }
 
-    await this.agent.planMode.finalizeFileName();
+    await this.agent.sessionMode.finalizeFileName();
     const resolved = await this.resolveDesign();
     if (!resolved.ok) return resolved.error as ExecutableToolResult;
 
@@ -140,7 +140,7 @@ export class ExitDesignModeTool implements BuiltinTool<ExitDesignModeInput> {
 
   private exitDesignMode(): ExecutableToolResult | undefined {
     try {
-      this.agent.planMode.exit();
+      this.agent.sessionMode.exit();
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to exit design mode.';
       return {
@@ -151,9 +151,9 @@ export class ExitDesignModeTool implements BuiltinTool<ExitDesignModeInput> {
   }
 
   private async resolveDesign(): Promise<ResolveDesignResult> {
-    let data: AdvancedSessionModeData;
+    let data: SessionModeData;
     try {
-      data = await this.agent.planMode.data();
+      data = await this.agent.sessionMode.data();
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to read design file.';
       return {
@@ -166,7 +166,7 @@ export class ExitDesignModeTool implements BuiltinTool<ExitDesignModeInput> {
       return { ok: true, design: data.content, path: data.path };
     }
 
-    const path = data?.path ?? this.agent.planMode.advancedSessionModeFilePath;
+    const path = data?.path ?? this.agent.sessionMode.sessionModeFilePath;
     return {
       ok: false,
       error: {

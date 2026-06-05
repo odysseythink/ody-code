@@ -9,7 +9,7 @@ import {
   formatUtcTimestamp,
   slugifyTitle,
   stripMarkdownFormatting,
-} from '../../../src/agent/advanced-session-mode/topic-generator';
+} from '../../../src/agent/session-mode/topic-generator';
 import type { Agent } from '../../../src/agent';
 
 function makeAgent(overrides: {

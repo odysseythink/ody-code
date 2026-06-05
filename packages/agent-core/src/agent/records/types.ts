@@ -7,7 +7,7 @@ import type { CompactionBeginData, CompactionResult } from '../compaction';
 import type { AgentConfigUpdateData } from '../config';
 import type { ContextMessage, PromptOrigin } from '../context';
 import type { PermissionApprovalResultRecord, PermissionMode } from '../permission';
-import type { AdvancedSessionModeKind } from '../advanced-session-mode';
+import type { SessionModeKind } from '../session-mode';
 import type { UserToolRegistration } from '../tool';
 import type { UsageRecordScope } from '../usage';
 
@@ -40,7 +40,7 @@ export interface AgentRecordEvents {
 
   'plan_mode.enter': {
     id: string;
-    kind?: AdvancedSessionModeKind;
+    kind?: SessionModeKind;
     fileStem?: string;
   };
   'plan_mode.cancel': {

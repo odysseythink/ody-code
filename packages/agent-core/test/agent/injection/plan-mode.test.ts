@@ -10,7 +10,7 @@ import {
 
 interface PlanModeStub {
   isActive: boolean;
-  advancedSessionModeFilePath?: string | null;
+  sessionModeFilePath?: string | null;
   /** Content returned by planMode.data(); when set non-empty on first inject, triggers reentry. */
   content?: string;
 }
@@ -19,20 +19,20 @@ function planAgent(stub: PlanModeStub): Agent {
   const history: unknown[] = [];
   return {
     type: 'main',
-    planMode: {
+    sessionMode: {
       get isActive() {
         return stub.isActive;
       },
       get kind() {
         return 'plan';
       },
-      get advancedSessionModeFilePath() {
-        return stub.advancedSessionModeFilePath ?? null;
+      get sessionModeFilePath() {
+        return stub.sessionModeFilePath ?? null;
       },
       data: async () =>
         stub.content === undefined
           ? null
-          : { id: 'p1', content: stub.content, path: stub.advancedSessionModeFilePath ?? '', kind: 'plan' },
+          : { id: 'p1', content: stub.content, path: stub.sessionModeFilePath ?? '', kind: 'plan' },
     },
     context: {
       history,
@@ -57,7 +57,7 @@ function lastReminder(agent: Agent): string {
 
 describe('PlanModeInjector content', () => {
   it('injects the full reminder with the writing-plans rubric and plan file footer', async () => {
-    const agent = planAgent({ isActive: true, advancedSessionModeFilePath: '/tmp/plan.md' });
+    const agent = planAgent({ isActive: true, sessionModeFilePath: '/tmp/plan.md' });
     const injector = new PlanModeInjector(agent);
 
     await injector.inject();
@@ -79,7 +79,7 @@ describe('PlanModeInjector content', () => {
   });
 
   it('keeps the entry message and the full reminder in sync (shared contract)', async () => {
-    const agent = planAgent({ isActive: true, advancedSessionModeFilePath: '/tmp/plan.md' });
+    const agent = planAgent({ isActive: true, sessionModeFilePath: '/tmp/plan.md' });
     const injector = new PlanModeInjector(agent);
     await injector.inject();
     const full = lastReminder(agent);
@@ -105,7 +105,7 @@ describe('PlanModeInjector content', () => {
   // This test fails loudly if a future edit strips a blade; it does NOT prove
   // the model behaves better — that requires a behavioral eval harness.
   it('carries the filter-verification blades in both the entry message and the full reminder', async () => {
-    const agent = planAgent({ isActive: true, advancedSessionModeFilePath: '/tmp/plan.md' });
+    const agent = planAgent({ isActive: true, sessionModeFilePath: '/tmp/plan.md' });
     const injector = new PlanModeInjector(agent);
     await injector.inject();
     const full = lastReminder(agent);
@@ -129,11 +129,11 @@ describe('PlanModeInjector content', () => {
   // its runtime consumer (a permission guard, a path matcher, a field a lookup
   // keys on) still validates a different value — compile-clean, type-consistent,
   // and therefore invisible to the shared-signature/type checks (e.g. a plan file
-  // written under `fileStem` but authorized by `isWritableAdvancedSessionModePath` matching
+  // written under `fileStem` but authorized by `isWritableSessionModePath` matching
   // `planId`). Fails loudly if a future edit strips the blade; does NOT prove the
   // model behaves better — that requires a behavioral eval harness.
   it('carries the consumer-reconciliation blade in both the entry message and the full reminder', async () => {
-    const agent = planAgent({ isActive: true, advancedSessionModeFilePath: '/tmp/plan.md' });
+    const agent = planAgent({ isActive: true, sessionModeFilePath: '/tmp/plan.md' });
     const injector = new PlanModeInjector(agent);
     await injector.inject();
     const full = lastReminder(agent);
@@ -151,7 +151,7 @@ describe('PlanModeInjector content', () => {
   });
 
   it('uses the inline reminder when no plan file path is available', async () => {
-    const agent = planAgent({ isActive: true, advancedSessionModeFilePath: null });
+    const agent = planAgent({ isActive: true, sessionModeFilePath: null });
     const injector = new PlanModeInjector(agent);
 
     await injector.inject();
@@ -163,7 +163,7 @@ describe('PlanModeInjector content', () => {
   });
 
   it('injects the exit reminder when plan mode turns off after being active', async () => {
-    const stub: PlanModeStub = { isActive: true, advancedSessionModeFilePath: '/tmp/plan.md' };
+    const stub: PlanModeStub = { isActive: true, sessionModeFilePath: '/tmp/plan.md' };
     const agent = planAgent(stub);
     const injector = new PlanModeInjector(agent);
 
@@ -186,7 +186,7 @@ describe('PlanModeInjector content', () => {
   it('injects the reentry reminder when prior plan content exists', async () => {
     const agent = planAgent({
       isActive: true,
-      advancedSessionModeFilePath: '/tmp/plan.md',
+      sessionModeFilePath: '/tmp/plan.md',
       content: '# Previous plan',
     });
     const injector = new PlanModeInjector(agent);
@@ -199,7 +199,7 @@ describe('PlanModeInjector content', () => {
 
 describe('PlanModeInjector split-plan steering', () => {
   it('steers to the next pending part when the index has an unfinished manifest', async () => {
-    const stub: PlanModeStub = { isActive: true, advancedSessionModeFilePath: '/tmp/plan.md' };
+    const stub: PlanModeStub = { isActive: true, sessionModeFilePath: '/tmp/plan.md' };
     const agent = planAgent(stub);
     const injector = new PlanModeInjector(agent);
 
@@ -225,7 +225,7 @@ describe('PlanModeInjector split-plan steering', () => {
   });
 
   it('steers to the cross-file final review once every manifest row is done', async () => {
-    const stub: PlanModeStub = { isActive: true, advancedSessionModeFilePath: '/tmp/plan.md' };
+    const stub: PlanModeStub = { isActive: true, sessionModeFilePath: '/tmp/plan.md' };
     const agent = planAgent(stub);
     const injector = new PlanModeInjector(agent);
 
@@ -292,7 +292,7 @@ describe('parseManifestFiles', () => {
 
 describe('PlanModeInjector cadence', () => {
   it('skips reinjection before the assistant-turn threshold', async () => {
-    const agent = planAgent({ isActive: true, advancedSessionModeFilePath: '/tmp/plan.md' });
+    const agent = planAgent({ isActive: true, sessionModeFilePath: '/tmp/plan.md' });
     const injector = new PlanModeInjector(agent);
 
     await injector.inject();
@@ -304,7 +304,7 @@ describe('PlanModeInjector cadence', () => {
   });
 
   it('injects the sparse reminder after the short assistant-turn threshold', async () => {
-    const agent = planAgent({ isActive: true, advancedSessionModeFilePath: '/tmp/plan.md' });
+    const agent = planAgent({ isActive: true, sessionModeFilePath: '/tmp/plan.md' });
     const injector = new PlanModeInjector(agent);
 
     await injector.inject();
@@ -319,7 +319,7 @@ describe('PlanModeInjector cadence', () => {
   });
 
   it('refreshes the full reminder after the long assistant-turn threshold', async () => {
-    const agent = planAgent({ isActive: true, advancedSessionModeFilePath: '/tmp/plan.md' });
+    const agent = planAgent({ isActive: true, sessionModeFilePath: '/tmp/plan.md' });
     const injector = new PlanModeInjector(agent);
 
     await injector.inject();
@@ -335,7 +335,7 @@ describe('PlanModeInjector cadence', () => {
   });
 
   it('refreshes the full reminder if a user message appears after the last injection', async () => {
-    const agent = planAgent({ isActive: true, advancedSessionModeFilePath: '/tmp/plan.md' });
+    const agent = planAgent({ isActive: true, sessionModeFilePath: '/tmp/plan.md' });
     const injector = new PlanModeInjector(agent);
 
     await injector.inject();

@@ -806,7 +806,7 @@ export class TurnFlow {
   }
 
   private telemetryMode(): 'agent' | 'plan' {
-    return this.agent.planMode.isActive ? 'plan' : 'agent';
+    return this.agent.sessionMode.isActive ? 'plan' : 'agent';
   }
 
   private shouldTrackApiError(turnId: number): boolean {

@@ -9,7 +9,7 @@ import type { Agent } from '#/agent';
 import { z } from 'zod';
 
 import { planModeEntryMessage } from '../../../agent/injection/plan-mode-contract';
-import { cleanupTopic } from '../../../agent/advanced-session-mode/topic-generator';
+import { cleanupTopic } from '../../../agent/session-mode/topic-generator';
 import type { BuiltinTool } from '../../../agent/tool';
 import type { ToolExecution } from '../../../loop/types';
 import { toInputJsonSchema } from '../../support/input-schema';
@@ -37,7 +37,7 @@ export class EnterPlanModeTool implements BuiltinTool<EnterPlanModeInput> {
       approvalRule: this.name,
       execute: async () => {
         // Guard: already in plan mode
-        if (this.agent.planMode.isActive) {
+        if (this.agent.sessionMode.isActive) {
           return {
             isError: true,
             output: 'Plan mode is already active. Use ExitPlanMode when the plan is ready.',
@@ -53,14 +53,14 @@ export class EnterPlanModeTool implements BuiltinTool<EnterPlanModeInput> {
         }
 
         try {
-          await this.agent.planMode.enter(undefined, undefined, undefined, 'plan', fileStem);
+          await this.agent.sessionMode.enter(undefined, undefined, undefined, 'plan', fileStem);
         } catch (error) {
           const message = error instanceof Error ? error.message : 'Failed to enter plan mode.';
           return { isError: true, output: `Failed to enter plan mode: ${message}` };
         }
 
         this.agent.telemetry.track('plan_enter_resolved', { outcome: 'auto_approved' });
-        return { output: planModeEntryMessage(this.agent.planMode.advancedSessionModeFilePath) };
+        return { output: planModeEntryMessage(this.agent.sessionMode.sessionModeFilePath) };
       },
     };
   }

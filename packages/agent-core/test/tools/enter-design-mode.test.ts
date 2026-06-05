@@ -15,7 +15,7 @@ function makeAgent(
     readonly active?: boolean;
     readonly kind?: 'plan' | 'design';
     readonly mode?: PermissionMode;
-    readonly advancedSessionModeFilePath?: string | null;
+    readonly sessionModeFilePath?: string | null;
     readonly enter?: () => Promise<void>;
     readonly generate?: () => Promise<{
       message: { content: Array<{ type: string; text: string }> };
@@ -34,15 +34,15 @@ function makeAgent(
     if (input.enter) await input.enter();
   });
   const agent = {
-    planMode: {
+    sessionMode: {
       get isActive() {
         return active;
       },
       get kind() {
         return input.kind ?? 'design';
       },
-      get advancedSessionModeFilePath() {
-        return input.advancedSessionModeFilePath ?? null;
+      get sessionModeFilePath() {
+        return input.sessionModeFilePath ?? null;
       },
       enter: enterSpy,
     },

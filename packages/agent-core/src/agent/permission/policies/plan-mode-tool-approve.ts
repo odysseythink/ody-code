@@ -16,14 +16,14 @@ export class PlanModeToolApprovePermissionPolicy implements PermissionPolicy {
 
     if (
       (toolName === 'Write' || toolName === 'Edit') &&
-      this.agent.planMode.isActive &&
-      writesOnlyPlanFile(context, this.agent.planMode.advancedSessionModeFilePath)
+      this.agent.sessionMode.isActive &&
+      writesOnlyPlanFile(context, this.agent.sessionMode.sessionModeFilePath)
     ) {
       return { kind: 'approve' };
     }
 
     if (toolName === 'ExitPlanMode' || toolName === 'ExitDesignMode') {
-      if (!this.agent.planMode.isActive) {
+      if (!this.agent.sessionMode.isActive) {
         return { kind: 'approve' };
       }
       if (context.execution.display?.kind !== 'plan_review') {
@@ -37,9 +37,9 @@ export class PlanModeToolApprovePermissionPolicy implements PermissionPolicy {
 
 function writesOnlyPlanFile(
   context: PermissionPolicyContext,
-  advancedSessionModeFilePath: string | null,
+  sessionModeFilePath: string | null,
 ): boolean {
-  if (advancedSessionModeFilePath === null) return false;
+  if (sessionModeFilePath === null) return false;
   const writeAccesses = writeFileAccesses(context);
-  return writeAccesses.every((access) => access.path === advancedSessionModeFilePath);
+  return writeAccesses.every((access) => access.path === sessionModeFilePath);
 }

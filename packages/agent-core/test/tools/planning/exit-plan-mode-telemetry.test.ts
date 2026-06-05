@@ -33,11 +33,11 @@ function makeAgent(input: {
     active = false;
   });
   const agent = {
-    planMode: {
+    sessionMode: {
       get isActive() {
         return active;
       },
-      get advancedSessionModeFilePath() {
+      get sessionModeFilePath() {
         return '/tmp/kimi-plan.md';
       },
       data: vi.fn(async () => ({

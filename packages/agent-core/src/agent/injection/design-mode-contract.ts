@@ -17,7 +17,7 @@
  * forbidding any implementation until the user approves the design.
  */
 
-import type { AdvancedSessionModeFilePath } from '../advanced-session-mode';
+import type { SessionModeFilePath } from '../session-mode';
 
 /** Leading sentence for the periodic re-injection ("...is active"). */
 const INTRO_ACTIVE = `Design mode is active. This is a brainstorming / spec-exploration session — NOT an implementation session. You MUST NOT make any edits (with the exception of the current design file) or otherwise change the system. Prefer read-only tools. Use Bash only when needed; Bash follows the normal permission mode and rules. This supersedes any other instructions you have received.`;
@@ -128,14 +128,14 @@ function contractBody(mockupAvailable: boolean): string {
   ].join('\n\n');
 }
 
-function withDesignFileFooter(body: string, designFilePath: AdvancedSessionModeFilePath): string {
+function withDesignFileFooter(body: string, designFilePath: SessionModeFilePath): string {
   if (designFilePath === null || designFilePath.length === 0) return body;
   return `${body}\n\nDesign file: ${designFilePath}`;
 }
 
 /** Full re-injection body (DesignModeInjector `full` variant). */
 export function designModeFullReminder(
-  designFilePath: AdvancedSessionModeFilePath,
+  designFilePath: SessionModeFilePath,
   mockupAvailable: boolean,
 ): string {
   return withDesignFileFooter(
@@ -146,7 +146,7 @@ export function designModeFullReminder(
 
 /** Condensed reminder between full re-injections — keeps the invariant + quality bar visible. */
 export function designModeSparseReminder(
-  designFilePath: AdvancedSessionModeFilePath,
+  designFilePath: SessionModeFilePath,
   mockupAvailable: boolean,
 ): string {
   const mockupPointer = mockupAvailable
@@ -160,7 +160,7 @@ ${SPARSE_QUALITY_POINTER}${mockupPointer}`;
 
 /** Re-entry reminder when a design file from a previous session already exists. */
 export function designModeReentryReminder(
-  designFilePath: AdvancedSessionModeFilePath,
+  designFilePath: SessionModeFilePath,
   mockupAvailable: boolean,
 ): string {
   const body = `Design mode is active. This is a brainstorming session, NOT implementation — no code until the user approves via ExitDesignMode. Prefer read-only tools; you may only write the current design file.
@@ -182,7 +182,7 @@ Your turn must end with either AskUserQuestion (to clarify) or ExitDesignMode (t
 
 /** Message shown the moment design mode is entered (EnterDesignModeTool). */
 export function designModeEntryMessage(
-  designFilePath: AdvancedSessionModeFilePath,
+  designFilePath: SessionModeFilePath,
   mockupAvailable: boolean,
 ): string {
   const fileLine =

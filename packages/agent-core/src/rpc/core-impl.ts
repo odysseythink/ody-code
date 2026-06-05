@@ -244,7 +244,7 @@ export class KimiCore implements PromisableMethods<CoreAPI> {
       // Honor config.defaultPlanMode for fresh sessions. Resumed sessions
       // restore their own plan state from records and never re-apply this.
       if (config.defaultPlanMode === true) {
-        await mainAgent.planMode.enter();
+        await mainAgent.sessionMode.enter();
       }
       await session.writeMetadata();
       await session.flushMetadata();

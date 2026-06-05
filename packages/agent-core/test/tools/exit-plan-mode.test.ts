@@ -18,7 +18,7 @@ function makeAgent(
     readonly active?: boolean | undefined;
     readonly plan?: string | null | undefined;
     readonly path?: string | undefined;
-    readonly advancedSessionModeFilePath?: string | null | undefined;
+    readonly sessionModeFilePath?: string | null | undefined;
     readonly emit?: ((event: unknown) => void) | undefined;
   } = {},
 ): { agent: Agent; requestApproval: ReturnType<typeof vi.fn>; emit: ReturnType<typeof vi.fn> } {
@@ -29,12 +29,12 @@ function makeAgent(
     if ((event as { type?: string }).type === 'plan_mode.exit') active = false;
   });
   const agent = {
-    planMode: {
+    sessionMode: {
       get isActive() {
         return active;
       },
-      get advancedSessionModeFilePath() {
-        return input.advancedSessionModeFilePath ?? null;
+      get sessionModeFilePath() {
+        return input.sessionModeFilePath ?? null;
       },
       data: vi.fn(async () => {
         if (input.plan === null) return null;

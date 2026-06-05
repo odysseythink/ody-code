@@ -8,19 +8,19 @@ export class PlanModeGuardDenyPermissionPolicy implements PermissionPolicy {
   constructor(private readonly agent: Agent) {}
 
   evaluate(context: PermissionPolicyContext): PermissionPolicyResult | undefined {
-    if (!this.agent.planMode.isActive) return;
+    if (!this.agent.sessionMode.isActive) return;
 
-    const isDesign = this.agent.planMode.kind === 'design';
+    const isDesign = this.agent.sessionMode.kind === 'design';
     const modeLabel = isDesign ? 'design' : 'plan';
     const exitTool = isDesign ? 'ExitDesignMode' : 'ExitPlanMode';
     const toolName = context.toolCall.name;
 
     if (toolName === 'Write' || toolName === 'Edit') {
-      const advancedSessionModeFilePath = this.agent.planMode.advancedSessionModeFilePath;
-      if (advancedSessionModeFilePath === null) {
+      const sessionModeFilePath = this.agent.sessionMode.sessionModeFilePath;
+      if (sessionModeFilePath === null) {
         return {
           kind: 'deny',
-          message: modeWriteDeniedMessage(modeLabel, advancedSessionModeFilePath),
+          message: modeWriteDeniedMessage(modeLabel, sessionModeFilePath),
         };
       }
       if (writesOnlyPlanFileset(context, this.agent)) {
@@ -28,7 +28,7 @@ export class PlanModeGuardDenyPermissionPolicy implements PermissionPolicy {
       }
       return {
         kind: 'deny',
-        message: modeWriteDeniedMessage(modeLabel, advancedSessionModeFilePath),
+        message: modeWriteDeniedMessage(modeLabel, sessionModeFilePath),
       };
     }
 
@@ -55,14 +55,14 @@ function writesOnlyPlanFileset(context: PermissionPolicyContext, agent: Agent): 
   if (writeAccesses.length === 0) return false;
   // The plan's writable set is the main plan file plus its split siblings
   // (`<id>-*.md` in the same directory); everything else stays denied.
-  return writeAccesses.every((access) => agent.planMode.isWritableAdvancedSessionModePath(access.path));
+  return writeAccesses.every((access) => agent.sessionMode.isWritableSessionModePath(access.path));
 }
 
-function modeWriteDeniedMessage(modeLabel: string, advancedSessionModeFilePath: string | null): string {
+function modeWriteDeniedMessage(modeLabel: string, sessionModeFilePath: string | null): string {
   const Mode = modeLabel.charAt(0).toUpperCase() + modeLabel.slice(1);
   const exitTool = modeLabel === 'design' ? 'ExitDesignMode' : 'ExitPlanMode';
   return (
-    `${Mode} mode is active. You may only write to the current ${modeLabel} file: ${advancedSessionModeFilePath ?? `(no ${modeLabel} file selected yet)`}. ` +
+    `${Mode} mode is active. You may only write to the current ${modeLabel} file: ${sessionModeFilePath ?? `(no ${modeLabel} file selected yet)`}. ` +
     `Call ${exitTool} to exit ${modeLabel} mode before editing other files.`
   );
 }

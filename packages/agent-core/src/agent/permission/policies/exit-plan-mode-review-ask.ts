@@ -23,8 +23,8 @@ export class ExitPlanModeReviewAskPermissionPolicy implements PermissionPolicy {
     const isExitDesign = toolName === 'ExitDesignMode';
     if (!isExitPlan && !isExitDesign) return;
     if (this.agent.permission.mode === 'auto') return;
-    if (!this.agent.planMode.isActive) return;
-    const isDesign = this.agent.planMode.kind === 'design';
+    if (!this.agent.sessionMode.isActive) return;
+    const isDesign = this.agent.sessionMode.kind === 'design';
     // Guard: ExitPlanMode shouldn't fire in design mode and vice versa
     if (isExitDesign && !isDesign) return;
     if (isExitPlan && isDesign) return;
@@ -156,10 +156,10 @@ export class ExitPlanModeReviewAskPermissionPolicy implements PermissionPolicy {
   }
 
   private exitMode(): { isError: true; output: string } | undefined {
-    const isDesign = this.agent.planMode.kind === 'design';
+    const isDesign = this.agent.sessionMode.kind === 'design';
     const modeLabel = isDesign ? 'design' : 'plan';
     try {
-      this.agent.planMode.exit();
+      this.agent.sessionMode.exit();
     } catch (error) {
       const message = error instanceof Error ? error.message : `Unknown error.`;
       return {

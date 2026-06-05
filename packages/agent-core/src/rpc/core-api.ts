@@ -1,9 +1,9 @@
-import type { Confidence } from '../agent/advanced-session-mode/reviewer';
+import type { Confidence } from '../agent/session-mode/reviewer';
 import type { AgentConfigData } from '#/agent/config';
 import type { AgentContextData } from '#/agent/context';
 import type { BackgroundTaskInfo } from '#/agent/background';
 import type { PermissionData, PermissionMode } from '#/agent/permission';
-import type { AdvancedSessionModeData, AdvancedSessionModeKind } from '#/agent/advanced-session-mode';
+import type { SessionModeData, SessionModeKind } from '#/agent/session-mode';
 import type { ToolInfo } from '#/agent/tool';
 import type { KimiConfig, KimiConfigPatch } from '#/config';
 import type { ExperimentalFlagMap } from '#/flags';
@@ -163,7 +163,7 @@ export interface CancelPlanPayload {
   readonly id?: string;
 }
 export interface EnterPlanPayload {
-  readonly kind?: AdvancedSessionModeKind;
+  readonly kind?: SessionModeKind;
   readonly fileStem?: string;
 }
 export interface BeginCompactionPayload {
@@ -365,7 +365,7 @@ export interface AgentAPI {
   getContext: (payload: EmptyPayload) => AgentContextData;
   getConfig: (payload: EmptyPayload) => AgentConfigData;
   getPermission: (payload: EmptyPayload) => PermissionData;
-  getPlan: (payload: EmptyPayload) => AdvancedSessionModeData;
+  getPlan: (payload: EmptyPayload) => SessionModeData;
   reviewDesign: (payload: ReviewDesignPayload) => DesignReviewData;
   getUsage: (payload: EmptyPayload) => UsageStatus;
   getTools: (payload: EmptyPayload) => readonly ToolInfo[];

@@ -40,10 +40,10 @@ import { ContextMemory } from './context';
 import { HookEngine } from '../session/hooks';
 
 import { parseManifestFiles } from './injection/plan-mode-contract';
-import { AdvancedSessionReviewer, shouldEscalate } from './advanced-session-mode/reviewer';
+import { AdvancedSessionReviewer, shouldEscalate } from './session-mode/reviewer';
 import { InjectionManager } from './injection/manager';
 import { PermissionManager, type PermissionManagerOptions } from './permission';
-import { AdvancedSessionMode } from './advanced-session-mode';
+import { SessionMode } from './session-mode';
 import {
   AgentRecords,
   BlobStore,
@@ -122,7 +122,7 @@ export class Agent {
   readonly turn: TurnFlow;
   readonly injection: InjectionManager;
   readonly permission: PermissionManager;
-  readonly planMode: AdvancedSessionMode;
+  readonly sessionMode: SessionMode;
   readonly usage: UsageRecorder;
   readonly skills: SkillManager | null;
   readonly tools: ToolManager;
@@ -172,7 +172,7 @@ export class Agent {
     this.turn = new TurnFlow(this);
     this.injection = new InjectionManager(this);
     this.permission = new PermissionManager(this, options.permission);
-    this.planMode = new AdvancedSessionMode(this);
+    this.sessionMode = new SessionMode(this);
     this.usage = new UsageRecorder(this);
     this.skills = options.skills ? new SkillManager(this, options.skills) : null;
     this.tools = new ToolManager(this);
@@ -345,7 +345,7 @@ export class Agent {
           this.config.update({ modelAlias: payload.model });
           // If the user changes model while inside plan/design mode, update
           // the pre-mode alias so exit restores the newly chosen model.
-          this.planMode.updatePreModeModelAlias(payload.model);
+          this.sessionMode.updatePreModeModelAlias(payload.model);
           this.telemetry.track('model_switch', { model: payload.model });
         }
         return {
@@ -358,12 +358,12 @@ export class Agent {
       },
       enterPlan: async (payload) => {
         if (
-          this.planMode.isActive &&
-          this.planMode.kind !== (payload.kind ?? 'plan')
+          this.sessionMode.isActive &&
+          this.sessionMode.kind !== (payload.kind ?? 'plan')
         ) {
-          await this.planMode.finalizeFileName();
+          await this.sessionMode.finalizeFileName();
         }
-        await this.planMode.enter(
+        await this.sessionMode.enter(
           undefined,
           undefined,
           undefined,
@@ -372,10 +372,10 @@ export class Agent {
         );
       },
       cancelPlan: async (payload) => {
-        await this.planMode.finalizeFileName();
-        this.planMode.cancel(payload.id);
+        await this.sessionMode.finalizeFileName();
+        this.sessionMode.cancel(payload.id);
       },
-      clearPlan: () => this.planMode.clear(),
+      clearPlan: () => this.sessionMode.clear(),
       beginCompaction: (payload) => {
         this.fullCompaction.begin({ source: 'manual', instruction: payload.instruction });
       },
@@ -410,7 +410,7 @@ export class Agent {
       getContext: () => this.context.data(),
       getConfig: () => this.config.data(),
       getPermission: () => this.permission.data(),
-      getPlan: () => this.planMode.data(),
+      getPlan: () => this.sessionMode.data(),
       reviewDesign: async (payload) => {
         let content: string;
         let path: string;
@@ -427,7 +427,7 @@ export class Agent {
           path = payload.path;
           kind = payload.kind ?? 'design';
         } else {
-          const data = await this.planMode.data();
+          const data = await this.sessionMode.data();
           if (data === null || data.content.trim().length === 0) {
             throw new KimiError(
               ErrorCodes.SESSION_PLAN_MODE_INVALID,
@@ -532,9 +532,8 @@ export class Agent {
       contextTokens,
       maxContextTokens,
       contextUsage,
-      planMode: this.planMode.isActive,
-      planKind: this.planMode.kind,
-      advancedSessionModeFilePath: this.planMode.advancedSessionModeFilePath,
+      sessionMode: this.sessionMode.isActive ? this.sessionMode.kind : 'normal',
+      sessionModeFilePath: this.sessionMode.sessionModeFilePath,
       permission: this.permission.mode,
       usage,
     });

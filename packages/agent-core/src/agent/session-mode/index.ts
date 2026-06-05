@@ -15,21 +15,21 @@ import { generateHeroSlug } from '../../utils/hero-slug';
  * read-only-with-one-writable-file machinery; only the prompts, the output
  * directory and the surfacing labels differ.
  */
-export type AdvancedSessionModeKind = 'plan' | 'design';
+export type SessionModeKind = 'plan' | 'design';
 
-export type AdvancedSessionModeData = null | {
+export type SessionModeData = null | {
   id: string;
   content: string;
   path: string;
-  kind: AdvancedSessionModeKind;
+  kind: SessionModeKind;
 };
-export type AdvancedSessionModeFilePath = string | null;
+export type SessionModeFilePath = string | null;
 
-export class AdvancedSessionMode {
+export class SessionMode {
   protected _isActive = false;
   protected _sessionModeId: null | string = null;
-  protected _SessionModeFilePath: AdvancedSessionModeFilePath = null;
-  protected _kind: AdvancedSessionModeKind = 'plan';
+  protected _sessionModeFilePath: SessionModeFilePath = null;
+  protected _kind: SessionModeKind = 'plan';
   protected _fileStem: string | null = null;
   protected _lastDesignFileStem: string | null = null;
   protected _manualTopicSlug: string | null = null;
@@ -37,7 +37,7 @@ export class AdvancedSessionMode {
 
   constructor(protected readonly agent: Agent) {}
 
-  createAdvancedSessionModeId(): string {
+  createSessionModeId(): string {
     return generateHeroSlug(randomUUID(), new Set());
   }
 
@@ -48,10 +48,10 @@ export class AdvancedSessionMode {
   }
 
   async enter(
-    id = this.createAdvancedSessionModeId(),
+    id = this.createSessionModeId(),
     createFile = false,
     emitStatus = true,
-    kind: AdvancedSessionModeKind = 'plan',
+    kind: SessionModeKind = 'plan',
     fileStem?: string,
   ): Promise<void> {
     if (this._isActive) {
@@ -65,7 +65,7 @@ export class AdvancedSessionMode {
     this._isActive = true;
     this._sessionModeId = id;
     this._kind = kind;
-    this._SessionModeFilePath = null;
+    this._sessionModeFilePath = null;
 
     let effectiveStem = fileStem;
     if (!effectiveStem) {
@@ -94,9 +94,9 @@ export class AdvancedSessionMode {
 
     let enterRecorded = false;
     try {
-      const advancedSessionModeFilePath = this.advancedSessionModeFilePathFor(this._fileStem);
-      this._SessionModeFilePath = advancedSessionModeFilePath;
-      await this.ensureAdvancedSessionModeDirectory(advancedSessionModeFilePath);
+      const sessionModeFilePath = this.sessionModeFilePathFor(this._fileStem);
+      this._sessionModeFilePath = sessionModeFilePath;
+      await this.ensureSessionModeDirectory(sessionModeFilePath);
       this.agent.records.logRecord({
         type: 'plan_mode.enter',
         id,
@@ -105,7 +105,7 @@ export class AdvancedSessionMode {
       });
       enterRecorded = true;
       if (createFile) {
-        await this.writeEmptyAdvancedSessionModeFile(advancedSessionModeFilePath);
+        await this.writeEmptySessionModeFile(sessionModeFilePath);
       }
     } catch (error) {
       if (enterRecorded) {
@@ -117,7 +117,7 @@ export class AdvancedSessionMode {
         }
         this._isActive = false;
         this._sessionModeId = null;
-        this._SessionModeFilePath = null;
+        this._sessionModeFilePath = null;
         this._fileStem = null;
         this._kind = 'plan';
       }
@@ -133,7 +133,7 @@ export class AdvancedSessionMode {
     fileStem,
   }: {
     readonly id: string;
-    readonly kind?: AdvancedSessionModeKind;
+    readonly kind?: SessionModeKind;
     readonly fileStem?: string;
   }): void {
     this.agent.replayBuilder.push({
@@ -146,7 +146,7 @@ export class AdvancedSessionMode {
     this._sessionModeId = id;
     this._kind = kind;
     this._fileStem = fileStem ?? id;
-    this._SessionModeFilePath = this.advancedSessionModeFilePathFor(this._fileStem);
+    this._sessionModeFilePath = this.sessionModeFilePathFor(this._fileStem);
   }
 
   cancel(id?: string): void {
@@ -163,15 +163,15 @@ export class AdvancedSessionMode {
     this._manualTopicSlug = null;
     this._isActive = false;
     this._sessionModeId = null;
-    this._SessionModeFilePath = null;
+    this._sessionModeFilePath = null;
     this._fileStem = null;
     this._kind = 'plan';
     this.agent.emitStatusUpdated();
   }
 
   async clear(): Promise<void> {
-    if (!this._SessionModeFilePath) return;
-    await this.writeEmptyAdvancedSessionModeFile(this._SessionModeFilePath);
+    if (!this._sessionModeFilePath) return;
+    await this.writeEmptySessionModeFile(this._sessionModeFilePath);
   }
 
   exit(id?: string): void {
@@ -191,7 +191,7 @@ export class AdvancedSessionMode {
     this._manualTopicSlug = null;
     this._isActive = false;
     this._sessionModeId = null;
-    this._SessionModeFilePath = null;
+    this._sessionModeFilePath = null;
     this._fileStem = null;
     this._kind = 'plan';
     this.agent.emitStatusUpdated();
@@ -201,7 +201,7 @@ export class AdvancedSessionMode {
     return this._isActive;
   }
 
-  get kind(): AdvancedSessionModeKind {
+  get kind(): SessionModeKind {
     return this._kind;
   }
 
@@ -209,59 +209,59 @@ export class AdvancedSessionMode {
     return this._fileStem;
   }
 
-  get advancedSessionModeFilePath(): AdvancedSessionModeFilePath {
-    return this._SessionModeFilePath;
+  get sessionModeFilePath(): SessionModeFilePath {
+    return this._sessionModeFilePath;
   }
 
   /**
-   * Whether `path` is part of the current AdvancedSessionMode's writable fileset. This is the
+   * Whether `path` is part of the current SessionMode's writable fileset. This is the
    * single source of truth the read-only guard ({@link PlanModeGuardDenyPermissionPolicy})
-   * uses to decide what Write/Edit may touch while AdvancedSessionMode mode is active.
+   * uses to decide what Write/Edit may touch while SessionMode mode is active.
    *
-   * The set is the main AdvancedSessionMode file (`<id>.md`) plus its split siblings
+   * The set is the main SessionMode file (`<id>.md`) plus its split siblings
    * (`<id>-<subsystem>.md`) in the same directory — and nothing else, so source
-   * files outside the AdvancedSessionModes directory stay denied. A single-file AdvancedSessionMode (the
+   * files outside the SessionModes directory stay denied. A single-file SessionMode (the
    * common case, and all of design mode) only matches the main file exactly.
    */
-  isWritableAdvancedSessionModePath(path: string): boolean {
-    if (this._SessionModeFilePath === null || this._sessionModeId === null) return false;
-    if (path === this._SessionModeFilePath) return true;
-    if (dirname(path) !== dirname(this._SessionModeFilePath)) return false;
+  isWritableSessionModePath(path: string): boolean {
+    if (this._sessionModeFilePath === null || this._sessionModeId === null) return false;
+    if (path === this._sessionModeFilePath) return true;
+    if (dirname(path) !== dirname(this._sessionModeFilePath)) return false;
     const base = basename(path);
     if (!base.endsWith('.md')) return false;
     const stem = base.slice(0, -'.md'.length);
     return stem === this._sessionModeId || stem.startsWith(`${this._sessionModeId}-`);
   }
 
-  async data(): Promise<AdvancedSessionModeData> {
-    if (!this._sessionModeId || !this._SessionModeFilePath) return null;
+  async data(): Promise<SessionModeData> {
+    if (!this._sessionModeId || !this._sessionModeFilePath) return null;
     let content = '';
     try {
-      content = await this.agent.kaos.readText(this._SessionModeFilePath);
+      content = await this.agent.kaos.readText(this._sessionModeFilePath);
     } catch (error) {
       if (!isMissingFileError(error)) throw error;
     }
     return {
       id: this._sessionModeId,
       content,
-      path: this._SessionModeFilePath,
+      path: this._sessionModeFilePath,
       kind: this._kind,
     };
   }
 
-  private async writeEmptyAdvancedSessionModeFile(path: string): Promise<void> {
-    await this.ensureAdvancedSessionModeDirectory(path);
+  private async writeEmptySessionModeFile(path: string): Promise<void> {
+    await this.ensureSessionModeDirectory(path);
     await this.agent.kaos.writeText(path, '');
   }
 
-  private async ensureAdvancedSessionModeDirectory(path: string): Promise<void> {
+  private async ensureSessionModeDirectory(path: string): Promise<void> {
     await this.agent.kaos.mkdir(dirname(path), {
       parents: true,
       existOk: true,
     });
   }
 
-  private advancedSessionModeFilePathFor(stem: string): string {
+  private sessionModeFilePathFor(stem: string): string {
     const cwdSubdir = this._kind === 'design' ? 'design' : 'plan';
     const homeSubdir = this._kind === 'design' ? 'designs' : 'plans';
     const plansDir =
@@ -272,17 +272,17 @@ export class AdvancedSessionMode {
   }
 
   async finalizeFileName(): Promise<string | null> {
-    if (!this._SessionModeFilePath || !this._fileStem) return this._SessionModeFilePath;
+    if (!this._sessionModeFilePath || !this._fileStem) return this._sessionModeFilePath;
 
     let content: string;
     try {
-      content = await this.agent.kaos.readText(this._SessionModeFilePath);
+      content = await this.agent.kaos.readText(this._sessionModeFilePath);
     } catch {
-      return this._SessionModeFilePath;
+      return this._sessionModeFilePath;
     }
 
     if (content.trim().length === 0) {
-      return this._SessionModeFilePath;
+      return this._sessionModeFilePath;
     }
 
     const heading = extractFirstHeading(content);
@@ -300,19 +300,19 @@ export class AdvancedSessionMode {
     finalStem = await this.findUniqueStem(finalStem);
 
     if (finalStem === this._fileStem) {
-      return this._SessionModeFilePath;
+      return this._sessionModeFilePath;
     }
 
-    const finalPath = this.advancedSessionModeFilePathFor(finalStem);
+    const finalPath = this.sessionModeFilePathFor(finalStem);
 
     try {
       await this.agent.kaos.writeText(finalPath, content);
     } catch (error) {
       this.agent.log?.warn('Failed to write finalized plan/design file', { error });
-      return this._SessionModeFilePath;
+      return this._sessionModeFilePath;
     }
 
-    this._SessionModeFilePath = finalPath;
+    this._sessionModeFilePath = finalPath;
     this._fileStem = finalStem;
     this.agent.emitStatusUpdated();
     return finalPath;
@@ -322,7 +322,7 @@ export class AdvancedSessionMode {
     let stem = baseStem;
     let suffix = 1;
     while (true) {
-      const candidatePath = this.advancedSessionModeFilePathFor(stem);
+      const candidatePath = this.sessionModeFilePathFor(stem);
       try {
         await this.agent.kaos.stat(candidatePath);
         stem = `${baseStem}-${suffix}`;

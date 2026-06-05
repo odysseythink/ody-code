@@ -31,8 +31,8 @@ describe('Agent resume', () => {
 
     await ctx.agent.resume();
 
-    expect(ctx.agent.planMode.isActive).toBe(true);
-    expect(ctx.agent.planMode.advancedSessionModeFilePath).toContain('resume-plan');
+    expect(ctx.agent.sessionMode.isActive).toBe(true);
+    expect(ctx.agent.sessionMode.sessionModeFilePath).toContain('resume-plan');
     expect(ctx.newEvents()).toMatchInlineSnapshot(`[]`);
     expect(ctx.llmCalls).toHaveLength(0);
     expect(execWithEnv).not.toHaveBeenCalled();

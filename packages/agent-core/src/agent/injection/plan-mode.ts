@@ -27,12 +27,12 @@ export class PlanModeInjector extends DynamicInjector {
 
   override onContextClear(): void {
     super.onContextClear();
-    this.wasActive = this.agent.planMode.isActive && this.agent.planMode.kind !== 'design';
+    this.wasActive = this.agent.sessionMode.isActive && this.agent.sessionMode.kind !== 'design';
   }
 
   override async getInjection(): Promise<string | undefined> {
-    const isPlanActive = this.agent.planMode.isActive && this.agent.planMode.kind !== 'design';
-    const { advancedSessionModeFilePath } = this.agent.planMode;
+    const isPlanActive = this.agent.sessionMode.isActive && this.agent.sessionMode.kind !== 'design';
+    const { sessionModeFilePath } = this.agent.sessionMode;
     if (!isPlanActive) {
       if (!this.wasActive) {
         return undefined;
@@ -46,17 +46,17 @@ export class PlanModeInjector extends DynamicInjector {
       this.injectedAt = null;
       this.wasActive = true;
       if (content.trim().length > 0) {
-        return planModeReentryReminder(advancedSessionModeFilePath);
+        return planModeReentryReminder(sessionModeFilePath);
       }
     }
     const variant = this.getVariant();
     if (variant === null) return undefined;
-    if (variant === 'reentry') return planModeReentryReminder(advancedSessionModeFilePath);
+    if (variant === 'reentry') return planModeReentryReminder(sessionModeFilePath);
 
     const directive = splitDirectiveFor(content);
     return variant === 'full'
-      ? planModeFullReminder(advancedSessionModeFilePath, directive)
-      : planModeSparseReminder(advancedSessionModeFilePath, directive);
+      ? planModeFullReminder(sessionModeFilePath, directive)
+      : planModeSparseReminder(sessionModeFilePath, directive);
   }
 
   protected getVariant(): PlanModeVariant | null {
@@ -81,7 +81,7 @@ export class PlanModeInjector extends DynamicInjector {
 
   private async currentPlanContent(): Promise<string> {
     try {
-      const data = await this.agent.planMode.data();
+      const data = await this.agent.sessionMode.data();
       return data?.content ?? '';
     } catch {
       return '';

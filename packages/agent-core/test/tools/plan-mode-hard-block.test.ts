@@ -8,13 +8,13 @@ import type {
   PermissionPolicyResult,
 } from '../../src/agent/permission';
 import { PlanModeGuardDenyPermissionPolicy } from '../../src/agent/permission/policies/plan-mode-guard-deny';
-import { AdvancedSessionMode } from '../../src/agent/advanced-session-mode';
+import { SessionMode } from '../../src/agent/session-mode';
 import { ToolAccesses } from '../../src/loop';
 import type { ToolExecutionHookContext } from '../../src/loop';
 
 const signal = new AbortController().signal;
 
-async function activePlanAgent(): Promise<{ agent: Agent; planMode: AdvancedSessionMode }> {
+async function activePlanAgent(): Promise<{ agent: Agent; planMode: SessionMode }> {
   const agent = {
     homedir: '/tmp/kimi-plan-test',
     emitStatusUpdated: vi.fn(),
@@ -24,10 +24,10 @@ async function activePlanAgent(): Promise<{ agent: Agent; planMode: AdvancedSess
       mkdir: vi.fn().mockResolvedValue(undefined),
     },
   } as unknown as Agent;
-  const planMode = new AdvancedSessionMode(agent);
-  Object.assign(agent, { planMode });
-  await planMode.enter('current-plan', false);
-  return { agent, planMode };
+  const sessionMode = new SessionMode(agent);
+  Object.assign(agent, { sessionMode });
+  await sessionMode.enter('current-plan', false);
+  return { agent, sessionMode };
 }
 
 function hookContext(toolName: string, args: unknown): ToolExecutionHookContext {
@@ -73,8 +73,8 @@ function evaluatePlanPolicy(
 
 describe('Plan mode permission policy', () => {
   it('allows Write and Edit to the active plan file', async () => {
-    const { agent, planMode } = await activePlanAgent();
-    const planPath = planMode.advancedSessionModeFilePath;
+    const { agent, sessionMode } = await activePlanAgent();
+    const planPath = sessionMode.sessionModeFilePath;
     if (planPath === null) throw new Error('expected plan path');
 
     expect(evaluatePlanPolicy(agent, 'Write', { path: planPath })).toBeUndefined();
@@ -112,8 +112,8 @@ describe('Plan mode permission policy', () => {
   });
 
   it('blocks file edits when plan mode has no selected plan file path', async () => {
-    const { agent, planMode } = await activePlanAgent();
-    (planMode as unknown as { _SessionModeFilePath: string | null })._SessionModeFilePath = null;
+    const { agent, sessionMode } = await activePlanAgent();
+    (sessionMode as unknown as { _sessionModeFilePath: string | null })._sessionModeFilePath = null;
 
     const result = evaluatePlanPolicy(agent, 'Edit', {
       path: '/workspace/src/other.ts',
@@ -127,8 +127,8 @@ describe('Plan mode permission policy', () => {
   });
 
   it('blocks file writes when plan mode has no selected plan file path', async () => {
-    const { agent, planMode } = await activePlanAgent();
-    (planMode as unknown as { _SessionModeFilePath: string | null })._SessionModeFilePath = null;
+    const { agent, sessionMode } = await activePlanAgent();
+    (sessionMode as unknown as { _sessionModeFilePath: string | null })._sessionModeFilePath = null;
 
     const result = evaluatePlanPolicy(agent, 'Write', {
       path: '/workspace/src/other.ts',
@@ -160,8 +160,8 @@ describe('Plan mode permission policy', () => {
   });
 
   it('allows multiple writes when every write access targets the active plan file', async () => {
-    const { agent, planMode } = await activePlanAgent();
-    const planPath = planMode.advancedSessionModeFilePath;
+    const { agent, sessionMode } = await activePlanAgent();
+    const planPath = sessionMode.sessionModeFilePath;
     if (planPath === null) throw new Error('expected plan path');
 
     const result = new PlanModeGuardDenyPermissionPolicy(agent).evaluate(
@@ -180,30 +180,30 @@ describe('Plan mode permission policy', () => {
   });
 
   it('allows writing split sibling files in the plan directory', async () => {
-    const { agent, planMode } = await activePlanAgent();
-    const planPath = planMode.advancedSessionModeFilePath;
+    const { agent, sessionMode } = await activePlanAgent();
+    const planPath = sessionMode.sessionModeFilePath;
     if (planPath === null) throw new Error('expected plan path');
     // planPath is `<dir>/current-plan.md`; siblings are `<dir>/current-plan-*.md`.
     const sibling = planPath.replace(/current-plan\.md$/, 'current-plan-core.md');
     expect(sibling).not.toBe(planPath);
 
-    expect(planMode.isWritableAdvancedSessionModePath(sibling)).toBe(true);
+    expect(sessionMode.isWritableSessionModePath(sibling)).toBe(true);
     expect(evaluatePlanPolicy(agent, 'Write', { path: sibling, content: 'x' })).toBeUndefined();
   });
 
   it('blocks writes to a same-named file in a different directory', async () => {
-    const { agent, planMode } = await activePlanAgent();
+    const { agent, sessionMode } = await activePlanAgent();
     // Same basename family but outside the plan directory must stay denied.
     const outside = '/workspace/src/current-plan-core.md';
-    expect(planMode.isWritableAdvancedSessionModePath(outside)).toBe(false);
+    expect(sessionMode.isWritableSessionModePath(outside)).toBe(false);
 
     const deny = expectDeny(evaluatePlanPolicy(agent, 'Write', { path: outside, content: 'x' }));
     expect(deny.message ?? '').toContain('current plan file');
   });
 
   it('blocks mixed plan-file and non-plan-file write accesses', async () => {
-    const { agent, planMode } = await activePlanAgent();
-    const planPath = planMode.advancedSessionModeFilePath;
+    const { agent, sessionMode } = await activePlanAgent();
+    const planPath = sessionMode.sessionModeFilePath;
     if (planPath === null) throw new Error('expected plan path');
 
     const result = new PlanModeGuardDenyPermissionPolicy(agent).evaluate(
@@ -287,8 +287,8 @@ describe('Plan mode permission policy', () => {
   });
 
   it('does not block anything once plan mode has exited', async () => {
-    const { agent, planMode } = await activePlanAgent();
-    planMode.exit();
+    const { agent, sessionMode } = await activePlanAgent();
+    sessionMode.exit();
 
     expect(evaluatePlanPolicy(agent, 'Write', { path: '/workspace/src/main.ts' })).toBeUndefined();
     expect(evaluatePlanPolicy(agent, 'Bash', { command: 'rm foo.txt' })).toBeUndefined();

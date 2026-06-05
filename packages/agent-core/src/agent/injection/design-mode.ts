@@ -16,12 +16,12 @@ export class DesignModeInjector extends DynamicInjector {
 
   override onContextClear(): void {
     super.onContextClear();
-    this.wasActive = this.agent.planMode.isActive && this.agent.planMode.kind === 'design';
+    this.wasActive = this.agent.sessionMode.isActive && this.agent.sessionMode.kind === 'design';
   }
 
   override async getInjection(): Promise<string | undefined> {
-    const isDesignActive = this.agent.planMode.isActive && this.agent.planMode.kind === 'design';
-    const { advancedSessionModeFilePath } = this.agent.planMode;
+    const isDesignActive = this.agent.sessionMode.isActive && this.agent.sessionMode.kind === 'design';
+    const { sessionModeFilePath } = this.agent.sessionMode;
     // Machine signal: ShowDesignMockup is usable only when it is BOTH registered
     // (host advertises openExternal, see ToolManager.initializeBuiltinTools) AND
     // enabled by the active profile — otherwise it never reaches the model's tool
@@ -39,16 +39,16 @@ export class DesignModeInjector extends DynamicInjector {
       this.injectedAt = null;
       this.wasActive = true;
       if (await this.hasCurrentDesignContent()) {
-        return designModeReentryReminder(advancedSessionModeFilePath, mockupAvailable);
+        return designModeReentryReminder(sessionModeFilePath, mockupAvailable);
       }
     }
     const variant = this.getVariant();
     if (variant === null) return undefined;
     return variant === 'full'
-      ? designModeFullReminder(advancedSessionModeFilePath, mockupAvailable)
+      ? designModeFullReminder(sessionModeFilePath, mockupAvailable)
       : variant === 'sparse'
-        ? designModeSparseReminder(advancedSessionModeFilePath, mockupAvailable)
-        : designModeReentryReminder(advancedSessionModeFilePath, mockupAvailable);
+        ? designModeSparseReminder(sessionModeFilePath, mockupAvailable)
+        : designModeReentryReminder(sessionModeFilePath, mockupAvailable);
   }
 
   protected getVariant(): DesignModeVariant | null {
@@ -71,7 +71,7 @@ export class DesignModeInjector extends DynamicInjector {
 
   private async hasCurrentDesignContent(): Promise<boolean> {
     try {
-      const data = await this.agent.planMode.data();
+      const data = await this.agent.sessionMode.data();
       return data !== null && data.content.trim().length > 0;
     } catch {
       return false;

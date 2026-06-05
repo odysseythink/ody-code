@@ -14,11 +14,11 @@ function makeAgent(mode: PermissionMode): {
   const requestApproval = vi.fn(async () => ({ decision: 'approved' }));
   const telemetryTrack = vi.fn();
   const agent = {
-    planMode: {
+    sessionMode: {
       get isActive() {
         return active;
       },
-      get advancedSessionModeFilePath() {
+      get sessionModeFilePath() {
         return '/tmp/kimi-plan.md';
       },
       enter: vi.fn(async () => {
