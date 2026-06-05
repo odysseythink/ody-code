@@ -809,3 +809,136 @@ describe('lazy fileStem and design reuse', () => {
     expect((ctx.agent.planMode as any)._manualTopicSlug).toBeNull();
   });
 });
+
+
+describe('finalizeFileName', () => {
+  it('renames file based on H1 heading', async () => {
+    const files = new Map<string, string>();
+    const mkdir = vi.fn().mockResolvedValue(undefined);
+    const readText = vi.fn(async (path: string) => files.get(path) ?? '');
+    const writeText = vi.fn(async (path: string, content: string) => {
+      files.set(path, content);
+      return content.length;
+    });
+    const ctx = testAgent({
+      kaos: createFakeKaos({ mkdir, readText, writeText }),
+    });
+    await ctx.agent.planMode.enter('brave-fox-1234', false, false, 'plan');
+    const tempPath = ctx.agent.planMode.planFilePath!;
+    await writeText(tempPath, '# My Plan\n\ncontent');
+
+    const finalPath = await ctx.agent.planMode.finalizeFileName();
+
+    const today = new Date().toISOString().slice(0, 10);
+    expect(finalPath).toContain(`plan/${today}-my-plan.md`);
+    expect(ctx.agent.planMode.planFilePath).toBe(finalPath);
+    expect(ctx.agent.planMode.fileStem).toBe(`${today}-my-plan`);
+  });
+
+  it('appends suffix on collision', async () => {
+    const files = new Map<string, string>();
+    const mkdir = vi.fn().mockResolvedValue(undefined);
+    const readText = vi.fn(async (path: string) => files.get(path) ?? '');
+    const writeText = vi.fn(async (path: string, content: string) => {
+      files.set(path, content);
+      return content.length;
+    });
+    const stat = vi.fn(async (path: string) => {
+      if (files.has(path)) {
+        return { size: files.get(path)!.length, mtime: new Date() };
+      }
+      throw Object.assign(new Error('ENOENT'), { code: 'ENOENT' });
+    });
+    const ctx = testAgent({
+      kaos: createFakeKaos({ mkdir, readText, writeText, stat }),
+    });
+    await ctx.agent.planMode.enter('brave-fox-1234', false, false, 'plan');
+    const today = new Date().toISOString().slice(0, 10);
+    // pre-create the target file
+    const targetPath = `/workspace/plan/${today}-my-plan.md`;
+    files.set(targetPath, 'existing');
+    const tempPath = ctx.agent.planMode.planFilePath!;
+    await writeText(tempPath, '# My Plan\n\ncontent');
+
+    const finalPath = await ctx.agent.planMode.finalizeFileName();
+
+    expect(finalPath).toContain(`plan/${today}-my-plan-1.md`);
+  });
+
+  it('falls back to manual topic when no H1', async () => {
+    const files = new Map<string, string>();
+    const mkdir = vi.fn().mockResolvedValue(undefined);
+    const readText = vi.fn(async (path: string) => files.get(path) ?? '');
+    const writeText = vi.fn(async (path: string, content: string) => {
+      files.set(path, content);
+      return content.length;
+    });
+    const ctx = testAgent({
+      kaos: createFakeKaos({ mkdir, readText, writeText }),
+    });
+    await ctx.agent.planMode.enter('brave-fox-1234', false, false, 'plan', 'custom-topic');
+    const tempPath = ctx.agent.planMode.planFilePath!;
+    await writeText(tempPath, 'no heading here');
+
+    const finalPath = await ctx.agent.planMode.finalizeFileName();
+
+    const today = new Date().toISOString().slice(0, 10);
+    expect(finalPath).toContain(`plan/${today}-custom-topic.md`);
+  });
+
+  it('falls back to planId when no H1 and no manual topic', async () => {
+    const files = new Map<string, string>();
+    const mkdir = vi.fn().mockResolvedValue(undefined);
+    const readText = vi.fn(async (path: string) => files.get(path) ?? '');
+    const writeText = vi.fn(async (path: string, content: string) => {
+      files.set(path, content);
+      return content.length;
+    });
+    const ctx = testAgent({
+      kaos: createFakeKaos({ mkdir, readText, writeText }),
+    });
+    await ctx.agent.planMode.enter('brave-fox-1234', false, false, 'plan');
+    const tempPath = ctx.agent.planMode.planFilePath!;
+    await writeText(tempPath, 'no heading here');
+
+    const finalPath = await ctx.agent.planMode.finalizeFileName();
+
+    const today = new Date().toISOString().slice(0, 10);
+    expect(finalPath).toContain(`plan/${today}-brave-fox-1234.md`);
+  });
+
+  it('returns temp path on empty file', async () => {
+    const files = new Map<string, string>();
+    const mkdir = vi.fn().mockResolvedValue(undefined);
+    const readText = vi.fn(async (path: string) => files.get(path) ?? '');
+    const writeText = vi.fn(async (path: string, content: string) => {
+      files.set(path, content);
+      return content.length;
+    });
+    const ctx = testAgent({
+      kaos: createFakeKaos({ mkdir, readText, writeText }),
+    });
+    await ctx.agent.planMode.enter('brave-fox-1234', false, false, 'plan');
+    const tempPath = ctx.agent.planMode.planFilePath;
+    const result = await ctx.agent.planMode.finalizeFileName();
+    expect(result).toBe(tempPath);
+  });
+
+  it('isWritablePlanPath works after finalize', async () => {
+    const files = new Map<string, string>();
+    const mkdir = vi.fn().mockResolvedValue(undefined);
+    const readText = vi.fn(async (path: string) => files.get(path) ?? '');
+    const writeText = vi.fn(async (path: string, content: string) => {
+      files.set(path, content);
+      return content.length;
+    });
+    const ctx = testAgent({
+      kaos: createFakeKaos({ mkdir, readText, writeText }),
+    });
+    await ctx.agent.planMode.enter('brave-fox-1234', false, false, 'plan');
+    const tempPath = ctx.agent.planMode.planFilePath!;
+    await writeText(tempPath, '# My Plan\n');
+    await ctx.agent.planMode.finalizeFileName();
+    expect(ctx.agent.planMode.isWritablePlanPath(ctx.agent.planMode.planFilePath!)).toBe(true);
+  });
+});

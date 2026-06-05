@@ -3,6 +3,7 @@ import { basename, dirname, join } from 'pathe';
 
 import type { Agent } from '..';
 import {
+  extractFirstHeading,
   formatDatePrefix,
   slugifyTitle,
 } from './topic-generator';
@@ -266,6 +267,63 @@ export class PlanMode {
         ? join(this.agent.config.cwd, cwdSubdir)
         : join(this.agent.homedir, homeSubdir);
     return join(plansDir, `${stem}.md`);
+  }
+
+  async finalizeFileName(): Promise<string | null> {
+    if (!this._planFilePath || !this._fileStem) return this._planFilePath;
+
+    let content: string;
+    try {
+      content = await this.agent.kaos.readText(this._planFilePath);
+    } catch {
+      return this._planFilePath;
+    }
+
+    if (content.trim().length === 0) {
+      return this._planFilePath;
+    }
+
+    const heading = extractFirstHeading(content);
+    const today = formatDatePrefix(new Date());
+    const slug = heading
+      ? slugifyTitle(heading)
+      : (this._manualTopicSlug ?? this._planId ?? 'untitled');
+
+    let finalStem = `${today}-${slug}`;
+    finalStem = await this.findUniqueStem(finalStem);
+
+    if (finalStem === this._fileStem) {
+      return this._planFilePath;
+    }
+
+    const finalPath = this.planFilePathFor(finalStem);
+
+    try {
+      await this.agent.kaos.writeText(finalPath, content);
+    } catch (error) {
+      this.agent.log?.warn('Failed to write finalized plan/design file', { error });
+      return this._planFilePath;
+    }
+
+    this._planFilePath = finalPath;
+    this._fileStem = finalStem;
+    this.agent.emitStatusUpdated();
+    return finalPath;
+  }
+
+  async findUniqueStem(baseStem: string): Promise<string> {
+    let stem = baseStem;
+    let suffix = 1;
+    while (true) {
+      const candidatePath = this.planFilePathFor(stem);
+      try {
+        await this.agent.kaos.stat(candidatePath);
+        stem = `${baseStem}-${suffix}`;
+        suffix++;
+      } catch {
+        return stem;
+      }
+    }
   }
 }
 
