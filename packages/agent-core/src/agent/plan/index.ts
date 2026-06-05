@@ -329,7 +329,7 @@ export class PlanMode {
 
 function extractSlugFromDatedStem(stem: string): string {
   const m = stem.match(/^\d{4}-\d{2}-\d{2}-(.+)$/);
-  return m ? m[1] : stem;
+  return m ? (m[1] ?? stem) : stem;
 }
 
 function isMissingFileError(error: unknown): boolean {

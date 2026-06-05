@@ -843,7 +843,18 @@ describe('finalizeFileName', () => {
     });
     const stat = vi.fn(async (path: string) => {
       if (files.has(path)) {
-        return { size: files.get(path)!.length, mtime: new Date() };
+        return {
+          stMode: 0o100644,
+          stIno: 1,
+          stDev: 1,
+          stNlink: 1,
+          stUid: 1000,
+          stGid: 1000,
+          stSize: files.get(path)!.length,
+          stAtime: Date.now(),
+          stMtime: Date.now(),
+          stCtime: Date.now(),
+        };
       }
       throw Object.assign(new Error('ENOENT'), { code: 'ENOENT' });
     });
