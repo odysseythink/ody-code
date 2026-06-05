@@ -115,6 +115,7 @@ import { isDeadTerminalError } from './utils/dead-terminal';
 import { formatErrorMessage } from './utils/event-payload';
 import { ImageAttachmentStore, type ImageAttachment } from './utils/image-attachment-store';
 import { extractMediaAttachments } from './utils/image-placeholder';
+import { assertNoLegacyFields } from './utils/assert-no-legacy-fields';
 import { hasPatchChanges } from './utils/object-patch';
 import { openUrl } from './utils/open-url';
 import { setProcessTitle } from './utils/proctitle';
@@ -963,6 +964,7 @@ export class KimiTUI {
   }
 
   setAppState(patch: Partial<AppState>): void {
+    assertNoLegacyFields(patch, 'setAppState');
     if (!hasPatchChanges(this.state.appState, patch)) return;
     const busyChanged = 'streamingPhase' in patch || 'isCompacting' in patch;
     Object.assign(this.state.appState, patch);
