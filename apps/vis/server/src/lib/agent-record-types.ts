@@ -2,7 +2,7 @@
 // Single source of truth: everything below comes from agent-core directly.
 // Do NOT add local interfaces that duplicate upstream shapes.
 
-export type {
+import type {
   AgentRecord,
   AgentRecordEvents,
   AgentRecordOf,
@@ -17,8 +17,26 @@ export type {
   ContextMessage,
   PromptOrigin,
 } from '@odysseythink/agent-core';
-export { AGENT_WIRE_PROTOCOL_VERSION } from '@odysseythink/agent-core';
-export type { Message, ContentPart, ToolCall, TokenUsage } from '@odysseythink/kosong';
+import { AGENT_WIRE_PROTOCOL_VERSION } from '@odysseythink/agent-core';
+import type { Message, ContentPart, ToolCall, TokenUsage } from '@odysseythink/kosong';
+
+export type {
+  AgentRecord,
+  AgentRecordEvents,
+  AgentRecordOf,
+  AgentConfigUpdateData,
+  CompactionBeginData,
+  CompactionResult,
+  PermissionApprovalResultRecord,
+  PermissionMode,
+  UsageRecordScope,
+  ToolStoreUpdate,
+  LoopRecordedEvent,
+  ContextMessage,
+  PromptOrigin,
+};
+export { AGENT_WIRE_PROTOCOL_VERSION };
+export type { Message, ContentPart, ToolCall, TokenUsage };
 
 // ── vis-only DTOs ──────────────────────────────────────────────────────────
 

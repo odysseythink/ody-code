@@ -1,3 +1,4 @@
+/// <reference path="./prompt-modules.d.ts" />
 export * from './agent';
 export * from './session';
 export * from './rpc';
@@ -13,6 +14,7 @@ export {
   log,
   redact,
   resolveGlobalLogPath,
+  __resetRootLoggerForTest,
 } from './logging/logger';
 export { resolveLoggingConfig } from './logging/resolve-config';
 export type { ResolveLoggingInput } from './logging/resolve-config';

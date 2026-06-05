@@ -123,7 +123,6 @@ function renderFriendly(record: AgentRecord) {
         </div>
       );
     case 'context.apply_compaction':
-    case 'full_compaction.complete':
       return (
         <div className="grid grid-cols-[140px_1fr] gap-x-3 gap-y-[2px]">
           <FieldRow label="summary" wide>

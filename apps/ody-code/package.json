@@ -76,6 +76,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@odysseythink/agent-core": "workspace:^",
     "@odysseythink/kimi-code-oauth": "workspace:^",
     "@odysseythink/kimi-code-sdk": "workspace:^",
     "@odysseythink/kimi-telemetry": "workspace:^",

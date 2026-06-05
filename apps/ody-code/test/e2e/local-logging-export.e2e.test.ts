@@ -9,7 +9,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { registerExportCommand } from '#/cli/sub/export';
 import { createKimiCodeHostIdentity } from '#/cli/version';
 import { KimiHarness, log } from '@odysseythink/kimi-code-sdk';
-import { __resetRootLoggerForTest } from '../../../../packages/agent-core/src/logging/logger';
+import { __resetRootLoggerForTest } from '@odysseythink/agent-core';
 
 const SESSION_LOG = 'logs/kimi-code.log';
 const GLOBAL_LOG = 'logs/global/kimi-code.log';

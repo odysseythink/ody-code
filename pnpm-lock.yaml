@@ -97,6 +97,9 @@ importers:
         specifier: ^4.3.6
         version: 4.3.6
     devDependencies:
+      '@odysseythink/agent-core':
+        specifier: workspace:^
+        version: link:../../packages/agent-core
       '@odysseythink/kimi-code-oauth':
         specifier: workspace:^
         version: link:../../packages/oauth
@@ -139,6 +142,9 @@ importers:
       '@odysseythink/agent-core':
         specifier: workspace:^
         version: link:../../../packages/agent-core
+      '@odysseythink/kosong':
+        specifier: workspace:^
+        version: link:../../../packages/kosong
       hono:
         specifier: ^4.7.7
         version: 4.12.14

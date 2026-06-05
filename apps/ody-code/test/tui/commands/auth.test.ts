@@ -93,7 +93,7 @@ describe('handleLoginCommand provider-type argument', () => {
     await handleLoginCommand(host, 'deepseek');
 
     expect(setConfig).toHaveBeenCalled();
-    const patch = setConfig.mock.calls[0][0];
+    const patch = setConfig.mock.calls[0]![0];
     expect(patch.providers?.deepseek_1).toMatchObject({
       type: 'deepseek',
       baseUrl: 'https://api.deepseek.com/v1',

@@ -39,7 +39,6 @@ import { ConfigState } from './config';
 import { ContextMemory } from './context';
 import { HookEngine } from '../session/hooks';
 import {
-  cleanupTopic,
   formatUtcTimestamp,
   TopicGenerator,
 } from './plan/topic-generator';

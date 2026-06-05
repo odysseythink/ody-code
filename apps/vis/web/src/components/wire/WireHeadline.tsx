@@ -2,7 +2,6 @@ import type { ReactNode } from 'react';
 
 import type { AgentRecord, ContentPart, LoopRecordedEvent } from '../../types';
 import { Pill } from '../shared/Pill';
-import { formatBytes } from '../shared/SizePreview';
 
 export interface HeadlineRender {
   /** Main headline content — rendered in the flex-grow slot of the row */
@@ -290,16 +289,7 @@ export function renderHeadline(r: AgentRecord): HeadlineRender {
       return { main: <Dim>cancelled</Dim> };
 
     case 'full_compaction.complete':
-      return {
-        main: (
-          <span className="flex items-center gap-2">
-            <Dim>
-              {r.compactedCount} msgs · {r.tokensBefore}→{r.tokensAfter} tok
-            </Dim>
-            <Dim>· summary {formatBytes(r.summary.length)}</Dim>
-          </span>
-        ),
-      };
+      return { main: <Dim>completed</Dim> };
 
     case 'plan_mode.enter':
       return {

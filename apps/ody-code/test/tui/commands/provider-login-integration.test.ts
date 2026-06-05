@@ -4,8 +4,8 @@ import {
   mergeConfigPatch,
   readConfigFile,
   writeConfigFile,
-} from '../../../../packages/agent-core/src/config/toml';
-import { getDefaultConfig } from '../../../../packages/agent-core/src/config/schema';
+} from '@odysseythink/agent-core';
+import { getDefaultConfig } from '@odysseythink/agent-core';
 import { mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
