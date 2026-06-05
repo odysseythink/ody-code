@@ -47,6 +47,7 @@ function makeAgent(
           path: input.path ?? '/tmp/plan.md',
         };
       }),
+      finalizeFileName: vi.fn().mockResolvedValue(null),
       exit: () => {
         emit({ type: 'plan_mode.exit' });
       },

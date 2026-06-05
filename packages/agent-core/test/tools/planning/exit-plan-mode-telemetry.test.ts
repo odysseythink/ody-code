@@ -44,6 +44,7 @@ function makeAgent(input: {
         content: '# Plan',
         path: '/tmp/kimi-plan.md',
       })),
+      finalizeFileName: vi.fn().mockResolvedValue(null),
       exit: exitPlanMode,
     },
     permission: { mode: input.mode },
