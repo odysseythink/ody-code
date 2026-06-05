@@ -31,6 +31,7 @@ export interface ProviderModelInfo {
   readonly id: string;
   readonly displayName?: string;
   readonly contextLength: number;
+  readonly maxOutputSize?: number;
   readonly supportsToolUse: boolean;
   readonly supportsReasoning: boolean;
   readonly supportsImageIn: boolean;
@@ -125,16 +126,49 @@ export async function fetchProviderModels(
   baseUrl?: string,
 ): Promise<ProviderModelInfo[]> {
   const resolvedBaseUrl = baseUrl ?? definition.defaultBaseUrl;
-  switch (definition.modelListStrategy) {
-    case 'openai-compatible':
-      return fetchOpenAICompatibleModels(resolvedBaseUrl, apiKey, fetchImpl, signal);
-    case 'anthropic-sdk':
-      return fetchAnthropicModels(resolvedBaseUrl, apiKey, fetchImpl, signal);
-    case 'none':
-      return [];
-    default:
-      throw new Error(`Unknown model list strategy: ${definition.modelListStrategy}`);
+  const models = await (async (): Promise<ProviderModelInfo[]> => {
+    switch (definition.modelListStrategy) {
+      case 'openai-compatible':
+        return fetchOpenAICompatibleModels(resolvedBaseUrl, apiKey, fetchImpl, signal);
+      case 'anthropic-sdk':
+        return fetchAnthropicModels(resolvedBaseUrl, apiKey, fetchImpl, signal);
+      case 'none':
+        return [];
+      default:
+        throw new Error(`Unknown model list strategy: ${definition.modelListStrategy}`);
+    }
+  })();
+
+  if (definition.type === 'glm') {
+    return models.map((model) => applyGLMModelOverrides(model));
   }
+  return models;
+}
+
+function applyGLMModelOverrides(model: ProviderModelInfo): ProviderModelInfo {
+  const id = model.id.toLowerCase();
+
+  // glm-5 series: 200K context, 128K output, supports thinking
+  if (/^glm-5(?:\.|$|-)/.test(id)) {
+    return {
+      ...model,
+      contextLength: 200_000,
+      maxOutputSize: 128_000,
+      supportsReasoning: true,
+    };
+  }
+
+  // glm-4.5 / glm-4.5-air / glm-4.6 / glm-4.7: 128K context, 96K output, no thinking
+  if (/^glm-4\.[567](?:-air)?$/.test(id)) {
+    return {
+      ...model,
+      contextLength: 128_000,
+      maxOutputSize: 96_000,
+      supportsReasoning: false,
+    };
+  }
+
+  return model;
 }
 
 export function applyProviderLoginConfig(
@@ -178,7 +212,7 @@ export function applyProviderLoginConfig(
       provider: providerKey,
       model: model.id,
       maxContextSize: model.contextLength,
-      maxOutputSize: 8192,
+      maxOutputSize: model.maxOutputSize ?? 8192,
       capabilities: caps.length > 0 ? caps : undefined,
       displayName: model.displayName,
     };
