@@ -117,7 +117,7 @@ describe('SessionEventHandler handleStatusUpdate', () => {
       type: 'agent.status.updated',
       agentId: 'main',
       sessionId: 'ses-1',
-      planMode: true,
+      sessionMode: 'plan',
     } as Event;
 
     handler.handleEvent(event, vi.fn());

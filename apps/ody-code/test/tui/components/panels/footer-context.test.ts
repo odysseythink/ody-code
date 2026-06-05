@@ -24,7 +24,7 @@ function baseState(overrides: Partial<AppState> = {}): AppState {
     workDir: '/tmp',
     sessionId: 'sess_1',
     permissionMode: 'manual',
-    planMode: false,
+    sessionMode: 'normal',
     thinking: false,
     contextUsage: 0,
     contextTokens: 0,

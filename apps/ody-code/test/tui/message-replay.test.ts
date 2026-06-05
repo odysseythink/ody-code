@@ -131,7 +131,7 @@ function makeSession(
       model: 'k2',
       thinkingLevel: 'off',
       permission: 'manual',
-      planMode: false,
+      sessionMode: 'normal',
       contextTokens: 0,
       maxContextTokens: 100,
       contextUsage: 0,

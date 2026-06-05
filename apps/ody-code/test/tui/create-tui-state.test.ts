@@ -10,7 +10,7 @@ function fakeInitialAppState(): AppState {
     workDir: '/tmp/kimi-test',
     sessionId: 'sess-1',
     permissionMode: 'manual',
-    planMode: false,
+    sessionMode: 'normal',
     thinking: false,
     contextUsage: 0,
     contextTokens: 0,

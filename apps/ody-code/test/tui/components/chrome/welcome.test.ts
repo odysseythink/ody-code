@@ -23,7 +23,7 @@ const appState: AppState = {
   isReplaying: false,
   streamingPhase: 'idle',
   streamingStartTime: 0,
-  planMode: false,
+  sessionMode: 'normal',
   theme: 'dark',
   editorCommand: null,
   notifications: { enabled: true, condition: 'unfocused' },

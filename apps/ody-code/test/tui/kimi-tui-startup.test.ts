@@ -102,7 +102,7 @@ function makeSession(overrides: Record<string, unknown> = {}) {
       model: "k2",
       thinkingLevel: "off",
       permission: "manual",
-      planMode: false,
+      sessionMode: 'normal',
       contextTokens: 10,
       maxContextTokens: 100,
       contextUsage: 0.1,
@@ -212,7 +212,7 @@ describe("KimiTUI startup", () => {
         model: "k2",
         thinkingLevel: "off",
         permission: "yolo",
-        planMode: true,
+        sessionMode: 'plan',
         contextTokens: 25,
         maxContextTokens: 200,
         contextUsage: 0.125,
@@ -226,7 +226,7 @@ describe("KimiTUI startup", () => {
     expect(harness.createSession).toHaveBeenCalledWith({
       workDir: "/tmp/proj-a",
       permission: "yolo",
-      planMode: true,
+      sessionMode: 'plan',
     });
     expect(session.setApprovalHandler).toHaveBeenCalledOnce();
     expect(session.setQuestionHandler).toHaveBeenCalledOnce();
@@ -237,7 +237,7 @@ describe("KimiTUI startup", () => {
       sessionId: "ses-1",
       model: "k2",
       permissionMode: "yolo",
-      planMode: true,
+      sessionMode: 'plan',
       contextTokens: 25,
       maxContextTokens: 200,
       contextUsage: 0.125,
@@ -333,7 +333,7 @@ describe("KimiTUI startup", () => {
         model,
         thinkingLevel: "off",
         permission: "manual",
-        planMode: false,
+        sessionMode: 'normal',
         contextTokens: 10,
         maxContextTokens: 100,
         contextUsage: 0.1,
@@ -454,7 +454,7 @@ describe("KimiTUI startup", () => {
         model: "k2",
         thinkingLevel: "off",
         permission: "yolo",
-        planMode: true,
+        sessionMode: 'plan',
         contextTokens: 10,
         maxContextTokens: 100,
         contextUsage: 0.1,
@@ -482,7 +482,7 @@ describe("KimiTUI startup", () => {
       sessionId: "",
       model: "",
       permissionMode: "yolo",
-      planMode: true,
+      sessionMode: 'plan',
     });
 
     vi.mocked(promptPlatformSelection).mockResolvedValue('kimi-code');
@@ -491,20 +491,20 @@ describe("KimiTUI startup", () => {
     expect(createSession).toHaveBeenNthCalledWith(1, {
       workDir: "/tmp/proj-a",
       permission: "yolo",
-      planMode: true,
+      sessionMode: 'plan',
     });
     expect(createSession).toHaveBeenNthCalledWith(2, {
       workDir: "/tmp/proj-a",
       model: "k2",
       thinking: "off",
       permission: "yolo",
-      planMode: true,
+      sessionMode: 'plan',
     });
     expect(driver.state.appState).toMatchObject({
       sessionId: "ses-1",
       model: "k2",
       permissionMode: "yolo",
-      planMode: true,
+      sessionMode: 'plan',
     });
   });
 
@@ -514,7 +514,7 @@ describe("KimiTUI startup", () => {
         model: "k2",
         thinkingLevel: "off",
         permission: "auto",
-        planMode: false,
+        sessionMode: 'normal',
         contextTokens: 10,
         maxContextTokens: 100,
         contextUsage: 0.1,
