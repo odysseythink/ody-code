@@ -23,12 +23,14 @@ type ReviewKind = 'plan' | 'design';
 interface ParsedArgs {
   readonly path?: string;
   readonly modelAlias?: string;
+  readonly timeoutMs?: number;
 }
 
 function parseArgs(args: string): ParsedArgs {
   const tokens = args.trim().split(/\s+/).filter((token) => token.length > 0);
   let path: string | undefined;
   let modelAlias: string | undefined;
+  let timeoutMs: number | undefined;
   for (let i = 0; i < tokens.length; i += 1) {
     const token = tokens[i] ?? '';
     if (token === '--model' || token === '-m') {
@@ -36,6 +38,13 @@ function parseArgs(args: string): ParsedArgs {
       i += 1;
     } else if (token.startsWith('--model=')) {
       modelAlias = token.slice('--model='.length);
+    } else if (token === '--timeout' || token === '-t') {
+      const raw = parseInt(tokens[i + 1] ?? '', 10);
+      if (!isNaN(raw) && raw > 0) timeoutMs = raw * 1000;
+      i += 1;
+    } else if (token.startsWith('--timeout=')) {
+      const raw = parseInt(token.slice('--timeout='.length), 10);
+      if (!isNaN(raw) && raw > 0) timeoutMs = raw * 1000;
     } else if (path === undefined) {
       path = token;
     }
@@ -43,6 +52,7 @@ function parseArgs(args: string): ParsedArgs {
   return {
     ...(path !== undefined ? { path } : {}),
     ...(modelAlias !== undefined && modelAlias.length > 0 ? { modelAlias } : {}),
+    ...(timeoutMs !== undefined ? { timeoutMs } : {}),
   };
 }
 
@@ -90,7 +100,7 @@ async function runSecondModelReview(
 
   const label = kind === 'plan' ? 'plan' : 'design';
   const Cap = kind === 'plan' ? 'Plan' : 'Design';
-  const { path, modelAlias } = parseArgs(args);
+  const { path, modelAlias, timeoutMs } = parseArgs(args);
 
   // Pre-flight: when no explicit file path is given, the review will use the current
   // plan/design-mode file. If the user is not in that mode, there is nothing to
@@ -113,6 +123,7 @@ async function runSecondModelReview(
     result = await session.reviewDesign({
       ...(path !== undefined ? { path } : {}),
       ...(modelAlias !== undefined ? { modelAlias } : {}),
+      ...(timeoutMs !== undefined ? { timeoutMs } : {}),
       kind,
     });
   } catch (error) {

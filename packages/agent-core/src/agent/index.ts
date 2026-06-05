@@ -481,7 +481,7 @@ export class Agent {
           );
         }
 
-        const defaultTimeoutMs = kind === 'plan' ? 120_000 : 60_000;
+        const defaultTimeoutMs = 120_000;
         const result = await new DesignReviewer(this, {
           reviewerAlias,
           kind,
