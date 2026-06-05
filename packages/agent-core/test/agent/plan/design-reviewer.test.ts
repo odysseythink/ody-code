@@ -155,6 +155,16 @@ describe('parseFindings', () => {
     expect(findings?.[0]?.severity).toBe('low');
   });
 
+  it('does not strip ``` fences that appear inside JSON detail fields', () => {
+    // Regression guard: the detail field may contain markdown code fences.
+    // stripCodeFences must only match fences that wrap the ENTIRE output.
+    const raw =
+      '{"findings":[{"severity":"high","title":"t","detail":"`extractFirstHeading(\'```\\n# not a heading\\n```\\n# Real\')`"}]}';
+    const findings = parseFindings(raw);
+    expect(findings).toHaveLength(1);
+    expect(findings?.[0]?.severity).toBe('high');
+  });
+
   it('salvages a JSON object wrapped in prose', () => {
     const findings = parseFindings('Here is my review: {"findings":[{"severity":"high","title":"a","detail":"b"}]} done');
     expect(findings).toHaveLength(1);

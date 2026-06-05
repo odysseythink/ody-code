@@ -223,8 +223,13 @@ function coerceFinding(entry: unknown): ReviewFinding | null {
 }
 
 function stripCodeFences(raw: string): string {
-  const fenced = raw.match(/```(?:json)?\s*([\s\S]*?)```/i);
-  return fenced?.[1] ?? raw;
+  const trimmed = raw.trim();
+  if (!trimmed.startsWith('```')) return raw;
+  const end = trimmed.lastIndexOf('```');
+  if (end <= 3) return raw;
+  const firstNewline = trimmed.indexOf('\n');
+  const start = firstNewline === -1 ? 3 : firstNewline + 1;
+  return trimmed.slice(start, end).trimEnd();
 }
 
 export class DesignReviewer {
