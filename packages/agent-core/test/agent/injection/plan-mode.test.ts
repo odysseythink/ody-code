@@ -97,6 +97,32 @@ describe('PlanModeInjector content', () => {
     expect(entry).toContain('Plan mode is now active');
   });
 
+  // Regression guard for the adversarial-review blades in plan-mode.
+  // These catch the class of bug where a plan bakes in a filter/word-list that
+  // contradicts the test assertion that must pass through it (e.g. 'auth' in the
+  // sensitive-word list while a test expects 'auth-refactor' to survive).
+  // This test fails loudly if a future edit strips a blade; it does NOT prove
+  // the model behaves better — that requires a behavioral eval harness.
+  it('carries the filter-verification blades in both the entry message and the full reminder', async () => {
+    const agent = planAgent({ isActive: true, planFilePath: '/tmp/plan.md' });
+    const injector = new PlanModeInjector(agent);
+    await injector.inject();
+    const full = lastReminder(agent);
+    const entry = planModeEntryMessage('/tmp/plan.md');
+
+    for (const marker of [
+      // Blade A — task-skeleton: enumerate must-survive inputs for every filter/regex.
+      'inputs that MUST survive',
+      'constant is wrong and must be fixed',
+      // Blade B — self-review item 6: trace each test assertion against its constants.
+      'HARD failure',
+      'fix the constant or the assertion',
+    ]) {
+      expect(full).toContain(marker);
+      expect(entry).toContain(marker);
+    }
+  });
+
   it('uses the inline reminder when no plan file path is available', async () => {
     const agent = planAgent({ isActive: true, planFilePath: null });
     const injector = new PlanModeInjector(agent);

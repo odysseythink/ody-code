@@ -39,7 +39,7 @@ Testable code is TEST-FIRST, with the test and implementation in the SAME task (
   - [ ] Write the minimal implementation (show the actual code).
   - [ ] Run it and verify it PASSES.
   - [ ] Commit.
-Never collect tests into a trailing "write the tests" task. Test the RISK — state mutations, boundary/offset math, permissions, money — with behavioral asserts on what changed, not just a compile check; a pure helper needs only a light test.
+Never collect tests into a trailing "write the tests" task. Test the RISK — state mutations, boundary/offset math, permissions, money — with behavioral asserts on what changed, not just a compile check; a pure helper needs only a light test. For any filter, regex, or matching rule: explicitly enumerate 2–3 inputs that MUST survive (not be filtered out) and confirm none of them are caught by the word list / regex you wrote — if a must-survive input contains a sensitive word, the constant is wrong and must be fixed before the test.
 Non-testable code (UI / config / wiring) still gets the COMPLETE code, then a build step, then a manual-verification step (exact action + expected observation), then a commit — never a skipped test.`;
 
 const DEPENDENCIES = `## Dependencies & phases
@@ -57,7 +57,7 @@ const SELF_REVIEW = `## Self-review (reproduce all seven as - [ ] checkboxes in 
 - [ ] 3. No phantom tasks: every task produces a verifiable change; zero \`--allow-empty\` / "already done in Task N".
 - [ ] 4. Dependency soundness: every \`Depends on:\` is satisfied by an earlier task; nothing references a symbol only a later task creates.
 - [ ] 5. Caller & build soundness: every shared-signature task updated all callers (incl. test files) and ends with a whole-tree typecheck, not a single-package build; the same signature is not changed across multiple tasks.
-- [ ] 6. Test-the-risk: every state-mutating task has a behavioral test asserting the mutation, not just a compile check.
+- [ ] 6. Test-the-risk: every state-mutating task has a behavioral test asserting the mutation, not just a compile check. For each test assertion, trace the expected value through the implementation constants it depends on — a test that expects a "must-survive" input to pass a filter that would actually reject it (e.g. the word list contains a substring of that input) is a HARD failure; fix the constant or the assertion before proceeding.
 - [ ] 7. Type consistency: types, signatures and property names used in later tasks match what earlier tasks defined.`;
 
 const INCREMENTAL_AND_SPLIT = `## Incremental writing & large plans
