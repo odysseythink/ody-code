@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import type { Agent } from '../../../src/agent';
 import { PlanModeInjector } from '../../../src/agent/injection/plan-mode';
 import {
+  parseManifestFiles,
   parsePartsManifest,
   planModeEntryMessage,
 } from '../../../src/agent/injection/plan-mode-contract';
@@ -268,6 +269,24 @@ describe('parsePartsManifest', () => {
     );
     expect(manifest?.allDone).toBe(true);
     expect(manifest?.next).toBeNull();
+  });
+});
+
+describe('parseManifestFiles', () => {
+  it('lists the basename of every manifest row, regardless of status', () => {
+    const files = parseManifestFiles(
+      [
+        '| # | File | Scope | Status |',
+        '|---|---|---|---|',
+        '| 1 | dir/plan-core.md | models | done |',
+        '| 2 | dir/plan-api.md | endpoints | pending |',
+      ].join('\n'),
+    );
+    expect(files).toEqual(['plan-core.md', 'plan-api.md']);
+  });
+
+  it('returns an empty array for a single-file plan with no manifest', () => {
+    expect(parseManifestFiles('# A plan\n\njust prose, no table')).toEqual([]);
   });
 });
 

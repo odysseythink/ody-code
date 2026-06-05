@@ -35,7 +35,7 @@ import {
   showPermissionPicker,
   showSettingsSelector,
 } from './config';
-import { handleDesignReviewCommand } from './design-review';
+import { handleDesignReviewCommand, handlePlanReviewCommand } from './design-review';
 import { handleGoalCommand } from './goal';
 import { handleProviderCommand } from './provider';
 import { handleFeedbackCommand, showMcpServers, showStatusReport, showUsage } from './info';
@@ -278,6 +278,9 @@ async function handleBuiltInSlashCommand(
       return;
     case 'design-review':
       await handleDesignReviewCommand(host, args);
+      return;
+    case 'plan-review':
+      await handlePlanReviewCommand(host, args);
       return;
     case 'compact':
       await handleCompactCommand(host, args);

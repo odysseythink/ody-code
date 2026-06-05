@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import type { Agent } from '../../../src/agent';
 import {
   buildCriticPrompt,
+  buildPlanCriticPrompt,
   DesignReviewer,
   escalatedSeverities,
   parseAuditLevel,
@@ -98,6 +99,29 @@ describe('buildCriticPrompt', () => {
   });
 });
 
+describe('buildPlanCriticPrompt', () => {
+  it('shares the adversary stance and JSON envelope with the design prompt', () => {
+    const prompt = buildPlanCriticPrompt();
+    expect(prompt).toContain('ADVERSARY');
+    expect(prompt).toContain('STRICT JSON');
+    expect(prompt).toContain('does not count');
+    // It attacks an EXECUTION PLAN, not a design document.
+    expect(prompt).toContain('EXECUTION PLAN');
+  });
+
+  it('targets execution-plan failure modes, not design lenses', () => {
+    const prompt = buildPlanCriticPrompt();
+    expect(prompt).toContain('Depends on:');
+    expect(prompt).toContain('--allow-empty');
+    expect(prompt).toContain('EVERY caller');
+    expect(prompt).toContain('must-survive');
+    expect(prompt).toContain('spec-coverage');
+    expect(prompt).toContain('GAP');
+    // The design-only PII/secrets lens is not the focus of a plan review.
+    expect(prompt).not.toContain('PII leaking');
+  });
+});
+
 describe('parseFindings', () => {
   it('parses a clean JSON object', () => {
     const findings = parseFindings('{"findings":[{"severity":"med","title":"t","detail":"d"}]}');
@@ -158,6 +182,20 @@ describe('DesignReviewer', () => {
       'design_review_completed',
       expect.objectContaining({ auditLevel: 'Deep' }),
     );
+  });
+
+  it('routes the critic prompt by document kind', async () => {
+    // Default (design): the system prompt is the design attack surface.
+    const design = makeAgent();
+    await new DesignReviewer(design.agent, { reviewerAlias }).review('a design');
+    expect(design.rawGenerate.mock.calls[0]?.[1]).toContain('DESIGN DOCUMENT');
+    expect(design.rawGenerate.mock.calls[0]?.[1]).not.toContain('EXECUTION PLAN');
+
+    // kind:'plan' selects the execution-plan attack surface instead.
+    const plan = makeAgent();
+    await new DesignReviewer(plan.agent, { reviewerAlias, kind: 'plan' }).review('a plan');
+    expect(plan.rawGenerate.mock.calls[0]?.[1]).toContain('EXECUTION PLAN');
+    expect(plan.rawGenerate.mock.calls[0]?.[1]).toContain('Depends on:');
   });
 
   it('resolves the reviewer model auth and threads it through to rawGenerate', async () => {

@@ -115,6 +115,7 @@ export interface ReconnectMcpServerRpcInput extends SessionIdRpcInput {
 export interface ReviewDesignRpcInput extends SessionIdRpcInput {
   readonly path?: string;
   readonly modelAlias?: string;
+  readonly kind?: 'plan' | 'design';
 }
 
 type ResolvedCoreAPI = Awaited<ReturnType<SDKRPCClient>>;
@@ -341,6 +342,7 @@ export class SDKRpcClient {
       agentId: this.interactiveAgentId,
       path: input.path,
       modelAlias: input.modelAlias,
+      kind: input.kind,
     });
   }
 

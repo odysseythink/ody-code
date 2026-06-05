@@ -201,6 +201,29 @@ export function parsePartsManifest(content: string): PartsManifest | null {
   };
 }
 
+/**
+ * Basenames of EVERY sibling file listed in a plan-index Parts manifest (not just
+ * the next pending one). Used to gather a split plan's sub-plan files for review.
+ * Returns `[]` when there is no manifest table (a single-file plan). Uses the same
+ * resilient row-scan as {@link parsePartsManifest}.
+ */
+export function parseManifestFiles(content: string): string[] {
+  const files: string[] = [];
+  for (const line of content.split('\n')) {
+    const cells = line.split('|').map((cell) => cell.trim());
+    const trimmed = cells.filter(
+      (cell, index) => !(cell === '' && (index === 0 || index === cells.length - 1)),
+    );
+    if (trimmed.length < 4) continue;
+    const status = (trimmed.at(-1) ?? '').toLowerCase();
+    if (status !== 'pending' && status !== 'done') continue;
+    const file = trimmed[1] ?? '';
+    if (!file.toLowerCase().endsWith('.md')) continue;
+    files.push(basename(file));
+  }
+  return files;
+}
+
 /** Directive appended while a split plan still has `pending` parts. */
 export function splitContinuationDirective(part: ManifestPart): string {
   return `## Split plan in progress

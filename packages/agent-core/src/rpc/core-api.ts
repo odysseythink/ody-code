@@ -302,10 +302,16 @@ export interface RemoveKimiProviderPayload {
 }
 
 export interface ReviewDesignPayload {
-  /** Design file to review. Defaults to the current plan/design-mode file. */
+  /** Plan/design file to review. Defaults to the current plan/design-mode file. */
   readonly path?: string;
   /** Reviewer model alias. Defaults to mode_models.review → .plan → default_model. */
   readonly modelAlias?: string;
+  /**
+   * Which document kind to attack (selects the critic prompt's attack surface and,
+   * for `plan`, gathers split-plan sibling files). Defaults to the current mode's
+   * kind, or `design` when reviewing an explicit path.
+   */
+  readonly kind?: 'plan' | 'design';
 }
 
 export interface ReviewFindingData {

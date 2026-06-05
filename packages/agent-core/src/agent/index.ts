@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { join } from 'pathe';
+import { dirname, join } from 'pathe';
 
 import { ErrorCodes, KimiError, makeErrorPayload } from '#/errors';
 import { log } from '#/logging/logger';
@@ -42,6 +42,7 @@ import {
   formatUtcTimestamp,
   TopicGenerator,
 } from './plan/topic-generator';
+import { parseManifestFiles } from './injection/plan-mode-contract';
 import { DesignReviewer, escalatedSeverities } from './plan/design-reviewer';
 import { InjectionManager } from './injection/manager';
 import { PermissionManager, type PermissionManagerOptions } from './permission';
@@ -410,29 +411,50 @@ export class Agent {
       reviewDesign: async (payload) => {
         let content: string;
         let path: string;
+        let kind: 'plan' | 'design';
         if (payload.path !== undefined && payload.path.length > 0) {
           try {
             content = await this.kaos.readText(payload.path);
           } catch {
             throw new KimiError(
               ErrorCodes.SESSION_PLAN_MODE_INVALID,
-              `Design file not found or unreadable: ${payload.path}`,
+              `Plan/design file not found or unreadable: ${payload.path}`,
             );
           }
           path = payload.path;
+          kind = payload.kind ?? 'design';
         } else {
           const data = await this.planMode.data();
           if (data === null || data.content.trim().length === 0) {
             throw new KimiError(
               ErrorCodes.SESSION_PLAN_MODE_INVALID,
-              'No design file to review. Enter design mode or pass a file path.',
+              'No plan/design file to review. Enter plan or design mode, or pass a file path.',
             );
           }
           content = data.content;
           path = data.path;
+          kind = payload.kind ?? data.kind;
         }
         if (content.trim().length === 0) {
-          throw new KimiError(ErrorCodes.SESSION_PLAN_MODE_INVALID, `Design file is empty: ${path}`);
+          throw new KimiError(ErrorCodes.SESSION_PLAN_MODE_INVALID, `Document is empty: ${path}`);
+        }
+
+        // A split plan keeps its tasks in sibling files listed in the index's Parts
+        // manifest; gather them so the reviewer attacks the whole plan, not just the
+        // index. Single-file plans and designs have no manifest → review as-is.
+        let reviewContent = content;
+        if (kind === 'plan') {
+          const dir = dirname(path);
+          for (const file of parseManifestFiles(content)) {
+            const siblingPath = join(dir, file);
+            if (siblingPath === path) continue;
+            try {
+              const siblingContent = await this.kaos.readText(siblingPath);
+              reviewContent += `\n\n===== FILE: ${file} =====\n\n${siblingContent}`;
+            } catch {
+              // Skip an unreadable sibling rather than failing the whole review.
+            }
+          }
         }
 
         const reviewerAlias =
@@ -447,7 +469,7 @@ export class Agent {
           );
         }
 
-        const result = await new DesignReviewer(this, { reviewerAlias }).review(content);
+        const result = await new DesignReviewer(this, { reviewerAlias, kind }).review(reviewContent);
         const escalate = new Set(escalatedSeverities(result.auditLevel));
         return {
           path,

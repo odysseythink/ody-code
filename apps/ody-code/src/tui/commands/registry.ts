@@ -68,6 +68,13 @@ export const BUILTIN_SLASH_COMMANDS = [
     availability: 'idle-only',
   },
   {
+    name: 'plan-review',
+    aliases: [],
+    description: 'Critique the current execution plan with the reviewer model (second-model review)',
+    priority: 95,
+    availability: 'idle-only',
+  },
+  {
     name: 'model',
     aliases: [],
     description: 'Switch LLM model',

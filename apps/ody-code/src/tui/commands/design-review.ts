@@ -1,20 +1,24 @@
 /**
- * /design-review — run a SECOND-MODEL critique of the current design.
+ * /design-review and /plan-review — a SECOND-MODEL critique of the current
+ * design or execution plan.
  *
- * Design mode runs on a cheap model; this asks a different (usually more
- * capable) configured model to audit the finished design in a single pass.
+ * Plan/design mode runs on a cheap model; this asks a different (usually more
+ * capable) configured model to attack the finished document in a single pass.
  * Findings are severity-tagged and pre-marked `escalate` (severity × the
- * design file's audit level) by the backend. We render them, then hand them
- * back to the design model with an instruction to confirm every [ESCALATE]
+ * document's audit level) by the backend. We render them, then hand them back
+ * to the authoring model with an instruction to confirm every [ESCALATE]
  * finding with the user via AskUserQuestion before editing — so the human
- * verification rides the existing interaction path and the design model fixes
- * its own file.
+ * verification rides the existing interaction path and the authoring model
+ * fixes its own file. The two commands share one implementation; only the
+ * document kind, mode guard, and wording differ.
  */
 
 import type { DesignReviewData, ReviewFindingData } from '@odysseythink/kimi-code-sdk';
 
 import { NO_ACTIVE_SESSION_MESSAGE } from '../constant/kimi-tui';
 import type { SlashCommandHost } from './dispatch';
+
+type ReviewKind = 'plan' | 'design';
 
 interface ParsedArgs {
   readonly path?: string;
@@ -55,68 +59,87 @@ function renderFinding(finding: ReviewFindingData, index: number): string {
   return `${index}. [${SEVERITY_LABEL[finding.severity]}]${tag} ${finding.title}${location}\n   ${finding.detail}${fix}`;
 }
 
-function buildFollowupMessage(result: DesignReviewData): string {
+function buildFollowupMessage(result: DesignReviewData, label: string): string {
   const body = result.findings.map((finding, i) => renderFinding(finding, i + 1)).join('\n');
   const escalated = result.findings.filter((finding) => finding.escalate).length;
   const escalationLine =
     escalated > 0
-      ? `For each of the ${escalated} finding(s) marked [ESCALATE], you MUST confirm with me via AskUserQuestion — fix it, skip it, or change the approach — BEFORE editing the design. Verify each flagged claim against the code first (run an ephemeral node -e / python -c when it is a filter, regex, or test assertion).`
+      ? `For each of the ${escalated} finding(s) marked [ESCALATE], you MUST confirm with me via AskUserQuestion — fix it, skip it, or change the approach — BEFORE editing the ${label}. Verify each flagged claim against the code first (run an ephemeral node -e / python -c when it is a filter, regex, or test assertion).`
       : 'None of the findings require my sign-off.';
   return [
-    `A second-model design review of the current design (reviewer: ${result.reviewerAlias}, audit level: ${result.auditLevel}) found ${result.findings.length} issue(s):`,
+    `A second-model ${label} review of the current ${label} (reviewer: ${result.reviewerAlias}, audit level: ${result.auditLevel}) found ${result.findings.length} issue(s):`,
     '',
     body,
     '',
     escalationLine,
-    'Fix the findings NOT marked [ESCALATE] directly in the design file. Do not implement anything beyond updating the design.',
+    `Fix the findings NOT marked [ESCALATE] directly in the ${label} file. Do not implement anything beyond updating the ${label}.`,
   ].join('\n');
 }
 
-export async function handleDesignReviewCommand(host: SlashCommandHost, args: string): Promise<void> {
+/** Shared core for both commands; `kind` selects the attack surface, guard, and wording. */
+async function runSecondModelReview(
+  host: SlashCommandHost,
+  args: string,
+  kind: ReviewKind,
+): Promise<void> {
   const session = host.session;
   if (session === undefined) {
     host.showError(NO_ACTIVE_SESSION_MESSAGE);
     return;
   }
 
+  const label = kind === 'plan' ? 'plan' : 'design';
+  const Cap = kind === 'plan' ? 'Plan' : 'Design';
   const { path, modelAlias } = parseArgs(args);
-  host.showStatus('Running design review on the reviewer model…');
+  host.showStatus(`Running ${label} review on the reviewer model…`);
 
   let result: DesignReviewData;
   try {
     result = await session.reviewDesign({
       ...(path !== undefined ? { path } : {}),
       ...(modelAlias !== undefined ? { modelAlias } : {}),
+      kind,
     });
   } catch (error) {
-    host.showError(`Design review failed: ${error instanceof Error ? error.message : String(error)}`);
+    host.showError(`${Cap} review failed: ${error instanceof Error ? error.message : String(error)}`);
     return;
   }
 
   if (!result.ok) {
-    host.showError(`Design review unavailable: ${result.note ?? 'unknown error'}`);
+    host.showError(`${Cap} review unavailable: ${result.note ?? 'unknown error'}`);
     return;
   }
   if (result.findings.length === 0) {
     host.showStatus(
-      `Design review (${result.reviewerAlias}) found no issues. Audit level: ${result.auditLevel}.`,
+      `${Cap} review (${result.reviewerAlias}) found no issues. Audit level: ${result.auditLevel}.`,
     );
     return;
   }
 
   const escalated = result.findings.filter((finding) => finding.escalate).length;
-  const inDesignMode = host.state.appState.designMode ?? false;
+  const inMode =
+    kind === 'plan'
+      ? (host.state.appState.planMode ?? false)
+      : (host.state.appState.designMode ?? false);
 
-  if (!inDesignMode) {
+  if (!inMode) {
     host.showStatus(
-      `Design review (${result.reviewerAlias}, ${result.auditLevel}): ${result.findings.length} finding(s).\n` +
-        `Not in design mode — enter design mode, then re-run /design-review to have the model address the findings.`,
+      `${Cap} review (${result.reviewerAlias}, ${result.auditLevel}): ${result.findings.length} finding(s).\n` +
+        `Not in ${label} mode — enter ${label} mode, then re-run /${label}-review to have the model address the findings.`,
     );
     return;
   }
 
   host.showStatus(
-    `Design review (${result.reviewerAlias}, ${result.auditLevel}): ${result.findings.length} finding(s), ${escalated} need your sign-off. Handing to the design model…`,
+    `${Cap} review (${result.reviewerAlias}, ${result.auditLevel}): ${result.findings.length} finding(s), ${escalated} need your sign-off. Handing to the ${label} model…`,
   );
-  host.sendNormalUserInput(buildFollowupMessage(result));
+  host.sendNormalUserInput(buildFollowupMessage(result, label));
+}
+
+export async function handleDesignReviewCommand(host: SlashCommandHost, args: string): Promise<void> {
+  await runSecondModelReview(host, args, 'design');
+}
+
+export async function handlePlanReviewCommand(host: SlashCommandHost, args: string): Promise<void> {
+  await runSecondModelReview(host, args, 'plan');
 }

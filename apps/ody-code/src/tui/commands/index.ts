@@ -28,7 +28,7 @@ export {
   showUsage,
 } from './info';
 export { handlePluginsCommand } from './plugins';
-export { handleDesignReviewCommand } from './design-review';
+export { handleDesignReviewCommand, handlePlanReviewCommand } from './design-review';
 export { handleGoalCommand, parseGoalCommand } from './goal';
 export { goalArgumentCompletions } from './registry';
 export {
