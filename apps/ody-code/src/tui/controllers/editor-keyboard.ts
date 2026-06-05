@@ -121,14 +121,13 @@ export class EditorKeyboardController {
         host.showError(NO_ACTIVE_SESSION_MESSAGE);
         return;
       }
-      const { planMode } = host.state.appState;
-      const designMode = host.state.appState.designMode ?? false;
-      if (!planMode && !designMode) {
+      const mode = host.state.appState.sessionMode;
+      if (mode === 'normal') {
         // normal → plan
         host.track('shortcut_plan_toggle', { enabled: true });
         host.track('shortcut_mode_switch', { to_mode: 'plan' });
         host.handlePlanToggle(true);
-      } else if (planMode) {
+      } else if (mode === 'plan') {
         // plan → design
         host.track('shortcut_mode_switch', { to_mode: 'design' });
         host.handleDesignToggle(true);

@@ -34,7 +34,7 @@ export async function handlePlanCommand(host: SlashCommandHost, args: string): P
   }
 
   let enabled: boolean;
-  if (subcmd.length === 0) enabled = !host.state.appState.planMode;
+  if (subcmd.length === 0) enabled = host.state.appState.sessionMode !== 'plan';
   else if (subcmd === 'on') enabled = true;
   else if (subcmd === 'off') enabled = false;
   else {
@@ -47,11 +47,11 @@ export async function handlePlanCommand(host: SlashCommandHost, args: string): P
 
 async function applyPlanMode(host: SlashCommandHost, session: Session, enabled: boolean): Promise<void> {
   try {
-    await session.setPlanMode(enabled);
-    host.setAppState({ planMode: enabled, designMode: false });
+    await session.setSessionMode(enabled ? 'plan' : 'normal');
+    host.setAppState({ sessionMode: enabled ? 'plan' : 'normal' });
     if (enabled) {
       const plan = await session.getPlan().catch(() => null);
-      log.debug('Mode toggled', { mode: 'plan', enabled, advancedSessionModeFilePath: plan?.path ?? null });
+      log.debug('Mode toggled', { mode: 'plan', enabled, sessionModeFilePath: plan?.path ?? null });
       host.showNotice('Plan mode: ON');
       return;
     }
@@ -78,7 +78,7 @@ export async function handleDesignCommand(host: SlashCommandHost, args: string):
   }
 
   let enabled: boolean;
-  if (subcmd.length === 0) enabled = !(host.state.appState.designMode ?? false);
+  if (subcmd.length === 0) enabled = host.state.appState.sessionMode !== 'design';
   else if (subcmd === 'on') enabled = true;
   else if (subcmd === 'off') enabled = false;
   else {
@@ -91,11 +91,11 @@ export async function handleDesignCommand(host: SlashCommandHost, args: string):
 
 async function applyDesignMode(host: SlashCommandHost, session: Session, enabled: boolean): Promise<void> {
   try {
-    await session.setDesignMode(enabled);
-    host.setAppState({ designMode: enabled, planMode: false });
+    await session.setSessionMode(enabled ? 'design' : 'normal');
+    host.setAppState({ sessionMode: enabled ? 'design' : 'normal' });
     if (enabled) {
       const plan = await session.getPlan().catch(() => null);
-      log.debug('Mode toggled', { mode: 'design', enabled, advancedSessionModeFilePath: plan?.path ?? null });
+      log.debug('Mode toggled', { mode: 'design', enabled, sessionModeFilePath: plan?.path ?? null });
       host.showNotice('Design mode: ON');
       return;
     }
@@ -378,7 +378,7 @@ async function performModelSwitch(host: SlashCommandHost, alias: string, thinkin
 export async function persistModelSelection(host: SlashCommandHost, alias: string, thinking: boolean): Promise<boolean> {
   const config = await host.harness.getConfig({ reload: true });
 
-  if (host.state.appState.planMode) {
+  if (host.state.appState.sessionMode === 'plan') {
     if (config.modeModels?.plan === alias && config.defaultThinking === thinking) {
       return false;
     }
@@ -386,7 +386,7 @@ export async function persistModelSelection(host: SlashCommandHost, alias: strin
       modeModels: { ...(config.modeModels ?? {}), plan: alias },
       defaultThinking: thinking,
     });
-  } else if (host.state.appState.designMode) {
+  } else if (host.state.appState.sessionMode === 'design') {
     if (config.modeModels?.design === alias && config.defaultThinking === thinking) {
       return false;
     }

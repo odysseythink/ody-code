@@ -106,10 +106,7 @@ async function runSecondModelReview(
   // Pre-flight: when no explicit file path is given, the review will use the current
   // plan/design-mode file. If the user is not in that mode, there is nothing to
   // review and no point charging the reviewer model. Show the guard message early.
-  const inMode =
-    kind === 'plan'
-      ? (host.state.appState.planMode ?? false)
-      : (host.state.appState.designMode ?? false);
+  const inMode = host.state.appState.sessionMode === kind;
   if (!inMode && path === undefined) {
     host.showStatus(
       `Not in ${label} mode — enter ${label} mode first, or pass an explicit file path: /${label}-review <path>.`,

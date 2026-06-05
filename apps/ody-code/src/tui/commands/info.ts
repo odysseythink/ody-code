@@ -117,7 +117,7 @@ export async function showStatusReport(host: SlashCommandHost): Promise<void> {
     sessionTitle: appState.sessionTitle,
     thinking: appState.thinking,
     permissionMode: appState.permissionMode,
-    planMode: appState.planMode,
+    sessionMode: appState.sessionMode,
     contextUsage: appState.contextUsage,
     contextTokens: appState.contextTokens,
     maxContextTokens: appState.maxContextTokens,
