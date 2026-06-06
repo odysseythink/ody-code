@@ -87,7 +87,7 @@ function makeStartupInput(): KimiTUIStartupInput {
       continue: false,
       yolo: false,
       auto: false,
-      plan: false,
+      sessionMode: 'normal',
       model: undefined,
       outputFormat: undefined,
       prompt: undefined,
@@ -134,7 +134,7 @@ function makeSession(overrides: Record<string, unknown> = {}) {
     setModel: vi.fn(async () => {}),
     setThinking: vi.fn(async () => {}),
     setPermission: vi.fn(async () => {}),
-    setPlanMode: vi.fn(async () => {}),
+    setSessionMode: vi.fn(async () => {}),
     onEvent: vi.fn(() => vi.fn()),
     listMcpServers: vi.fn(async () => []),
     listSkills: vi.fn(async () => []),
@@ -458,14 +458,14 @@ describe('KimiTUI message flow', () => {
         maxContextTokens: 100,
         contextUsage: 0,
       })),
-      setPlanMode: vi.fn(async () => {
+      setSessionMode: vi.fn(async () => {
         throw new Error('Already in plan mode');
       }),
     });
     const { driver, harness } = await makeDriver(session);
     harness.createSession.mockClear();
-    session.setPlanMode.mockClear();
-    driver.state.appState.planMode = true;
+    session.setSessionMode.mockClear();
+    driver.state.appState.sessionMode = 'plan';
 
     driver.handleUserInput('/new');
 
@@ -478,7 +478,7 @@ describe('KimiTUI message flow', () => {
         sessionMode: 'plan',
       });
     });
-    expect(session.setPlanMode).not.toHaveBeenCalled();
+    expect(session.setSessionMode).not.toHaveBeenCalled();
     expect(stripSgr(renderTranscript(driver))).not.toContain('Post-create setup failed');
   });
 
@@ -514,7 +514,7 @@ describe('KimiTUI message flow', () => {
     driver.state.editor.onShiftTab?.();
 
     await vi.waitFor(() => {
-      expect(session.setPlanMode).toHaveBeenCalledWith(true);
+      expect(session.setSessionMode).toHaveBeenCalledWith('plan');
     });
     expect(harness.track).toHaveBeenCalledWith('shortcut_plan_toggle', { enabled: true });
     expect(harness.track).toHaveBeenCalledWith('shortcut_mode_switch', { to_mode: 'plan' });

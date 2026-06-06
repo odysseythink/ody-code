@@ -32,7 +32,7 @@ default_model = "kimi-for-coding"
 default_thinking = false
 default_permission_mode = "auto"
 skip_afk_prompt_injection = false
-default_plan_mode = false
+default_session_mode = 'plan'
 default_editor = ""
 theme = "dark"
 show_thinking_stream = true
@@ -88,7 +88,7 @@ describe('SDK config TOML', () => {
     expect(config.defaultModel).toBe('kimi-for-coding');
     expect(config.defaultThinking).toBe(false);
     expect(config.defaultPermissionMode).toBe('auto');
-    expect(config.defaultSessionMode).toBe(false);
+    expect(config.defaultSessionMode).toBe('plan');
     expect(config.mergeAllAvailableSkills).toBe(true);
     expect(config.extraSkillDirs).toEqual(['~/team-skills', '.agents/team-skills']);
 

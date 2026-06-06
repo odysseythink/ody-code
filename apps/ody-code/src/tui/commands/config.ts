@@ -383,7 +383,7 @@ export async function persistModelSelection(host: SlashCommandHost, alias: strin
       return false;
     }
     await host.harness.setConfig({
-      modeModels: { ...(config.modeModels ?? {}), plan: alias },
+      modeModels: { ...config.modeModels, plan: alias },
       defaultThinking: thinking,
     });
   } else if (host.state.appState.sessionMode === 'design') {
@@ -391,7 +391,7 @@ export async function persistModelSelection(host: SlashCommandHost, alias: strin
       return false;
     }
     await host.harness.setConfig({
-      modeModels: { ...(config.modeModels ?? {}), design: alias },
+      modeModels: { ...config.modeModels, design: alias },
       defaultThinking: thinking,
     });
   } else {

@@ -38,8 +38,8 @@ describe('plan-mode bootstrap from config.defaultSessionMode', () => {
     await rm(tmp, { recursive: true, force: true });
   });
 
-  it('activates plan mode on a new session when config.defaultSessionMode is true', async () => {
-    await writeFile(configPath, `default_plan_mode = true\n${BASE_CONFIG}`);
+  it('activates plan mode on a new session when config.defaultSessionMode is plan', async () => {
+    await writeFile(configPath, `default_session_mode = 'plan'\n${BASE_CONFIG}`);
     const rpc = await createTestRpc();
     const created = await rpc.createSession({ workDir });
     await rpc.closeSession({ sessionId: created.id });

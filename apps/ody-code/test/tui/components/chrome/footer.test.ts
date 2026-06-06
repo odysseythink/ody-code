@@ -122,7 +122,7 @@ const baseAppState: AppState = {
 
 describe('FooterComponent mode badge', () => {
   it('renders inverted plan badge without filename on Line 2', () => {
-    const state = { ...baseAppState, sessionMode: 'plan', sessionModeFilePath: 'plan.md' };
+    const state: AppState = { ...baseAppState, sessionMode: 'plan', sessionModeFilePath: 'plan.md' };
     const footer = new FooterComponent(state, darkColors);
     const lines = footer.render(120);
     const line2 = stripAnsi(lines[1]!);
@@ -135,7 +135,7 @@ describe('FooterComponent mode badge', () => {
   });
 
   it('renders inverted design badge without filename on Line 2', () => {
-    const state = { ...baseAppState, sessionMode: 'design', sessionModeFilePath: 'design.md' };
+    const state: AppState = { ...baseAppState, sessionMode: 'design', sessionModeFilePath: 'design.md' };
     const footer = new FooterComponent(state, darkColors);
     const lines = footer.render(120);
     const line2 = stripAnsi(lines[1]!);
@@ -146,7 +146,7 @@ describe('FooterComponent mode badge', () => {
   });
 
   it('renders normal badge without filename when no sessionModeFilePath is set', () => {
-    const state = { ...baseAppState, sessionMode: 'normal', sessionMode: 'normal' };
+    const state: AppState = { ...baseAppState, sessionMode: 'normal' };
     const footer = new FooterComponent(state, darkColors);
     const lines = footer.render(120);
     const line2 = stripAnsi(lines[1]!);
@@ -156,7 +156,7 @@ describe('FooterComponent mode badge', () => {
   });
 
   it('renders normal badge with filename when sessionModeFilePath is set', () => {
-    const state = { ...baseAppState, sessionMode: 'normal', sessionMode: 'normal', sessionModeFilePath: 'normal.md' };
+    const state: AppState = { ...baseAppState, sessionMode: 'normal', sessionModeFilePath: 'normal.md' };
     const footer = new FooterComponent(state, darkColors);
     const lines = footer.render(120);
     const line2 = stripAnsi(lines[1]!);
@@ -167,7 +167,7 @@ describe('FooterComponent mode badge', () => {
   });
 
   it('falls back to mode-only badge when sessionModeFilePath is null', () => {
-    const state = { ...baseAppState, sessionMode: 'plan', sessionModeFilePath: null };
+    const state: AppState = { ...baseAppState, sessionMode: 'plan', sessionModeFilePath: null };
     const footer = new FooterComponent(state, darkColors);
     const lines = footer.render(120);
     const line2 = stripAnsi(lines[1]!);
@@ -178,7 +178,7 @@ describe('FooterComponent mode badge', () => {
 
   it('truncates long filenames on the badge', () => {
     const longName = 'very-long-file-name-that-exceeds-the-available-space.md';
-    const state = { ...baseAppState, sessionMode: 'normal', sessionMode: 'normal', sessionModeFilePath: longName };
+    const state: AppState = { ...baseAppState, sessionMode: 'normal', sessionModeFilePath: longName };
     const footer = new FooterComponent(state, darkColors);
     const lines = footer.render(120);
     const line2 = stripAnsi(lines[1]!);
@@ -187,7 +187,7 @@ describe('FooterComponent mode badge', () => {
   });
 
   it('places transient hint on the right when space allows', () => {
-    const state = { ...baseAppState, sessionMode: 'plan', sessionModeFilePath: 'plan.md' };
+    const state: AppState = { ...baseAppState, sessionMode: 'plan', sessionModeFilePath: 'plan.md' };
     const footer = new FooterComponent(state, darkColors);
     footer.setTransientHint('Press Ctrl+C again');
     const lines = footer.render(120);
@@ -200,7 +200,7 @@ describe('FooterComponent mode badge', () => {
   });
 
   it('hides hint on narrow terminals while keeping badge and context', () => {
-    const state = { ...baseAppState, sessionMode: 'plan', sessionModeFilePath: 'plan.md' };
+    const state: AppState = { ...baseAppState, sessionMode: 'plan', sessionModeFilePath: 'plan.md' };
     const footer = new FooterComponent(state, darkColors);
     footer.setTransientHint('Press Ctrl+C again to exit');
     const lines = footer.render(40);
@@ -211,7 +211,7 @@ describe('FooterComponent mode badge', () => {
   });
 
   it('does not render plain mode badge on Line 1', () => {
-    const state = { ...baseAppState, sessionMode: 'plan', sessionModeFilePath: 'plan.md' };
+    const state: AppState = { ...baseAppState, sessionMode: 'plan', sessionModeFilePath: 'plan.md' };
     const footer = new FooterComponent(state, darkColors);
     const lines = footer.render(120);
     const line1 = stripAnsi(lines[0]!);

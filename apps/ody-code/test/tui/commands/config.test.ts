@@ -4,12 +4,12 @@ import type { SlashCommandHost } from '../../../src/tui/commands/dispatch';
 
 function createMockHost(
   config: { defaultModel?: string; defaultThinking?: boolean; modeModels?: { plan?: string; design?: string } },
-  planMode: boolean,
-  designMode: boolean,
+  sessionMode: 'normal' | 'plan' | 'design',
+  
 ) {
   return {
     state: {
-      appState: { planMode, designMode },
+      appState: { sessionMode },
     },
     harness: {
       getConfig: vi.fn().mockResolvedValue(config),
@@ -20,7 +20,7 @@ function createMockHost(
 
 describe('persistModelSelection per-mode', () => {
   it('saves to defaultModel in build mode', async () => {
-    const host = createMockHost({ defaultModel: 'old-model', defaultThinking: false }, false, false);
+    const host = createMockHost({ defaultModel: 'old-model', defaultThinking: false }, 'normal');
     const persisted = await persistModelSelection(host, 'new-model', true);
     expect(persisted).toBe(true);
     expect(host.harness.setConfig).toHaveBeenCalledWith({
@@ -30,7 +30,7 @@ describe('persistModelSelection per-mode', () => {
   });
 
   it('saves to modeModels.plan in plan mode', async () => {
-    const host = createMockHost({ defaultModel: 'build-model', defaultThinking: false }, true, false);
+    const host = createMockHost({ defaultModel: 'build-model', defaultThinking: false }, 'plan');
     const persisted = await persistModelSelection(host, 'plan-model', true);
     expect(persisted).toBe(true);
     expect(host.harness.setConfig).toHaveBeenCalledWith({
@@ -42,8 +42,7 @@ describe('persistModelSelection per-mode', () => {
   it('saves to modeModels.design in design mode', async () => {
     const host = createMockHost(
       { defaultModel: 'build-model', modeModels: { plan: 'plan-model' }, defaultThinking: false },
-      false,
-      true,
+      'design',
     );
     const persisted = await persistModelSelection(host, 'design-model', false);
     expect(persisted).toBe(true);
@@ -54,7 +53,7 @@ describe('persistModelSelection per-mode', () => {
   });
 
   it('returns false when nothing changed in build mode', async () => {
-    const host = createMockHost({ defaultModel: 'same-model', defaultThinking: true }, false, false);
+    const host = createMockHost({ defaultModel: 'same-model', defaultThinking: true }, 'normal');
     const persisted = await persistModelSelection(host, 'same-model', true);
     expect(persisted).toBe(false);
     expect(host.harness.setConfig).not.toHaveBeenCalled();

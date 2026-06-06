@@ -39,7 +39,7 @@ describe('createTUIState', () => {
         continueLast: false,
         yolo: false,
         auto: false,
-        plan: false,
+        sessionMode: 'normal',
       },
     };
     const state = createTUIState(opts);

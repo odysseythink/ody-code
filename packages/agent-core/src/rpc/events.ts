@@ -4,7 +4,6 @@ import type { GoalChange, GoalSnapshot } from '../session/goal';
 import type { CronJobOrigin, PromptOrigin } from '../agent/context';
 import type { KimiErrorPayload } from '../errors';
 import type { PermissionMode } from '../agent/permission';
-import type { SessionModeKind } from '../agent/session-mode';
 import type { SkillSource } from '../skill';
 import type { BackgroundTaskInfo } from '../agent/background';
 import type { ToolInputDisplay } from '../tools/display';

@@ -1,6 +1,7 @@
 import type { ToolCall } from '@odysseythink/kosong';
 import { describe, expect, it, vi } from 'vitest';
 
+import { formatDatePrefix } from '../../src/agent/session-mode/topic-generator';
 import { createFakeKaos } from '../tools/fixtures/fake-kaos';
 import { createCommandKaos, testAgent } from './harness/agent';
 
@@ -464,9 +465,9 @@ describe('plan allows safe tool flow', () => {
     await ctx.rpc.prompt({ input: [{ type: 'text', text: 'Inspect without mutating files' }] });
     expect(await ctx.untilTurnEnd()).toMatchInlineSnapshot(`
       [wire] permission.set_mode         { "mode": "yolo", "time": "<time>" }
-      [emit] agent.status.updated        { "model": "mock-model", "contextTokens": 0, "maxContextTokens": 1000000, "contextUsage": 0, "planMode": false, "planKind": "plan", "sessionModeFilePath": null, "permission": "yolo" }
-      [wire] plan_mode.enter             { "id": "test-plan", "kind": "plan", "time": "<time>" }
-      [emit] agent.status.updated        { "model": "mock-model", "contextTokens": 0, "maxContextTokens": 1000000, "contextUsage": 0, "planMode": true, "planKind": "plan", "sessionModeFilePath": "/Users/ranwei/workspace/ody-code/plan/test-plan.md", "permission": "yolo" }
+      [emit] agent.status.updated        { "model": "mock-model", "contextTokens": 0, "maxContextTokens": 1000000, "contextUsage": 0, "sessionMode": "normal", "sessionModeFilePath": null, "permission": "yolo" }
+      [wire] session_mode.enter          { "id": "test-plan", "kind": "plan", "time": "<time>" }
+      [emit] agent.status.updated        { "model": "mock-model", "contextTokens": 0, "maxContextTokens": 1000000, "contextUsage": 0, "sessionMode": "plan", "sessionModeFilePath": "/Users/ranwei/workspace/ody-code/plan/test-plan.md", "permission": "yolo" }
       [wire] turn.prompt                 { "input": [ { "type": "text", "text": "Inspect without mutating files" } ], "origin": { "kind": "user" }, "time": "<time>" }
       [emit] turn.started                { "turnId": 0, "origin": { "kind": "user" } }
       [wire] context.append_message      { "message": { "role": "user", "content": [ { "type": "text", "text": "Inspect without mutating files" } ], "toolCalls": [], "origin": { "kind": "user" } }, "time": "<time>" }
@@ -483,7 +484,7 @@ describe('plan allows safe tool flow', () => {
       [wire] context.append_loop_event   { "event": { "type": "step.end", "uuid": "<uuid-1>", "turnId": "0", "step": 1, "usage": { "inputOther": 2224, "output": 23, "inputCacheRead": 0, "inputCacheCreation": 0 }, "finishReason": "tool_use" }, "time": "<time>" }
       [emit] turn.step.completed         { "turnId": 0, "step": 1, "stepId": "<uuid-1>", "usage": { "inputOther": 2224, "output": 23, "inputCacheRead": 0, "inputCacheCreation": 0 }, "finishReason": "tool_use" }
       [wire] usage.record                { "model": "mock-model", "usage": { "inputOther": 2224, "output": 23, "inputCacheRead": 0, "inputCacheCreation": 0 }, "usageScope": "turn", "time": "<time>" }
-      [emit] agent.status.updated        { "model": "mock-model", "contextTokens": 2247, "maxContextTokens": 1000000, "contextUsage": 0.002247, "planMode": true, "planKind": "plan", "sessionModeFilePath": "/Users/ranwei/workspace/ody-code/plan/test-plan.md", "permission": "yolo", "usage": { "byModel": { "mock-model": { "inputOther": 2224, "output": 23, "inputCacheRead": 0, "inputCacheCreation": 0 } }, "total": { "inputOther": 2224, "output": 23, "inputCacheRead": 0, "inputCacheCreation": 0 }, "currentTurn": { "inputOther": 2224, "output": 23, "inputCacheRead": 0, "inputCacheCreation": 0 } } }
+      [emit] agent.status.updated        { "model": "mock-model", "contextTokens": 2247, "maxContextTokens": 1000000, "contextUsage": 0.002247, "sessionMode": "plan", "sessionModeFilePath": "/Users/ranwei/workspace/ody-code/plan/test-plan.md", "permission": "yolo", "usage": { "byModel": { "mock-model": { "inputOther": 2224, "output": 23, "inputCacheRead": 0, "inputCacheCreation": 0 } }, "total": { "inputOther": 2224, "output": 23, "inputCacheRead": 0, "inputCacheCreation": 0 }, "currentTurn": { "inputOther": 2224, "output": 23, "inputCacheRead": 0, "inputCacheCreation": 0 } } }
       [wire] context.append_loop_event   { "event": { "type": "step.begin", "uuid": "<uuid-3>", "turnId": "0", "step": 2 }, "time": "<time>" }
       [emit] turn.step.started           { "turnId": 0, "step": 2, "stepId": "<uuid-3>" }
       [emit] assistant.delta             { "turnId": 0, "delta": "The safe command printed plan-safe." }
@@ -491,7 +492,7 @@ describe('plan allows safe tool flow', () => {
       [wire] context.append_loop_event   { "event": { "type": "step.end", "uuid": "<uuid-3>", "turnId": "0", "step": 2, "usage": { "inputOther": 2251, "output": 12, "inputCacheRead": 0, "inputCacheCreation": 0 }, "finishReason": "end_turn" }, "time": "<time>" }
       [emit] turn.step.completed         { "turnId": 0, "step": 2, "stepId": "<uuid-3>", "usage": { "inputOther": 2251, "output": 12, "inputCacheRead": 0, "inputCacheCreation": 0 }, "finishReason": "end_turn" }
       [wire] usage.record                { "model": "mock-model", "usage": { "inputOther": 2251, "output": 12, "inputCacheRead": 0, "inputCacheCreation": 0 }, "usageScope": "turn", "time": "<time>" }
-      [emit] agent.status.updated        { "model": "mock-model", "contextTokens": 2263, "maxContextTokens": 1000000, "contextUsage": 0.002263, "planMode": true, "planKind": "plan", "sessionModeFilePath": "/Users/ranwei/workspace/ody-code/plan/test-plan.md", "permission": "yolo", "usage": { "byModel": { "mock-model": { "inputOther": 4475, "output": 35, "inputCacheRead": 0, "inputCacheCreation": 0 } }, "total": { "inputOther": 4475, "output": 35, "inputCacheRead": 0, "inputCacheCreation": 0 }, "currentTurn": { "inputOther": 4475, "output": 35, "inputCacheRead": 0, "inputCacheCreation": 0 } } }
+      [emit] agent.status.updated        { "model": "mock-model", "contextTokens": 2263, "maxContextTokens": 1000000, "contextUsage": 0.002263, "sessionMode": "plan", "sessionModeFilePath": "/Users/ranwei/workspace/ody-code/plan/test-plan.md", "permission": "yolo", "usage": { "byModel": { "mock-model": { "inputOther": 4475, "output": 35, "inputCacheRead": 0, "inputCacheCreation": 0 } }, "total": { "inputOther": 4475, "output": 35, "inputCacheRead": 0, "inputCacheCreation": 0 }, "currentTurn": { "inputOther": 4475, "output": 35, "inputCacheRead": 0, "inputCacheCreation": 0 } } }
       [emit] turn.ended                  { "turnId": 0, "reason": "completed" }
     `);
     await ctx.expectResumeMatches();
@@ -517,9 +518,9 @@ describe('plan mode Bash ordinary permission behavior', () => {
 
     expect(await ctx.untilTurnEnd()).toMatchInlineSnapshot(`
       [wire] permission.set_mode         { "mode": "yolo", "time": "<time>" }
-      [emit] agent.status.updated        { "model": "mock-model", "contextTokens": 0, "maxContextTokens": 1000000, "contextUsage": 0, "planMode": false, "planKind": "plan", "sessionModeFilePath": null, "permission": "yolo" }
-      [wire] plan_mode.enter             { "id": "test-plan", "kind": "plan", "time": "<time>" }
-      [emit] agent.status.updated        { "model": "mock-model", "contextTokens": 0, "maxContextTokens": 1000000, "contextUsage": 0, "planMode": true, "planKind": "plan", "sessionModeFilePath": "/Users/ranwei/workspace/ody-code/plan/test-plan.md", "permission": "yolo" }
+      [emit] agent.status.updated        { "model": "mock-model", "contextTokens": 0, "maxContextTokens": 1000000, "contextUsage": 0, "sessionMode": "normal", "sessionModeFilePath": null, "permission": "yolo" }
+      [wire] session_mode.enter          { "id": "test-plan", "kind": "plan", "time": "<time>" }
+      [emit] agent.status.updated        { "model": "mock-model", "contextTokens": 0, "maxContextTokens": 1000000, "contextUsage": 0, "sessionMode": "plan", "sessionModeFilePath": "/Users/ranwei/workspace/ody-code/plan/test-plan.md", "permission": "yolo" }
       [wire] turn.prompt                 { "input": [ { "type": "text", "text": "Remove forbidden.txt" } ], "origin": { "kind": "user" }, "time": "<time>" }
       [emit] turn.started                { "turnId": 0, "origin": { "kind": "user" } }
       [wire] context.append_message      { "message": { "role": "user", "content": [ { "type": "text", "text": "Remove forbidden.txt" } ], "toolCalls": [], "origin": { "kind": "user" } }, "time": "<time>" }
@@ -536,7 +537,7 @@ describe('plan mode Bash ordinary permission behavior', () => {
       [wire] context.append_loop_event   { "event": { "type": "step.end", "uuid": "<uuid-1>", "turnId": "0", "step": 1, "usage": { "inputOther": 2221, "output": 23, "inputCacheRead": 0, "inputCacheCreation": 0 }, "finishReason": "tool_use" }, "time": "<time>" }
       [emit] turn.step.completed         { "turnId": 0, "step": 1, "stepId": "<uuid-1>", "usage": { "inputOther": 2221, "output": 23, "inputCacheRead": 0, "inputCacheCreation": 0 }, "finishReason": "tool_use" }
       [wire] usage.record                { "model": "mock-model", "usage": { "inputOther": 2221, "output": 23, "inputCacheRead": 0, "inputCacheCreation": 0 }, "usageScope": "turn", "time": "<time>" }
-      [emit] agent.status.updated        { "model": "mock-model", "contextTokens": 2244, "maxContextTokens": 1000000, "contextUsage": 0.002244, "planMode": true, "planKind": "plan", "sessionModeFilePath": "/Users/ranwei/workspace/ody-code/plan/test-plan.md", "permission": "yolo", "usage": { "byModel": { "mock-model": { "inputOther": 2221, "output": 23, "inputCacheRead": 0, "inputCacheCreation": 0 } }, "total": { "inputOther": 2221, "output": 23, "inputCacheRead": 0, "inputCacheCreation": 0 }, "currentTurn": { "inputOther": 2221, "output": 23, "inputCacheRead": 0, "inputCacheCreation": 0 } } }
+      [emit] agent.status.updated        { "model": "mock-model", "contextTokens": 2244, "maxContextTokens": 1000000, "contextUsage": 0.002244, "sessionMode": "plan", "sessionModeFilePath": "/Users/ranwei/workspace/ody-code/plan/test-plan.md", "permission": "yolo", "usage": { "byModel": { "mock-model": { "inputOther": 2221, "output": 23, "inputCacheRead": 0, "inputCacheCreation": 0 } }, "total": { "inputOther": 2221, "output": 23, "inputCacheRead": 0, "inputCacheCreation": 0 }, "currentTurn": { "inputOther": 2221, "output": 23, "inputCacheRead": 0, "inputCacheCreation": 0 } } }
       [wire] context.append_loop_event   { "event": { "type": "step.begin", "uuid": "<uuid-3>", "turnId": "0", "step": 2 }, "time": "<time>" }
       [emit] turn.step.started           { "turnId": 0, "step": 2, "stepId": "<uuid-3>" }
       [emit] assistant.delta             { "turnId": 0, "delta": "The command completed." }
@@ -544,7 +545,7 @@ describe('plan mode Bash ordinary permission behavior', () => {
       [wire] context.append_loop_event   { "event": { "type": "step.end", "uuid": "<uuid-3>", "turnId": "0", "step": 2, "usage": { "inputOther": 2247, "output": 9, "inputCacheRead": 0, "inputCacheCreation": 0 }, "finishReason": "end_turn" }, "time": "<time>" }
       [emit] turn.step.completed         { "turnId": 0, "step": 2, "stepId": "<uuid-3>", "usage": { "inputOther": 2247, "output": 9, "inputCacheRead": 0, "inputCacheCreation": 0 }, "finishReason": "end_turn" }
       [wire] usage.record                { "model": "mock-model", "usage": { "inputOther": 2247, "output": 9, "inputCacheRead": 0, "inputCacheCreation": 0 }, "usageScope": "turn", "time": "<time>" }
-      [emit] agent.status.updated        { "model": "mock-model", "contextTokens": 2256, "maxContextTokens": 1000000, "contextUsage": 0.002256, "planMode": true, "planKind": "plan", "sessionModeFilePath": "/Users/ranwei/workspace/ody-code/plan/test-plan.md", "permission": "yolo", "usage": { "byModel": { "mock-model": { "inputOther": 4468, "output": 32, "inputCacheRead": 0, "inputCacheCreation": 0 } }, "total": { "inputOther": 4468, "output": 32, "inputCacheRead": 0, "inputCacheCreation": 0 }, "currentTurn": { "inputOther": 4468, "output": 32, "inputCacheRead": 0, "inputCacheCreation": 0 } } }
+      [emit] agent.status.updated        { "model": "mock-model", "contextTokens": 2256, "maxContextTokens": 1000000, "contextUsage": 0.002256, "sessionMode": "plan", "sessionModeFilePath": "/Users/ranwei/workspace/ody-code/plan/test-plan.md", "permission": "yolo", "usage": { "byModel": { "mock-model": { "inputOther": 4468, "output": 32, "inputCacheRead": 0, "inputCacheCreation": 0 } }, "total": { "inputOther": 4468, "output": 32, "inputCacheRead": 0, "inputCacheCreation": 0 }, "currentTurn": { "inputOther": 4468, "output": 32, "inputCacheRead": 0, "inputCacheCreation": 0 } } }
       [emit] turn.ended                  { "turnId": 0, "reason": "completed" }
     `);
     expect(toolResultText(ctx.agent.context.history)).toContain('removed');
@@ -793,7 +794,7 @@ describe('lazy fileStem and design reuse', () => {
     // simulate a prior design exit
     (ctx.agent.sessionMode as any)._lastDesignFileStem = '2024-06-05-implement-glm';
     await ctx.agent.sessionMode.enter('brave-fox-1234', false, false, 'plan');
-    const today = new Date().toISOString().slice(0, 10);
+    const today = formatDatePrefix(new Date());
     expect(ctx.agent.sessionMode.fileStem).toBe(`${today}-implement-glm`);
   });
 
@@ -827,7 +828,7 @@ describe('finalizeFileName', () => {
 
     const finalPath = await ctx.agent.sessionMode.finalizeFileName();
 
-    const today = new Date().toISOString().slice(0, 10);
+    const today = formatDatePrefix(new Date());
     expect(finalPath).toContain(`plan/${today}-my-plan.md`);
     expect(ctx.agent.sessionMode.sessionModeFilePath).toBe(finalPath);
     expect(ctx.agent.sessionMode.fileStem).toBe(`${today}-my-plan`);
@@ -862,7 +863,7 @@ describe('finalizeFileName', () => {
       kaos: createFakeKaos({ mkdir, readText, writeText, stat }),
     });
     await ctx.agent.sessionMode.enter('brave-fox-1234', false, false, 'plan');
-    const today = new Date().toISOString().slice(0, 10);
+    const today = formatDatePrefix(new Date());
     // pre-create the target file
     const targetPath = `/workspace/plan/${today}-my-plan.md`;
     files.set(targetPath, 'existing');
@@ -891,7 +892,7 @@ describe('finalizeFileName', () => {
 
     const finalPath = await ctx.agent.sessionMode.finalizeFileName();
 
-    const today = new Date().toISOString().slice(0, 10);
+    const today = formatDatePrefix(new Date());
     expect(finalPath).toContain(`plan/${today}-custom-topic.md`);
   });
 
@@ -912,7 +913,7 @@ describe('finalizeFileName', () => {
 
     const finalPath = await ctx.agent.sessionMode.finalizeFileName();
 
-    const today = new Date().toISOString().slice(0, 10);
+    const today = formatDatePrefix(new Date());
     expect(finalPath).toContain(`plan/${today}-brave-fox-1234.md`);
   });
 
@@ -982,7 +983,7 @@ describe('code review fixes', () => {
 
     const finalPath = await ctx.agent.sessionMode.finalizeFileName();
 
-    const today = new Date().toISOString().slice(0, 10);
+    const today = formatDatePrefix(new Date());
     expect(finalPath).toContain(`plan/${today}-my-feature.md`);
   });
 
@@ -1005,7 +1006,7 @@ describe('code review fixes', () => {
 
     const finalPath = await ctx.agent.sessionMode.finalizeFileName();
 
-    const today = new Date().toISOString().slice(0, 10);
+    const today = formatDatePrefix(new Date());
     expect(finalPath).toContain(`plan/${today}-brave-fox-1234.md`);
   });
 
@@ -1026,7 +1027,7 @@ describe('code review fixes', () => {
 
     await ctx.rpc.cancelPlan({ id: 'brave-fox-1234' });
 
-    const today = new Date().toISOString().slice(0, 10);
+    const today = formatDatePrefix(new Date());
     expect(files.has(`/workspace/plan/${today}-my-plan.md`)).toBe(true);
     expect(ctx.agent.sessionMode.isActive).toBe(false);
   });
@@ -1048,7 +1049,7 @@ describe('code review fixes', () => {
 
     await ctx.rpc.enterPlan({ kind: 'design' });
 
-    const today = new Date().toISOString().slice(0, 10);
+    const today = formatDatePrefix(new Date());
     expect(files.has(`/workspace/plan/${today}-plan-title.md`)).toBe(true);
     expect(ctx.agent.sessionMode.kind).toBe('design');
   });

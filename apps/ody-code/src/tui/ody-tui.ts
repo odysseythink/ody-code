@@ -1045,7 +1045,7 @@ export class KimiTUI {
       thinking: status.thinkingLevel !== 'off',
       permissionMode: status.permission,
       sessionMode: status.sessionMode ?? 'normal',
-      sessionModeFilePath: status.sessionModeFilePath ?? null,
+      sessionModeFilePath: sessionModeFilePath ?? null,
       contextTokens: status.contextTokens,
       maxContextTokens: status.maxContextTokens,
       contextUsage: status.contextUsage,

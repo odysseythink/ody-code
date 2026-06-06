@@ -49,7 +49,7 @@ const COMPLETE_TOML = `
 default_model = "kimi-code/kimi-for-coding"
 default_thinking = true
 default_permission_mode = "auto"
-default_plan_mode = false
+default_session_mode = 'plan'
 merge_all_available_skills = true
 extra_skill_dirs = ["~/team-skills", ".agents/team-skills"]
 telemetry = false
@@ -132,7 +132,7 @@ describe('harness config TOML loader', () => {
     expect(config.defaultModel).toBe('kimi-code/kimi-for-coding');
     expect(config.defaultThinking).toBe(true);
     expect(config.defaultPermissionMode).toBe('auto');
-    expect(config.defaultSessionMode).toBe(false);
+    expect(config.defaultSessionMode).toBe('plan');
     expect(config.mergeAllAvailableSkills).toBe(true);
     expect(config.extraSkillDirs).toEqual(['~/team-skills', '.agents/team-skills']);
     expect(config.telemetry).toBe(false);

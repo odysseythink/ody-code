@@ -71,7 +71,7 @@ function makeStartupInput(
       continue: false,
       yolo: false,
       auto: false,
-      plan: false,
+      sessionMode: 'normal',
       model: undefined,
       outputFormat: undefined,
       prompt: undefined,
@@ -219,7 +219,7 @@ describe("KimiTUI startup", () => {
       })),
     });
     const harness = makeHarness(session);
-    const driver = makeDriver(harness, makeStartupInput({ yolo: true, plan: true }));
+    const driver = makeDriver(harness, makeStartupInput({ yolo: true, sessionMode: 'plan' }));
 
     await expect(driver.init()).resolves.toBe(false);
 
@@ -319,7 +319,7 @@ describe("KimiTUI startup", () => {
       workDir: "/tmp/proj-a",
       model: "kimi-code/k2.5",
       permission: undefined,
-      sessionMode: 'normal',
+      sessionMode: undefined,
     });
   });
 
@@ -474,7 +474,7 @@ describe("KimiTUI startup", () => {
       })),
       createSession,
     });
-    const driver = makeDriver(harness, makeStartupInput({ yolo: true, plan: true }));
+    const driver = makeDriver(harness, makeStartupInput({ yolo: true, sessionMode: 'plan' }));
 
     await expect(driver.init()).resolves.toBe(false);
 
@@ -545,7 +545,7 @@ describe("KimiTUI startup", () => {
       model: "k2",
       thinking: "off",
       permission: undefined,
-      sessionMode: 'normal',
+      sessionMode: undefined,
     });
     expect(driver.state.appState).toMatchObject({
       permissionMode: "auto",

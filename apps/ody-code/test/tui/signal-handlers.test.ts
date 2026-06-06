@@ -17,7 +17,7 @@ function makeStartupInput(): KimiTUIStartupInput {
       continue: false,
       yolo: false,
       auto: false,
-      plan: false,
+      sessionMode: 'normal',
       model: undefined,
       outputFormat: undefined,
       prompt: undefined,

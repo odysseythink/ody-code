@@ -35,7 +35,7 @@ describe('Session plan, compact, usage, and resume APIs', () => {
       });
 
       const status = await session.getStatus();
-      expect(status.advancedSessionModeFilePath).toMatch(/\.md$/);
+      expect(status.sessionModeFilePath).toMatch(/\.md$/);
 
       await expect(session.clearPlan()).resolves.toBeUndefined();
       await expect(session.getPlan()).resolves.toMatchObject({
@@ -54,7 +54,7 @@ describe('Session plan, compact, usage, and resume APIs', () => {
       });
 
       const statusOff = await session.getStatus();
-      expect(statusOff.advancedSessionModeFilePath).toBeNull();
+      expect(statusOff.sessionModeFilePath).toBeNull();
     } finally {
       await harness.close();
     }
@@ -246,9 +246,9 @@ describe('Session plan, compact, usage, and resume APIs', () => {
         .trim()
         .split('\n')
         .map((line) => JSON.parse(line) as Record<string, unknown>)
-        .find((record) => record['type'] === 'plan_mode.enter');
+        .find((record) => record['type'] === 'session_mode.enter');
       expect(enterRecord).toEqual({
-        type: 'plan_mode.enter',
+        type: 'session_mode.enter',
         id: sourcePlan.id,
         kind: 'plan',
         time: expect.any(Number),

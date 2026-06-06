@@ -2,6 +2,7 @@ import type { createKimiDeviceId as createKimiDeviceIdFn } from '@odysseythink/k
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { runPrompt } from '#/cli/run-prompt';
+import type { CLIOptions } from '#/cli/options';
 
 type CreateKimiDeviceId = typeof createKimiDeviceIdFn;
 
@@ -124,13 +125,13 @@ vi.mock('@odysseythink/kimi-telemetry', () => ({
   withTelemetryContext: mocks.withTelemetryContext,
 }));
 
-function opts(overrides: Partial<Parameters<typeof runPrompt>[0]> = {}) {
+function opts(overrides: Partial<CLIOptions> = {}): CLIOptions {
   return {
     session: undefined,
     continue: false,
     yolo: false,
     auto: false,
-    plan: false,
+    sessionMode: 'normal',
     model: undefined,
     outputFormat: undefined,
     prompt: 'say hello',
