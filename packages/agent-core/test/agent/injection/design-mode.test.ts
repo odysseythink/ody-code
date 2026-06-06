@@ -364,6 +364,24 @@ describe('DesignModeInjector split-design steering', () => {
 
     expect(lastReminder(agent)).toContain('Split design — all parts written');
   });
+
+  it('injects no split directive for a single-file design (no manifest)', async () => {
+    const stub: DesignModeStub = { isActive: true, sessionModeFilePath: '/tmp/design.md' };
+    const agent = designAgent(stub);
+    const injector = new DesignModeInjector(agent);
+
+    await injector.inject();
+    // A single-file design with prose but no Parts manifest table.
+    stub.content = '# My design\n\nJust one coherent component, written inline. No manifest.';
+    history(agent).push({ role: 'user', content: [{ text: 'continue' }] });
+    await injector.inject();
+
+    const text = lastReminder(agent);
+    expect(text).not.toContain('Split design in progress');
+    expect(text).not.toContain('Split design — all parts written');
+    // The full reminder still renders normally.
+    expect(text).toContain('Design mode is active');
+  });
 });
 
 describe('DesignModeInjector cadence', () => {
