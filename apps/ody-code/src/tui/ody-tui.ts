@@ -35,6 +35,7 @@ import { detectFdPath } from '#/utils/process/fd-detect';
 import {
   BUILTIN_SLASH_COMMANDS,
   buildSkillSlashCommands,
+  isCommandVisibleInMode,
   isExperimentalFlagEnabled,
   setExperimentalFlags,
   sortSlashCommands,
@@ -306,9 +307,10 @@ export class KimiTUI {
   // =========================================================================
 
   private getSlashCommands(): readonly KimiSlashCommand[] {
-    const builtins = sortSlashCommands(BUILTIN_SLASH_COMMANDS).filter((command) =>
-      isExperimentalFlagEnabled(command.experimentalFlag),
-    );
+    const mode = this.state.appState.sessionMode;
+    const builtins = sortSlashCommands(BUILTIN_SLASH_COMMANDS)
+      .filter((command) => isCommandVisibleInMode(command, mode))
+      .filter((command) => isExperimentalFlagEnabled(command.experimentalFlag));
     return [...builtins, ...this.skillCommands];
   }
 
@@ -967,8 +969,12 @@ export class KimiTUI {
     assertNoLegacyFields(patch, 'setAppState');
     if (!hasPatchChanges(this.state.appState, patch)) return;
     const busyChanged = 'streamingPhase' in patch || 'isCompacting' in patch;
+    const modeChanged = 'sessionMode' in patch;
     Object.assign(this.state.appState, patch);
-    if ('sessionMode' in patch) this.updateEditorBorderHighlight();
+    if (modeChanged) {
+      this.updateEditorBorderHighlight();
+      this.setupAutocomplete();
+    }
     this.state.footer.setState(this.state.appState);
     this.updateActivityPane();
     if (busyChanged) this.updateQueueDisplay();
