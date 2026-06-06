@@ -31,7 +31,7 @@ describe('manual plan entry', () => {
 
     expect(ctx.agent.sessionMode.isActive).toBe(true);
     expect(ctx.agent.sessionMode.sessionModeFilePath).toMatch(/\.md$/);
-    expect(mkdir).toHaveBeenCalledWith('/workspace/plan', { parents: true, existOk: true });
+    expect(mkdir).toHaveBeenCalledWith('/workspace/.ody-code/plans', { parents: true, existOk: true });
     expect(writeText).not.toHaveBeenCalled();
     expect(ctx.allEvents.some((event) => event.event === 'turn.started')).toBe(false);
     expect(ctx.llmCalls).toHaveLength(0);
@@ -47,7 +47,7 @@ describe('manual plan entry', () => {
 
     const livePath = ctx.agent.sessionMode.sessionModeFilePath;
     if (livePath === null) throw new Error('expected active plan path');
-    expect(livePath).toBe('/workspace/plan/stable-plan.md');
+    expect(livePath).toBe('/workspace/.ody-code/plans/stable-plan.md');
 
     const enterRecord = ctx.allEvents.find(
       (event) => event.type === '[wire]' && event.event === 'session_mode.enter',
@@ -55,6 +55,7 @@ describe('manual plan entry', () => {
     expect(enterRecord?.args).toEqual({
       id: 'stable-plan',
       kind: 'plan',
+      path: '/workspace/.ody-code/plans/stable-plan.md',
       time: expect.any(Number),
     });
 
@@ -62,6 +63,7 @@ describe('manual plan entry', () => {
     resumed.dispatch({
       type: 'session_mode.enter',
       id: 'stable-plan',
+      path: livePath,
     });
 
     expect(resumed.agent.sessionMode.sessionModeFilePath).toBe(livePath);
@@ -73,7 +75,7 @@ describe('manual plan entry', () => {
     });
     await ctx.agent.sessionMode.enter('plan-id', false, true, 'plan', 'custom-stem');
 
-    expect(ctx.agent.sessionMode.sessionModeFilePath).toBe('/workspace/plan/custom-stem.md');
+    expect(ctx.agent.sessionMode.sessionModeFilePath).toBe('/workspace/.ody-code/plans/custom-stem.md');
     expect(ctx.agent.sessionMode.fileStem).toBe('custom-stem');
 
     const enterRecord = ctx.allEvents.find(
@@ -90,9 +92,10 @@ describe('manual plan entry', () => {
       type: 'session_mode.enter',
       id: 'plan-id',
       fileStem: 'custom-stem',
+      path: '/workspace/.ody-code/plans/custom-stem.md',
     });
 
-    expect(resumed.agent.sessionMode.sessionModeFilePath).toBe('/workspace/plan/custom-stem.md');
+    expect(resumed.agent.sessionMode.sessionModeFilePath).toBe('/workspace/.ody-code/plans/custom-stem.md');
     expect(resumed.agent.sessionMode.fileStem).toBe('custom-stem');
   });
 
@@ -466,8 +469,8 @@ describe('plan allows safe tool flow', () => {
     expect(await ctx.untilTurnEnd()).toMatchInlineSnapshot(`
       [wire] permission.set_mode         { "mode": "yolo", "time": "<time>" }
       [emit] agent.status.updated        { "model": "mock-model", "contextTokens": 0, "maxContextTokens": 1000000, "contextUsage": 0, "sessionMode": "normal", "sessionModeFilePath": null, "permission": "yolo" }
-      [wire] session_mode.enter          { "id": "test-plan", "kind": "plan", "time": "<time>" }
-      [emit] agent.status.updated        { "model": "mock-model", "contextTokens": 0, "maxContextTokens": 1000000, "contextUsage": 0, "sessionMode": "plan", "sessionModeFilePath": "/Users/ranwei/workspace/ody-code/plan/test-plan.md", "permission": "yolo" }
+      [wire] session_mode.enter          { "id": "test-plan", "kind": "plan", "path": "/Users/ranwei/workspace/ody-code/.ody-code/plans/test-plan.md", "time": "<time>" }
+      [emit] agent.status.updated        { "model": "mock-model", "contextTokens": 0, "maxContextTokens": 1000000, "contextUsage": 0, "sessionMode": "plan", "sessionModeFilePath": "/Users/ranwei/workspace/ody-code/.ody-code/plans/test-plan.md", "permission": "yolo" }
       [wire] turn.prompt                 { "input": [ { "type": "text", "text": "Inspect without mutating files" } ], "origin": { "kind": "user" }, "time": "<time>" }
       [emit] turn.started                { "turnId": 0, "origin": { "kind": "user" } }
       [wire] context.append_message      { "message": { "role": "user", "content": [ { "type": "text", "text": "Inspect without mutating files" } ], "toolCalls": [], "origin": { "kind": "user" } }, "time": "<time>" }
@@ -484,7 +487,7 @@ describe('plan allows safe tool flow', () => {
       [wire] context.append_loop_event   { "event": { "type": "step.end", "uuid": "<uuid-1>", "turnId": "0", "step": 1, "usage": { "inputOther": 2365, "output": 23, "inputCacheRead": 0, "inputCacheCreation": 0 }, "finishReason": "tool_use" }, "time": "<time>" }
       [emit] turn.step.completed         { "turnId": 0, "step": 1, "stepId": "<uuid-1>", "usage": { "inputOther": 2365, "output": 23, "inputCacheRead": 0, "inputCacheCreation": 0 }, "finishReason": "tool_use" }
       [wire] usage.record                { "model": "mock-model", "usage": { "inputOther": 2365, "output": 23, "inputCacheRead": 0, "inputCacheCreation": 0 }, "usageScope": "turn", "time": "<time>" }
-      [emit] agent.status.updated        { "model": "mock-model", "contextTokens": 2388, "maxContextTokens": 1000000, "contextUsage": 0.002388, "sessionMode": "plan", "sessionModeFilePath": "/Users/ranwei/workspace/ody-code/plan/test-plan.md", "permission": "yolo", "usage": { "byModel": { "mock-model": { "inputOther": 2365, "output": 23, "inputCacheRead": 0, "inputCacheCreation": 0 } }, "total": { "inputOther": 2365, "output": 23, "inputCacheRead": 0, "inputCacheCreation": 0 }, "currentTurn": { "inputOther": 2365, "output": 23, "inputCacheRead": 0, "inputCacheCreation": 0 } } }
+      [emit] agent.status.updated        { "model": "mock-model", "contextTokens": 2388, "maxContextTokens": 1000000, "contextUsage": 0.002388, "sessionMode": "plan", "sessionModeFilePath": "/Users/ranwei/workspace/ody-code/.ody-code/plans/test-plan.md", "permission": "yolo", "usage": { "byModel": { "mock-model": { "inputOther": 2365, "output": 23, "inputCacheRead": 0, "inputCacheCreation": 0 } }, "total": { "inputOther": 2365, "output": 23, "inputCacheRead": 0, "inputCacheCreation": 0 }, "currentTurn": { "inputOther": 2365, "output": 23, "inputCacheRead": 0, "inputCacheCreation": 0 } } }
       [wire] context.append_loop_event   { "event": { "type": "step.begin", "uuid": "<uuid-3>", "turnId": "0", "step": 2 }, "time": "<time>" }
       [emit] turn.step.started           { "turnId": 0, "step": 2, "stepId": "<uuid-3>" }
       [emit] assistant.delta             { "turnId": 0, "delta": "The safe command printed plan-safe." }
@@ -492,7 +495,7 @@ describe('plan allows safe tool flow', () => {
       [wire] context.append_loop_event   { "event": { "type": "step.end", "uuid": "<uuid-3>", "turnId": "0", "step": 2, "usage": { "inputOther": 2392, "output": 12, "inputCacheRead": 0, "inputCacheCreation": 0 }, "finishReason": "end_turn" }, "time": "<time>" }
       [emit] turn.step.completed         { "turnId": 0, "step": 2, "stepId": "<uuid-3>", "usage": { "inputOther": 2392, "output": 12, "inputCacheRead": 0, "inputCacheCreation": 0 }, "finishReason": "end_turn" }
       [wire] usage.record                { "model": "mock-model", "usage": { "inputOther": 2392, "output": 12, "inputCacheRead": 0, "inputCacheCreation": 0 }, "usageScope": "turn", "time": "<time>" }
-      [emit] agent.status.updated        { "model": "mock-model", "contextTokens": 2404, "maxContextTokens": 1000000, "contextUsage": 0.002404, "sessionMode": "plan", "sessionModeFilePath": "/Users/ranwei/workspace/ody-code/plan/test-plan.md", "permission": "yolo", "usage": { "byModel": { "mock-model": { "inputOther": 4757, "output": 35, "inputCacheRead": 0, "inputCacheCreation": 0 } }, "total": { "inputOther": 4757, "output": 35, "inputCacheRead": 0, "inputCacheCreation": 0 }, "currentTurn": { "inputOther": 4757, "output": 35, "inputCacheRead": 0, "inputCacheCreation": 0 } } }
+      [emit] agent.status.updated        { "model": "mock-model", "contextTokens": 2404, "maxContextTokens": 1000000, "contextUsage": 0.002404, "sessionMode": "plan", "sessionModeFilePath": "/Users/ranwei/workspace/ody-code/.ody-code/plans/test-plan.md", "permission": "yolo", "usage": { "byModel": { "mock-model": { "inputOther": 4757, "output": 35, "inputCacheRead": 0, "inputCacheCreation": 0 } }, "total": { "inputOther": 4757, "output": 35, "inputCacheRead": 0, "inputCacheCreation": 0 }, "currentTurn": { "inputOther": 4757, "output": 35, "inputCacheRead": 0, "inputCacheCreation": 0 } } }
       [emit] turn.ended                  { "turnId": 0, "reason": "completed" }
     `);
     await ctx.expectResumeMatches();
@@ -519,8 +522,8 @@ describe('plan mode Bash ordinary permission behavior', () => {
     expect(await ctx.untilTurnEnd()).toMatchInlineSnapshot(`
       [wire] permission.set_mode         { "mode": "yolo", "time": "<time>" }
       [emit] agent.status.updated        { "model": "mock-model", "contextTokens": 0, "maxContextTokens": 1000000, "contextUsage": 0, "sessionMode": "normal", "sessionModeFilePath": null, "permission": "yolo" }
-      [wire] session_mode.enter          { "id": "test-plan", "kind": "plan", "time": "<time>" }
-      [emit] agent.status.updated        { "model": "mock-model", "contextTokens": 0, "maxContextTokens": 1000000, "contextUsage": 0, "sessionMode": "plan", "sessionModeFilePath": "/Users/ranwei/workspace/ody-code/plan/test-plan.md", "permission": "yolo" }
+      [wire] session_mode.enter          { "id": "test-plan", "kind": "plan", "path": "/Users/ranwei/workspace/ody-code/.ody-code/plans/test-plan.md", "time": "<time>" }
+      [emit] agent.status.updated        { "model": "mock-model", "contextTokens": 0, "maxContextTokens": 1000000, "contextUsage": 0, "sessionMode": "plan", "sessionModeFilePath": "/Users/ranwei/workspace/ody-code/.ody-code/plans/test-plan.md", "permission": "yolo" }
       [wire] turn.prompt                 { "input": [ { "type": "text", "text": "Remove forbidden.txt" } ], "origin": { "kind": "user" }, "time": "<time>" }
       [emit] turn.started                { "turnId": 0, "origin": { "kind": "user" } }
       [wire] context.append_message      { "message": { "role": "user", "content": [ { "type": "text", "text": "Remove forbidden.txt" } ], "toolCalls": [], "origin": { "kind": "user" } }, "time": "<time>" }
@@ -537,7 +540,7 @@ describe('plan mode Bash ordinary permission behavior', () => {
       [wire] context.append_loop_event   { "event": { "type": "step.end", "uuid": "<uuid-1>", "turnId": "0", "step": 1, "usage": { "inputOther": 2362, "output": 23, "inputCacheRead": 0, "inputCacheCreation": 0 }, "finishReason": "tool_use" }, "time": "<time>" }
       [emit] turn.step.completed         { "turnId": 0, "step": 1, "stepId": "<uuid-1>", "usage": { "inputOther": 2362, "output": 23, "inputCacheRead": 0, "inputCacheCreation": 0 }, "finishReason": "tool_use" }
       [wire] usage.record                { "model": "mock-model", "usage": { "inputOther": 2362, "output": 23, "inputCacheRead": 0, "inputCacheCreation": 0 }, "usageScope": "turn", "time": "<time>" }
-      [emit] agent.status.updated        { "model": "mock-model", "contextTokens": 2385, "maxContextTokens": 1000000, "contextUsage": 0.002385, "sessionMode": "plan", "sessionModeFilePath": "/Users/ranwei/workspace/ody-code/plan/test-plan.md", "permission": "yolo", "usage": { "byModel": { "mock-model": { "inputOther": 2362, "output": 23, "inputCacheRead": 0, "inputCacheCreation": 0 } }, "total": { "inputOther": 2362, "output": 23, "inputCacheRead": 0, "inputCacheCreation": 0 }, "currentTurn": { "inputOther": 2362, "output": 23, "inputCacheRead": 0, "inputCacheCreation": 0 } } }
+      [emit] agent.status.updated        { "model": "mock-model", "contextTokens": 2385, "maxContextTokens": 1000000, "contextUsage": 0.002385, "sessionMode": "plan", "sessionModeFilePath": "/Users/ranwei/workspace/ody-code/.ody-code/plans/test-plan.md", "permission": "yolo", "usage": { "byModel": { "mock-model": { "inputOther": 2362, "output": 23, "inputCacheRead": 0, "inputCacheCreation": 0 } }, "total": { "inputOther": 2362, "output": 23, "inputCacheRead": 0, "inputCacheCreation": 0 }, "currentTurn": { "inputOther": 2362, "output": 23, "inputCacheRead": 0, "inputCacheCreation": 0 } } }
       [wire] context.append_loop_event   { "event": { "type": "step.begin", "uuid": "<uuid-3>", "turnId": "0", "step": 2 }, "time": "<time>" }
       [emit] turn.step.started           { "turnId": 0, "step": 2, "stepId": "<uuid-3>" }
       [emit] assistant.delta             { "turnId": 0, "delta": "The command completed." }
@@ -545,7 +548,7 @@ describe('plan mode Bash ordinary permission behavior', () => {
       [wire] context.append_loop_event   { "event": { "type": "step.end", "uuid": "<uuid-3>", "turnId": "0", "step": 2, "usage": { "inputOther": 2388, "output": 9, "inputCacheRead": 0, "inputCacheCreation": 0 }, "finishReason": "end_turn" }, "time": "<time>" }
       [emit] turn.step.completed         { "turnId": 0, "step": 2, "stepId": "<uuid-3>", "usage": { "inputOther": 2388, "output": 9, "inputCacheRead": 0, "inputCacheCreation": 0 }, "finishReason": "end_turn" }
       [wire] usage.record                { "model": "mock-model", "usage": { "inputOther": 2388, "output": 9, "inputCacheRead": 0, "inputCacheCreation": 0 }, "usageScope": "turn", "time": "<time>" }
-      [emit] agent.status.updated        { "model": "mock-model", "contextTokens": 2397, "maxContextTokens": 1000000, "contextUsage": 0.002397, "sessionMode": "plan", "sessionModeFilePath": "/Users/ranwei/workspace/ody-code/plan/test-plan.md", "permission": "yolo", "usage": { "byModel": { "mock-model": { "inputOther": 4750, "output": 32, "inputCacheRead": 0, "inputCacheCreation": 0 } }, "total": { "inputOther": 4750, "output": 32, "inputCacheRead": 0, "inputCacheCreation": 0 }, "currentTurn": { "inputOther": 4750, "output": 32, "inputCacheRead": 0, "inputCacheCreation": 0 } } }
+      [emit] agent.status.updated        { "model": "mock-model", "contextTokens": 2397, "maxContextTokens": 1000000, "contextUsage": 0.002397, "sessionMode": "plan", "sessionModeFilePath": "/Users/ranwei/workspace/ody-code/.ody-code/plans/test-plan.md", "permission": "yolo", "usage": { "byModel": { "mock-model": { "inputOther": 4750, "output": 32, "inputCacheRead": 0, "inputCacheCreation": 0 } }, "total": { "inputOther": 4750, "output": 32, "inputCacheRead": 0, "inputCacheCreation": 0 }, "currentTurn": { "inputOther": 4750, "output": 32, "inputCacheRead": 0, "inputCacheCreation": 0 } } }
       [emit] turn.ended                  { "turnId": 0, "reason": "completed" }
     `);
     expect(toolResultText(ctx.agent.context.history)).toContain('removed');
@@ -776,7 +779,7 @@ describe('lazy fileStem and design reuse', () => {
     });
     await ctx.agent.sessionMode.enter('brave-fox-1234', false, false, 'plan');
     expect(ctx.agent.sessionMode.fileStem).toBe('brave-fox-1234');
-    expect(ctx.agent.sessionMode.sessionModeFilePath).toContain('plan/brave-fox-1234.md');
+    expect(ctx.agent.sessionMode.sessionModeFilePath).toContain('.ody-code/plans/brave-fox-1234.md');
   });
 
   it('enter stores manual topic slug', async () => {
@@ -829,7 +832,7 @@ describe('finalizeFileName', () => {
     const finalPath = await ctx.agent.sessionMode.finalizeFileName();
 
     const today = formatDatePrefix(new Date());
-    expect(finalPath).toContain(`plan/${today}-my-plan.md`);
+    expect(finalPath).toContain(`.ody-code/plans/${today}-my-plan.md`);
     expect(ctx.agent.sessionMode.sessionModeFilePath).toBe(finalPath);
     expect(ctx.agent.sessionMode.fileStem).toBe(`${today}-my-plan`);
   });
@@ -865,14 +868,14 @@ describe('finalizeFileName', () => {
     await ctx.agent.sessionMode.enter('brave-fox-1234', false, false, 'plan');
     const today = formatDatePrefix(new Date());
     // pre-create the target file
-    const targetPath = `/workspace/plan/${today}-my-plan.md`;
+    const targetPath = `/workspace/.ody-code/plans/${today}-my-plan.md`;
     files.set(targetPath, 'existing');
     const tempPath = ctx.agent.sessionMode.sessionModeFilePath!;
     await writeText(tempPath, '# My Plan\n\ncontent');
 
     const finalPath = await ctx.agent.sessionMode.finalizeFileName();
 
-    expect(finalPath).toContain(`plan/${today}-my-plan-1.md`);
+    expect(finalPath).toContain(`.ody-code/plans/${today}-my-plan-1.md`);
   });
 
   it('falls back to manual topic when no H1', async () => {
@@ -893,7 +896,7 @@ describe('finalizeFileName', () => {
     const finalPath = await ctx.agent.sessionMode.finalizeFileName();
 
     const today = formatDatePrefix(new Date());
-    expect(finalPath).toContain(`plan/${today}-custom-topic.md`);
+    expect(finalPath).toContain(`.ody-code/plans/${today}-custom-topic.md`);
   });
 
   it('falls back to planId when no H1 and no manual topic', async () => {
@@ -914,7 +917,7 @@ describe('finalizeFileName', () => {
     const finalPath = await ctx.agent.sessionMode.finalizeFileName();
 
     const today = formatDatePrefix(new Date());
-    expect(finalPath).toContain(`plan/${today}-brave-fox-1234.md`);
+    expect(finalPath).toContain(`.ody-code/plans/${today}-brave-fox-1234.md`);
   });
 
   it('returns temp path on empty file', async () => {
@@ -1040,7 +1043,7 @@ describe('code review fixes', () => {
     const finalPath = await ctx.agent.sessionMode.finalizeFileName();
 
     const today = formatDatePrefix(new Date());
-    expect(finalPath).toContain(`plan/${today}-brave-fox-1234.md`);
+    expect(finalPath).toContain(`.ody-code/plans/${today}-brave-fox-1234.md`);
   });
 
   it('cancelPlan RPC handler calls finalizeFileName before cancel', async () => {
@@ -1061,7 +1064,7 @@ describe('code review fixes', () => {
     await ctx.rpc.cancelPlan({ id: 'brave-fox-1234' });
 
     const today = formatDatePrefix(new Date());
-    expect(files.has(`/workspace/plan/${today}-my-plan.md`)).toBe(true);
+    expect(files.has(`/workspace/.ody-code/plans/${today}-my-plan.md`)).toBe(true);
     expect(ctx.agent.sessionMode.isActive).toBe(false);
   });
 
@@ -1083,7 +1086,166 @@ describe('code review fixes', () => {
     await ctx.rpc.enterPlan({ kind: 'design' });
 
     const today = formatDatePrefix(new Date());
-    expect(files.has(`/workspace/plan/${today}-plan-title.md`)).toBe(true);
+    expect(files.has(`/workspace/.ody-code/plans/${today}-plan-title.md`)).toBe(true);
     expect(ctx.agent.sessionMode.kind).toBe('design');
+  });
+});
+
+describe('project-scoped directory resolution', () => {
+  it('resolves project-scoped plan directory when mkdir succeeds', async () => {
+    const mkdir = vi.fn().mockResolvedValue(undefined);
+    const ctx = testAgent({ kaos: createFakeKaos({ mkdir }) });
+    await ctx.agent.sessionMode.enter('test-plan', false, false, 'plan');
+    expect(ctx.agent.sessionMode.sessionModeFilePath).toBe('/workspace/.ody-code/plans/test-plan.md');
+    expect(mkdir).toHaveBeenCalledWith('/workspace/.ody-code/plans', { parents: true, existOk: true });
+  });
+
+  it('falls back to session-scoped path on permission error', async () => {
+    const mkdir = vi.fn(async (path: string) => {
+      if (path === '/workspace/.ody-code/plans') {
+        throw Object.assign(new Error('EACCES'), { code: 'EACCES' });
+      }
+    });
+    const ctx = testAgent({ kaos: createFakeKaos({ mkdir }), homedir: '/home/session' });
+    await ctx.agent.sessionMode.enter('test-plan', false, false, 'plan');
+    expect(ctx.agent.sessionMode.sessionModeFilePath).toBe('/home/session/plans/test-plan.md');
+    expect(mkdir).toHaveBeenCalledWith('/workspace/.ody-code/plans', { parents: true, existOk: true });
+    expect(mkdir).toHaveBeenCalledWith('/home/session/plans', { parents: true, existOk: true });
+  });
+
+  it('creates .gitignore entry when project-scoped path is used', async () => {
+    const files = new Map<string, string>();
+    const mkdir = vi.fn().mockResolvedValue(undefined);
+    const readText = vi.fn(async (path: string) => files.get(path) ?? '');
+    const writeText = vi.fn(async (path: string, content: string) => {
+      files.set(path, content);
+      return content.length;
+    });
+    const ctx = testAgent({ kaos: createFakeKaos({ mkdir, readText, writeText }) });
+    await ctx.agent.sessionMode.enter('test-plan', false, false, 'plan');
+    expect(files.get('/workspace/.gitignore')).toBe('.ody-code/\n');
+  });
+
+  it('does not duplicate .ody-code/ in existing .gitignore', async () => {
+    const files = new Map<string, string>();
+    files.set('/workspace/.gitignore', '.ody-code/\n');
+    const mkdir = vi.fn().mockResolvedValue(undefined);
+    const readText = vi.fn(async (path: string) => files.get(path) ?? '');
+    const writeText = vi.fn(async (path: string, content: string) => {
+      files.set(path, content);
+      return content.length;
+    });
+    const ctx = testAgent({ kaos: createFakeKaos({ mkdir, readText, writeText }) });
+    await ctx.agent.sessionMode.enter('test-plan', false, false, 'plan');
+    expect(files.get('/workspace/.gitignore')).toBe('.ody-code/\n');
+    // Ensure writeText was NOT called for .gitignore
+    expect(writeText).not.toHaveBeenCalledWith('/workspace/.gitignore', expect.anything());
+  });
+
+  it('keeps findUniqueStem behavior via wrapper', async () => {
+    const files = new Map<string, string>();
+    const mkdir = vi.fn().mockResolvedValue(undefined);
+    const stat = vi.fn(async (path: string) => {
+      if (files.has(path)) {
+        return { stMode: 0o100644, stIno: 1, stDev: 1, stNlink: 1, stUid: 1000, stGid: 1000, stSize: files.get(path)!.length, stAtime: Date.now(), stMtime: Date.now(), stCtime: Date.now() };
+      }
+      throw Object.assign(new Error('ENOENT'), { code: 'ENOENT' });
+    });
+    const ctx = testAgent({ kaos: createFakeKaos({ mkdir, stat }) });
+    await ctx.agent.sessionMode.enter('test-plan', false, false, 'plan');
+    const baseStem = '2024-06-05-my-plan';
+    // Must survive: base stem itself when file does not exist
+    const result = await (ctx.agent.sessionMode as unknown as { findUniqueStem(s: string): Promise<string> }).findUniqueStem(baseStem);
+    expect(result).toBe(baseStem);
+  });
+});
+
+describe('enter with project-scoped paths', () => {
+  it('logs persisted path in session_mode.enter record', async () => {
+    const mkdir = vi.fn().mockResolvedValue(undefined);
+    const ctx = testAgent({ kaos: createFakeKaos({ mkdir }) });
+    await ctx.agent.sessionMode.enter('test-plan', false, false, 'plan');
+
+    const enterRecord = ctx.allEvents.find(
+      (event) => event.type === '[wire]' && event.event === 'session_mode.enter',
+    );
+    expect(enterRecord?.args).toMatchObject({
+      id: 'test-plan',
+      kind: 'plan',
+      path: '/workspace/.ody-code/plans/test-plan.md',
+    });
+  });
+
+  it('enters design mode in project-scoped designs directory', async () => {
+    const mkdir = vi.fn().mockResolvedValue(undefined);
+    const ctx = testAgent({ kaos: createFakeKaos({ mkdir }) });
+    await ctx.agent.sessionMode.enter('test-design', false, false, 'design');
+    expect(ctx.agent.sessionMode.sessionModeFilePath).toBe('/workspace/.ody-code/designs/test-design.md');
+    expect(mkdir).toHaveBeenCalledWith('/workspace/.ody-code/designs', { parents: true, existOk: true });
+  });
+});
+
+describe('resume and finalize with project-scoped paths', () => {
+  it('restores exact persisted path on resume', async () => {
+    const ctx = testAgent({ kaos: createFakeKaos() });
+    ctx.dispatch({
+      type: 'session_mode.enter',
+      id: 'restored-plan',
+      path: '/workspace/.ody-code/plans/restored-plan.md',
+    });
+    expect(ctx.agent.sessionMode.sessionModeFilePath).toBe('/workspace/.ody-code/plans/restored-plan.md');
+  });
+
+  it('falls back to legacy path when no persisted path on resume', async () => {
+    const ctx = testAgent({ kaos: createFakeKaos() });
+    ctx.dispatch({
+      type: 'session_mode.enter',
+      id: 'legacy-plan',
+    });
+    expect(ctx.agent.sessionMode.sessionModeFilePath).toBe('/workspace/plan/legacy-plan.md');
+  });
+
+  it('finalizes in the same project-scoped directory', async () => {
+    const files = new Map<string, string>();
+    const mkdir = vi.fn().mockResolvedValue(undefined);
+    const readText = vi.fn(async (path: string) => files.get(path) ?? '');
+    const writeText = vi.fn(async (path: string, content: string) => {
+      files.set(path, content);
+      return content.length;
+    });
+    const ctx = testAgent({ kaos: createFakeKaos({ mkdir, readText, writeText }) });
+    await ctx.agent.sessionMode.enter('test-plan', false, false, 'plan');
+    const planPath = ctx.agent.sessionMode.sessionModeFilePath!;
+    files.set(planPath, '# My Plan\n\ncontent');
+
+    const finalPath = await ctx.agent.sessionMode.finalizeFileName();
+
+    const today = formatDatePrefix(new Date());
+    expect(finalPath).toBe(`/workspace/.ody-code/plans/${today}-my-plan.md`);
+    expect(ctx.agent.sessionMode.sessionModeFilePath).toBe(finalPath);
+  });
+
+  it('finalizes in the same fallback directory when project-scoped was denied', async () => {
+    const files = new Map<string, string>();
+    const mkdir = vi.fn(async (path: string) => {
+      if (path === '/workspace/.ody-code/plans') {
+        throw Object.assign(new Error('EACCES'), { code: 'EACCES' });
+      }
+    });
+    const readText = vi.fn(async (path: string) => files.get(path) ?? '');
+    const writeText = vi.fn(async (path: string, content: string) => {
+      files.set(path, content);
+      return content.length;
+    });
+    const ctx = testAgent({ kaos: createFakeKaos({ mkdir, readText, writeText }), homedir: '/home/session' });
+    await ctx.agent.sessionMode.enter('test-plan', false, false, 'plan');
+    const planPath = ctx.agent.sessionMode.sessionModeFilePath!;
+    files.set(planPath, '# My Plan\n\ncontent');
+
+    const finalPath = await ctx.agent.sessionMode.finalizeFileName();
+
+    const today = formatDatePrefix(new Date());
+    expect(finalPath).toBe(`/home/session/plans/${today}-my-plan.md`);
+    expect(ctx.agent.sessionMode.sessionModeFilePath).toBe(finalPath);
   });
 });

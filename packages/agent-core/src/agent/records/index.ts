@@ -64,6 +64,7 @@ function restoreAgentRecord(agent: Agent, input: AgentRecord): void {
         id: input.id,
         kind: input.kind ?? 'plan',
         fileStem: input.fileStem,
+        path: input.path,
       });
       return;
     case 'session_mode.cancel':

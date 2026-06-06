@@ -94,14 +94,25 @@ export class SessionMode {
 
     let enterRecorded = false;
     try {
-      const sessionModeFilePath = this.sessionModeFilePathFor(this._fileStem);
+      const { dir, isProjectScoped } = await this.resolveSessionModeDirectory(kind);
+      const sessionModeFilePath = join(dir, `${this._fileStem}.md`);
       this._sessionModeFilePath = sessionModeFilePath;
       await this.ensureSessionModeDirectory(sessionModeFilePath);
+
+      if (isProjectScoped) {
+        try {
+          await this.ensureGitignore(this.agent.config.cwd);
+        } catch (error) {
+          this.agent.log?.warn('Failed to update .gitignore', { error });
+        }
+      }
+
       this.agent.records.logRecord({
         type: 'session_mode.enter',
         id,
         kind,
         ...(this._fileStem !== id ? { fileStem: this._fileStem } : {}),
+        path: sessionModeFilePath,
       });
       enterRecorded = true;
       if (createFile) {
@@ -131,10 +142,12 @@ export class SessionMode {
     id,
     kind = 'plan',
     fileStem,
+    path,
   }: {
     readonly id: string;
     readonly kind?: SessionModeKind;
     readonly fileStem?: string;
+    readonly path?: string;
   }): void {
     this.agent.replayBuilder.push({
       type: 'session_mode_updated',
@@ -146,7 +159,12 @@ export class SessionMode {
     this._sessionModeId = id;
     this._kind = kind;
     this._fileStem = fileStem ?? id;
-    this._sessionModeFilePath = this.sessionModeFilePathFor(this._fileStem);
+
+    if (path) {
+      this._sessionModeFilePath = path;
+    } else {
+      this._sessionModeFilePath = this.sessionModeFilePathFor(this._fileStem);
+    }
   }
 
   cancel(id?: string): void {
@@ -262,13 +280,71 @@ export class SessionMode {
   }
 
   private sessionModeFilePathFor(stem: string): string {
-    const cwdSubdir = this._kind === 'design' ? 'design' : 'plan';
     const homeSubdir = this._kind === 'design' ? 'designs' : 'plans';
-    const plansDir =
-      this.agent.homedir === undefined
-        ? join(this.agent.config.cwd, cwdSubdir)
-        : join(this.agent.homedir, homeSubdir);
-    return join(plansDir, `${stem}.md`);
+    const cwdSubdir = this._kind === 'design' ? 'design' : 'plan';
+    if (this.agent.homedir !== undefined) {
+      return join(this.agent.homedir, homeSubdir, `${stem}.md`);
+    }
+    return join(this.agent.config.cwd, cwdSubdir, `${stem}.md`);
+  }
+
+  private async resolveSessionModeDirectory(kind: SessionModeKind): Promise<{ dir: string; isProjectScoped: boolean }> {
+    const projectDir = join(this.agent.config.cwd, '.ody-code', kind === 'design' ? 'designs' : 'plans');
+    try {
+      await this.agent.kaos.mkdir(projectDir, { parents: true, existOk: true });
+      return { dir: projectDir, isProjectScoped: true };
+    } catch (error) {
+      if (isPermissionError(error) && this.agent.homedir !== undefined) {
+        const sessionDir = join(this.agent.homedir, kind === 'design' ? 'designs' : 'plans');
+        await this.agent.kaos.mkdir(sessionDir, { parents: true, existOk: true });
+        return { dir: sessionDir, isProjectScoped: false };
+      }
+      throw error;
+    }
+  }
+
+  private async ensureGitignore(cwd: string): Promise<void> {
+    const gitignorePath = join(cwd, '.gitignore');
+    const entry = '.ody-code/';
+    try {
+      const content = await this.agent.kaos.readText(gitignorePath);
+      if (content.trim().length === 0) {
+        await this.agent.kaos.writeText(gitignorePath, entry + '\n');
+        return;
+      }
+      const lines = content.split('\n');
+      for (const line of lines) {
+        if (line.trim() === entry) {
+          return; // already present
+        }
+      }
+      const separator = content.endsWith('\n') ? '' : '\n';
+      await this.agent.kaos.writeText(gitignorePath, content + separator + entry + '\n');
+    } catch (error) {
+      if (isMissingFileError(error)) {
+        await this.agent.kaos.writeText(gitignorePath, entry + '\n');
+      } else {
+        throw error;
+      }
+    }
+  }
+
+  private async findUniqueStemInDir(dir: string, baseStem: string): Promise<string> {
+    let stem = baseStem;
+    let suffix = 1;
+    const MAX_SUFFIX = 1000;
+    while (suffix <= MAX_SUFFIX) {
+      const candidatePath = join(dir, `${stem}.md`);
+      try {
+        await this.agent.kaos.stat(candidatePath);
+        stem = `${baseStem}-${suffix}`;
+        suffix++;
+      } catch {
+        return stem;
+      }
+    }
+    const micro = Date.now();
+    return `${baseStem}-${micro}`;
   }
 
   async finalizeFileName(): Promise<string | null> {
@@ -297,13 +373,13 @@ export class SessionMode {
          'untitled');
 
     let finalStem = `${today}-${slug}`;
-    finalStem = await this.findUniqueStem(finalStem);
+    finalStem = await this.findUniqueStemInDir(dirname(this._sessionModeFilePath), finalStem);
 
     if (finalStem === this._fileStem) {
       return this._sessionModeFilePath;
     }
 
-    const finalPath = this.sessionModeFilePathFor(finalStem);
+    const finalPath = join(dirname(this._sessionModeFilePath), `${finalStem}.md`);
 
     try {
       await this.agent.kaos.writeText(finalPath, content);
@@ -319,22 +395,8 @@ export class SessionMode {
   }
 
   async findUniqueStem(baseStem: string): Promise<string> {
-    let stem = baseStem;
-    let suffix = 1;
-    const MAX_SUFFIX = 1000;
-    while (suffix <= MAX_SUFFIX) {
-      const candidatePath = this.sessionModeFilePathFor(stem);
-      try {
-        await this.agent.kaos.stat(candidatePath);
-        stem = `${baseStem}-${suffix}`;
-        suffix++;
-      } catch {
-        return stem;
-      }
-    }
-    // Fallback: append micro-timestamp to guarantee uniqueness
-    const micro = Date.now();
-    return `${baseStem}-${micro}`;
+    if (!this._sessionModeFilePath) return baseStem;
+    return this.findUniqueStemInDir(dirname(this._sessionModeFilePath), baseStem);
   }
 }
 
@@ -347,4 +409,10 @@ function isMissingFileError(error: unknown): boolean {
   if (error === null || typeof error !== 'object') return false;
   const code = (error as { readonly code?: unknown }).code;
   return code === 'ENOENT';
+}
+
+function isPermissionError(error: unknown): boolean {
+  if (error === null || typeof error !== 'object') return false;
+  const code = (error as { readonly code?: unknown }).code;
+  return code === 'EACCES' || code === 'EPERM';
 }
