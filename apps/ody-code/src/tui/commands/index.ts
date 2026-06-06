@@ -4,6 +4,7 @@ export * from './registry';
 export * from './resolve';
 export * from './skills';
 export * from './types';
+export * from './visibility';
 
 export { dispatchInput, type SlashCommandHost } from './dispatch';
 export {

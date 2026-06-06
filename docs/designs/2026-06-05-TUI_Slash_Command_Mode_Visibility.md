@@ -4,49 +4,44 @@
 
 ### In
 - Add mode-based visibility filtering to slash commands in the TUI autocomplete and help panel.
-- Commands can declare `hiddenInModes` to hide themselves in specific modes (`design`, `plan`, `normal`).
-- Manual input of a hidden command is also blocked with a clear error message.
-- Both built-in commands and skill commands support `hiddenInModes`.
-- Help panel shows only currently-visible commands.
-- Autocomplete refreshes when mode switches.
+- Built-in commands can declare `hiddenInModes` to hide themselves in specific modes (`design`, `plan`, `normal`). [C:USER]
+- Manual input of a hidden command is also blocked with a clear error message. [C:USER]
+- Help panel shows only currently-visible commands. [C:USER]
+- Autocomplete refreshes when mode switches. [C:USER]
 
 ### Out
-- No changes to command execution logic beyond the block check.
-- No changes to how modes are entered/exited.
-- No persistent state changes.
+- Skill commands do not support `hiddenInModes` in this version; deferred to a future release. [C:USER]
+- No changes to command execution logic beyond the block check. [C:DEFERRED]
+- No changes to how modes are entered/exited. [C:DEFERRED]
+- No persistent state changes. [C:DEFERRED]
 
 ## Resolved Decisions
 
-1. **Scope** — Generic mechanism on `KimiSlashCommand` with `hiddenInModes`; applies to built-in and skill commands. [C:USER]
-2. **Data & State** — `hiddenInModes?: ('design' | 'plan' | 'normal')[]`; manual input blocked too. [C:USER]
+1. **Scope** — Generic mechanism on `KimiSlashCommand` with `hiddenInModes`; applies to built-in commands only in this version. Skill command support deferred. [C:USER]
+2. **Data & State** — `hiddenInModes?: readonly ('design' | 'plan' | 'normal')[]`; manual input blocked too. [C:USER]
 3. **Error & Degradation** — New `blocked` reason `'mode-unavailable'` with message `"Not available in current mode"`. [C:USER]
-4. **Integration** — Skill commands support `hiddenInModes`; help panel syncs; autocomplete refreshes on mode switch. [C:USER]
-5. **Filter Priority** — Mode filter first, then experimental flag. [C:USER]
-6. **Mode Exclusivity** — `plan` and `design` are mutually exclusive; `normal` means neither is active. [C:INFERRED]
+4. **Integration** — Help panel syncs via `getSlashCommands()`; autocomplete refreshes on `sessionMode` change in `setAppState`. [C:USER]
+5. **Filter Priority** — Mode filter first, then experimental flag. [C:INFERRED]
+6. **SessionMode Source** — `AppState.sessionMode` is the single source of truth; no `resolveCurrentMode` helper needed. [C:USER]
+7. **Telemetry** — Reuse existing `input_command_invalid` track event with `reason: 'mode-unavailable'`. [C:USER]
 
 ## Architecture
 
 ```
-AppState (planMode, designMode)
-    │
-    ▼
-resolveCurrentMode(appState) ──► 'design' | 'plan' | 'normal'
-    │
-    ▼
-isCommandVisibleInMode(command, mode)
-    │
-    ├──► getSlashCommands() ──► autocomplete list (filtered)
-    │
-    ├──► resolveSlashCommandInput() ──► blocked if hidden
-    │
-    └──► showHelpPanel() ──► help list (filtered via getSlashCommands)
+AppState.sessionMode ──► getSlashCommands() ──► filter by hiddenInModes
+                              │
+                              ├──► setupAutocomplete() ──► autocomplete list
+                              │
+                              ├──► showHelpPanel() ──► help list
+                              │
+                              └──► resolveSlashCommandInput() ──► blocked if hidden
 ```
 
 ## Data Types
 
 ```ts
 // apps/ody-code/src/tui/commands/types.ts
-export type TuiMode = 'design' | 'plan' | 'normal';
+export type SessionMode = 'normal' | 'plan' | 'design';
 
 export interface KimiSlashCommand<Name extends string = string> extends SlashCommand {
   readonly name: Name;
@@ -57,7 +52,7 @@ export interface KimiSlashCommand<Name extends string = string> extends SlashCom
   readonly experimentalFlag?: FlagId;
   readonly completeArgs?: (argumentPrefix: string) => AutocompleteItem[] | null;
   /** [C:USER] Modes in which this command is hidden from the palette and blocked. */
-  readonly hiddenInModes?: readonly TuiMode[];
+  readonly hiddenInModes?: readonly SessionMode[];
 }
 ```
 
@@ -65,31 +60,23 @@ export interface KimiSlashCommand<Name extends string = string> extends SlashCom
 // apps/ody-code/src/tui/commands/resolve.ts
 export type SlashCommandBlockedReason = SlashCommandBusyReason | 'mode-unavailable';
 
-export type SlashCommandIntent =
-  | { readonly kind: 'not-command' }
-  | { readonly kind: 'builtin'; readonly command: BuiltinSlashCommand; readonly name: BuiltinSlashCommandName; readonly args: string }
-  | { readonly kind: 'skill'; readonly commandName: string; readonly skillName: string; readonly args: string }
-  | { readonly kind: 'message'; readonly input: string }
-  | { readonly kind: 'blocked'; readonly commandName: string; readonly reason: SlashCommandBlockedReason }
-  | { readonly kind: 'invalid'; readonly commandName: string; readonly reason: SlashCommandInvalidReason };
+export interface ResolveSlashCommandInput {
+  readonly input: string;
+  readonly skillCommandMap: ReadonlyMap<string, string>;
+  readonly isStreaming: boolean;
+  readonly isCompacting: boolean;
+  /** [C:USER] Current session mode for visibility filtering. */
+  readonly sessionMode: SessionMode;
+}
 ```
 
 ## Core Functions
-
-### `resolveCurrentMode`
-```ts
-export function resolveCurrentMode(appState: Pick<AppState, 'planMode' | 'designMode'>): TuiMode {
-  if (appState.planMode) return 'plan';
-  if (appState.designMode) return 'design';
-  return 'normal';
-}
-```
 
 ### `isCommandVisibleInMode`
 ```ts
 export function isCommandVisibleInMode(
   command: Pick<KimiSlashCommand, 'hiddenInModes'>,
-  mode: TuiMode,
+  mode: SessionMode,
 ): boolean {
   if (command.hiddenInModes === undefined || command.hiddenInModes.length === 0) {
     return true;
@@ -137,37 +124,45 @@ Add `hiddenInModes` to the four commands:
 },
 ```
 
-### 2. `apps/ody-code/src/tui/kimi-tui.ts` `getSlashCommands()` (lines 309–314)
-Change to accept `appState` and filter by mode:
+### 2. `apps/ody-code/src/tui/ody-tui.ts` `getSlashCommands()` (lines 308–313)
+Add mode filtering:
 ```ts
-private getSlashCommands(appState: AppState = this.state.appState): readonly KimiSlashCommand[] {
-  const mode = resolveCurrentMode(appState);
+private getSlashCommands(): readonly KimiSlashCommand[] {
+  const mode = this.state.appState.sessionMode;
   const builtins = sortSlashCommands(BUILTIN_SLASH_COMMANDS)
     .filter((command) => isCommandVisibleInMode(command, mode))
     .filter((command) => isExperimentalFlagEnabled(command.experimentalFlag));
-  const skills = this.skillCommands.filter((command) => isCommandVisibleInMode(command, mode));
-  return [...builtins, ...skills];
+  return [...builtins, ...this.skillCommands];
 }
 ```
 
-### 3. `apps/ody-code/src/tui/kimi-tui.ts` `setupAutocomplete()` (lines 316–335)
-No change needed; it already calls `getSlashCommands()`.
-
-### 4. `apps/ody-code/src/tui/kimi-tui.ts` `showHelpPanel()` (line 1724)
-No change needed; it already calls `getSlashCommands()`.
-
-### 5. `apps/ody-code/src/tui/commands/resolve.ts` `resolveSlashCommandInput()` (lines 48–99)
-Add `appState` to input and mode check:
+### 3. `apps/ody-code/src/tui/ody-tui.ts` `setAppState()` (lines 966–972)
+Add autocomplete refresh on mode change:
 ```ts
-export interface ResolveSlashCommandInput {
-  readonly input: string;
-  readonly skillCommandMap: ReadonlyMap<string, string>;
-  readonly isStreaming: boolean;
-  readonly isCompacting: boolean;
-  readonly planMode: boolean;
-  readonly designMode: boolean;
+setAppState(patch: Partial<AppState>): void {
+  assertNoLegacyFields(patch, 'setAppState');
+  if (!hasPatchChanges(this.state.appState, patch)) return;
+  const busyChanged = 'streamingPhase' in patch || 'isCompacting' in patch;
+  const modeChanged = 'sessionMode' in patch;
+  Object.assign(this.state.appState, patch);
+  if (modeChanged) {
+    this.updateEditorBorderHighlight();
+    this.setupAutocomplete();
+  }
+  this.state.footer.setState(this.state.appState);
+  // ... rest unchanged
 }
+```
 
+### 4. `apps/ody-code/src/tui/ody-tui.ts` `setupAutocomplete()` (lines 315–335)
+No change needed; it already calls `getSlashCommands()`.
+
+### 5. `apps/ody-code/src/tui/ody-tui.ts` `showHelpPanel()` (line 1717)
+No change needed; it already calls `getSlashCommands()`.
+
+### 6. `apps/ody-code/src/tui/commands/resolve.ts` `resolveSlashCommandInput()` (lines 48–99)
+Add `sessionMode` to input and mode check:
+```ts
 export function resolveSlashCommandInput(options: ResolveSlashCommandInput): SlashCommandIntent {
   const parsed = parseSlashInput(options.input);
   if (parsed === null) return { kind: 'not-command' };
@@ -177,8 +172,7 @@ export function resolveSlashCommandInput(options: ResolveSlashCommandInput): Sla
     command !== undefined &&
     isExperimentalFlagEnabled((command as KimiSlashCommand).experimentalFlag)
   ) {
-    const mode = resolveCurrentMode(options);
-    if (!isCommandVisibleInMode(command as KimiSlashCommand, mode)) {
+    if (!isCommandVisibleInMode(command as KimiSlashCommand, options.sessionMode)) {
       return { kind: 'blocked', commandName: parsed.name, reason: 'mode-unavailable' };
     }
     const busyReason = slashCommandBusyReason(options);
@@ -194,7 +188,7 @@ export function resolveSlashCommandInput(options: ResolveSlashCommandInput): Sla
 }
 ```
 
-### 6. `apps/ody-code/src/tui/commands/dispatch.ts` `executeSlashCommand()` (lines 154–204)
+### 7. `apps/ody-code/src/tui/commands/dispatch.ts` `executeSlashCommand()` (lines 154–204)
 Add handling for `'mode-unavailable'`:
 ```ts
 async function executeSlashCommand(host: SlashCommandHost, input: string): Promise<void> {
@@ -204,8 +198,7 @@ async function executeSlashCommand(host: SlashCommandHost, input: string): Promi
     skillCommandMap: host.skillCommandMap,
     isStreaming: host.state.appState.streamingPhase !== 'idle',
     isCompacting: host.state.appState.isCompacting,
-    planMode: host.state.appState.planMode,
-    designMode: host.state.appState.designMode ?? false,
+    sessionMode: host.state.appState.sessionMode,
   });
 
   switch (intent.kind) {
@@ -223,56 +216,40 @@ async function executeSlashCommand(host: SlashCommandHost, input: string): Promi
 }
 ```
 
-### 7. Mode-switch refresh
-In `apps/ody-code/src/tui/kimi-tui.ts` `setAppState()` (line 968), add mode-change detection to auto-refresh autocomplete:
-```ts
-setAppState(patch: Partial<AppState>): void {
-  if (!hasPatchChanges(this.state.appState, patch)) return;
-  const busyChanged = 'streamingPhase' in patch || 'isCompacting' in patch;
-  const modeChanged = 'planMode' in patch || 'designMode' in patch;
-  Object.assign(this.state.appState, patch);
-  if ('planMode' in patch) this.updateEditorBorderHighlight();
-  if (modeChanged) this.setupAutocomplete();
-  this.state.footer.setState(this.state.appState);
-  // ... rest unchanged
-}
-```
-This avoids exposing `setupAutocomplete` through `SlashCommandHost` and covers all mode-switch paths (`/plan`, `/design`, Shift-Tab, session restore) automatically.
-
 ## Error & Degradation
 
 | Error | Immediate Handling | Degradation Path | Recovery |
 |---|---|---|---|
 | User types hidden command | `blocked` with `mode-unavailable` → `showError("Not available in current mode")` | Input rejected, nothing executed | User switches to correct mode |
-| Mode resolve fails (both true) | `resolveCurrentMode` picks `plan` first [C:INFERRED] | `plan` wins over `design` | User toggles modes to correct state |
+| `hiddenInModes` is empty/undefined | `isCommandVisibleInMode` returns `true` | Command visible in all modes | N/A (default behavior) |
 
 ## Test Plan
 
 1. **`isCommandVisibleInMode` unit tests**
    - `hiddenInModes: undefined` → visible in all modes
-   - `hiddenInModes: ['design']` with mode `design` → false
-   - `hiddenInModes: ['design']` with mode `plan` → true
-   - `hiddenInModes: ['plan', 'normal']` with mode `design` → true
-   - `hiddenInModes: ['plan', 'normal']` with mode `plan` → false
-   - `hiddenInModes: ['plan', 'normal']` with mode `normal` → false
+   - `hiddenInModes: ['design']` with mode `design` → `false`
+   - `hiddenInModes: ['design']` with mode `plan` → `true`
+   - `hiddenInModes: ['plan', 'normal']` with mode `design` → `true`
+   - `hiddenInModes: ['plan', 'normal']` with mode `plan` → `false`
+   - `hiddenInModes: ['plan', 'normal']` with mode `normal` → `false`
 
-2. **`resolveCurrentMode` unit tests**
-   - `planMode: true, designMode: true` → `'plan'` (mutual-exclusivity fallback)
-   - `planMode: true, designMode: false` → `'plan'`
-   - `planMode: false, designMode: true` → `'design'`
-   - `planMode: false, designMode: false` → `'normal'`
-
-3. **Integration: `getSlashCommands` filtering**
+2. **Integration: `getSlashCommands` filtering**
    - In `normal` mode: `design-review` and `plan-review` are absent
    - In `design` mode: `design` is absent, `design-review` is present
    - In `plan` mode: `plan` is absent, `plan-review` is present
 
-4. **Integration: `resolveSlashCommandInput` blocking**
+3. **Integration: `resolveSlashCommandInput` blocking**
    - `/design-review` in `normal` mode → `blocked` reason `'mode-unavailable'`
    - `/plan` in `plan` mode → `blocked` reason `'mode-unavailable'`
 
+4. **Integration: `setAppState` mode-switch refresh**
+   - Calling `setAppState({ sessionMode: 'plan' })` triggers `setupAutocomplete()`
+
 5. **Help panel**
    - In `design` mode, help panel does not list `design` or `plan-review`
+
+6. **Dispatch error message**
+   - `/design-review` in `normal` mode shows `"Not available in current mode"`
 
 Done criteria: `pnpm test --filter apps/ody-code` passes.
 
@@ -280,14 +257,14 @@ Done criteria: `pnpm test --filter apps/ody-code` passes.
 
 | # | Risk | Likelihood | Impact | Mitigation |
 |---|---|---|---|---|
-| 1 | `resolveCurrentMode` picks wrong mode if both flags are true | Low | Medium | Document fallback order (`plan` > `design` > `normal`); add unit test |
-| 2 | Skill commands from future skills unexpectedly hidden | Low | Low | Default is visible; only hidden when explicitly declared |
-| 3 | Help panel cached stale list after mode switch | Medium | Low | Ensure `showHelpPanel` re-calls `getSlashCommands` each time |
+| 1 | `getSlashCommands` filter accidentally hides commands that should be visible | Low | Medium | Unit tests for `isCommandVisibleInMode` cover all combinations; default is visible |
+| 2 | Help panel cached stale list after mode switch | Low | Low | `showHelpPanel` re-calls `getSlashCommands` each time; `setAppState` refreshes autocomplete |
+| 3 | Future skill commands unexpectedly hidden when `hiddenInModes` support is added | Low | Low | Skill support deferred; when added, default will be visible (no `hiddenInModes` = visible everywhere) |
 
 ## Assumptions & Unverified Items
 
 | # | Assumption | Confidence | Impact if wrong | How to verify |
 |---|---|---|---|---|
-| 1 | `planMode` and `designMode` are mutually exclusive in practice | Medium | Low | Check mode toggle logic in `config.ts` and `editor-keyboard.ts` |
-| 2 | `getSlashCommands` is the single source of truth for help panel commands | High | Low | Verified in `kimi-tui.ts` line 1724 |
-| 3 | Skill commands do not currently have `hiddenInModes` and will default to visible | High | Low | Verified in `skills.ts` line 21–31 |
+| 1 | `AppState.sessionMode` is always `'normal'`, `'plan'`, or `'design'` at runtime | High | Medium | Verified by `AppState` type in `apps/ody-code/src/tui/types.ts` line 20 |
+| 2 | `getSlashCommands` is the single source of truth for help panel commands | High | Low | Verified in `ody-tui.ts` line 1721 |
+| 3 | `skillCommands` do not currently have `hiddenInModes` and will default to visible | High | Low | Verified in `commands/types.ts`; `hiddenInModes` is optional |

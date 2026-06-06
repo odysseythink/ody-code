@@ -1,6 +1,8 @@
 import type { AutocompleteItem, SlashCommand } from '@earendil-works/pi-tui';
 import type { FlagId } from '@odysseythink/kimi-code-sdk';
 
+export type SessionMode = 'normal' | 'plan' | 'design';
+
 export type SlashCommandAvailability = 'always' | 'idle-only';
 
 export interface KimiSlashCommand<Name extends string = string> extends SlashCommand {
@@ -18,6 +20,8 @@ export interface KimiSlashCommand<Name extends string = string> extends SlashCom
    * pi-tui's `getArgumentCompletions` in the autocomplete setup.
    */
   readonly completeArgs?: (argumentPrefix: string) => AutocompleteItem[] | null;
+  /** Modes in which this command is hidden from the palette and blocked. */
+  readonly hiddenInModes?: readonly SessionMode[];
 }
 
 export interface ParsedSlashInput {
