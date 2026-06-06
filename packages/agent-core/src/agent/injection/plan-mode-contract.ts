@@ -64,7 +64,7 @@ const INCREMENTAL_AND_SPLIT = `## Incremental writing & large plans
 Never emit the whole plan in one Write. Scaffold first (header + File Structure + Dependency Overview + Risks & Open Questions), save, THEN append one phase per Edit, and append the Self-Review last — so the document-level scaffolding can never be crowded out by task detail.
 Count the tasks first, then pick a layout:
   - ≤ 8 tasks → ONE file (the current plan file), written incrementally as above.
-  - > 8 tasks, OR work spanning more than one subsystem → SPLIT. The current plan file (\`<id>.md\`) becomes the INDEX: global Goal/Architecture, File Structure, Dependency Overview, Risks, the spec-coverage table, and a Parts manifest (below) — NO tasks live in the index. Each phase/subsystem becomes a sibling file \`<id>-<subsystem>.md\` next to the index, holding that phase's tasks + its own local Self-Review. You MAY write these sibling files — they share the plan file's directory. Cross-file deps are allowed: \`Depends on: <id>-core.md: Task 2\`.
+  - > 8 tasks, OR work spanning more than one subsystem → SPLIT. The current plan file (\`<id>.md\`) becomes the INDEX: global Goal/Architecture, File Structure, Dependency Overview, Risks, the spec-coverage table, and a Parts manifest (below) — the index MUST contain NO task sections (no ### Task headers, no - [ ] step lists); all task content lives exclusively in the part files. Each phase/subsystem becomes a sibling file \`<id>-<subsystem>.md\` next to the index, holding that phase's tasks + its own local Self-Review. You MAY write these sibling files — they share the plan file's directory. Cross-file deps are allowed: \`Depends on: <id>-core.md: Task 2\`.
 The Parts manifest lives in the index and is the durable state that survives a context compaction mid-generation:
 
 ## Parts (generate one per invocation, in order)
@@ -73,10 +73,10 @@ The Parts manifest lives in the index and is the durable state that survives a c
 | 1 | <id>-core.md | models + persistence | pending |
 | 2 | <id>-api.md | endpoints + wiring | pending |
 
-Write the index first (every row \`pending\`), then write the sub-plan files one at a time, flipping each row to \`done\` the INSTANT its file is written. If the context is compacted while generating, resume by re-reading the index and finding the first \`pending\` row — never re-write a \`done\` part. Call ExitPlanMode only after every row is \`done\`.`;
+Write the index first (every row \`pending\`), then end your turn — the injection on the next turn will direct you to the first pending part. Write ONE part per turn: scaffold + tasks + local Self-Review, flip its manifest row to \`done\`, then stop that turn (no AskUserQuestion, no ExitPlanMode). The injection will direct you to the next pending part. If the context is compacted while generating, re-read the index and find the first \`pending\` row — never re-write a \`done\` part. Call ExitPlanMode only after every row is \`done\`.`;
 
 const TURN_DISCIPLINE = `## Approaches & turn discipline
-Keep approaches focused: at most 2-3 meaningfully different ones; if one is clearly superior, propose just that. When the best approach depends on user preference or context you lack, use AskUserQuestion to clarify FIRST (one question per turn) — it yields a more targeted plan than dumping options. If the final plan keeps multiple approaches, you MUST pass them as ExitPlanMode's \`options\` so the user can choose at approval time. Never ask about plan approval via text or AskUserQuestion — that is ExitPlanMode's job — and do NOT reference "the plan" in AskUserQuestion, since the user cannot see it until you call ExitPlanMode. Your turn must end with either AskUserQuestion (to clarify) or ExitPlanMode (to request approval).`;
+Keep approaches focused: at most 2-3 meaningfully different ones; if one is clearly superior, propose just that. When the best approach depends on user preference or context you lack, use AskUserQuestion to clarify FIRST (one question per turn) — it yields a more targeted plan than dumping options. If the final plan keeps multiple approaches, you MUST pass them as ExitPlanMode's \`options\` so the user can choose at approval time. Never ask about plan approval via text or AskUserQuestion — that is ExitPlanMode's job — and do NOT reference "the plan" in AskUserQuestion, since the user cannot see it until you call ExitPlanMode. End every turn with AskUserQuestion (to clarify) or ExitPlanMode (to request approval) — EXCEPT during a split plan: when the Parts manifest has \`pending\` rows, write ONE part file per turn, flip its row to \`done\`, then end the turn naturally without calling AskUserQuestion or ExitPlanMode. The injection on the next turn will direct you to the next pending part.`;
 
 /** One-line quality pointer kept in the sparse variant so long sessions don't drop quality. */
 const SPARSE_QUALITY_POINTER = `Reminder: the plan must be concrete enough to execute with zero follow-up — exact file paths + line ranges, complete code in every step, exact commands with expected output, per-task tests asserting the risk, an explicit dependency graph, the shared-signature caller/whole-tree-typecheck rule, and the seven-item self-review with a spec-coverage table. Plans over 8 tasks split into an index (with a Parts manifest) + sibling files.`;
@@ -189,7 +189,7 @@ export function parsePartsManifest(content: string): PartsManifest | null {
     if (trimmed.length < 4) continue;
     const status = (trimmed.at(-1) ?? '').toLowerCase();
     if (status !== 'pending' && status !== 'done') continue;
-    const file = trimmed[1] ?? '';
+    const file = (trimmed[1] ?? '').replace(/`/g, '').trim();
     if (!file.toLowerCase().endsWith('.md')) continue;
     rows.push({ file, scope: trimmed.at(-2) ?? '', status });
   }
@@ -217,7 +217,7 @@ export function parseManifestFiles(content: string): string[] {
     if (trimmed.length < 4) continue;
     const status = (trimmed.at(-1) ?? '').toLowerCase();
     if (status !== 'pending' && status !== 'done') continue;
-    const file = trimmed[1] ?? '';
+    const file = (trimmed[1] ?? '').replace(/`/g, '').trim();
     if (!file.toLowerCase().endsWith('.md')) continue;
     files.push(basename(file));
   }
@@ -226,8 +226,8 @@ export function parseManifestFiles(content: string): string[] {
 
 /** Directive appended while a split plan still has `pending` parts. */
 export function splitContinuationDirective(part: ManifestPart): string {
-  return `## Split plan in progress
-The index holds a Parts manifest with unfinished parts. The next part to write is \`${part.file}\`${part.scope.length > 0 ? ` (scope: ${part.scope})` : ''}. This turn: write THAT sub-plan file next to the index (scaffold-then-append: local header → its tasks → its local Self-Review), then set its manifest row Status to \`done\` in the index. Mark each part \`done\` the instant its file is written — the on-disk manifest is the durable state, so if the context is compacted mid-generation you resume by re-reading the index and finding the next \`pending\` row. Never re-write a part already marked \`done\`, and do NOT call ExitPlanMode until every row is \`done\`.`;
+  return `## Split plan in progress — write ONE part this turn
+The index has pending parts. This turn: write ONLY \`${part.file}\`${part.scope.length > 0 ? ` (scope: ${part.scope})` : ''} next to the index (scaffold-then-append: part header → its tasks → its local Self-Review), then immediately flip its manifest row Status to \`done\` in the index. After flipping: stop — do NOT write any other part file, and do NOT call ExitPlanMode or AskUserQuestion. The injection on the next turn will point you to the next \`pending\` row. The on-disk manifest is the durable state: if context is compacted mid-generation, re-read the index and find the next \`pending\` row. Never re-write a part already marked \`done\`.`;
 }
 
 /** Directive appended once every manifest row is `done`. */

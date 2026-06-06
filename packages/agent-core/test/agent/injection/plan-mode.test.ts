@@ -270,6 +270,20 @@ describe('parsePartsManifest', () => {
     expect(manifest?.allDone).toBe(true);
     expect(manifest?.next).toBeNull();
   });
+
+  it('handles backtick-wrapped file names written by the model', () => {
+    const manifest = parsePartsManifest(
+      [
+        '| # | File | Scope | Status |',
+        '|---|---|---|---|',
+        '| 1 | `plan-core.md` | models | done |',
+        '| 2 | `plan-api.md` | endpoints | pending |',
+      ].join('\n'),
+    );
+    expect(manifest).not.toBeNull();
+    expect(manifest?.allDone).toBe(false);
+    expect(manifest?.next).toEqual({ file: 'plan-api.md', scope: 'endpoints' });
+  });
 });
 
 describe('parseManifestFiles', () => {
@@ -287,6 +301,16 @@ describe('parseManifestFiles', () => {
 
   it('returns an empty array for a single-file plan with no manifest', () => {
     expect(parseManifestFiles('# A plan\n\njust prose, no table')).toEqual([]);
+  });
+
+  it('handles backtick-wrapped file names written by the model', () => {
+    const files = parseManifestFiles(
+      [
+        '| 1 | `plan-core.md` | models | done |',
+        '| 2 | `plan-api.md` | endpoints | pending |',
+      ].join('\n'),
+    );
+    expect(files).toEqual(['plan-core.md', 'plan-api.md']);
   });
 });
 
