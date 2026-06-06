@@ -56,12 +56,11 @@ export function resolveSlashCommandInput(options: ResolveSlashCommandInput): Sla
   if (parsed === null) return { kind: 'not-command' };
 
   const command = findBuiltInSlashCommand(parsed.name);
-  // `command` is a literal union where only some members carry `experimentalFlag`; widen to read it.
   if (
     command !== undefined &&
-    isExperimentalFlagEnabled((command as KimiSlashCommand).experimentalFlag)
+    isExperimentalFlagEnabled(command.experimentalFlag)
   ) {
-    if (!isCommandVisibleInMode(command as KimiSlashCommand, options.sessionMode)) {
+    if (!isCommandVisibleInMode(command, options.sessionMode)) {
       return {
         kind: 'blocked',
         commandName: parsed.name,

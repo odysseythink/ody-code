@@ -58,6 +58,7 @@ interface MessageDriver {
   handleUserInput(text: string): void;
   persistInputHistory(text: string): Promise<void>;
   getCurrentSessionId(): string;
+  showError(msg: string): void;
 }
 
 interface FeedbackDriver extends MessageDriver {
@@ -445,6 +446,26 @@ describe('KimiTUI message flow', () => {
         command: command.slice(1),
       });
     }
+  });
+
+  it('tracks mode-unavailable commands as invalid and shows a clear error', async () => {
+    const { driver, harness } = await makeDriver();
+    driver.state.appState.sessionMode = 'design';
+    const showErrorSpy = vi.spyOn(driver, 'showError').mockImplementation(() => {});
+
+    driver.handleUserInput('/plan-review');
+    await Promise.resolve();
+
+    expect(harness.track).toHaveBeenCalledWith('input_command_invalid', {
+      reason: 'mode-unavailable',
+      command: 'plan-review',
+    });
+    expect(showErrorSpy).toHaveBeenCalledWith('Not available in current mode');
+    expect(harness.track).not.toHaveBeenCalledWith('input_command', {
+      command: 'plan-review',
+    });
+
+    showErrorSpy.mockRestore();
   });
 
   it('does not re-enter plan mode after creating a plan-mode session', async () => {
