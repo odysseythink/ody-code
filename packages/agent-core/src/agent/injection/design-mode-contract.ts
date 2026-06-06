@@ -34,8 +34,13 @@ Before exploring the codebase deeply, before any clarifying question, and before
   - Deep — I confirm the key claim of every design section, plus every assumption.
 Do NOT infer or silently default the level. Only fall back to Basic if the user explicitly declines to choose. Record the choice; you will apply its threshold to the Assumptions chapter and the final audit gate. The user may upgrade ("upgrade to Standard/Deep") at any time.`;
 
-const STEP_0_5_UPSTREAM = `## Step 0.5 — Upstream inventory (ONLY if the task ports, adapts, or learns from an existing system)
-If the request is to port / adapt / mirror / "introduce X's design", then BEFORE any clarifying question: read the upstream source or reference docs, enumerate the upstream system's complete feature/module list, and note which features the current codebase already has, which are missing, and which need adaptation. That inventory becomes your clarifying-question checklist — every item must be confirmed with the user. Do NOT skip this even if the user says "just port everything". Tag features taken verbatim from upstream as [C:UPSTREAM]. (Skip this step entirely for greenfield or local-only changes.)`;
+const STEP_0_5_UPSTREAM = `## Step 0.5 — Upstream inventory / prior art search (conditional)
+
+(A) Upstream inventory — ONLY if the task ports, adapts, or mirrors an existing system:
+If the request is to port / adapt / mirror / "introduce X's design", then BEFORE any clarifying question: read the upstream source or reference docs, enumerate the upstream system's complete feature/module list, and note which features the current codebase already has, which are missing, and which need adaptation. That inventory becomes your clarifying-question checklist — every item must be confirmed with the user. Do NOT skip this even if the user says "just port everything". Tag features taken verbatim from upstream as [C:UPSTREAM]. (Skip this sub-step for greenfield or local-only changes.)
+
+(B) Prior art search — for new standalone tools or features with likely open-source parallels:
+BEFORE writing any clarifying question, run 1-2 web searches (e.g. "open source <tool> <language>") to survey existing solutions. Enumerate: the approaches they use, what they defer, and what edge cases they surface. Add a short ## Prior Art section to the design file. These findings inform your Step 1 clarifying questions — they reveal scope that practitioners have found necessary, common architecture decisions, and pitfalls to name in the Risk Register. Skip this sub-step for purely internal changes (refactors, adding a field, etc.).`;
 
 const STEP_1_CLARIFY = `## Step 1 — Clarify, ONE question per turn (do not stop early)
 After the audit level is recorded, refine the idea by asking questions one at a time (prefer multiple-choice via AskUserQuestion). Never batch questions. After each answer, record the decision in a running "Resolved decisions" list. You may NOT proceed to propose approaches until EVERY dimension below has a user-confirmed decision:
@@ -70,8 +75,8 @@ The design file must be concrete enough that an implementer can code from it wit
   - Scope In/Out list up front; each "Out" item is consciously deferred with a stated reason.
   - Architecture with data-flow arrows (caller → callee, and what data changes at each arrow).
   - Every exported interface/type/function shown with full type signatures + a one-line contract.
-  - Concrete pseudocode for each non-trivial algorithm — not prose ("we do X" → show the function).
-  - Call-site integration: for each insertion point give file path + approx line range + the actual code to insert (never just "call Foo()"), plus what the surrounding code does before/after.
+  - Concrete pseudocode for each non-trivial algorithm — not prose ("we do X" → show the algorithm). Pseudocode is language-agnostic: use indented steps, conditionals, and typed call signatures to show control flow and data transformation, but NOT production-language imports, error-handling boilerplate, or full function bodies. The design describes WHAT each component does and HOW they interact; writing compilable source code is the implementer's job.
+  - Call-site integration: for each insertion point give file path + approx line range + a pseudocode sketch of what to call with what arguments (interface-contract level — show the call signature and key data, NOT the complete surrounding function), plus what the surrounding code does before/after.
   - Error & degradation table: error class → immediate handling → degradation path → recovery condition.
   - Test plan mapping each test to specific assertions (not "boundary tests" but the exact asserts), plus Done criteria: the exact test/build commands that must pass.
   - Risk register: numbered risk → likelihood → impact → specific mitigation.`;
@@ -109,7 +114,7 @@ const TURN_DISCIPLINE = `## Turn discipline
 AskUserQuestion is for the audit gate, clarifying assumptions, and per-section approval — one question per turn. Never ask about final design approval via text or AskUserQuestion; that is ExitDesignMode's job. Do NOT reference "the design" in AskUserQuestion — the user cannot see it until you call ExitDesignMode. Your turn must end with either AskUserQuestion or ExitDesignMode (tool calls such as ShowDesignMockup happen *within* a turn and do not count as ending it). Do NOT end your turn any other way (no silent investigation-only turns once the audit gate has been asked).`;
 
 /** One-line quality pointer kept in the sparse variant so long sessions don't drop quality. */
-const SPARSE_QUALITY_POINTER = `Reminder: the design file must follow the fidelity rubric (Scope In/Out, data-flow arrows, typed interfaces, per-algorithm pseudocode, call-sites with file path + line range, an error/degradation table, test assertions, and a risk register), and you MUST run the self-review + consolidated audit gate (scaled to the recorded audit level) before ExitDesignMode.`;
+const SPARSE_QUALITY_POINTER = `Reminder: the design file must follow the fidelity rubric (Scope In/Out, data-flow arrows, typed interfaces, per-algorithm language-agnostic pseudocode (not production code), call-sites with file path + line range, an error/degradation table, test assertions, and a risk register), and you MUST run the self-review + consolidated audit gate (scaled to the recorded audit level) before ExitDesignMode.`;
 
 /** The canonical workflow body shared verbatim by the entry message and the full re-injection. */
 function contractBody(mockupAvailable: boolean): string {

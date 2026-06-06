@@ -267,6 +267,40 @@ describe('DesignModeInjector content', () => {
   });
 });
 
+describe('DesignModeInjector contract guards', () => {
+  it('carries the no-production-code guard in both the entry message and the full reminder', async () => {
+    const agent = designAgent({ isActive: true, sessionModeFilePath: '/tmp/design.md' });
+    const injector = new DesignModeInjector(agent);
+    await injector.inject();
+    const full = lastReminder(agent);
+    const entry = designModeEntryMessage('/tmp/design.md', false);
+
+    for (const marker of [
+      'language-agnostic',
+      "implementer's job",
+    ]) {
+      expect(full).toContain(marker);
+      expect(entry).toContain(marker);
+    }
+  });
+
+  it('carries the prior-art search guidance in both the entry message and the full reminder', async () => {
+    const agent = designAgent({ isActive: true, sessionModeFilePath: '/tmp/design.md' });
+    const injector = new DesignModeInjector(agent);
+    await injector.inject();
+    const full = lastReminder(agent);
+    const entry = designModeEntryMessage('/tmp/design.md', false);
+
+    for (const marker of [
+      'Prior art search',
+      '## Prior Art',
+    ]) {
+      expect(full).toContain(marker);
+      expect(entry).toContain(marker);
+    }
+  });
+});
+
 describe('DesignModeInjector cadence', () => {
   it('skips reinjection before the assistant-turn threshold', async () => {
     const agent = designAgent({ isActive: true, sessionModeFilePath: '/tmp/design.md' });
