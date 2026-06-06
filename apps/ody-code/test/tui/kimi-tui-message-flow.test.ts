@@ -438,7 +438,7 @@ describe('KimiTUI message flow', () => {
       await Promise.resolve();
 
       expect(harness.track).toHaveBeenCalledWith('input_command_invalid', {
-        reason: 'blocked',
+        reason: 'streaming',
         command: command.slice(1),
       });
       expect(harness.track).not.toHaveBeenCalledWith('input_command', {
