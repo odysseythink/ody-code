@@ -12,9 +12,8 @@
  * the durable state that survives auto-compaction mid-generation.
  */
 
-import { basename } from 'pathe';
-
 import type { SessionModeFilePath } from '../session-mode';
+import type { ManifestPart } from './parts-manifest';
 
 /** Leading sentence for the periodic re-injection ("...is active"). */
 const INTRO_ACTIVE = `Plan mode is active. This is an implementation-planning session. You MUST NOT make any edits except the current plan file(s) — prefer read-only tools (Read, Grep, Glob); use Bash only when needed (it follows the normal permission mode and rules). This supersedes any other instructions you have received. Goal: produce a plan a skilled engineer with zero context for this codebase can execute task-by-task. DRY, YAGNI, TDD, frequent commits.`;
@@ -159,70 +158,16 @@ export function planModeEntryMessage(sessionModeFilePath: SessionModeFilePath): 
 }
 
 // ── Parts manifest (durable split state) ─────────────────────────────
-
-export interface ManifestPart {
-  readonly file: string;
-  readonly scope: string;
-}
-
-export interface PartsManifest {
-  /** True when a manifest table exists and every row is `done`. */
-  readonly allDone: boolean;
-  /** The first `pending` row, or null when none remain. */
-  readonly next: ManifestPart | null;
-}
-
-/**
- * Parse a Parts manifest out of plan-index content. Resilient to surrounding
- * prose: it scans for markdown table rows whose last cell is `pending`/`done`
- * and whose file cell ends in `.md`, so header and separator rows are ignored.
- * Returns null when no manifest table is present (a single-file plan).
- */
-export function parsePartsManifest(content: string): PartsManifest | null {
-  const rows: Array<{ file: string; scope: string; status: string }> = [];
-  for (const line of content.split('\n')) {
-    const cells = line.split('|').map((cell) => cell.trim());
-    // Drop the empty cells produced by leading/trailing pipes.
-    const trimmed = cells.filter(
-      (cell, index) => !(cell === '' && (index === 0 || index === cells.length - 1)),
-    );
-    if (trimmed.length < 4) continue;
-    const status = (trimmed.at(-1) ?? '').toLowerCase();
-    if (status !== 'pending' && status !== 'done') continue;
-    const file = (trimmed[1] ?? '').replace(/`/g, '').trim();
-    if (!file.toLowerCase().endsWith('.md')) continue;
-    rows.push({ file, scope: trimmed.at(-2) ?? '', status });
-  }
-  if (rows.length === 0) return null;
-  const next = rows.find((row) => row.status === 'pending');
-  return {
-    allDone: next === undefined,
-    next: next === undefined ? null : { file: basename(next.file), scope: next.scope },
-  };
-}
-
-/**
- * Basenames of EVERY sibling file listed in a plan-index Parts manifest (not just
- * the next pending one). Used to gather a split plan's sub-plan files for review.
- * Returns `[]` when there is no manifest table (a single-file plan). Uses the same
- * resilient row-scan as {@link parsePartsManifest}.
- */
-export function parseManifestFiles(content: string): string[] {
-  const files: string[] = [];
-  for (const line of content.split('\n')) {
-    const cells = line.split('|').map((cell) => cell.trim());
-    const trimmed = cells.filter(
-      (cell, index) => !(cell === '' && (index === 0 || index === cells.length - 1)),
-    );
-    if (trimmed.length < 4) continue;
-    const status = (trimmed.at(-1) ?? '').toLowerCase();
-    if (status !== 'pending' && status !== 'done') continue;
-    const file = (trimmed[1] ?? '').replace(/`/g, '').trim();
-    if (!file.toLowerCase().endsWith('.md')) continue;
-    files.push(basename(file));
-  }
-  return files;
-}
+// The manifest types + parsers are mode-agnostic (pure markdown-table parsing,
+// no plan/design wording) and live in `parts-manifest.ts`; design mode imports
+// the same module. Re-exported here so existing plan-mode import sites
+// (PlanModeInjector, tests, review gathering) keep their import path unchanged.
+export {
+  type ManifestPart,
+  type PartsManifest,
+  parseManifestFiles,
+  parsePartsManifest,
+} from './parts-manifest';
 
 /** Directive appended while a split plan still has `pending` parts. */
 export function splitContinuationDirective(part: ManifestPart): string {

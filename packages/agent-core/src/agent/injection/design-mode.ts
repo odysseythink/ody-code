@@ -3,7 +3,10 @@ import {
   designModeFullReminder,
   designModeReentryReminder,
   designModeSparseReminder,
+  designSplitContinuationDirective,
+  designSplitFinalReviewDirective,
 } from './design-mode-contract';
+import { type ManifestPart, parsePartsManifest } from './parts-manifest';
 
 const DESIGN_MODE_DEDUP_MIN_TURNS = 2;
 const DESIGN_MODE_FULL_REFRESH_TURNS = 5;
@@ -35,20 +38,22 @@ export class DesignModeInjector extends DynamicInjector {
       this.injectedAt = null;
       return exitReminder();
     }
+    const content = await this.currentDesignContent();
     if (!this.wasActive) {
       this.injectedAt = null;
       this.wasActive = true;
-      if (await this.hasCurrentDesignContent()) {
+      if (content.trim().length > 0) {
         return designModeReentryReminder(sessionModeFilePath, mockupAvailable);
       }
     }
     const variant = this.getVariant();
     if (variant === null) return undefined;
+    if (variant === 'reentry') return designModeReentryReminder(sessionModeFilePath, mockupAvailable);
+
+    const directive = splitDirectiveFor(content);
     return variant === 'full'
-      ? designModeFullReminder(sessionModeFilePath, mockupAvailable)
-      : variant === 'sparse'
-        ? designModeSparseReminder(sessionModeFilePath, mockupAvailable)
-        : designModeReentryReminder(sessionModeFilePath, mockupAvailable);
+      ? designModeFullReminder(sessionModeFilePath, mockupAvailable, directive)
+      : designModeSparseReminder(sessionModeFilePath, mockupAvailable, directive);
   }
 
   protected getVariant(): DesignModeVariant | null {
@@ -69,14 +74,30 @@ export class DesignModeInjector extends DynamicInjector {
     return null;
   }
 
-  private async hasCurrentDesignContent(): Promise<boolean> {
+  private async currentDesignContent(): Promise<string> {
     try {
       const data = await this.agent.sessionMode.data();
-      return data !== null && data.content.trim().length > 0;
+      return data?.content ?? '';
     } catch {
-      return false;
+      return '';
     }
   }
+}
+
+/**
+ * When the current design file is a split index, derive the directive that steers
+ * the model to the next pending part (or the cross-file final review once every
+ * part is done). Returns undefined for single-file designs (no manifest).
+ */
+function splitDirectiveFor(content: string): string | undefined {
+  const manifest = parsePartsManifest(content);
+  if (manifest === null) return undefined;
+  if (manifest.next !== null) {
+    const next: ManifestPart = manifest.next;
+    return designSplitContinuationDirective(next);
+  }
+  if (manifest.allDone) return designSplitFinalReviewDirective();
+  return undefined;
 }
 
 function exitReminder(): string {

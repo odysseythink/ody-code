@@ -18,6 +18,7 @@
  */
 
 import type { SessionModeFilePath } from '../session-mode';
+import type { ManifestPart } from './parts-manifest';
 
 /** Leading sentence for the periodic re-injection ("...is active"). */
 const INTRO_ACTIVE = `Design mode is active. This is a brainstorming / spec-exploration session — NOT an implementation session. You MUST NOT make any edits (with the exception of the current design file) or otherwise change the system. Prefer read-only tools. Use Bash only when needed; Bash follows the normal permission mode and rules. This supersedes any other instructions you have received.`;
@@ -43,6 +44,7 @@ If the request is to port / adapt / mirror / "introduce X's design", then BEFORE
 BEFORE writing any clarifying question, run 1-2 web searches (e.g. "open source <tool> <language>") to survey existing solutions. Enumerate: the approaches they use, what they defer, and what edge cases they surface. Add a short ## Prior Art section to the design file. These findings inform your Step 1 clarifying questions — they reveal scope that practitioners have found necessary, common architecture decisions, and pitfalls to name in the Risk Register. Skip this sub-step for purely internal changes (refactors, adding a field, etc.).`;
 
 const STEP_1_CLARIFY = `## Step 1 — Clarify, ONE question per turn (do not stop early)
+Before detailed questions, assess scope: if the goal describes multiple independent subsystems or products (e.g. "a platform with chat, billing, and analytics"), flag it immediately — do NOT refine details of something that should be decomposed first. If the goal is too large for a single design, help the user decompose into sub-projects (name the independent pieces, how they relate, what order to build), then design the FIRST sub-project through this flow; each sub-project gets its own design → plan → implementation cycle. (A large but single coherent design is NOT decomposition — that is the multi-file split at Step 4.)
 After the audit level is recorded, refine the idea by asking questions one at a time (prefer multiple-choice via AskUserQuestion). Never batch questions. After each answer, record the decision in a running "Resolved decisions" list. You may NOT proceed to propose approaches until EVERY dimension below has a user-confirmed decision:
   1. Scope — which paths/users/scenarios are covered; what is explicitly deferred.
   2. Data & State — new data structures, persistence, lifecycle.
@@ -79,10 +81,26 @@ The design file must be concrete enough that an implementer can code from it wit
   - Call-site integration: for each insertion point give file path + approx line range + a pseudocode sketch of what to call with what arguments (interface-contract level — show the call signature and key data, NOT the complete surrounding function), plus what the surrounding code does before/after.
   - Error & degradation table: error class → immediate handling → degradation path → recovery condition.
   - Test plan mapping each test to specific assertions (not "boundary tests" but the exact asserts), plus Done criteria: the exact test/build commands that must pass.
-  - Risk register: numbered risk → likelihood → impact → specific mitigation.`;
+  - Risk register: numbered risk → likelihood → impact → specific mitigation.
+Write incrementally and split large designs — see "Incremental writing & large designs" below.`;
+
+const DESIGN_INCREMENTAL_AND_SPLIT = `## Incremental writing & large designs
+Never emit the whole design in one Write. Scaffold first (Scope In/Out + Prior Art + Architecture skeleton + Assumptions + Risk register headers), save, THEN append one component at a time.
+Assess the design's breadth first, then pick a layout:
+  - A single coherent component/subsystem → ONE file (the current design file), written incrementally.
+  - Spanning more than one independent subsystem (e.g. a CLI with separate config, rendering, AI-client, output-builder modules) → SPLIT. The current design file (\`<id>.md\`) becomes the INDEX: global Scope In/Out, Architecture & data-flow overview, Prior Art, cross-cutting Assumptions & Risk register, and a Parts manifest (below) — the index MUST contain NO per-component detail (no component interfaces, no per-algorithm pseudocode); that lives in the part files. Each subsystem becomes a sibling file \`<id>-<subsystem>.md\` next to the index, holding that subsystem's interfaces + algorithms + local error/test notes. You MAY write these siblings — they share the design file's directory. Cross-file refs allowed: \`see <id>-core.md: AnalyzePage\`.
+The Parts manifest lives in the index and is the durable state that survives a context compaction mid-generation:
+
+## Parts (generate one per turn, in order)
+| # | File | Scope | Status |
+|---|---|---|---|
+| 1 | <id>-core.md | data types + persistence | pending |
+| 2 | <id>-api.md | endpoints + wiring | pending |
+
+Write the index first (every row \`pending\`), then end your turn — the next injection points you to the first pending part. Write ONE part per turn (scaffold + interfaces + algorithms + local notes), flip its row to \`done\`, then stop (no AskUserQuestion, no ExitDesignMode). If context is compacted while generating, re-read the index and find the first \`pending\` row — never re-write a \`done\` part. Run the cross-file review and call ExitDesignMode only after every row is \`done\`.`;
 
 const STEP_4_5_REVIEW_AUDIT = `## Step 4.5 — Adversarial self-review, then the consolidated audit gate (before ExitDesignMode)
-First name the 1-3 decisions where being wrong is most expensive (a filter, regex, matching rule, parsing step, or fallback path) — these get the deepest scrutiny. For EACH, write 3 concrete inputs (real-world AND adversarial) with the output you expect; a surprising result means the design is wrong, so fix it. Where the logic is a pure predicate/regex/small algorithm, VERIFY it with an ephemeral \`node -e\`/\`python -c\` (no file writes) instead of trusting a mental trace — e.g. confirm a substring filter does not reject inputs that must survive. Then sweep the design through four fixed lenses — each catches what a single generalist pass overlooks: **Security** — every filter/regex for false positives (rejects valid input) and false negatives (lets through what must be caught), plus secrets/PII leaking into a log or filename; **Test** — every behaviour has a must-pass AND a must-reject case, and an assertion that contradicts a constant it depends on (e.g. a "must-survive" case your own rule would reject) is a HARD failure; **Ops** — any added call's cost/latency, identifier collision/uniqueness, behaviour on repeat or concurrency; **Integration** — every data source, field, event, or hook the design relies on actually EXISTS in the code (verify with Read/Grep, do not assume). Also fix inline: placeholders/TODOs, internal contradictions, scope creep, and any requirement open to two readings. Then present a CONSOLIDATED audit summary via AskUserQuestion, scaled to the recorded level:
+First name the 1-3 decisions where being wrong is most expensive (a filter, regex, matching rule, parsing step, or fallback path) — these get the deepest scrutiny. For EACH, write 3 concrete inputs (real-world AND adversarial) with the output you expect; a surprising result means the design is wrong, so fix it. Where the logic is a pure predicate/regex/small algorithm, VERIFY it with an ephemeral \`node -e\`/\`python -c\` (no file writes) instead of trusting a mental trace — e.g. confirm a substring filter does not reject inputs that must survive. Then sweep the design through four fixed lenses — each catches what a single generalist pass overlooks: **Security** — every filter/regex for false positives (rejects valid input) and false negatives (lets through what must be caught), plus secrets/PII leaking into a log or filename; **Test** — every behaviour has a must-pass AND a must-reject case, and an assertion that contradicts a constant it depends on (e.g. a "must-survive" case your own rule would reject) is a HARD failure; **Ops** — any added call's cost/latency, identifier collision/uniqueness, behaviour on repeat or concurrency; **Integration** — every data source, field, event, or hook the design relies on actually EXISTS in the code (verify with Read/Grep, do not assume); **Scope** — is this still ONE coherent design, or did it grow into multiple independent sub-projects that should each get their own design? If the latter, stop and propose decomposition rather than shipping one oversized spec. Also fix inline: placeholders/TODOs, internal contradictions, scope creep, and any requirement open to two readings. Then present a CONSOLIDATED audit summary via AskUserQuestion, scaled to the recorded level:
   - Basic — confirm only the high-stakes [C:INFERRED] items (architecture / security / data / ops).
   - Standard — surface EVERY [C:INFERRED] assumption; the user accepts / defers / corrects each.
   - Deep — confirm each numbered section's key claim PLUS every assumption.
@@ -126,6 +144,7 @@ function contractBody(mockupAvailable: boolean): string {
     STEP_2_PROPOSE,
     STEP_3_PRESENT,
     STEP_4_WRITE,
+    DESIGN_INCREMENTAL_AND_SPLIT,
     STEP_4_5_REVIEW_AUDIT,
     STEP_5_EXIT,
     visualCompanion(mockupAvailable),
@@ -138,28 +157,52 @@ function withDesignFileFooter(body: string, designFilePath: SessionModeFilePath)
   return `${body}\n\nDesign file: ${designFilePath}`;
 }
 
+/** Prepend the split-steering directive (when the design index is mid-split) above the body. */
+function withSplitDirective(body: string, splitDirective?: string): string {
+  if (splitDirective === undefined || splitDirective.length === 0) return body;
+  return `${splitDirective}\n\n${body}`;
+}
+
+/** Directive appended while a split design still has `pending` parts. */
+export function designSplitContinuationDirective(part: ManifestPart): string {
+  return `## Split design in progress — write ONE part this turn
+The index has pending parts. This turn: write ONLY \`${part.file}\`${part.scope.length > 0 ? ` (scope: ${part.scope})` : ''} next to the index (scaffold-then-append: component header → its interfaces/types → its algorithms → its local error/test notes), then immediately flip its manifest row Status to \`done\` in the index. After flipping: stop — do NOT write any other part file, and do NOT call ExitDesignMode or AskUserQuestion. The next injection points you to the next \`pending\` row. The on-disk manifest is durable state: if context is compacted mid-generation, re-read the index and find the next \`pending\` row. Never re-write a part already \`done\`.`;
+}
+
+/** Directive appended once every manifest row is `done`. */
+export function designSplitFinalReviewDirective(): string {
+  return `## Split design — all parts written
+Every row in the index's Parts manifest is \`done\`. Before ExitDesignMode, do the cross-file review: confirm every cross-file reference (\`see <file>: <symbol>\`) resolves to a definition in that part, every Scope-In item is covered by some part, and the index's Assumptions & Risk register still reflect the parts. Then run the Step 4.5 self-review + consolidated audit gate and call ExitDesignMode.`;
+}
+
 /** Full re-injection body (DesignModeInjector `full` variant). */
 export function designModeFullReminder(
   designFilePath: SessionModeFilePath,
   mockupAvailable: boolean,
+  splitDirective?: string,
 ): string {
-  return withDesignFileFooter(
+  const body = withSplitDirective(
     `${INTRO_ACTIVE}\n\n${contractBody(mockupAvailable)}`,
-    designFilePath,
+    splitDirective,
   );
+  return withDesignFileFooter(body, designFilePath);
 }
 
 /** Condensed reminder between full re-injections — keeps the invariant + quality bar visible. */
 export function designModeSparseReminder(
   designFilePath: SessionModeFilePath,
   mockupAvailable: boolean,
+  splitDirective?: string,
 ): string {
   const mockupPointer = mockupAvailable
     ? '\n\nShowDesignMockup is available — use ONLY for UI/visual appearance comparisons (layout variants, side-by-side renders). Architecture, interfaces, flows, and tables go in the design file as markdown.'
     : '';
-  const body = `Design mode still active (see full instructions earlier). This is a brainstorming session, NOT implementation — no code until the user approves the design via ExitDesignMode. Confirm the audit level (Basic/Standard/Deep) was asked; clarify one question per turn until all seven decision dimensions are settled (and verify any data source / hook point the design relies on actually exists in code); propose 2-3 approaches; present the design section by section for approval; then write the design file with [C:USER]/[C:INFERRED]/[C:DEFERRED]/[C:UPSTREAM] tags and an ## Assumptions chapter. Pass options to ExitDesignMode when there is a real choice. End every turn with AskUserQuestion or ExitDesignMode — never any other way.
+  const body = withSplitDirective(
+    `Design mode still active (see full instructions earlier). This is a brainstorming session, NOT implementation — no code until the user approves the design via ExitDesignMode. Confirm the audit level (Basic/Standard/Deep) was asked; clarify one question per turn until all seven decision dimensions are settled (and verify any data source / hook point the design relies on actually exists in code); propose 2-3 approaches; present the design section by section for approval; then write the design file with [C:USER]/[C:INFERRED]/[C:DEFERRED]/[C:UPSTREAM] tags and an ## Assumptions chapter. A design spanning multiple independent subsystems → SPLIT into an index with a Parts manifest + sibling files. Pass options to ExitDesignMode when there is a real choice. End every turn with AskUserQuestion or ExitDesignMode — never any other way.
 
-${SPARSE_QUALITY_POINTER}${mockupPointer}`;
+${SPARSE_QUALITY_POINTER}${mockupPointer}`,
+    splitDirective,
+  );
   return withDesignFileFooter(body, designFilePath);
 }
 
@@ -175,9 +218,10 @@ A design file from a previous session already exists.
   1. Read the existing design file to understand what was previously designed.
   2. Confirm (or re-ask) the audit level (Basic/Standard/Deep) before continuing.
   3. Evaluate the user's current request against that design. Same topic: update it. Different topic: replace it.
-  4. Clarify any newly-required decisions one question per turn (seven-dimension checklist); verify any data source / hook point the design relies on actually exists in code.
-  5. Maintain decision tags [C:USER]/[C:INFERRED]/[C:DEFERRED]/[C:UPSTREAM] and the ## Assumptions chapter; keep the fidelity rubric.
-  6. Run the self-review + consolidated audit gate, then update the design file before calling ExitDesignMode.
+  4. If it is a split index, the Parts manifest is the source of truth — read the sibling files it lists, write the next \`pending\` part and flip its row to \`done\`; never re-write a \`done\` part.
+  5. Clarify any newly-required decisions one question per turn (seven-dimension checklist); verify any data source / hook point the design relies on actually exists in code.
+  6. Maintain decision tags [C:USER]/[C:INFERRED]/[C:DEFERRED]/[C:UPSTREAM] and the ## Assumptions chapter; keep the fidelity rubric.
+  7. Run the self-review + consolidated audit gate, then update the design file before calling ExitDesignMode.
 
 ${visualCompanion(mockupAvailable)}
 

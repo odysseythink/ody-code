@@ -299,6 +299,71 @@ describe('DesignModeInjector contract guards', () => {
       expect(entry).toContain(marker);
     }
   });
+
+  // Scope gate: a goal that is really several independent sub-projects should be
+  // decomposed (each its own design→plan cycle), not refined as one oversized spec.
+  // This mirrors gpowers brainstorming's "assess scope / decompose" step.
+  it('carries the scope-decomposition gate in both the entry message and the full reminder', async () => {
+    const agent = designAgent({ isActive: true, sessionModeFilePath: '/tmp/design.md' });
+    const injector = new DesignModeInjector(agent);
+    await injector.inject();
+    const full = lastReminder(agent);
+    const entry = designModeEntryMessage('/tmp/design.md', false);
+
+    for (const marker of [
+      'decompose into sub-projects',
+      'multiple independent subsystems',
+    ]) {
+      expect(full).toContain(marker);
+      expect(entry).toContain(marker);
+    }
+  });
+});
+
+describe('DesignModeInjector split-design steering', () => {
+  it('steers to the next pending part when the index has an unfinished manifest', async () => {
+    const stub: DesignModeStub = { isActive: true, sessionModeFilePath: '/tmp/design.md' };
+    const agent = designAgent(stub);
+    const injector = new DesignModeInjector(agent);
+
+    // First injection on an empty design: plain full reminder, no split steering.
+    await injector.inject();
+
+    // The model has now written an index with a Parts manifest; a new user
+    // message forces a full refresh, which should carry the split directive.
+    stub.content = [
+      '## Parts',
+      '| # | File | Scope | Status |',
+      '|---|---|---|---|',
+      '| 1 | design-core.md | data types | done |',
+      '| 2 | design-api.md | endpoints | pending |',
+    ].join('\n');
+    history(agent).push({ role: 'user', content: [{ text: 'continue' }] });
+    await injector.inject();
+
+    const text = lastReminder(agent);
+    expect(text).toContain('Split design in progress');
+    expect(text).toContain('design-api.md');
+    expect(text).not.toContain('Split design — all parts written');
+  });
+
+  it('steers to the cross-file final review once every manifest row is done', async () => {
+    const stub: DesignModeStub = { isActive: true, sessionModeFilePath: '/tmp/design.md' };
+    const agent = designAgent(stub);
+    const injector = new DesignModeInjector(agent);
+
+    await injector.inject();
+    stub.content = [
+      '| # | File | Scope | Status |',
+      '|---|---|---|---|',
+      '| 1 | design-core.md | data types | done |',
+      '| 2 | design-api.md | endpoints | done |',
+    ].join('\n');
+    history(agent).push({ role: 'user', content: [{ text: 'continue' }] });
+    await injector.inject();
+
+    expect(lastReminder(agent)).toContain('Split design — all parts written');
+  });
 });
 
 describe('DesignModeInjector cadence', () => {
