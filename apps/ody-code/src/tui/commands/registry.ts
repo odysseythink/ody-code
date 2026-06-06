@@ -52,6 +52,7 @@ export const BUILTIN_SLASH_COMMANDS = [
     description: 'Toggle plan mode',
     priority: 100,
     availability: (args) => (args.trim().toLowerCase() === 'clear' ? 'idle-only' : 'always'),
+    hiddenInModes: ['plan'],
   },
   {
     name: 'design',
@@ -59,6 +60,7 @@ export const BUILTIN_SLASH_COMMANDS = [
     description: 'Toggle design mode (brainstorming / spec exploration)',
     priority: 100,
     availability: (args) => (args.trim().toLowerCase() === 'clear' ? 'idle-only' : 'always'),
+    hiddenInModes: ['design'],
   },
   {
     name: 'design-review',
@@ -66,6 +68,7 @@ export const BUILTIN_SLASH_COMMANDS = [
     description: 'Critique the current design with the reviewer model (second-model review)',
     priority: 95,
     availability: 'idle-only',
+    hiddenInModes: ['plan', 'normal'],
   },
   {
     name: 'plan-review',
@@ -73,6 +76,7 @@ export const BUILTIN_SLASH_COMMANDS = [
     description: 'Critique the current execution plan with the reviewer model (second-model review)',
     priority: 95,
     availability: 'idle-only',
+    hiddenInModes: ['design', 'normal'],
   },
   {
     name: 'model',

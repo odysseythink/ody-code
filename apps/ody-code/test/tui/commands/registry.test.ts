@@ -122,4 +122,17 @@ describe('built-in slash command registry', () => {
       ]),
     );
   });
+
+  it('declares hiddenInModes for mode-specific commands', () => {
+    expect(findBuiltInSlashCommand('plan')?.hiddenInModes).toEqual(['plan']);
+    expect(findBuiltInSlashCommand('design')?.hiddenInModes).toEqual(['design']);
+    expect(findBuiltInSlashCommand('design-review')?.hiddenInModes).toEqual(['plan', 'normal']);
+    expect(findBuiltInSlashCommand('plan-review')?.hiddenInModes).toEqual(['design', 'normal']);
+  });
+
+  it('does not declare hiddenInModes for universal commands', () => {
+    expect(findBuiltInSlashCommand('help')?.hiddenInModes).toBeUndefined();
+    expect(findBuiltInSlashCommand('exit')?.hiddenInModes).toBeUndefined();
+    expect(findBuiltInSlashCommand('model')?.hiddenInModes).toBeUndefined();
+  });
 });
