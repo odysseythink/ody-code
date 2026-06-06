@@ -260,11 +260,13 @@ export const BUILTIN_SLASH_COMMANDS = [
 export type BuiltinSlashCommand = (typeof BUILTIN_SLASH_COMMANDS)[number];
 export type BuiltinSlashCommandName = BuiltinSlashCommand['name'];
 
-export function findBuiltInSlashCommand(commandName: string): BuiltinSlashCommand | undefined {
+export function findBuiltInSlashCommand(
+  commandName: string,
+): KimiSlashCommand<BuiltinSlashCommandName> | undefined {
   const commands = BUILTIN_SLASH_COMMANDS as readonly KimiSlashCommand<BuiltinSlashCommandName>[];
   return commands.find(
     (command) => command.name === commandName || command.aliases.includes(commandName),
-  ) as BuiltinSlashCommand | undefined;
+  );
 }
 
 export function resolveSlashCommandAvailability(

@@ -6,11 +6,15 @@ import {
 } from './registry';
 import { isExperimentalFlagEnabled } from './experimental-flags';
 import { parseSlashInput } from './parse';
+import { isCommandVisibleInMode } from './visibility';
 import type {
   KimiSlashCommand,
+  SessionMode,
   SlashCommandBusyReason,
   SlashCommandInvalidReason,
 } from './types';
+
+export type SlashCommandBlockedReason = SlashCommandBusyReason | 'mode-unavailable';
 
 export type SlashCommandIntent =
   | { readonly kind: 'not-command' }
@@ -30,7 +34,7 @@ export type SlashCommandIntent =
   | {
       readonly kind: 'blocked';
       readonly commandName: string;
-      readonly reason: SlashCommandBusyReason;
+      readonly reason: SlashCommandBlockedReason;
     }
   | {
       readonly kind: 'invalid';
@@ -43,6 +47,8 @@ export interface ResolveSlashCommandInput {
   readonly skillCommandMap: ReadonlyMap<string, string>;
   readonly isStreaming: boolean;
   readonly isCompacting: boolean;
+  /** Current session mode for visibility filtering. */
+  readonly sessionMode: SessionMode;
 }
 
 export function resolveSlashCommandInput(options: ResolveSlashCommandInput): SlashCommandIntent {
@@ -55,6 +61,13 @@ export function resolveSlashCommandInput(options: ResolveSlashCommandInput): Sla
     command !== undefined &&
     isExperimentalFlagEnabled((command as KimiSlashCommand).experimentalFlag)
   ) {
+    if (!isCommandVisibleInMode(command as KimiSlashCommand, options.sessionMode)) {
+      return {
+        kind: 'blocked',
+        commandName: parsed.name,
+        reason: 'mode-unavailable',
+      };
+    }
     const busyReason = slashCommandBusyReason(options);
     if (
       busyReason !== undefined &&
@@ -68,7 +81,7 @@ export function resolveSlashCommandInput(options: ResolveSlashCommandInput): Sla
     }
     return {
       kind: 'builtin',
-      command,
+      command: command as BuiltinSlashCommand,
       name: command.name,
       args: parsed.args,
     };

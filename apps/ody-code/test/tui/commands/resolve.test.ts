@@ -16,6 +16,7 @@ function resolve(
     skillCommandMap: new Map<string, string>(),
     isStreaming: false,
     isCompacting: false,
+    sessionMode: 'normal',
     ...overrides,
   });
 }
@@ -172,6 +173,67 @@ describe('goal command resolution', () => {
     expect(resolve('/goal', { isStreaming: true })).toMatchObject({
       kind: 'builtin',
       name: 'goal',
+    });
+  });
+});
+
+describe('mode visibility blocking', () => {
+  it('blocks commands hidden in the current mode', () => {
+    // design-review is hidden in plan and normal
+    expect(resolve('/design-review', { sessionMode: 'normal' })).toEqual({
+      kind: 'blocked',
+      commandName: 'design-review',
+      reason: 'mode-unavailable',
+    });
+    expect(resolve('/design-review', { sessionMode: 'plan' })).toEqual({
+      kind: 'blocked',
+      commandName: 'design-review',
+      reason: 'mode-unavailable',
+    });
+  });
+
+  it('allows hidden commands when in the correct mode', () => {
+    expect(resolve('/design-review', { sessionMode: 'design' })).toMatchObject({
+      kind: 'builtin',
+      name: 'design-review',
+    });
+    expect(resolve('/plan-review', { sessionMode: 'plan' })).toMatchObject({
+      kind: 'builtin',
+      name: 'plan-review',
+    });
+  });
+
+  it('blocks /plan in plan mode and /design in design mode', () => {
+    expect(resolve('/plan', { sessionMode: 'plan' })).toEqual({
+      kind: 'blocked',
+      commandName: 'plan',
+      reason: 'mode-unavailable',
+    });
+    expect(resolve('/design', { sessionMode: 'design' })).toEqual({
+      kind: 'blocked',
+      commandName: 'design',
+      reason: 'mode-unavailable',
+    });
+  });
+
+  it('allows /plan and /design in normal mode', () => {
+    expect(resolve('/plan', { sessionMode: 'normal' })).toMatchObject({
+      kind: 'builtin',
+      name: 'plan',
+    });
+    expect(resolve('/design', { sessionMode: 'normal' })).toMatchObject({
+      kind: 'builtin',
+      name: 'design',
+    });
+  });
+
+  it('mode block takes precedence over busy block', () => {
+    // design-review is hidden in normal mode; even while streaming,
+    // the mode-unavailable reason wins.
+    expect(resolve('/design-review', { sessionMode: 'normal', isStreaming: true })).toEqual({
+      kind: 'blocked',
+      commandName: 'design-review',
+      reason: 'mode-unavailable',
     });
   });
 });

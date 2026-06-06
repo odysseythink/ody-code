@@ -158,14 +158,19 @@ async function executeSlashCommand(host: SlashCommandHost, input: string): Promi
     skillCommandMap: host.skillCommandMap,
     isStreaming: host.state.appState.streamingPhase !== 'idle',
     isCompacting: host.state.appState.isCompacting,
+    sessionMode: host.state.appState.sessionMode,
   });
 
   switch (intent.kind) {
     case 'not-command':
       return;
     case 'blocked':
-      host.track('input_command_invalid', { reason: 'blocked', command: intent.commandName });
-      host.showError(slashBusyMessage(intent.commandName, intent.reason));
+      host.track('input_command_invalid', { reason: intent.reason, command: intent.commandName });
+      if (intent.reason === 'mode-unavailable') {
+        host.showError('Not available in current mode');
+      } else {
+        host.showError(slashBusyMessage(intent.commandName, intent.reason));
+      }
       return;
     case 'skill': {
       const session = host.session;
