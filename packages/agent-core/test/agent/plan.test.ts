@@ -951,6 +951,39 @@ describe('finalizeFileName', () => {
     await ctx.agent.sessionMode.finalizeFileName();
     expect(ctx.agent.sessionMode.isWritableSessionModePath(ctx.agent.sessionMode.sessionModeFilePath!)).toBe(true);
   });
+
+  it('findUniqueStem caps suffix at 1000 and falls back to timestamp', async () => {
+    const mkdir = vi.fn().mockResolvedValue(undefined);
+    const stat = vi.fn(async (path: string) => {
+      // Pretend every path containing 'my-plan' exists, EXCEPT those ending
+      // with a 13-digit timestamp (the cap-fallback pattern).
+      if (path.includes('my-plan') && !/\d{13}\.md$/.test(path)) {
+        return {
+          stMode: 0o100644,
+          stIno: 1,
+          stDev: 1,
+          stNlink: 1,
+          stUid: 1000,
+          stGid: 1000,
+          stSize: 1,
+          stAtime: Date.now(),
+          stMtime: Date.now(),
+          stCtime: Date.now(),
+        };
+      }
+      throw Object.assign(new Error('ENOENT'), { code: 'ENOENT' });
+    });
+    const ctx = testAgent({
+      kaos: createFakeKaos({ mkdir, stat }),
+    });
+    await ctx.agent.sessionMode.enter('brave-fox-1234', false, false, 'plan');
+
+    const baseStem = '2024-06-05-my-plan';
+    const result = await (ctx.agent.sessionMode as unknown as { findUniqueStem(s: string): Promise<string> }).findUniqueStem(baseStem);
+
+    // Must be baseStem followed by a 13-digit timestamp (Date.now), not a small numeric suffix
+    expect(result).toMatch(/^2024-06-05-my-plan-\d{13}$/);
+  });
 });
 
 

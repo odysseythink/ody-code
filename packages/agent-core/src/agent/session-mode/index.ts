@@ -321,7 +321,8 @@ export class SessionMode {
   async findUniqueStem(baseStem: string): Promise<string> {
     let stem = baseStem;
     let suffix = 1;
-    while (true) {
+    const MAX_SUFFIX = 1000;
+    while (suffix <= MAX_SUFFIX) {
       const candidatePath = this.sessionModeFilePathFor(stem);
       try {
         await this.agent.kaos.stat(candidatePath);
@@ -331,6 +332,9 @@ export class SessionMode {
         return stem;
       }
     }
+    // Fallback: append micro-timestamp to guarantee uniqueness
+    const micro = Date.now();
+    return `${baseStem}-${micro}`;
   }
 }
 
