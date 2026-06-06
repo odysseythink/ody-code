@@ -226,7 +226,7 @@ describe('DesignModeInjector content', () => {
     const text = lastReminder(agent);
     expect(text).toContain('Design mode still active');
     expect(text).toContain('fidelity rubric');
-    expect(text).toContain('consolidated audit gate');
+    expect(text).toContain('post-write audit gate');
     expect(text).toContain('Design file: /tmp/design.md');
   });
 
@@ -313,6 +313,45 @@ describe('DesignModeInjector contract guards', () => {
     for (const marker of [
       'decompose into sub-projects',
       'multiple independent subsystems',
+    ]) {
+      expect(full).toContain(marker);
+      expect(entry).toContain(marker);
+    }
+  });
+
+  // Placement fidelity: when the request names a concrete target (e.g.
+  // `backend/cmd/server`), the design must land THERE — retargeting to a
+  // different location requires an explicit user decision, never a silent swap.
+  it('carries the placement-fidelity rule in both the entry message and the full reminder', async () => {
+    const agent = designAgent({ isActive: true, sessionModeFilePath: '/tmp/design.md' });
+    const injector = new DesignModeInjector(agent);
+    await injector.inject();
+    const full = lastReminder(agent);
+    const entry = designModeEntryMessage('/tmp/design.md', false);
+
+    for (const marker of [
+      'Placement fidelity',
+      'names a concrete target',
+      'may NOT silently retarget',
+    ]) {
+      expect(full).toContain(marker);
+      expect(entry).toContain(marker);
+    }
+  });
+
+  // Post-write audit gate: every [C:INFERRED] assumption must be enumerated
+  // verbatim for per-item sign-off, and ExitDesignMode is blocked until the
+  // level-appropriate items are signed off (mirrors gpowers' User Audit Gate).
+  it('carries the per-assumption sign-off hard gate in both the entry message and the full reminder', async () => {
+    const agent = designAgent({ isActive: true, sessionModeFilePath: '/tmp/design.md' });
+    const injector = new DesignModeInjector(agent);
+    await injector.inject();
+    const full = lastReminder(agent);
+    const entry = designModeEntryMessage('/tmp/design.md', false);
+
+    for (const marker of [
+      'list each [C:INFERRED] assumption verbatim',
+      'MUST NOT call ExitDesignMode until',
     ]) {
       expect(full).toContain(marker);
       expect(entry).toContain(marker);
