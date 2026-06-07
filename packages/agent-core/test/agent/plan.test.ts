@@ -119,8 +119,12 @@ describe('plan clear', () => {
       return content.length;
     });
 
+    const stat = vi.fn(async (path: string) => {
+      if (files.has(path)) return { stMode: 0o100644 } as never;
+      throw Object.assign(new Error('ENOENT'), { code: 'ENOENT' });
+    });
     const ctx = testAgent({
-      kaos: createPlanKaos({ mkdir, readText, writeText }),
+      kaos: createPlanKaos({ mkdir, readText, writeText, stat }),
     });
     await ctx.agent.sessionMode.enter('test-plan', false);
     await setPlanPath(ctx);
@@ -739,6 +743,39 @@ describe('lazy file path resolution', () => {
     );
     // Synchronous extraction — no LLM round-trip on entry.
     expect(ctx.llmCalls).toHaveLength(0);
+  });
+
+  it('does not leak a sensitive user message into the reserved filename', async () => {
+    const ctx = testAgent({ kaos: createPlanKaos() });
+    // Message trips the sensitive-word filter ("key") → topic is rejected → "untitled".
+    (ctx.agent.context.history as unknown as unknown[]).push({
+      role: 'user',
+      origin: { kind: 'user' },
+      content: [{ type: 'text', text: 'store the api key abc123 in redis' }],
+    });
+
+    await ctx.agent.sessionMode.enter('secret-plan', false, false, 'plan');
+
+    const today = formatDatePrefix(new Date());
+    expect(ctx.agent.sessionMode.sessionModeFilePath).toBe(
+      `/workspace/.ody-code/plans/${today}-untitled.md`,
+    );
+  });
+
+  it('clear() is a no-op when the eagerly-reserved file has not been written yet', async () => {
+    const writeText = vi.fn(async (_p: string, c: string) => c.length);
+    const stat = vi.fn(async () => {
+      throw Object.assign(new Error('ENOENT'), { code: 'ENOENT' });
+    });
+    const ctx = testAgent({ kaos: createPlanKaos({ writeText, stat }) });
+    await ctx.agent.sessionMode.enter('unwritten-plan', false, false, 'plan');
+
+    // Path is reserved, but nothing has been written to disk.
+    expect(ctx.agent.sessionMode.sessionModeFilePath).not.toBeNull();
+    await ctx.agent.sessionMode.clear();
+
+    // No empty file is materialised for a plan the model never started.
+    expect(writeText).not.toHaveBeenCalled();
   });
 
   it('enter uses a UUID as the internal session mode id', async () => {

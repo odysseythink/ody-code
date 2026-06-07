@@ -151,6 +151,14 @@ export class SessionMode {
 
   async clear(): Promise<void> {
     if (!this._sessionModeFilePath) return;
+    // The path may be only RESERVED (eager resolution at entry) with no file on
+    // disk yet. Clearing a plan/design the model has not written should stay a
+    // no-op — do not materialise an empty file for work that was never started.
+    try {
+      await this.agent.kaos.stat(this._sessionModeFilePath);
+    } catch {
+      return;
+    }
     await this.writeEmptySessionModeFile(this._sessionModeFilePath);
   }
 
@@ -220,6 +228,10 @@ export class SessionMode {
    * no model round-trip, so entering plan/design mode stays instant. Best-effort:
    * any failure leaves the path null so {@link resolveFilePathFromContent} can
    * resolve it lazily on first write instead.
+   *
+   * The reserved name is deduplicated against files ON DISK, but since no file is
+   * created here it is not collision-proof against another session reserving the
+   * same name concurrently — acceptable for single-user interactive sessions.
    */
   private async resolveFilePathEagerly(dir: string): Promise<void> {
     if (this._sessionModeFilePath !== null) return;
