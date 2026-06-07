@@ -12,6 +12,8 @@
  * the durable state that survives auto-compaction mid-generation.
  */
 
+import { basename } from 'pathe';
+
 import type { SessionModeFilePath } from '../session-mode';
 import type { ManifestPart } from './parts-manifest';
 
@@ -63,14 +65,14 @@ const INCREMENTAL_AND_SPLIT = `## Incremental writing & large plans
 Never emit the whole plan in one Write. Scaffold first (header + File Structure + Dependency Overview + Risks & Open Questions), save, THEN append one phase per Edit, and append the Self-Review last — so the document-level scaffolding can never be crowded out by task detail.
 Count the tasks first, then pick a layout:
   - ≤ 8 tasks → ONE file (the current plan file), written incrementally as above.
-  - > 8 tasks, OR work spanning more than one subsystem → SPLIT. The current plan file (\`<id>.md\`) becomes the INDEX: global Goal/Architecture, File Structure, Dependency Overview, Risks, the spec-coverage table, and a Parts manifest (below) — the index MUST contain NO task sections (no ### Task headers, no - [ ] step lists); all task content lives exclusively in the part files. Each phase/subsystem becomes a sibling file \`<id>-<subsystem>.md\` next to the index, holding that phase's tasks + its own local Self-Review. You MAY write these sibling files — they share the plan file's directory. Cross-file deps are allowed: \`Depends on: <id>-core.md: Task 2\`.
+  - > 8 tasks, OR work spanning more than one subsystem → SPLIT. The current plan file (\`<id>.md\`) becomes the INDEX: global Goal/Architecture, File Structure, Dependency Overview, Risks, the spec-coverage table, and a Parts manifest (below) — the index MUST contain NO task sections (no ### Task headers, no - [ ] step lists); all task content lives exclusively in the part files. Part files do NOT sit next to the index — they go INSIDE a subdirectory named exactly after the index's filename stem: if the index is \`<dir>/<id>.md\`, the parts live in \`<dir>/<id>/\` as \`<id>/<subsystem>.md\` (e.g. \`<id>/core.md\`, \`<id>/api.md\`), each holding that phase's tasks + its own local Self-Review. This subdirectory is the ONLY place part files may be written; a file placed next to the index (as \`<id>-<subsystem>.md\`) or under any other base name will be REJECTED by the write guard. Cross-file deps are allowed: \`Depends on: <id>/core.md: Task 2\`.
 The Parts manifest lives in the index and is the durable state that survives a context compaction mid-generation:
 
 ## Parts (generate one per invocation, in order)
 | # | File | Scope | Status |
 |---|---|---|---|
-| 1 | <id>-core.md | models + persistence | pending |
-| 2 | <id>-api.md | endpoints + wiring | pending |
+| 1 | <id>/core.md | models + persistence | pending |
+| 2 | <id>/api.md | endpoints + wiring | pending |
 
 Write the index first (every row \`pending\`), then end your turn — the injection on the next turn will direct you to the first pending part. Write ONE part per turn: scaffold + tasks + local Self-Review, flip its manifest row to \`done\`, then stop that turn (no AskUserQuestion, no ExitPlanMode). The injection will direct you to the next pending part. If the context is compacted while generating, re-read the index and find the first \`pending\` row — never re-write a \`done\` part. Call ExitPlanMode only after every row is \`done\`.`;
 
@@ -78,7 +80,7 @@ const TURN_DISCIPLINE = `## Approaches & turn discipline
 Keep approaches focused: at most 2-3 meaningfully different ones; if one is clearly superior, propose just that. When the best approach depends on user preference or context you lack, use AskUserQuestion to clarify FIRST (one question per turn) — it yields a more targeted plan than dumping options. If the final plan keeps multiple approaches, you MUST pass them as ExitPlanMode's \`options\` so the user can choose at approval time. Never ask about plan approval via text or AskUserQuestion — that is ExitPlanMode's job — and do NOT reference "the plan" in AskUserQuestion, since the user cannot see it until you call ExitPlanMode. End every turn with AskUserQuestion (to clarify) or ExitPlanMode (to request approval) — EXCEPT during a split plan: when the Parts manifest has \`pending\` rows, write ONE part file per turn, flip its row to \`done\`, then end the turn naturally without calling AskUserQuestion or ExitPlanMode. The injection on the next turn will direct you to the next pending part.`;
 
 /** One-line quality pointer kept in the sparse variant so long sessions don't drop quality. */
-const SPARSE_QUALITY_POINTER = `Reminder: the plan must be concrete enough to execute with zero follow-up — exact file paths + line ranges, complete code in every step, exact commands with expected output, per-task tests asserting the risk, an explicit dependency graph, the shared-signature caller/whole-tree-typecheck rule, and the seven-item self-review with a spec-coverage table. Plans over 8 tasks split into an index (with a Parts manifest) + sibling files.`;
+const SPARSE_QUALITY_POINTER = `Reminder: the plan must be concrete enough to execute with zero follow-up — exact file paths + line ranges, complete code in every step, exact commands with expected output, per-task tests asserting the risk, an explicit dependency graph, the shared-signature caller/whole-tree-typecheck rule, and the seven-item self-review with a spec-coverage table. Plans over 8 tasks split into an index (with a Parts manifest) + part files in a subdirectory named after the index (\`<id>/<subsystem>.md\`).`;
 
 /** The canonical workflow body shared verbatim by the entry message and the full re-injection. */
 function contractBody(): string {
@@ -115,7 +117,7 @@ export function planModeFullReminder(sessionModeFilePath: SessionModeFilePath, s
 /** Condensed reminder between full re-injections — keeps the invariant + quality bar visible. */
 export function planModeSparseReminder(sessionModeFilePath: SessionModeFilePath, splitDirective?: string): string {
   const body = withSplitDirective(
-    `Plan mode still active (see full instructions earlier). Read-only except the current plan file(s); write with Write/Edit. Each task: \`Depends on:\` + \`Files:\` + test-first bite-sized steps (or complete code + a manual-verification step for non-testable code) + commit. The same task that changes a shared signature updates every caller (incl. tests) and ends with a whole-tree typecheck. No TODO/placeholder/phantom tasks. Run the seven-item self-review (with a spec-coverage table) before ExitPlanMode. >8 tasks → split into an index with a Parts manifest + sibling files. Pass \`options\` to ExitPlanMode when the plan keeps multiple approaches. End every turn with AskUserQuestion or ExitPlanMode.
+    `Plan mode still active (see full instructions earlier). Read-only except the current plan file(s); write with Write/Edit. Each task: \`Depends on:\` + \`Files:\` + test-first bite-sized steps (or complete code + a manual-verification step for non-testable code) + commit. The same task that changes a shared signature updates every caller (incl. tests) and ends with a whole-tree typecheck. No TODO/placeholder/phantom tasks. Run the seven-item self-review (with a spec-coverage table) before ExitPlanMode. >8 tasks → split into an index with a Parts manifest + part files in a subdirectory named after the index (\`<id>/<subsystem>.md\`). Pass \`options\` to ExitPlanMode when the plan keeps multiple approaches. End every turn with AskUserQuestion or ExitPlanMode.
 
 ${SPARSE_QUALITY_POINTER}`,
     splitDirective,
@@ -129,10 +131,10 @@ export function planModeReentryReminder(sessionModeFilePath: SessionModeFilePath
 
 ## Re-entering Plan Mode
 A plan file from a previous session already exists.
-  1. Read the existing plan file (and, if it is a split index, the sibling files it lists) to understand what was previously planned.
+  1. Read the existing plan file (and, if it is a split index, the part files it lists — they live in a subdirectory named after the index, \`<id>/<subsystem>.md\`) to understand what was previously planned.
   2. Evaluate the user's current request against it. Same task: update it. Different task: replace it with a fresh plan.
   3. Keep the rubric: test-first bite-sized tasks, \`Depends on:\` graph, the shared-signature caller/whole-tree-typecheck rule, no placeholders, and the seven-item self-review with a spec-coverage table.
-  4. For a split plan, the index's Parts manifest is the source of truth — write the next \`pending\` part and flip its row to \`done\`; never re-write a \`done\` part.
+  4. For a split plan, the index's Parts manifest is the source of truth — write the next \`pending\` part INSIDE the index's subdirectory as \`<index-stem>/<subsystem>.md\` (a directory named exactly after the index filename stem; a file written next to the index instead will be rejected by the write guard) and flip its row to \`done\`; never re-write a \`done\` part.
   5. Always update the plan file before calling ExitPlanMode.
 
 Your turn must end with either AskUserQuestion (to clarify requirements) or ExitPlanMode (to request plan approval).`;
@@ -170,9 +172,11 @@ export {
 } from './parts-manifest';
 
 /** Directive appended while a split plan still has `pending` parts. */
-export function splitContinuationDirective(part: ManifestPart): string {
+export function splitContinuationDirective(part: ManifestPart, indexStem: string): string {
+  const partName = basename(part.file);
+  const target = `${indexStem}/${partName}`;
   return `## Split plan in progress — write ONE part this turn
-The index has pending parts. This turn: write ONLY \`${part.file}\`${part.scope.length > 0 ? ` (scope: ${part.scope})` : ''} next to the index (scaffold-then-append: part header → its tasks → its local Self-Review), then immediately flip its manifest row Status to \`done\` in the index. After flipping: stop — do NOT write any other part file, and do NOT call ExitPlanMode or AskUserQuestion. The injection on the next turn will point you to the next \`pending\` row. The on-disk manifest is the durable state: if context is compacted mid-generation, re-read the index and find the next \`pending\` row. Never re-write a part already marked \`done\`.`;
+The index has pending parts. This turn: write ONLY \`${target}\`${part.scope.length > 0 ? ` (scope: ${part.scope})` : ''} — the part file \`${partName}\` lives INSIDE the index's \`${indexStem}/\` subdirectory (a directory named exactly after the index file, alongside it), NOT next to the index as \`${indexStem}-${partName}\`. Scaffold-then-append: part header → its tasks → its local Self-Review, then immediately flip its manifest row Status to \`done\` in the index. After flipping: stop — do NOT write any other part file, and do NOT call ExitPlanMode or AskUserQuestion. The injection on the next turn will point you to the next \`pending\` row. The on-disk manifest is the durable state: if context is compacted mid-generation, re-read the index and find the next \`pending\` row. Never re-write a part already marked \`done\`.`;
 }
 
 /** Directive appended once every manifest row is `done`. */

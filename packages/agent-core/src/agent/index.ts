@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { dirname, join } from 'pathe';
+import { basename, dirname, join } from 'pathe';
 
 import { ErrorCodes, KimiError, makeErrorPayload } from '#/errors';
 import { log } from '#/logging/logger';
@@ -445,9 +445,12 @@ export class Agent {
         // index. Single-file plans and designs have no manifest → review as-is.
         let reviewContent = content;
         if (kind === 'plan') {
+          // Split parts live in a subdirectory named after the index file's stem
+          // (`<dir>/<stem>/<part>.md`), matching the write-permission guard.
           const dir = dirname(path);
+          const stem = basename(path).replace(/\.md$/, '');
           for (const file of parseManifestFiles(content)) {
-            const siblingPath = join(dir, file);
+            const siblingPath = join(dir, stem, file);
             if (siblingPath === path) continue;
             try {
               const siblingContent = await this.kaos.readText(siblingPath);

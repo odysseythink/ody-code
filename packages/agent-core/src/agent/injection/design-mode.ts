@@ -1,3 +1,6 @@
+import { basename } from 'pathe';
+
+import type { SessionModeFilePath } from '../session-mode';
 import { DynamicInjector } from './injector';
 import {
   designModeFullReminder,
@@ -43,7 +46,7 @@ export class DesignModeInjector extends DynamicInjector {
       this.injectedAt = null;
       this.wasActive = true;
       if (content.trim().length > 0) {
-        const directive = splitDirectiveFor(content);
+        const directive = splitDirectiveFor(content, sessionModeFilePath);
         return designModeReentryReminder(sessionModeFilePath, mockupAvailable, directive);
       }
     }
@@ -51,7 +54,7 @@ export class DesignModeInjector extends DynamicInjector {
     if (variant === null) return undefined;
     if (variant === 'reentry') return designModeReentryReminder(sessionModeFilePath, mockupAvailable);
 
-    const directive = splitDirectiveFor(content);
+    const directive = splitDirectiveFor(content, sessionModeFilePath);
     return variant === 'full'
       ? designModeFullReminder(sessionModeFilePath, mockupAvailable, directive)
       : designModeSparseReminder(sessionModeFilePath, mockupAvailable, directive);
@@ -90,15 +93,21 @@ export class DesignModeInjector extends DynamicInjector {
  * the model to the next pending part (or the cross-file final review once every
  * part is done). Returns undefined for single-file designs (no manifest).
  */
-function splitDirectiveFor(content: string): string | undefined {
+function splitDirectiveFor(content: string, sessionModeFilePath: SessionModeFilePath): string | undefined {
   const manifest = parsePartsManifest(content);
   if (manifest === null) return undefined;
   if (manifest.next !== null) {
     const next: ManifestPart = manifest.next;
-    return designSplitContinuationDirective(next);
+    return designSplitContinuationDirective(next, indexStemFor(sessionModeFilePath));
   }
   if (manifest.allDone) return designSplitFinalReviewDirective();
   return undefined;
+}
+
+/** The index file's stem (filename without the `.md`), used as the split subdirectory name. */
+function indexStemFor(sessionModeFilePath: SessionModeFilePath): string {
+  if (sessionModeFilePath === null || sessionModeFilePath.length === 0) return '';
+  return basename(sessionModeFilePath).replace(/\.md$/, '');
 }
 
 function exitReminder(): string {

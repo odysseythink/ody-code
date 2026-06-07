@@ -17,6 +17,8 @@
  * forbidding any implementation until the user approves the design.
  */
 
+import { basename } from 'pathe';
+
 import type { SessionModeFilePath } from '../session-mode';
 import type { ManifestPart } from './parts-manifest';
 
@@ -88,14 +90,14 @@ const DESIGN_INCREMENTAL_AND_SPLIT = `## Incremental writing & large designs
 Never emit the whole design in one Write. Scaffold first (Scope In/Out + Prior Art + Architecture skeleton + Assumptions + Risk register headers), save, THEN append one component at a time.
 Assess the design's breadth first, then pick a layout:
   - A single coherent component/subsystem → ONE file (the current design file), written incrementally.
-  - Spanning more than one independent subsystem (e.g. a CLI with separate config, rendering, AI-client, output-builder modules) → SPLIT. The current design file (\`<id>.md\`) becomes the INDEX: global Scope In/Out, Architecture & data-flow overview, Prior Art, cross-cutting Assumptions & Risk register, and a Parts manifest (below) — the index MUST contain NO per-component detail (no component interfaces, no per-algorithm pseudocode); that lives in the part files. Each subsystem becomes a sibling file \`<id>-<subsystem>.md\` next to the index, holding that subsystem's interfaces + algorithms + local error/test notes. You MAY write these siblings — they share the design file's directory. Cross-file refs allowed: \`see <id>-core.md: AnalyzePage\`. Sibling filenames MUST be derived from the index's own filename stem — if the index is \`2026-07-my-feature.md\`, siblings are \`2026-07-my-feature-core.md\`, \`2026-07-my-feature-api.md\`, etc. Do NOT invent a different base name. The \`<id>\` in every manifest row IS the index stem; copy it exactly and do not abbreviate or translate it.
+  - Spanning more than one independent subsystem (e.g. a CLI with separate config, rendering, AI-client, output-builder modules) → SPLIT. The current design file (\`<id>.md\`) becomes the INDEX: global Scope In/Out, Architecture & data-flow overview, Prior Art, cross-cutting Assumptions & Risk register, and a Parts manifest (below) — the index MUST contain NO per-component detail (no component interfaces, no per-algorithm pseudocode); that lives in the part files. Part files do NOT sit next to the index — they go INSIDE a subdirectory named exactly after the index's filename stem: if the index is \`<dir>/<id>.md\`, the parts live in \`<dir>/<id>/\` as \`<id>/<subsystem>.md\` (e.g. \`<id>/core.md\`, \`<id>/api.md\`). This subdirectory is the ONLY place part files may be written; a file placed next to the index (as \`<id>-<subsystem>.md\`) or under any other base name will be REJECTED by the write guard. Each part holds that subsystem's interfaces + algorithms + local error/test notes. Cross-file refs allowed: \`see <id>/core.md: AnalyzePage\`.
 The Parts manifest lives in the index and is the durable state that survives a context compaction mid-generation:
 
 ## Parts (generate one per turn, in order)
 | # | File | Scope | Status |
 |---|---|---|---|
-| 1 | <id>-core.md | data types + persistence | pending |
-| 2 | <id>-api.md | endpoints + wiring | pending |
+| 1 | <id>/core.md | data types + persistence | pending |
+| 2 | <id>/api.md | endpoints + wiring | pending |
 
 Write the index first (every row \`pending\`), then end your turn — the next injection points you to the first pending part. Write ONE part per turn (scaffold + interfaces + algorithms + local notes), flip its row to \`done\`, then stop (no AskUserQuestion, no ExitDesignMode). If context is compacted while generating, re-read the index and find the first \`pending\` row — never re-write a \`done\` part. Run the cross-file review and call ExitDesignMode only after every row is \`done\`.`;
 
@@ -164,9 +166,11 @@ function withSplitDirective(body: string, splitDirective?: string): string {
 }
 
 /** Directive appended while a split design still has `pending` parts. */
-export function designSplitContinuationDirective(part: ManifestPart): string {
+export function designSplitContinuationDirective(part: ManifestPart, indexStem: string): string {
+  const partName = basename(part.file);
+  const target = `${indexStem}/${partName}`;
   return `## Split design in progress — write ONE part this turn
-The index has pending parts. This turn: write ONLY \`${part.file}\`${part.scope.length > 0 ? ` (scope: ${part.scope})` : ''} next to the index (scaffold-then-append: component header → its interfaces/types → its algorithms → its local error/test notes), then immediately flip its manifest row Status to \`done\` in the index. After flipping: stop — do NOT write any other part file, and do NOT call ExitDesignMode or AskUserQuestion. The next injection points you to the next \`pending\` row. The on-disk manifest is durable state: if context is compacted mid-generation, re-read the index and find the next \`pending\` row. Never re-write a part already \`done\`.`;
+The index has pending parts. This turn: write ONLY \`${target}\`${part.scope.length > 0 ? ` (scope: ${part.scope})` : ''} — the part file \`${partName}\` lives INSIDE the index's \`${indexStem}/\` subdirectory (a directory named exactly after the index file, alongside it), NOT next to the index as \`${indexStem}-${partName}\`. Scaffold-then-append: component header → its interfaces/types → its algorithms → its local error/test notes, then immediately flip its manifest row Status to \`done\` in the index. After flipping: stop — do NOT write any other part file, and do NOT call ExitDesignMode or AskUserQuestion. The next injection points you to the next \`pending\` row. The on-disk manifest is durable state: if context is compacted mid-generation, re-read the index and find the next \`pending\` row. Never re-write a part already \`done\`.`;
 }
 
 /** Directive appended once every manifest row is `done`. */
@@ -198,7 +202,7 @@ export function designModeSparseReminder(
     ? '\n\nShowDesignMockup is available — use ONLY for UI/visual appearance comparisons (layout variants, side-by-side renders). Architecture, interfaces, flows, and tables go in the design file as markdown.'
     : '';
   const body = withSplitDirective(
-    `Design mode still active (see full instructions earlier). This is a brainstorming session, NOT implementation — no code until the user approves the design via ExitDesignMode. Confirm the audit level (Basic/Standard/Deep) was asked; clarify one question per turn until all seven decision dimensions are settled (and verify any data source / hook point the design relies on actually exists in code); propose 2-3 approaches; present the design section by section for approval; then write the design file with [C:USER]/[C:INFERRED]/[C:DEFERRED]/[C:UPSTREAM] tags and an ## Assumptions chapter. A design spanning multiple independent subsystems → SPLIT into an index with a Parts manifest + sibling files. Pass options to ExitDesignMode when there is a real choice. End every turn with AskUserQuestion or ExitDesignMode — never any other way.
+    `Design mode still active (see full instructions earlier). This is a brainstorming session, NOT implementation — no code until the user approves the design via ExitDesignMode. Confirm the audit level (Basic/Standard/Deep) was asked; clarify one question per turn until all seven decision dimensions are settled (and verify any data source / hook point the design relies on actually exists in code); propose 2-3 approaches; present the design section by section for approval; then write the design file with [C:USER]/[C:INFERRED]/[C:DEFERRED]/[C:UPSTREAM] tags and an ## Assumptions chapter. A design spanning multiple independent subsystems → SPLIT into an index with a Parts manifest + part files written inside a subdirectory named after the index (\`<id>/<subsystem>.md\`). Pass options to ExitDesignMode when there is a real choice. End every turn with AskUserQuestion or ExitDesignMode — never any other way.
 
 ${SPARSE_QUALITY_POINTER}${mockupPointer}`,
     splitDirective,
@@ -219,7 +223,7 @@ A design file from a previous session already exists.
   1. Read the existing design file to understand what was previously designed.
   2. Confirm (or re-ask) the audit level (Basic/Standard/Deep) before continuing.
   3. Evaluate the user's current request against that design. Same topic: update it. Different topic: replace it.
-  4. If it is a split index, the Parts manifest is the source of truth — write the next \`pending\` part as \`<index-stem>-<subsystem>.md\` (derive the name from the index filename stem; never invent a different base name), flip its row to \`done\`; never re-write a \`done\` part.
+  4. If it is a split index, the Parts manifest is the source of truth — write the next \`pending\` part INSIDE the index's subdirectory as \`<index-stem>/<subsystem>.md\` (a directory named exactly after the index filename stem, alongside the index; a file written next to the index instead will be rejected by the write guard), flip its row to \`done\`; never re-write a \`done\` part.
   5. Clarify any newly-required decisions one question per turn (seven-dimension checklist); verify any data source / hook point the design relies on actually exists in code; if the request names a concrete target, design THERE — do not silently retarget.
   6. Maintain decision tags [C:USER]/[C:INFERRED]/[C:DEFERRED]/[C:UPSTREAM] and the ## Assumptions chapter; keep the fidelity rubric.
   7. Run the self-review + post-write audit gate (write the \`## Self-Review\` section to the design file; list each [C:INFERRED] assumption verbatim for sign-off; do not ExitDesignMode until signed off), then update the design file before calling ExitDesignMode.

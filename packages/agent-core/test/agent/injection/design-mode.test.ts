@@ -319,9 +319,10 @@ describe('DesignModeInjector contract guards', () => {
     }
   });
 
-  // Sibling naming: sibling files in a split design must be derived from the
-  // index file's own stem — the AI must not invent a different base name.
-  it('carries the sibling-filename naming rule in both the entry message and the full reminder', async () => {
+  // Split layout: part files live INSIDE a subdirectory named after the index
+  // stem (`<id>/<subsystem>.md`), matching the write-permission guard — a file
+  // placed next to the index is rejected.
+  it('carries the subdirectory split-layout rule in both the entry message and the full reminder', async () => {
     const agent = designAgent({ isActive: true, sessionModeFilePath: '/tmp/design.md' });
     const injector = new DesignModeInjector(agent);
     await injector.inject();
@@ -329,8 +330,8 @@ describe('DesignModeInjector contract guards', () => {
     const entry = designModeEntryMessage('/tmp/design.md', false);
 
     for (const marker of [
-      "index's own filename stem",
-      'Do NOT invent a different base name',
+      'subdirectory named exactly after the index',
+      'REJECTED by the write guard',
     ]) {
       expect(full).toContain(marker);
       expect(entry).toContain(marker);
@@ -411,15 +412,16 @@ describe('DesignModeInjector split-design steering', () => {
       '## Parts',
       '| # | File | Scope | Status |',
       '|---|---|---|---|',
-      '| 1 | design-core.md | data types | done |',
-      '| 2 | design-api.md | endpoints | pending |',
+      '| 1 | design/core.md | data types | done |',
+      '| 2 | design/api.md | endpoints | pending |',
     ].join('\n');
     history(agent).push({ role: 'user', content: [{ text: 'continue' }] });
     await injector.inject();
 
     const text = lastReminder(agent);
     expect(text).toContain('Split design in progress');
-    expect(text).toContain('design-api.md');
+    // Target reconstructed as `<index-stem>/<part-basename>` = `design/api.md`.
+    expect(text).toContain('design/api.md');
     expect(text).not.toContain('Split design — all parts written');
   });
 
@@ -432,8 +434,8 @@ describe('DesignModeInjector split-design steering', () => {
     stub.content = [
       '| # | File | Scope | Status |',
       '|---|---|---|---|',
-      '| 1 | design-core.md | data types | done |',
-      '| 2 | design-api.md | endpoints | done |',
+      '| 1 | design/core.md | data types | done |',
+      '| 2 | design/api.md | endpoints | done |',
     ].join('\n');
     history(agent).push({ role: 'user', content: [{ text: 'continue' }] });
     await injector.inject();
@@ -449,8 +451,8 @@ describe('DesignModeInjector split-design steering', () => {
         '## Parts',
         '| # | File | Scope | Status |',
         '|---|---|---|---|',
-        '| 1 | design-core.md | core types | done |',
-        '| 2 | design-api.md | endpoints | pending |',
+        '| 1 | design/core.md | core types | done |',
+        '| 2 | design/api.md | endpoints | pending |',
       ].join('\n'),
     });
     const injector = new DesignModeInjector(agent);
@@ -460,7 +462,7 @@ describe('DesignModeInjector split-design steering', () => {
     const text = lastReminder(agent);
     expect(text).toContain('Re-entering Design Mode');
     expect(text).toContain('Split design in progress');
-    expect(text).toContain('design-api.md');
+    expect(text).toContain('design/api.md');
   });
 
   it('injects no split directive for a single-file design (no manifest)', async () => {

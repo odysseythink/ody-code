@@ -1,3 +1,6 @@
+import { basename } from 'pathe';
+
+import type { SessionModeFilePath } from '../session-mode';
 import { DynamicInjector } from './injector';
 import {
   type ManifestPart,
@@ -53,7 +56,7 @@ export class PlanModeInjector extends DynamicInjector {
     if (variant === null) return undefined;
     if (variant === 'reentry') return planModeReentryReminder(sessionModeFilePath);
 
-    const directive = splitDirectiveFor(content);
+    const directive = splitDirectiveFor(content, sessionModeFilePath);
     return variant === 'full'
       ? planModeFullReminder(sessionModeFilePath, directive)
       : planModeSparseReminder(sessionModeFilePath, directive);
@@ -94,15 +97,21 @@ export class PlanModeInjector extends DynamicInjector {
  * the model to the next pending part (or the cross-file final review once every
  * part is done). Returns undefined for single-file plans (no manifest).
  */
-function splitDirectiveFor(content: string): string | undefined {
+function splitDirectiveFor(content: string, sessionModeFilePath: SessionModeFilePath): string | undefined {
   const manifest = parsePartsManifest(content);
   if (manifest === null) return undefined;
   if (manifest.next !== null) {
     const next: ManifestPart = manifest.next;
-    return splitContinuationDirective(next);
+    return splitContinuationDirective(next, indexStemFor(sessionModeFilePath));
   }
   if (manifest.allDone) return splitFinalReviewDirective();
   return undefined;
+}
+
+/** The index file's stem (filename without the `.md`), used as the split subdirectory name. */
+function indexStemFor(sessionModeFilePath: SessionModeFilePath): string {
+  if (sessionModeFilePath === null || sessionModeFilePath.length === 0) return '';
+  return basename(sessionModeFilePath).replace(/\.md$/, '');
 }
 
 function exitReminder(): string {

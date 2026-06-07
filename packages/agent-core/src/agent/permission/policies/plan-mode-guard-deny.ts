@@ -53,8 +53,9 @@ export class PlanModeGuardDenyPermissionPolicy implements PermissionPolicy {
 function writesOnlyPlanFileset(context: PermissionPolicyContext, agent: Agent): boolean {
   const writeAccesses = writeFileAccesses(context);
   if (writeAccesses.length === 0) return false;
-  // The plan's writable set is the main plan file plus its split siblings
-  // (`<id>-*.md` in the same directory); everything else stays denied.
+  // The plan's writable set is the main plan/design file plus its split parts —
+  // `.md` files inside a subdirectory named after the index file's stem
+  // (`<id>/*.md`); everything else stays denied.
   return writeAccesses.every((access) => agent.sessionMode.isWritableSessionModePath(access.path));
 }
 
