@@ -168,7 +168,7 @@ describe('plan exit tool', () => {
       arguments: '{}',
     };
     ctx.mockNextResponse({ type: 'text', text: 'I will present the plan.' }, exitPlanModeCall);
-    ctx.mockNextResponse({ type: 'text', text: 'I can execute after approval.' });
+    ctx.mockNextResponse({ type: 'text', text: 'This response must not be requested.' });
     await ctx.rpc.prompt({ input: [{ type: 'text', text: 'Show the plan' }] });
 
     await ctx.untilTurnEnd();
@@ -177,9 +177,50 @@ describe('plan exit tool', () => {
     ).toBe(false);
     expect(readText).toHaveBeenCalledWith(planPath);
     expect(ctx.agent.sessionMode.isActive).toBe(false);
-    const llmInput = ctx.llmCalls[1]!;
-    expect(toolResultText(llmInput.history)).toContain('Plan mode deactivated');
-    expect(toolResultText(llmInput.history)).toContain('# Plan');
+    // ExitPlanMode hard-stops the turn: no second model step runs after approval,
+    // so the planning context can be freed before the user starts execution.
+    expect(ctx.llmCalls).toHaveLength(1);
+    expect(toolResultText(ctx.agent.context.history)).toContain('Plan mode deactivated');
+    expect(toolResultText(ctx.agent.context.history)).toContain('# Plan');
+    expect(toolResultText(ctx.agent.context.history)).toContain('STOP');
+    await ctx.expectResumeMatches();
+  });
+
+  it('hard-stops the turn after the user approves the plan in manual mode', async () => {
+    const files = new Map<string, string>();
+    const readText = vi.fn(async (path: string) => files.get(path) ?? '');
+    const ctx = testAgent({
+      kaos: createPlanKaos({ readText }),
+    });
+    ctx.configure({ tools: ['ExitPlanMode'] });
+    await ctx.rpc.setPermission({ mode: 'manual' });
+    await ctx.agent.sessionMode.enter('approve-plan', false);
+    await setPlanPath(ctx);
+
+    const planPath = ctx.agent.sessionMode.sessionModeFilePath;
+    if (planPath === null) throw new Error('expected active plan path');
+    files.set(planPath, '# Plan\n\n- Inspect\n- Change\n- Verify');
+
+    const exitPlanModeCall: ToolCall = {
+      type: 'function',
+      id: 'call_exit_approve',
+      name: 'ExitPlanMode',
+      arguments: '{}',
+    };
+    ctx.mockNextResponse({ type: 'text', text: 'I will present the plan.' }, exitPlanModeCall);
+    ctx.mockNextResponse({ type: 'text', text: 'This response must not be requested.' });
+    await ctx.rpc.prompt({ input: [{ type: 'text', text: 'Show the plan' }] });
+
+    const approval = await ctx.takeApprovalRequest();
+    approval.respond({ decision: 'approved' });
+
+    await ctx.untilTurnEnd();
+    expect(ctx.agent.sessionMode.isActive).toBe(false);
+    // Approval ends the turn — the model gets no follow-up step to auto-execute.
+    expect(ctx.llmCalls).toHaveLength(1);
+    expect(toolResultText(ctx.agent.context.history)).toContain('Plan mode deactivated');
+    expect(toolResultText(ctx.agent.context.history)).toContain('# Plan');
+    expect(toolResultText(ctx.agent.context.history)).toContain('STOP');
     await ctx.expectResumeMatches();
   });
 
@@ -329,7 +370,6 @@ describe('plan exit tool options', () => {
         }),
     };
     ctx.mockNextResponse({ type: 'text', text: 'I will present the plan.' }, exitPlanModeCall);
-    ctx.mockNextResponse({ type: 'text', text: 'I can execute after approval.' });
     await ctx.rpc.prompt({ input: [{ type: 'text', text: 'Show the plan' }] });
 
     const approval = await ctx.takeApprovalRequest();
@@ -344,6 +384,9 @@ describe('plan exit tool options', () => {
 
     approval.respond({ decision: 'approved', selectedLabel: 'Approach A' });
     await ctx.untilTurnEnd();
+    expect(ctx.llmCalls).toHaveLength(1);
+    expect(toolResultText(ctx.agent.context.history)).toContain('Selected approach: Approach A');
+    expect(toolResultText(ctx.agent.context.history)).toContain('STOP');
   });
 });
 

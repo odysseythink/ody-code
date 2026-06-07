@@ -93,11 +93,12 @@ export class ExitPlanModeReviewAskPermissionPolicy implements PermissionPolicy {
     }
 
     const savedTo = display.path !== undefined ? `Plan saved to: ${display.path}\n\n` : '';
-    const formattedPlan = `Plan mode deactivated. All tools are now available.\n${savedTo}## Approved Plan:\n${display.plan}`;
+    const formattedPlan = `Plan mode deactivated.\n${savedTo}## Approved Plan:\n${display.plan}\n\nSTOP — do NOT begin executing now. This turn ends here so the planning context can be freed before execution. Do not write or edit code. The user will start execution themselves — typically by running /compact to free up context, then sending a message or invoking the gpowers executing-plans skill. Wait for them.`;
     return {
       kind: 'result' as const,
       syntheticResult: {
         isError: false,
+        stopTurn: true,
         output: `Exited plan mode. ${optionPrefix}${formattedPlan}`,
       },
     };

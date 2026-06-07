@@ -140,6 +140,7 @@ export class ExitPlanModeTool implements BuiltinTool<ExitPlanModeInput> {
 
     return {
       isError: false,
+      stopTurn: true,
       output: `Exited plan mode. ${formatPlanForOutput(resolvedPlan.plan, resolvedPlan.path)}`,
     };
   }
@@ -211,5 +212,5 @@ function normalizeOptionLabel(label: string): string {
 
 function formatPlanForOutput(plan: string, path: string | undefined): string {
   const savedTo = path !== undefined ? `Plan saved to: ${path}\n\n` : '';
-  return `Plan mode deactivated. All tools are now available.\n${savedTo}## Approved Plan:\n${plan}`;
+  return `Plan mode deactivated.\n${savedTo}## Approved Plan:\n${plan}\n\nSTOP — do NOT begin executing now. This turn ends here so the planning context can be freed before execution. Do not write or edit code. The user will start execution themselves — typically by running /compact to free up context, then sending a message or invoking the gpowers executing-plans skill. Wait for them.`;
 }
