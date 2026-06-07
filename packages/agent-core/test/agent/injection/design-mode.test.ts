@@ -319,6 +319,43 @@ describe('DesignModeInjector contract guards', () => {
     }
   });
 
+  // Sibling naming: sibling files in a split design must be derived from the
+  // index file's own stem — the AI must not invent a different base name.
+  it('carries the sibling-filename naming rule in both the entry message and the full reminder', async () => {
+    const agent = designAgent({ isActive: true, sessionModeFilePath: '/tmp/design.md' });
+    const injector = new DesignModeInjector(agent);
+    await injector.inject();
+    const full = lastReminder(agent);
+    const entry = designModeEntryMessage('/tmp/design.md', false);
+
+    for (const marker of [
+      "index's own filename stem",
+      'Do NOT invent a different base name',
+    ]) {
+      expect(full).toContain(marker);
+      expect(entry).toContain(marker);
+    }
+  });
+
+  // Self-review write-to-file: the four-lens findings must be written to a
+  // ## Self-Review section in the design file, not left in <thinking> only.
+  it('carries the self-review write-to-file requirement in both the entry message and the full reminder', async () => {
+    const agent = designAgent({ isActive: true, sessionModeFilePath: '/tmp/design.md' });
+    const injector = new DesignModeInjector(agent);
+    await injector.inject();
+    const full = lastReminder(agent);
+    const entry = designModeEntryMessage('/tmp/design.md', false);
+
+    for (const marker of [
+      '## Self-Review',
+      'four-lens findings',
+      'must be on disk before the assumption sign-off',
+    ]) {
+      expect(full).toContain(marker);
+      expect(entry).toContain(marker);
+    }
+  });
+
   // Placement fidelity: when the request names a concrete target (e.g.
   // `backend/cmd/server`), the design must land THERE — retargeting to a
   // different location requires an explicit user decision, never a silent swap.
@@ -402,6 +439,28 @@ describe('DesignModeInjector split-design steering', () => {
     await injector.inject();
 
     expect(lastReminder(agent)).toContain('Split design — all parts written');
+  });
+
+  it('includes split directive in reentry reminder when manifest has pending parts', async () => {
+    const agent = designAgent({
+      isActive: true,
+      sessionModeFilePath: '/tmp/design.md',
+      content: [
+        '## Parts',
+        '| # | File | Scope | Status |',
+        '|---|---|---|---|',
+        '| 1 | design-core.md | core types | done |',
+        '| 2 | design-api.md | endpoints | pending |',
+      ].join('\n'),
+    });
+    const injector = new DesignModeInjector(agent);
+
+    await injector.inject();
+
+    const text = lastReminder(agent);
+    expect(text).toContain('Re-entering Design Mode');
+    expect(text).toContain('Split design in progress');
+    expect(text).toContain('design-api.md');
   });
 
   it('injects no split directive for a single-file design (no manifest)', async () => {

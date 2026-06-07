@@ -43,7 +43,8 @@ export class DesignModeInjector extends DynamicInjector {
       this.injectedAt = null;
       this.wasActive = true;
       if (content.trim().length > 0) {
-        return designModeReentryReminder(sessionModeFilePath, mockupAvailable);
+        const directive = splitDirectiveFor(content);
+        return designModeReentryReminder(sessionModeFilePath, mockupAvailable, directive);
       }
     }
     const variant = this.getVariant();
