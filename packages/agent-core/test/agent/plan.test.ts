@@ -39,10 +39,9 @@ describe('manual plan entry', () => {
     await delay(10);
 
     expect(ctx.agent.sessionMode.isActive).toBe(true);
-    // Path is reserved eagerly at entry (no user message → "untitled"), but no file is created.
-    expect(ctx.agent.sessionMode.sessionModeFilePath).toBe(
-      `/workspace/.ody-code/plans/${formatDatePrefix(new Date())}-untitled.md`,
-    );
+    // No user prompt yet at entry → naming is DEFERRED (path stays null) so the
+    // first prompt/write can name the file, rather than locking in "untitled".
+    expect(ctx.agent.sessionMode.sessionModeFilePath).toBeNull();
     expect(mkdir).toHaveBeenCalledWith('/workspace/.ody-code/plans', { parents: true, existOk: true });
     expect(writeText).not.toHaveBeenCalled();
     expect(ctx.allEvents.some((event) => event.event === 'turn.started')).toBe(false);
@@ -57,10 +56,8 @@ describe('manual plan entry', () => {
     });
     await ctx.agent.sessionMode.enter('stable-plan');
 
-    // Path reserved eagerly at entry (no user message → "untitled").
-    expect(ctx.agent.sessionMode.sessionModeFilePath).toBe(
-      `/workspace/.ody-code/plans/${formatDatePrefix(new Date())}-untitled.md`,
-    );
+    // No user prompt yet at entry → naming deferred (path null), not "untitled".
+    expect(ctx.agent.sessionMode.sessionModeFilePath).toBeNull();
 
     const enterRecord = ctx.allEvents.find(
       (event) => event.type === '[wire]' && event.event === 'session_mode.enter',
@@ -709,8 +706,17 @@ function toolResultText(history: readonly { role: string; content: readonly unkn
     .join('\n');
 }
 
+/** Push a real user prompt into history so eager naming has a topic source. */
+function seedPrompt(ctx: { agent: { context: { history: unknown } } }, text: string): void {
+  (ctx.agent.context.history as unknown as unknown[]).push({
+    role: 'user',
+    origin: { kind: 'user' },
+    content: [{ type: 'text', text }],
+  });
+}
+
 describe('lazy file path resolution', () => {
-  it('enter reserves a path eagerly but does not create a file', async () => {
+  it('defers the path when entered before any user prompt and creates no file', async () => {
     const mkdir = vi.fn().mockResolvedValue(undefined);
     const writeText = vi.fn().mockResolvedValue(0);
     const ctx = testAgent({
@@ -719,11 +725,36 @@ describe('lazy file path resolution', () => {
     await ctx.agent.sessionMode.enter('test-id', false, false, 'plan');
 
     expect(ctx.agent.sessionMode.isActive).toBe(true);
-    expect(ctx.agent.sessionMode.sessionModeFilePath).toBe(
-      `/workspace/.ody-code/plans/${formatDatePrefix(new Date())}-untitled.md`,
-    );
-    // The path is only RESERVED — the first Write creates the file, not enter().
+    // No prompt to name from yet → naming deferred (null), not locked to "untitled".
+    expect(ctx.agent.sessionMode.sessionModeFilePath).toBeNull();
     expect(writeText).not.toHaveBeenCalled();
+  });
+
+  it('defers naming when the mode is entered BEFORE the first prompt (regression)', async () => {
+    // Reproduces the ecopower bug: session launches already in design mode, so
+    // enter() runs with an empty history; the prompt arrives ~seconds later.
+    const ctx = testAgent({ kaos: createPlanKaos() });
+
+    await ctx.agent.sessionMode.enter('pre-prompt', false, false, 'design');
+    // Entered with no user prompt → path must be deferred, NOT "…-untitled.md".
+    expect(ctx.agent.sessionMode.sessionModeFilePath).toBeNull();
+
+    // The prompt arrives after entry (with pasted file paths, like the real case).
+    (ctx.agent.context.history as unknown as unknown[]).push({
+      role: 'user',
+      origin: { kind: 'user' },
+      content: [
+        {
+          type: 'text',
+          text: '合并两份设计：/Users/a/.ody-code/designs/jay-garrick-flash-monet.md\n/Users/b/2026-06-06-frontend-backend-integration-design.md',
+        },
+      ],
+    });
+
+    // First write resolves the path from the prompt topic (path noise stripped).
+    const path = await ctx.agent.sessionMode.resolveFilePathFromContent('# Some Design Title\n\nbody');
+    const today = formatDatePrefix(new Date());
+    expect(path).toBe(`/workspace/.ody-code/designs/${today}-合并两份设计.md`);
   });
 
   it('derives the eagerly-reserved path from the latest user message topic', async () => {
@@ -747,7 +778,7 @@ describe('lazy file path resolution', () => {
 
   it('does not leak a sensitive user message into the reserved filename', async () => {
     const ctx = testAgent({ kaos: createPlanKaos() });
-    // Message trips the sensitive-word filter ("key") → topic is rejected → "untitled".
+    // Message trips the sensitive-word filter ("key") → topic is rejected.
     (ctx.agent.context.history as unknown as unknown[]).push({
       role: 'user',
       origin: { kind: 'user' },
@@ -756,10 +787,9 @@ describe('lazy file path resolution', () => {
 
     await ctx.agent.sessionMode.enter('secret-plan', false, false, 'plan');
 
-    const today = formatDatePrefix(new Date());
-    expect(ctx.agent.sessionMode.sessionModeFilePath).toBe(
-      `/workspace/.ody-code/plans/${today}-untitled.md`,
-    );
+    // No usable (non-sensitive) topic → naming deferred (null); the sensitive text
+    // never becomes a filename and nothing is locked in.
+    expect(ctx.agent.sessionMode.sessionModeFilePath).toBeNull();
   });
 
   it('clear() is a no-op when the eagerly-reserved file has not been written yet', async () => {
@@ -768,6 +798,12 @@ describe('lazy file path resolution', () => {
       throw Object.assign(new Error('ENOENT'), { code: 'ENOENT' });
     });
     const ctx = testAgent({ kaos: createPlanKaos({ writeText, stat }) });
+    // Seed a prompt so entry reserves a concrete path eagerly.
+    (ctx.agent.context.history as unknown as unknown[]).push({
+      role: 'user',
+      origin: { kind: 'user' },
+      content: [{ type: 'text', text: 'add a billing module' }],
+    });
     await ctx.agent.sessionMode.enter('unwritten-plan', false, false, 'plan');
 
     // Path is reserved, but nothing has been written to disk.
@@ -1008,9 +1044,10 @@ describe('project-scoped directory resolution', () => {
   it('resolves project-scoped plan directory when mkdir succeeds', async () => {
     const mkdir = vi.fn().mockResolvedValue(undefined);
     const ctx = testAgent({ kaos: createFakeKaos({ mkdir }) });
+    seedPrompt(ctx, 'add a billing module');
     await ctx.agent.sessionMode.enter('test-plan', false, false, 'plan');
     expect(ctx.agent.sessionMode.sessionModeFilePath).toBe(
-      `/workspace/.ody-code/plans/${formatDatePrefix(new Date())}-untitled.md`,
+      `/workspace/.ody-code/plans/${formatDatePrefix(new Date())}-add-a-billing-module.md`,
     );
     expect(mkdir).toHaveBeenCalledWith('/workspace/.ody-code/plans', { parents: true, existOk: true });
   });
@@ -1022,9 +1059,10 @@ describe('project-scoped directory resolution', () => {
       }
     });
     const ctx = testAgent({ kaos: createFakeKaos({ mkdir }), homedir: '/home/session' });
+    seedPrompt(ctx, 'add a billing module');
     await ctx.agent.sessionMode.enter('test-plan', false, false, 'plan');
     expect(ctx.agent.sessionMode.sessionModeFilePath).toBe(
-      `/home/session/plans/${formatDatePrefix(new Date())}-untitled.md`,
+      `/home/session/plans/${formatDatePrefix(new Date())}-add-a-billing-module.md`,
     );
     expect(mkdir).toHaveBeenCalledWith('/workspace/.ody-code/plans', { parents: true, existOk: true });
     expect(mkdir).toHaveBeenCalledWith('/home/session/plans', { parents: true, existOk: true });
@@ -1096,9 +1134,10 @@ describe('enter with project-scoped paths', () => {
   it('enters design mode in project-scoped designs directory', async () => {
     const mkdir = vi.fn().mockResolvedValue(undefined);
     const ctx = testAgent({ kaos: createFakeKaos({ mkdir }) });
+    seedPrompt(ctx, 'add a billing module');
     await ctx.agent.sessionMode.enter('test-design', false, false, 'design');
     expect(ctx.agent.sessionMode.sessionModeFilePath).toBe(
-      `/workspace/.ody-code/designs/${formatDatePrefix(new Date())}-untitled.md`,
+      `/workspace/.ody-code/designs/${formatDatePrefix(new Date())}-add-a-billing-module.md`,
     );
     expect(mkdir).toHaveBeenCalledWith('/workspace/.ody-code/designs', { parents: true, existOk: true });
   });

@@ -9,6 +9,7 @@ import {
   formatUtcTimestamp,
   slugifyTitle,
   stripMarkdownFormatting,
+  stripLocators,
 } from '../../../src/agent/session-mode/topic-generator';
 import type { Agent } from '../../../src/agent';
 
@@ -257,6 +258,40 @@ describe('extractTopicFromMessage', () => {
   });
 });
 
+
+describe('stripLocators', () => {
+  it('drops absolute paths glued after a CJK colon, keeping the prose', () => {
+    const msg =
+      '合并两份设计：/Users/ranwei/.ody-code/sessions/wd_x/agents/main/designs/jay-garrick-flash-monet.md\n/Users/ranwei/workspace/go_work/2026-06-06-frontend-backend-integration-design.md';
+    expect(stripLocators(msg)).toBe('合并两份设计：');
+  });
+
+  it('drops http(s) URLs', () => {
+    expect(stripLocators('see https://example.com/docs and fix it')).toBe('see and fix it');
+  });
+
+  it('drops relative paths with a file extension', () => {
+    expect(stripLocators('refactor src/agent/index.ts please')).toBe('refactor please');
+  });
+
+  it('drops ./ ../ ~/ prefixed paths', () => {
+    expect(stripLocators('compare ./a/b.md with ~/notes/c.md and ../d/e.md')).toBe('compare with and');
+  });
+
+  it('leaves ordinary slashed words (read/write, and/or) intact', () => {
+    expect(stripLocators('support read/write and/or stream modes')).toBe(
+      'support read/write and/or stream modes',
+    );
+  });
+
+  it('leaves prose with no locators untouched', () => {
+    expect(stripLocators('add a billing module')).toBe('add a billing module');
+  });
+
+  it('returns empty string when the message is only a path', () => {
+    expect(stripLocators('/Users/ranwei/workspace/x.md')).toBe('');
+  });
+});
 
 describe('heading & slug helpers', () => {
   it('extractFirstHeading finds first H1', () => {

@@ -7,6 +7,7 @@ import {
   extractTopicFromMessage,
   formatDatePrefix,
   slugifyTitle,
+  stripLocators,
   buildTitlePrompt,
 } from './topic-generator';
 
@@ -235,8 +236,14 @@ export class SessionMode {
    */
   private async resolveFilePathEagerly(dir: string): Promise<void> {
     if (this._sessionModeFilePath !== null) return;
+    // The topic source is the user's prompt. When the mode is activated BEFORE
+    // the first prompt (e.g. the session launches already in design mode), the
+    // history has no prompt yet — do NOT lock in an "untitled" placeholder, or
+    // it would stick forever and block the later prompt from naming the file.
+    // Defer to first-write resolution (resolveFilePathFromContent) instead.
+    const slug = this.topicSlugFromHistory();
+    if (slug === null) return;
     try {
-      const slug = this.topicSlugFromHistory() ?? 'untitled';
       const stem = await this.findUniqueStemInDir(dir, `${formatDatePrefix(new Date())}-${slug}`);
       this._sessionModeFilePath = join(dir, `${stem}.md`);
     } catch (error) {
@@ -248,7 +255,9 @@ export class SessionMode {
 
   /** Kebab topic from the latest real user message, or null when none is usable. */
   private topicSlugFromHistory(): string | null {
-    const lastUserMessage = this.agent.context.history.findLast(
+    const history = this.agent.context?.history;
+    if (history === undefined) return null;
+    const lastUserMessage = history.findLast(
       (msg) => msg.role === 'user' && msg.origin?.kind === 'user',
     );
     if (lastUserMessage === undefined) return null;
@@ -258,7 +267,9 @@ export class SessionMode {
       .join('')
       .trim();
     if (text.length === 0) return null;
-    return extractTopicFromMessage(text);
+    // Strip path/URL noise so the topic reflects intent ("合并两份设计"), not the
+    // file paths the user pasted ("合并两份设计-users-ranwei-ody-code").
+    return extractTopicFromMessage(stripLocators(text));
   }
 
   async resolveFilePathFromContent(content: string): Promise<string> {
@@ -268,17 +279,22 @@ export class SessionMode {
 
     const { dir } = await this.resolveSessionModeDirectory(this._kind);
 
-    const heading = extractFirstHeading(content);
-    let slug: string;
-    if (heading) {
-      slug = slugifyTitle(heading);
-    } else {
-      const title = await this.llmSummarizeTitle(content);
-      slug = title ? slugifyTitle(title) : 'untitled';
+    // Topic source priority: the user's prompt (now present even if the mode was
+    // entered before it), then the document's H1 heading, then an LLM summary,
+    // finally "untitled" as a last resort.
+    let slug = this.topicSlugFromHistory();
+    if (!slug) {
+      const heading = extractFirstHeading(content);
+      if (heading) {
+        slug = slugifyTitle(heading);
+      } else {
+        const title = await this.llmSummarizeTitle(content);
+        slug = title ? slugifyTitle(title) : 'untitled';
+      }
     }
 
     const datePrefix = formatDatePrefix(new Date());
-    const stem = `${datePrefix}-${slug}`;
+    const stem = `${datePrefix}-${slug && slug.length > 0 ? slug : 'untitled'}`;
     const finalStem = await this.findUniqueStemInDir(dir, stem);
     const path = join(dir, `${finalStem}.md`);
 

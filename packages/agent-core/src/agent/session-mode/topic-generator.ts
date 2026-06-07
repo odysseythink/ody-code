@@ -100,6 +100,31 @@ export function extractTopicFromMessage(
   return topic;
 }
 
+/**
+ * Remove filesystem paths and URLs from a user message so a topic extracted
+ * from it reflects the *intent* ("合并两份设计") rather than path noise
+ * ("合并两份设计-users-ranwei-ody-code"). Conservative by design: only strips
+ * tokens that clearly look like locators, leaving ordinary slashed words
+ * (e.g. `read/write`, `and/or`) untouched.
+ */
+export function stripLocators(text: string): string {
+  // Delimiters that bound a locator. A locator never spans these, so greedy
+  // matching cannot swallow the prose glued in front of a path (e.g. the CJK
+  // colon in "合并两份设计：/Users/...").
+  const D = '：:，,、。（()\\[\\]"\'？?！!';
+  const P = `[^\\s${D}]`; // a path/locator character
+  const lead = `(?<=^|[\\s${D}])`; // a locator starts at string start or after a delimiter
+  return text
+    .replace(/https?:\/\/\S+/gi, ' ')
+    // relative paths carrying a file extension: src/agent/index.ts, a/b.md
+    .replace(new RegExp(`${lead}${P}*\\/${P}*\\.[A-Za-z0-9]{1,8}(?![A-Za-z0-9])`, 'g'), ' ')
+    // absolute / ~/ ./ ../ slash-led paths (the slash must follow a delimiter,
+    // so "read/write" — slash after a letter — is left alone)
+    .replace(new RegExp(`${lead}[~.]*\\/${P}+`, 'g'), ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 export function formatUtcTimestamp(date: Date): string {
   const iso = date.toISOString();
   return (
