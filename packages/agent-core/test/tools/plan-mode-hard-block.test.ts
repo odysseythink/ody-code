@@ -108,10 +108,10 @@ describe('Plan mode permission policy', () => {
     });
 
     const writeDeny = expectDeny(write);
-    expect(writeDeny.message ?? '').toContain('current plan file');
+    expect(writeDeny.message ?? '').toContain('assigned plan file');
     expect(writeDeny.message ?? '').toContain('ExitPlanMode');
     const editDeny = expectDeny(edit);
-    expect(editDeny.message ?? '').toContain('current plan file');
+    expect(editDeny.message ?? '').toContain('assigned plan file');
   });
 
   it('blocks file edits when plan mode has no selected plan file path', async () => {
@@ -125,7 +125,7 @@ describe('Plan mode permission policy', () => {
     });
 
     const deny = expectDeny(result);
-    expect(deny.message ?? '').toContain('(no plan file selected yet)');
+    expect(deny.message ?? '').toContain('no plan file has been selected yet');
     expect(deny.message ?? '').toContain('ExitPlanMode');
   });
 
@@ -139,7 +139,7 @@ describe('Plan mode permission policy', () => {
     });
 
     const deny = expectDeny(result);
-    expect(deny.message ?? '').toContain('(no plan file selected yet)');
+    expect(deny.message ?? '').toContain('no plan file has been selected yet');
     expect(deny.message ?? '').toContain('ExitPlanMode');
   });
 
@@ -196,7 +196,7 @@ describe('Plan mode permission policy', () => {
     expect(sessionMode.isWritableSessionModePath(outside)).toBe(false);
 
     const deny = expectDeny(evaluatePlanPolicy(agent, 'Write', { path: outside, content: 'x' }));
-    expect(deny.message ?? '').toContain('current plan file');
+    expect(deny.message ?? '').toContain('assigned plan file');
   });
 
   it('blocks mixed plan-file and non-plan-file write accesses', async () => {
@@ -217,7 +217,7 @@ describe('Plan mode permission policy', () => {
     );
 
     const deny = expectDeny(result);
-    expect(deny.message ?? '').toContain('current plan file');
+    expect(deny.message ?? '').toContain('assigned plan file');
   });
 
   it('does not block read-only tools while plan mode is active', async () => {

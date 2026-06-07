@@ -62,6 +62,7 @@ const SELF_REVIEW = `## Self-review (reproduce all seven as - [ ] checkboxes in 
 - [ ] 7. Type consistency: types, signatures and property names used in later tasks match what earlier tasks defined.`;
 
 const INCREMENTAL_AND_SPLIT = `## Incremental writing & large plans
+The host has ALREADY assigned the plan file path — it is shown to you (labelled in the entry message and at the bottom of this reminder). Write the plan to EXACTLY that assigned path. Do NOT invent your own path, directory, or filename, and do NOT follow any other tool's or skill's location convention (e.g. \`.gpowers/…\` or \`docs/.../plans/…\`) — a write to any other path will be REJECTED by the write guard. A split plan's part files go in the \`<stem>/\` subdirectory of that exact path (below).
 Never emit the whole plan in one Write. Scaffold first (header + File Structure + Dependency Overview + Risks & Open Questions), save, THEN append one phase per Edit, and append the Self-Review last — so the document-level scaffolding can never be crowded out by task detail.
 Count the tasks first, then pick a layout:
   - ≤ 8 tasks → ONE file (the current plan file), written incrementally as above.
@@ -146,7 +147,7 @@ export function planModeEntryMessage(sessionModeFilePath: SessionModeFilePath): 
   const fileLine =
     sessionModeFilePath === null || sessionModeFilePath.length === 0
       ? 'No plan file path is available in this host yet; wait for one before calling ExitPlanMode, and do not use Write or Edit until then.'
-      : `Plan file: ${sessionModeFilePath}`;
+      : `Plan file: ${sessionModeFilePath}\nWrite the plan to EXACTLY this path (a split plan's parts go in the matching \`<stem>/\` subdirectory). Do NOT invent your own path, directory, or filename, and do NOT follow another tool's or skill's convention (e.g. \`.gpowers/…\`).`;
 
   return [
     'Plan mode is now active. This is an implementation-planning session: investigate with',

@@ -68,6 +68,7 @@ const STEP_3_PRESENT = `## Step 3 — Present the design incrementally
 Present the design in sections scaled to their complexity (architecture, components, data flow, error handling, testing). After EACH section, ask the user (via AskUserQuestion) whether it looks right before moving on. Be ready to go back and revise.`;
 
 const STEP_4_WRITE = `## Step 4 — Write the design file
+The host has ALREADY assigned the design file path — it is shown to you (labelled in the entry message and at the bottom of this reminder). Write the design to EXACTLY that assigned path. Do NOT invent your own path, directory, or filename, and do NOT follow any other tool's or skill's location convention (e.g. \`.gpowers/designs/…\` or \`docs/.../specs/…\`) — a write to any other path will be REJECTED by the write guard. For a split design, the part files go in the \`<stem>/\` subdirectory of that exact path (see "Incremental writing & large designs").
 Only after the design is agreed, write it to the design file with Write or Edit. Every section, config field, and interface MUST carry a decision-source tag:
   - [C:USER] — the user explicitly confirmed this.
   - [C:INFERRED] — you inferred it; call it out in the Assumptions chapter.
@@ -243,7 +244,7 @@ export function designModeEntryMessage(
   const fileLine =
     designFilePath === null || designFilePath.length === 0
       ? 'No design file path is available in this host yet; wait for one before calling ExitDesignMode.'
-      : `Design file: ${designFilePath}`;
+      : `Design file: ${designFilePath}\nWrite the design to EXACTLY this path (its split parts go in the matching \`<stem>/\` subdirectory). Do NOT invent your own path, directory, or filename, and do NOT follow another tool's or skill's convention (e.g. \`.gpowers/designs/…\`).`;
 
   return [
     'Design mode is now active. This is a brainstorming / spec-exploration session — NOT an',

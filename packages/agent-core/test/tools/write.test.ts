@@ -120,6 +120,34 @@ describe('WriteTool', () => {
     expect(result.output).toContain('Wrote 5 bytes');
   });
 
+  it('reports the host-assigned path (not the requested path) when session mode redirects the write', async () => {
+    const writeText = vi.fn().mockResolvedValue(6);
+    const redirectPath = '/workspace/.ody-code/designs/2026-01-01-foo.md';
+    const agent = {
+      kaos: createFakeKaos({ writeText, stat: DIR_STAT }),
+      config: { cwd: '/workspace' },
+      sessionMode: {
+        isActive: true,
+        sessionModeFilePath: null,
+        resolveFilePathFromContent: vi.fn().mockResolvedValue(redirectPath),
+      },
+    } as unknown as Agent;
+    const tool = new WriteTool(agent);
+
+    const result = await executeTool(
+      tool,
+      context({ path: '.gpowers/designs/my-slug.md', content: '# Foo' }),
+    );
+
+    // Bytes actually land at the host-assigned path, and the message says so —
+    // so the model stops believing its requested path is authoritative.
+    expect(writeText).toHaveBeenCalledWith(redirectPath, '# Foo');
+    expect(result.output).toContain(redirectPath);
+    expect(result.output).toContain('host-assigned');
+    expect(result.output).toContain('redirected here');
+    expect(result.output).not.toContain('Wrote 6 bytes to .gpowers/designs/my-slug.md');
+  });
+
   it('expands leading tilde paths using the kaos home directory', async () => {
     const writeText = vi.fn().mockResolvedValue(5);
     const tool = new WriteTool(mockAgent(createFakeKaos({ writeText, stat: DIR_STAT }), PERMISSIVE_WORKSPACE));

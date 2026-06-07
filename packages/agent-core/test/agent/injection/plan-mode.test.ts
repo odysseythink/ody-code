@@ -98,6 +98,26 @@ describe('PlanModeInjector content', () => {
     expect(entry).toContain('Plan mode is now active');
   });
 
+  // Path mandate: the host assigns the plan file path; the model must write to
+  // exactly it and must NOT invent its own path or follow another tool's/skill's
+  // convention (e.g. `.gpowers/…`).
+  it('carries the do-not-invent-a-path mandate in both the entry message and the full reminder', async () => {
+    const agent = planAgent({ isActive: true, sessionModeFilePath: '/tmp/plan.md' });
+    const injector = new PlanModeInjector(agent);
+    await injector.inject();
+    const full = lastReminder(agent);
+    const entry = planModeEntryMessage('/tmp/plan.md');
+
+    for (const marker of [
+      'Do NOT invent your own path',
+      '.gpowers/',
+      'REJECTED by the write guard',
+    ]) {
+      expect(full).toContain(marker);
+      expect(entry).toContain(marker);
+    }
+  });
+
   // Regression guard for the adversarial-review blades in plan-mode.
   // These catch the class of bug where a plan bakes in a filter/word-list that
   // contradicts the test assertion that must pass through it (e.g. 'auth' in the

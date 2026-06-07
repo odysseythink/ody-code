@@ -1,3 +1,5 @@
+import { basename } from 'pathe';
+
 import type { Agent } from '../..';
 import type { PermissionPolicy, PermissionPolicyContext, PermissionPolicyResult } from '../types';
 import { writeFileAccesses } from './file-access-ask';
@@ -62,8 +64,19 @@ function writesOnlyPlanFileset(context: PermissionPolicyContext, agent: Agent): 
 function modeWriteDeniedMessage(modeLabel: string, sessionModeFilePath: string | null): string {
   const Mode = modeLabel.charAt(0).toUpperCase() + modeLabel.slice(1);
   const exitTool = modeLabel === 'design' ? 'ExitDesignMode' : 'ExitPlanMode';
+  if (sessionModeFilePath === null) {
+    return (
+      `${Mode} mode is active, but no ${modeLabel} file has been selected yet. ` +
+      `Wait for the host to assign one before writing, or call ${exitTool} to exit ${modeLabel} mode.`
+    );
+  }
+  // Name the FULL writable set: the assigned file plus `.md` files inside its
+  // `<stem>/` subdirectory (split parts). A bare "only the file" message reads
+  // as "single file, no split" and pushes the model to merge parts into the index.
+  const stem = basename(sessionModeFilePath).replace(/\.md$/, '');
   return (
-    `${Mode} mode is active. You may only write to the current ${modeLabel} file: ${sessionModeFilePath ?? `(no ${modeLabel} file selected yet)`}. ` +
+    `${Mode} mode is active. You may only write to the assigned ${modeLabel} file (${sessionModeFilePath}) ` +
+    `or .md files inside its "${stem}/" subdirectory (where split parts go) — write split parts there, do NOT merge them into the index and do NOT invent another path. ` +
     `Call ${exitTool} to exit ${modeLabel} mode before editing other files.`
   );
 }

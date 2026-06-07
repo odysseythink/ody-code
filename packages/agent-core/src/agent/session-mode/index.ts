@@ -4,6 +4,7 @@ import { basename, dirname, join, normalize } from 'pathe';
 import type { Agent } from '..';
 import {
   extractFirstHeading,
+  extractTopicFromMessage,
   formatDatePrefix,
   slugifyTitle,
   buildTitlePrompt,
@@ -84,6 +85,12 @@ export class SessionMode {
           this.agent.log?.warn('Failed to update .gitignore', { error });
         }
       }
+
+      // Resolve an authoritative file path NOW (at entry), so the model is handed
+      // a concrete path up front and never invents its own (e.g. a `.gpowers/...`
+      // path from an unrelated convention). Best-effort: if it fails the path
+      // stays null and lazy resolution (resolveFilePathFromContent) takes over.
+      await this.resolveFilePathEagerly(dir);
 
       this.agent.records.logRecord({
         type: 'session_mode.enter',
@@ -199,6 +206,47 @@ export class SessionMode {
     if (!normalizedPath.startsWith(splitDir + '/')) return false;
     if (!basename(normalizedPath).endsWith('.md')) return false;
     return true;
+  }
+
+  /**
+   * Reserve the session-mode file path at entry time from the conversation topic.
+   * Sets {@link _sessionModeFilePath} so the guard's writable set and the
+   * entry message both have an authoritative path before the model writes
+   * anything (otherwise the model invents its own path — e.g. a `.gpowers/...`
+   * convention — and collides with the guard). No file is created here: the
+   * first Write creates it; this only reserves a deduplicated name.
+   *
+   * Uses a synchronous, non-LLM topic extraction from the latest user message —
+   * no model round-trip, so entering plan/design mode stays instant. Best-effort:
+   * any failure leaves the path null so {@link resolveFilePathFromContent} can
+   * resolve it lazily on first write instead.
+   */
+  private async resolveFilePathEagerly(dir: string): Promise<void> {
+    if (this._sessionModeFilePath !== null) return;
+    try {
+      const slug = this.topicSlugFromHistory() ?? 'untitled';
+      const stem = await this.findUniqueStemInDir(dir, `${formatDatePrefix(new Date())}-${slug}`);
+      this._sessionModeFilePath = join(dir, `${stem}.md`);
+    } catch (error) {
+      this.agent.log?.warn('Eager session-mode path resolution failed; will resolve lazily', {
+        error,
+      });
+    }
+  }
+
+  /** Kebab topic from the latest real user message, or null when none is usable. */
+  private topicSlugFromHistory(): string | null {
+    const lastUserMessage = this.agent.context.history.findLast(
+      (msg) => msg.role === 'user' && msg.origin?.kind === 'user',
+    );
+    if (lastUserMessage === undefined) return null;
+    const text = lastUserMessage.content
+      .filter((part) => part.type === 'text')
+      .map((part) => part.text)
+      .join('')
+      .trim();
+    if (text.length === 0) return null;
+    return extractTopicFromMessage(text);
   }
 
   async resolveFilePathFromContent(content: string): Promise<string> {

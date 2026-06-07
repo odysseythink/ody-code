@@ -59,7 +59,7 @@ export class WriteTool implements BuiltinTool<WriteInput> {
   ) {}
 
   async resolveExecution(args: WriteInput): Promise<ToolExecution> {
-    let path = resolvePathAccessPath(args.path, {
+    const requestedPath = resolvePathAccessPath(args.path, {
       kaos: this.agent.kaos,
       workspace: {
         workspaceDir: this.agent.config.cwd,
@@ -68,13 +68,20 @@ export class WriteTool implements BuiltinTool<WriteInput> {
       operation: 'write',
     });
 
-    // Lazy path resolution for plan/design mode
+    // Lazy path resolution for plan/design mode (fallback when the path was not
+    // already reserved eagerly at session-mode entry).
+    let path = requestedPath;
     if (
       this.agent.sessionMode.isActive &&
       this.agent.sessionMode.sessionModeFilePath === null
     ) {
       path = await this.agent.sessionMode.resolveFilePathFromContent(args.content);
     }
+    // When the host redirects the write to the assigned session-mode file, the
+    // success message MUST report where the bytes actually landed — otherwise the
+    // model keeps believing its requested path is authoritative and writes split
+    // parts to the wrong directory.
+    const redirected = path !== requestedPath;
 
     return {
       accesses: ToolAccesses.writeFile(path),
@@ -87,11 +94,15 @@ export class WriteTool implements BuiltinTool<WriteInput> {
           pathClass: this.agent.kaos.pathClass(),
           homeDir: this.agent.kaos.gethome(),
         }),
-      execute: () => this.execution(args, path),
+      execute: () => this.execution(args, path, redirected),
     };
   }
 
-  private async execution(args: WriteInput, safePath: string): Promise<ExecutableToolResult> {
+  private async execution(
+    args: WriteInput,
+    safePath: string,
+    redirected: boolean,
+  ): Promise<ExecutableToolResult> {
     const parentError = await this.checkParentDirectory(safePath);
     if (parentError !== undefined) {
       return { isError: true, output: parentError };
@@ -108,8 +119,12 @@ export class WriteTool implements BuiltinTool<WriteInput> {
       // length would only equal the byte count for pure ASCII content, so it
       // is not used here.
       const bytesWritten = Buffer.byteLength(args.content, 'utf8');
+      const verb = mode === 'append' ? 'Appended' : 'Wrote';
+      const target = redirected
+        ? `${safePath} (the host-assigned design/plan file path; your requested path "${args.path}" was redirected here — write split parts under its "<stem>/" subdirectory, not under your requested path)`
+        : args.path;
       return {
-        output: `${mode === 'append' ? 'Appended' : 'Wrote'} ${String(bytesWritten)} bytes to ${args.path}`,
+        output: `${verb} ${String(bytesWritten)} bytes to ${target}`,
       };
     } catch (error) {
       const code = (error as { code?: unknown } | null)?.code;
