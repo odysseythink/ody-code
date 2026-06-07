@@ -1,6 +1,8 @@
 import type { ToolCall } from '@odysseythink/kosong';
+import { basename, dirname, join } from 'pathe';
 import { describe, expect, it, vi } from 'vitest';
 
+import { splitContinuationDirective } from '../../src/agent/injection/plan-mode-contract';
 import { formatDatePrefix } from '../../src/agent/session-mode/topic-generator';
 import { createFakeKaos } from '../tools/fixtures/fake-kaos';
 import { createCommandKaos, testAgent } from './harness/agent';
@@ -876,6 +878,31 @@ describe('isWritableSessionModePath subdirectory model', () => {
     (ctx.agent.sessionMode as unknown as { _sessionModeFilePath: string | null })._sessionModeFilePath = '/workspace/.ody-code/plans/2026-06-06-foo.md';
 
     expect(ctx.agent.sessionMode.isWritableSessionModePath('/workspace/.ody-code/plans/2026-06-06-foo/../2026-06-06-bar.md')).toBe(false);
+  });
+
+  // Integration lock: the split-continuation directive's emitted write target
+  // MUST be a path the guard actually allows. This is the exact contradiction
+  // that caused the production bug (directive said same-dir `<id>-<sub>.md`, the
+  // guard only allowed the `<id>/` subdirectory). Extract the target from the
+  // directive TEXT (not by recomputing it) so re-introducing the same-dir form
+  // would resolve to a guard-denied path and fail here.
+  it('emits a continuation-directive target the write guard allows', async () => {
+    const index = '/workspace/.ody-code/plans/2026-06-06-foo.md';
+    const ctx = testAgent({ kaos: createPlanKaos() });
+    await ctx.agent.sessionMode.enter('test-id', false, false, 'plan');
+    (ctx.agent.sessionMode as unknown as { _sessionModeFilePath: string | null })._sessionModeFilePath = index;
+
+    const indexStem = basename(index).replace(/\.md$/, '');
+    const directive = splitContinuationDirective({ file: 'api.md', scope: 'endpoints' }, indexStem);
+
+    // The directive states `write ONLY \`<target>\`` — pull that first quoted token.
+    const target = directive.match(/write ONLY `([^`]+)`/)?.[1];
+    expect(target).toBe('2026-06-06-foo/api.md');
+
+    // Resolve the (index-relative) target against the index's directory, then
+    // assert the guard permits exactly that absolute path.
+    const absolute = join(dirname(index), target ?? '');
+    expect(ctx.agent.sessionMode.isWritableSessionModePath(absolute)).toBe(true);
   });
 });
 

@@ -212,15 +212,18 @@ describe('PlanModeInjector split-plan steering', () => {
       '## Parts',
       '| # | File | Scope | Status |',
       '|---|---|---|---|',
-      '| 1 | plan-core.md | models | done |',
-      '| 2 | plan-api.md | endpoints | pending |',
+      '| 1 | plan/core.md | models | done |',
+      '| 2 | plan/api.md | endpoints | pending |',
     ].join('\n');
     history(agent).push({ role: 'user', content: [{ text: 'continue' }] });
     await injector.inject();
 
     const text = lastReminder(agent);
     expect(text).toContain('Split plan in progress');
-    expect(text).toContain('plan-api.md');
+    // Target reconstructed as `<index-stem>/<part-basename>` = `plan/api.md`.
+    // Assert the subdirectory form (NOT the old same-dir `plan-api.md`), so a
+    // regression to "write next to the index" would fail this test.
+    expect(text).toContain('plan/api.md');
     expect(text).not.toContain('Split plan — all parts written');
   });
 
@@ -233,8 +236,8 @@ describe('PlanModeInjector split-plan steering', () => {
     stub.content = [
       '| # | File | Scope | Status |',
       '|---|---|---|---|',
-      '| 1 | plan-core.md | models | done |',
-      '| 2 | plan-api.md | endpoints | done |',
+      '| 1 | plan/core.md | models | done |',
+      '| 2 | plan/api.md | endpoints | done |',
     ].join('\n');
     history(agent).push({ role: 'user', content: [{ text: 'continue' }] });
     await injector.inject();
