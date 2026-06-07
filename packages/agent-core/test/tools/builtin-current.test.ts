@@ -56,6 +56,14 @@ function context<Input>(args: Input, toolCallId = 'call_1') {
   return { turnId: '0', toolCallId, args, signal };
 }
 
+function mockAgent(kaos: ReturnType<typeof createFakeKaos>, workspaceConfig: WorkspaceConfig): Agent {
+  return {
+    kaos,
+    config: { cwd: workspaceConfig.workspaceDir },
+    sessionMode: { isActive: false, sessionModeFilePath: null },
+  } as unknown as Agent;
+}
+
 function mockSubagentHost<T extends Pick<SessionSubagentHost, 'spawn'> & Partial<SessionSubagentHost>>(
   host: T,
 ): T & SessionSubagentHost {
@@ -111,8 +119,10 @@ describe('current builtin file and shell tools', () => {
   it('Write exposes parameters and writes through kaos', async () => {
     const writeText = vi.fn().mockResolvedValue(5);
     const tool = new WriteTool(
-      createFakeKaos({ writeText, stat: vi.fn<Kaos['stat']>().mockResolvedValue(directoryStat) }),
-      workspace,
+      mockAgent(
+        createFakeKaos({ writeText, stat: vi.fn<Kaos['stat']>().mockResolvedValue(directoryStat) }),
+        workspace,
+      ),
     );
 
     expect(WriteInputSchema.safeParse({ path: '/workspace/a.txt', content: 'hello' }).success).toBe(
@@ -130,8 +140,10 @@ describe('current builtin file and shell tools', () => {
 
   it('Edit exposes parameters and errors when old_string is missing', async () => {
     const tool = new EditTool(
-      createFakeKaos({ readText: vi.fn().mockResolvedValue('alpha\nbeta\n') }),
-      workspace,
+      mockAgent(
+        createFakeKaos({ readText: vi.fn().mockResolvedValue('alpha\nbeta\n') }),
+        workspace,
+      ),
     );
 
     expect(

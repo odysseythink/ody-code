@@ -319,10 +319,9 @@ function isVolatileDurationKey(key: string): boolean {
 
 function isPlanModeReminder(value: string): boolean {
   return (
-    (value.includes('Plan mode is active') ||
-      value.includes('Plan mode still active') ||
-      value.includes('Re-entering Plan Mode')) &&
-    value.includes('Plan file:')
+    value.includes('Plan mode is active') ||
+    value.includes('Plan mode still active') ||
+    value.includes('Re-entering Plan Mode')
   );
 }
 

@@ -9,7 +9,6 @@ import type { Agent } from '#/agent';
 import { z } from 'zod';
 
 import { planModeEntryMessage } from '../../../agent/injection/plan-mode-contract';
-import { cleanupTopic } from '../../../agent/session-mode/topic-generator';
 import type { BuiltinTool } from '../../../agent/tool';
 import type { ToolExecution } from '../../../loop/types';
 import { toInputJsonSchema } from '../../support/input-schema';
@@ -17,11 +16,7 @@ import DESCRIPTION from './enter-plan-mode.md';
 
 // ── Input schema ─────────────────────────────────────────────────────
 
-export const EnterPlanModeInputSchema = z
-  .object({
-    topic: z.string().max(100).optional(),
-  })
-  .strict();
+export const EnterPlanModeInputSchema = z.object({}).strict();
 export type EnterPlanModeInput = z.infer<typeof EnterPlanModeInputSchema>;
 
 export class EnterPlanModeTool implements BuiltinTool<EnterPlanModeInput> {
@@ -44,16 +39,8 @@ export class EnterPlanModeTool implements BuiltinTool<EnterPlanModeInput> {
           };
         }
 
-        let fileStem: string | undefined;
-        if (_args.topic !== undefined) {
-          const cleaned = cleanupTopic(_args.topic);
-          if (cleaned !== null) {
-            fileStem = cleaned;
-          }
-        }
-
         try {
-          await this.agent.sessionMode.enter(undefined, undefined, undefined, 'plan', fileStem);
+          await this.agent.sessionMode.enter(undefined, undefined, undefined, 'plan');
         } catch (error) {
           const message = error instanceof Error ? error.message : 'Failed to enter plan mode.';
           return { isError: true, output: `Failed to enter plan mode: ${message}` };

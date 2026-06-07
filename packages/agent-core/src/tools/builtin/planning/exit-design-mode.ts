@@ -119,7 +119,6 @@ export class ExitDesignModeTool implements BuiltinTool<ExitDesignModeInput> {
       };
     }
 
-    await this.agent.sessionMode.finalizeFileName();
     const resolved = await this.resolveDesign();
     if (!resolved.ok) return resolved.error as ExecutableToolResult;
 

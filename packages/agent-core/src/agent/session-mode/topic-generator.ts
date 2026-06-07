@@ -14,6 +14,15 @@ export interface TopicGeneratorOptions {
   readonly sensitiveWords?: readonly string[];
 }
 
+export function buildTitlePrompt(documentContent: string): string {
+  return `Given the following markdown document, produce a concise, filesystem-safe title (max 5 words, English or matching the document language). Do not quote secrets, API keys, or PII. Output ONLY the title, no explanation.
+
+Document:
+---
+${documentContent}
+---`;
+}
+
 export function buildTopicPrompt(userMessageText: string): string {
   return `You are a concise topic extractor. Based on the user's message below, generate a short English topic phrase (2-5 words) in kebab-case (lowercase, hyphen-separated).
 

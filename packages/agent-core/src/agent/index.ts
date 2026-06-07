@@ -361,18 +361,16 @@ export class Agent {
           this.sessionMode.isActive &&
           this.sessionMode.kind !== (payload.kind ?? 'plan')
         ) {
-          await this.sessionMode.finalizeFileName();
+          // No finalize needed — path is resolved lazily on first write
         }
         await this.sessionMode.enter(
           undefined,
           undefined,
           undefined,
           payload.kind ?? 'plan',
-          payload.fileStem,
         );
       },
       cancelPlan: async (payload) => {
-        await this.sessionMode.finalizeFileName();
         this.sessionMode.cancel(payload.id);
       },
       clearPlan: () => this.sessionMode.clear(),

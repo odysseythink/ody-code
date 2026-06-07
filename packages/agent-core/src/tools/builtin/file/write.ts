@@ -5,7 +5,7 @@
  * Path access policy is resolved before any Kaos I/O.
  */
 
-import type { Kaos } from '@odysseythink/kaos';
+import type { Agent } from '../../../agent';
 import { dirname } from 'pathe';
 import { z } from 'zod';
 
@@ -15,7 +15,6 @@ import type { ExecutableToolResult, ToolExecution } from '../../../loop/types';
 import { resolvePathAccessPath } from '../../policies/path-access';
 import { toInputJsonSchema } from '../../support/input-schema';
 import { literalRulePattern, matchesPathRuleSubject } from '../../support/rule-match';
-import type { WorkspaceConfig } from '../../support/workspace';
 import WRITE_DESCRIPTION from './write.md';
 
 /** Mask isolating the file-type bits of a stat mode. */
@@ -56,16 +55,27 @@ export class WriteTool implements BuiltinTool<WriteInput> {
   readonly parameters: Record<string, unknown> = toInputJsonSchema(WriteInputSchema);
 
   constructor(
-    private readonly kaos: Kaos,
-    private readonly workspace: WorkspaceConfig,
+    private readonly agent: Agent,
   ) {}
 
-  resolveExecution(args: WriteInput): ToolExecution {
-    const path = resolvePathAccessPath(args.path, {
-      kaos: this.kaos,
-      workspace: this.workspace,
+  async resolveExecution(args: WriteInput): Promise<ToolExecution> {
+    let path = resolvePathAccessPath(args.path, {
+      kaos: this.agent.kaos,
+      workspace: {
+        workspaceDir: this.agent.config.cwd,
+        additionalDirs: [],
+      },
       operation: 'write',
     });
+
+    // Lazy path resolution for plan/design mode
+    if (
+      this.agent.sessionMode.isActive &&
+      this.agent.sessionMode.sessionModeFilePath === null
+    ) {
+      path = await this.agent.sessionMode.resolveFilePathFromContent(args.content);
+    }
+
     return {
       accesses: ToolAccesses.writeFile(path),
       description: `Writing ${args.path}`,
@@ -73,9 +83,9 @@ export class WriteTool implements BuiltinTool<WriteInput> {
       approvalRule: literalRulePattern(this.name, path),
       matchesRule: (ruleArgs) =>
         matchesPathRuleSubject(ruleArgs, path, {
-          cwd: this.workspace.workspaceDir,
-          pathClass: this.kaos.pathClass(),
-          homeDir: this.kaos.gethome(),
+          cwd: this.agent.config.cwd,
+          pathClass: this.agent.kaos.pathClass(),
+          homeDir: this.agent.kaos.gethome(),
         }),
       execute: () => this.execution(args, path),
     };
@@ -90,9 +100,9 @@ export class WriteTool implements BuiltinTool<WriteInput> {
     try {
       const mode = args.mode ?? 'overwrite';
       if (mode === 'append') {
-        await this.kaos.writeText(safePath, args.content, { mode: 'a' });
+        await this.agent.kaos.writeText(safePath, args.content, { mode: 'a' });
       } else {
-        await this.kaos.writeText(safePath, args.content);
+        await this.agent.kaos.writeText(safePath, args.content);
       }
       // Report the number of UTF-8 bytes this call wrote to disk. The string
       // length would only equal the byte count for pure ASCII content, so it
@@ -130,7 +140,7 @@ export class WriteTool implements BuiltinTool<WriteInput> {
     const parent = dirname(safePath);
     let stat;
     try {
-      stat = await this.kaos.stat(parent);
+      stat = await this.agent.kaos.stat(parent);
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
         return `Parent directory does not exist: ${parent}. Create it before writing this file.`;

@@ -17,6 +17,7 @@ const signal = new AbortController().signal;
 async function activePlanAgent(): Promise<{ agent: Agent; sessionMode: SessionMode }> {
   const agent = {
     homedir: '/tmp/kimi-plan-test',
+    config: { cwd: '/tmp/kimi-plan-test' },
     emitStatusUpdated: vi.fn(),
     records: { logRecord: vi.fn() },
     replayBuilder: { push: vi.fn() },
@@ -27,6 +28,8 @@ async function activePlanAgent(): Promise<{ agent: Agent; sessionMode: SessionMo
   const sessionMode = new SessionMode(agent);
   Object.assign(agent, { sessionMode });
   await sessionMode.enter('current-plan', false);
+  // Set a realistic path so permission tests have something to compare against
+  (sessionMode as unknown as { _sessionModeFilePath: string })._sessionModeFilePath = '/tmp/kimi-plan-test/plans/2026-06-06-foo.md';
   return { agent, sessionMode };
 }
 
@@ -179,22 +182,17 @@ describe('Plan mode permission policy', () => {
     expect(result).toBeUndefined();
   });
 
-  it('allows writing split sibling files in the plan directory', async () => {
+  it('allows writing split files in the subdirectory named after the main stem', async () => {
     const { agent, sessionMode } = await activePlanAgent();
-    const planPath = sessionMode.sessionModeFilePath;
-    if (planPath === null) throw new Error('expected plan path');
-    // planPath is `<dir>/current-plan.md`; siblings are `<dir>/current-plan-*.md`.
-    const sibling = planPath.replace(/current-plan\.md$/, 'current-plan-core.md');
-    expect(sibling).not.toBe(planPath);
+    const splitFile = '/tmp/kimi-plan-test/plans/2026-06-06-foo/subsystem-a.md';
 
-    expect(sessionMode.isWritableSessionModePath(sibling)).toBe(true);
-    expect(evaluatePlanPolicy(agent, 'Write', { path: sibling, content: 'x' })).toBeUndefined();
+    expect(sessionMode.isWritableSessionModePath(splitFile)).toBe(true);
+    expect(evaluatePlanPolicy(agent, 'Write', { path: splitFile, content: 'x' })).toBeUndefined();
   });
 
-  it('blocks writes to a same-named file in a different directory', async () => {
+  it('blocks writes outside the main file or its subdirectory', async () => {
     const { agent, sessionMode } = await activePlanAgent();
-    // Same basename family but outside the plan directory must stay denied.
-    const outside = '/workspace/src/current-plan-core.md';
+    const outside = '/tmp/kimi-plan-test/plans/2026-06-06-bar/subsystem.md';
     expect(sessionMode.isWritableSessionModePath(outside)).toBe(false);
 
     const deny = expectDeny(evaluatePlanPolicy(agent, 'Write', { path: outside, content: 'x' }));

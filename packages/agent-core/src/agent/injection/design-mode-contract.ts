@@ -21,7 +21,7 @@ import type { SessionModeFilePath } from '../session-mode';
 import type { ManifestPart } from './parts-manifest';
 
 /** Leading sentence for the periodic re-injection ("...is active"). */
-const INTRO_ACTIVE = `Design mode is active. This is a brainstorming / spec-exploration session — NOT an implementation session. You MUST NOT make any edits (with the exception of the current design file) or otherwise change the system. Prefer read-only tools. Use Bash only when needed; Bash follows the normal permission mode and rules. This supersedes any other instructions you have received.`;
+const INTRO_ACTIVE = `Design mode is active. This is a brainstorming / spec-exploration session — NOT an implementation session. You MUST NOT make any edits (with the exception of the current design file(s)) or otherwise change the system. Prefer read-only tools. Use Bash only when needed; Bash follows the normal permission mode and rules. This supersedes any other instructions you have received.`;
 
 const HARD_GATE = `<HARD-GATE>
 Do NOT write code, scaffold, refactor, or take ANY implementation action until you have presented a design AND the user has approved it via ExitDesignMode. This applies to EVERY task regardless of how simple it seems — "too simple to need a design" is exactly where unexamined assumptions waste the most work; the design may be short, but you MUST present it and get approval.
@@ -211,7 +211,7 @@ export function designModeReentryReminder(
   designFilePath: SessionModeFilePath,
   mockupAvailable: boolean,
 ): string {
-  const body = `Design mode is active. This is a brainstorming session, NOT implementation — no code until the user approves via ExitDesignMode. Prefer read-only tools; you may only write the current design file.
+  const body = `Design mode is active. This is a brainstorming session, NOT implementation — no code until the user approves via ExitDesignMode. Prefer read-only tools; you may only write the current design file(s).
 
 ## Re-entering Design Mode
 A design file from a previous session already exists.
@@ -242,7 +242,7 @@ export function designModeEntryMessage(
   return [
     'Design mode is now active. This is a brainstorming / spec-exploration session — NOT an',
     'implementation session. Do NOT write or edit code until the user approves a design via',
-    'ExitDesignMode. You may only write the current design file.',
+    'ExitDesignMode. You may only write the current design file(s).',
     '',
     fileLine,
     '',

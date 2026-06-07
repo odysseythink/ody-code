@@ -80,12 +80,10 @@ describe('EnterPlanModeTool', () => {
     expect(tool.description).toContain('When NOT to use');
     expect(tool.description).toContain('subagent_type="explore"');
     expect(EnterPlanModeInputSchema.safeParse({}).success).toBe(true);
-    expect(EnterPlanModeInputSchema.safeParse({ topic: 'Auth Refactor' }).success).toBe(true);
+    expect(EnterPlanModeInputSchema.safeParse({ topic: 'Auth Refactor' }).success).toBe(false);
     expect(tool.parameters).toMatchObject({
       type: 'object',
-      properties: {
-        topic: { type: 'string' },
-      },
+      properties: {},
     });
     expect((tool.parameters['properties'] as Record<string, unknown>)['reason']).toBeUndefined();
   });
@@ -128,30 +126,9 @@ describe('EnterPlanModeTool', () => {
         undefined,
         undefined,
         'plan',
-        undefined,
       );
     },
   );
-
-  it('uses user-provided topic when given', async () => {
-    const { agent, enterSpy } = makeAgent({ mode: 'yolo' });
-
-    const result = await executeTool(new EnterPlanModeTool(agent), {
-      turnId: '0',
-      toolCallId: 'tc_topic',
-      args: { topic: 'User Profile' },
-      signal,
-    });
-
-    expect(result.isError).toBeFalsy();
-    expect(enterSpy).toHaveBeenCalledWith(
-      undefined,
-      undefined,
-      undefined,
-      'plan',
-      'user-profile',
-    );
-  });
 
   it('uses inline guidance when no plan file path is available', async () => {
     const { agent } = makeAgent({ mode: 'yolo', sessionModeFilePath: null });

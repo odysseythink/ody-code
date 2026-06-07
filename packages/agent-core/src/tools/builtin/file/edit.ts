@@ -8,7 +8,7 @@
  * Kaos I/O.
  */
 
-import type { Kaos } from '@odysseythink/kaos';
+import type { Agent } from '../../../agent';
 import { z } from 'zod';
 
 import type { BuiltinTool } from '../../../agent/tool';
@@ -17,7 +17,6 @@ import type { ExecutableToolResult, ToolExecution } from '../../../loop/types';
 import { resolvePathAccessPath } from '../../policies/path-access';
 import { toInputJsonSchema } from '../../support/input-schema';
 import { literalRulePattern, matchesPathRuleSubject } from '../../support/rule-match';
-import type { WorkspaceConfig } from '../../support/workspace';
 import { materializeModelText, toModelTextView } from './line-endings';
 import EDIT_DESCRIPTION from './edit.md';
 
@@ -61,14 +60,16 @@ export class EditTool implements BuiltinTool<EditInput> {
   readonly parameters: Record<string, unknown> = toInputJsonSchema(EditInputSchema);
 
   constructor(
-    private readonly kaos: Kaos,
-    private readonly workspace: WorkspaceConfig,
+    private readonly agent: Agent,
   ) {}
 
   resolveExecution(args: EditInput): ToolExecution {
     const path = resolvePathAccessPath(args.path, {
-      kaos: this.kaos,
-      workspace: this.workspace,
+      kaos: this.agent.kaos,
+      workspace: {
+        workspaceDir: this.agent.config.cwd,
+        additionalDirs: [],
+      },
       operation: 'write',
     });
     return {
@@ -84,9 +85,9 @@ export class EditTool implements BuiltinTool<EditInput> {
       approvalRule: literalRulePattern(this.name, path),
       matchesRule: (ruleArgs) =>
         matchesPathRuleSubject(ruleArgs, path, {
-          cwd: this.workspace.workspaceDir,
-          pathClass: this.kaos.pathClass(),
-          homeDir: this.kaos.gethome(),
+          cwd: this.agent.config.cwd,
+          pathClass: this.agent.kaos.pathClass(),
+          homeDir: this.agent.kaos.gethome(),
         }),
       execute: () => this.execution(args, path),
     };
@@ -101,7 +102,7 @@ export class EditTool implements BuiltinTool<EditInput> {
     }
 
     try {
-      const raw = await this.kaos.readText(safePath);
+      const raw = await this.agent.kaos.readText(safePath);
       const modelView = toModelTextView(raw);
       const content = modelView.text;
       const replaceAll = args.replace_all ?? false;
@@ -130,7 +131,7 @@ export class EditTool implements BuiltinTool<EditInput> {
         }
 
         const newContent = replaceOnceLiteral(content, args.old_string, args.new_string);
-        await this.kaos.writeText(
+        await this.agent.kaos.writeText(
           safePath,
           materializeModelText(newContent, modelView.lineEndingStyle),
         );
@@ -145,7 +146,7 @@ export class EditTool implements BuiltinTool<EditInput> {
       }
 
       const newContent = parts.join(args.new_string);
-      await this.kaos.writeText(
+      await this.agent.kaos.writeText(
         safePath,
         materializeModelText(newContent, modelView.lineEndingStyle),
       );

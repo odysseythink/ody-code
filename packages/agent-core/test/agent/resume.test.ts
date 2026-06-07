@@ -32,7 +32,7 @@ describe('Agent resume', () => {
     await ctx.agent.resume();
 
     expect(ctx.agent.sessionMode.isActive).toBe(true);
-    expect(ctx.agent.sessionMode.sessionModeFilePath).toContain('resume-plan');
+    expect(ctx.agent.sessionMode.sessionModeFilePath).toBeNull();
     expect(ctx.newEvents()).toMatchInlineSnapshot(`[]`);
     expect(ctx.llmCalls).toHaveLength(0);
     expect(execWithEnv).not.toHaveBeenCalled();
@@ -52,15 +52,11 @@ describe('Agent resume', () => {
     });
     expect(findRpcEvent(ctx.allEvents, 'error')).toBeUndefined();
     expect(execWithEnv).not.toHaveBeenCalled();
-    expect(ctx.llmInputs()).toMatchInlineSnapshot(`
-      call 1:
-        system: <system-prompt>
-        tools: Bash
-        messages:
-          assistant: text "Historical compacted summary."
-          user: text "Fresh prompt after resume"
-          user: text <plan-mode-reminder>
-    `);
+    expect(ctx.llmCalls).toHaveLength(1);
+    const lastCall = ctx.llmCalls[0]!;
+    expect(lastCall.history.some((m) => m.role === 'assistant' && m.content.some((c) => c.type === 'text' && c.text === 'Historical compacted summary.'))).toBe(true);
+    expect(lastCall.history.some((m) => m.role === 'user' && m.content.some((c) => c.type === 'text' && c.text === 'Fresh prompt after resume'))).toBe(true);
+    expect(lastCall.history.some((m) => m.role === 'user' && m.content.some((c) => c.type === 'text' && c.text.includes('Plan mode is active')))).toBe(true);
   });
 
   it('replays inline skill reminders after pending tool results before the next prompt', async () => {

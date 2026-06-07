@@ -12,6 +12,13 @@ function createPlanKaos(overrides: Parameters<typeof createFakeKaos>[0] = {}) {
   });
 }
 
+async function setPlanPath(
+  ctx: ReturnType<typeof testAgent>,
+  path = '/workspace/.ody-code/plans/test-plan.md',
+): Promise<void> {
+  (ctx.agent.sessionMode as unknown as { _sessionModeFilePath: string | null })._sessionModeFilePath = path;
+}
+
 describe('manual plan entry', () => {
   it('keeps permission gating out of the SessionMode state object', () => {
     const ctx = testAgent();
@@ -30,7 +37,7 @@ describe('manual plan entry', () => {
     await delay(10);
 
     expect(ctx.agent.sessionMode.isActive).toBe(true);
-    expect(ctx.agent.sessionMode.sessionModeFilePath).toMatch(/\.md$/);
+    expect(ctx.agent.sessionMode.sessionModeFilePath).toBeNull();
     expect(mkdir).toHaveBeenCalledWith('/workspace/.ody-code/plans', { parents: true, existOk: true });
     expect(writeText).not.toHaveBeenCalled();
     expect(ctx.allEvents.some((event) => event.event === 'turn.started')).toBe(false);
@@ -45,9 +52,7 @@ describe('manual plan entry', () => {
     });
     await ctx.agent.sessionMode.enter('stable-plan');
 
-    const livePath = ctx.agent.sessionMode.sessionModeFilePath;
-    if (livePath === null) throw new Error('expected active plan path');
-    expect(livePath).toBe('/workspace/.ody-code/plans/stable-plan.md');
+    expect(ctx.agent.sessionMode.sessionModeFilePath).toBeNull();
 
     const enterRecord = ctx.allEvents.find(
       (event) => event.type === '[wire]' && event.event === 'session_mode.enter',
@@ -55,7 +60,6 @@ describe('manual plan entry', () => {
     expect(enterRecord?.args).toEqual({
       id: 'stable-plan',
       kind: 'plan',
-      path: '/workspace/.ody-code/plans/stable-plan.md',
       time: expect.any(Number),
     });
 
@@ -63,40 +67,10 @@ describe('manual plan entry', () => {
     resumed.dispatch({
       type: 'session_mode.enter',
       id: 'stable-plan',
-      path: livePath,
+      path: '/workspace/.ody-code/plans/stable-plan.md',
     });
 
-    expect(resumed.agent.sessionMode.sessionModeFilePath).toBe(livePath);
-  });
-
-  it('uses fileStem for plan path when provided and restores it from wire records', async () => {
-    const ctx = testAgent({
-      kaos: createPlanKaos(),
-    });
-    await ctx.agent.sessionMode.enter('plan-id', false, true, 'plan', 'custom-stem');
-
-    expect(ctx.agent.sessionMode.sessionModeFilePath).toBe('/workspace/.ody-code/plans/custom-stem.md');
-    expect(ctx.agent.sessionMode.fileStem).toBe('custom-stem');
-
-    const enterRecord = ctx.allEvents.find(
-      (event) => event.type === '[wire]' && event.event === 'session_mode.enter',
-    );
-    expect(enterRecord?.args).toMatchObject({
-      id: 'plan-id',
-      kind: 'plan',
-      fileStem: 'custom-stem',
-    });
-
-    const resumed = testAgent({ kaos: createFakeKaos() });
-    resumed.dispatch({
-      type: 'session_mode.enter',
-      id: 'plan-id',
-      fileStem: 'custom-stem',
-      path: '/workspace/.ody-code/plans/custom-stem.md',
-    });
-
-    expect(resumed.agent.sessionMode.sessionModeFilePath).toBe('/workspace/.ody-code/plans/custom-stem.md');
-    expect(resumed.agent.sessionMode.fileStem).toBe('custom-stem');
+    expect(resumed.agent.sessionMode.sessionModeFilePath).toBeNull();
   });
 
   it('enters plan mode through the EnterPlanMode tool and reminds the next step', async () => {
@@ -141,6 +115,7 @@ describe('plan clear', () => {
       kaos: createPlanKaos({ mkdir, readText, writeText }),
     });
     await ctx.agent.sessionMode.enter('test-plan', false);
+    await setPlanPath(ctx);
 
     const planPath = ctx.agent.sessionMode.sessionModeFilePath;
     if (planPath === null) throw new Error('expected active plan path');
@@ -171,6 +146,7 @@ describe('plan exit tool', () => {
     ctx.configure({ tools: ['ExitPlanMode'] });
     await ctx.rpc.setPermission({ mode: 'auto' });
     await ctx.agent.sessionMode.enter('test-plan', false);
+    await setPlanPath(ctx);
 
     const planPath = ctx.agent.sessionMode.sessionModeFilePath;
     if (planPath === null) throw new Error('expected active plan path');
@@ -207,6 +183,7 @@ describe('plan exit tool', () => {
     ctx.configure({ tools: ['ExitPlanMode'] });
     await ctx.rpc.setPermission({ mode: 'manual' });
     await ctx.agent.sessionMode.enter('reject-plan', false);
+    await setPlanPath(ctx);
 
     const planPath = ctx.agent.sessionMode.sessionModeFilePath;
     if (planPath === null) throw new Error('expected active plan path');
@@ -245,6 +222,7 @@ describe('plan exit tool', () => {
     ctx.configure({ tools: ['ExitPlanMode', 'Bash'] });
     await ctx.rpc.setPermission({ mode: 'yolo' });
     await ctx.agent.sessionMode.enter('reject-and-exit-plan', false);
+    await setPlanPath(ctx);
 
     const planPath = ctx.agent.sessionMode.sessionModeFilePath;
     if (planPath === null) throw new Error('expected active plan path');
@@ -322,6 +300,7 @@ describe('plan exit tool options', () => {
     ctx.configure({ tools: ['ExitPlanMode'] });
     await ctx.rpc.setPermission({ mode: 'manual' });
     await ctx.agent.sessionMode.enter('options-plan', false);
+    await setPlanPath(ctx);
 
     const planPath = ctx.agent.sessionMode.sessionModeFilePath;
     if (planPath === null) throw new Error('expected active plan path');
@@ -374,6 +353,7 @@ describe('plan allows safe tool flow', () => {
       });
       ctx.configure({ tools: [toolName] });
       await ctx.agent.sessionMode.enter('test-plan', false);
+      await setPlanPath(ctx);
 
       const planPath = ctx.agent.sessionMode.sessionModeFilePath;
       if (planPath === null) throw new Error('expected active plan path');
@@ -424,6 +404,7 @@ describe('plan allows safe tool flow', () => {
       reason: 'blocked by test',
     });
     await ctx.agent.sessionMode.enter('test-plan', false);
+    await setPlanPath(ctx);
 
     const planPath = ctx.agent.sessionMode.sessionModeFilePath;
     if (planPath === null) throw new Error('expected active plan path');
@@ -466,38 +447,12 @@ describe('plan allows safe tool flow', () => {
     ctx.mockNextResponse({ type: 'text', text: 'I will inspect safely.' }, bashCall);
     ctx.mockNextResponse({ type: 'text', text: 'The safe command printed plan-safe.' });
     await ctx.rpc.prompt({ input: [{ type: 'text', text: 'Inspect without mutating files' }] });
-    expect(await ctx.untilTurnEnd()).toMatchInlineSnapshot(`
-      [wire] permission.set_mode         { "mode": "yolo", "time": "<time>" }
-      [emit] agent.status.updated        { "model": "mock-model", "contextTokens": 0, "maxContextTokens": 1000000, "contextUsage": 0, "sessionMode": "normal", "sessionModeFilePath": null, "permission": "yolo" }
-      [wire] session_mode.enter          { "id": "test-plan", "kind": "plan", "path": "/Users/ranwei/workspace/ody-code/.ody-code/plans/test-plan.md", "time": "<time>" }
-      [emit] agent.status.updated        { "model": "mock-model", "contextTokens": 0, "maxContextTokens": 1000000, "contextUsage": 0, "sessionMode": "plan", "sessionModeFilePath": "/Users/ranwei/workspace/ody-code/.ody-code/plans/test-plan.md", "permission": "yolo" }
-      [wire] turn.prompt                 { "input": [ { "type": "text", "text": "Inspect without mutating files" } ], "origin": { "kind": "user" }, "time": "<time>" }
-      [emit] turn.started                { "turnId": 0, "origin": { "kind": "user" } }
-      [wire] context.append_message      { "message": { "role": "user", "content": [ { "type": "text", "text": "Inspect without mutating files" } ], "toolCalls": [], "origin": { "kind": "user" } }, "time": "<time>" }
-      [wire] context.append_message      { "message": { "role": "user", "content": [ { "type": "text", "text": "<plan-mode-reminder>" } ], "toolCalls": [], "origin": { "kind": "injection", "variant": "plan_mode" } }, "time": "<time>" }
-      [wire] context.append_loop_event   { "event": { "type": "step.begin", "uuid": "<uuid-1>", "turnId": "0", "step": 1 }, "time": "<time>" }
-      [emit] turn.step.started           { "turnId": 0, "step": 1, "stepId": "<uuid-1>" }
-      [emit] assistant.delta             { "turnId": 0, "delta": "I will inspect safely." }
-      [emit] tool.call.delta             { "turnId": 0, "toolCallId": "call_bash", "name": "Bash", "argumentsPart": "{\\"command\\":\\"printf plan-safe\\",\\"timeout\\":60}" }
-      [wire] context.append_loop_event   { "event": { "type": "content.part", "uuid": "<uuid-2>", "turnId": "0", "step": 1, "stepUuid": "<uuid-1>", "part": { "type": "text", "text": "I will inspect safely." } }, "time": "<time>" }
-      [wire] context.append_loop_event   { "event": { "type": "tool.call", "uuid": "call_bash", "turnId": "0", "step": 1, "stepUuid": "<uuid-1>", "toolCallId": "call_bash", "name": "Bash", "args": { "command": "printf plan-safe", "timeout": 60 }, "description": "Running: printf plan-safe", "display": { "kind": "command", "command": "printf plan-safe", "cwd": "<cwd>", "language": "bash" } }, "time": "<time>" }
-      [emit] tool.call.started           { "turnId": 0, "toolCallId": "call_bash", "name": "Bash", "args": { "command": "printf plan-safe", "timeout": 60 }, "description": "Running: printf plan-safe", "display": { "kind": "command", "command": "printf plan-safe", "cwd": "<cwd>", "language": "bash" } }
-      [wire] context.append_loop_event   { "event": { "type": "tool.result", "parentUuid": "call_bash", "toolCallId": "call_bash", "result": { "output": "plan-safe" } }, "time": "<time>" }
-      [emit] tool.result                 { "turnId": 0, "toolCallId": "call_bash", "output": "plan-safe" }
-      [wire] context.append_loop_event   { "event": { "type": "step.end", "uuid": "<uuid-1>", "turnId": "0", "step": 1, "usage": { "inputOther": 2365, "output": 23, "inputCacheRead": 0, "inputCacheCreation": 0 }, "finishReason": "tool_use" }, "time": "<time>" }
-      [emit] turn.step.completed         { "turnId": 0, "step": 1, "stepId": "<uuid-1>", "usage": { "inputOther": 2365, "output": 23, "inputCacheRead": 0, "inputCacheCreation": 0 }, "finishReason": "tool_use" }
-      [wire] usage.record                { "model": "mock-model", "usage": { "inputOther": 2365, "output": 23, "inputCacheRead": 0, "inputCacheCreation": 0 }, "usageScope": "turn", "time": "<time>" }
-      [emit] agent.status.updated        { "model": "mock-model", "contextTokens": 2388, "maxContextTokens": 1000000, "contextUsage": 0.002388, "sessionMode": "plan", "sessionModeFilePath": "/Users/ranwei/workspace/ody-code/.ody-code/plans/test-plan.md", "permission": "yolo", "usage": { "byModel": { "mock-model": { "inputOther": 2365, "output": 23, "inputCacheRead": 0, "inputCacheCreation": 0 } }, "total": { "inputOther": 2365, "output": 23, "inputCacheRead": 0, "inputCacheCreation": 0 }, "currentTurn": { "inputOther": 2365, "output": 23, "inputCacheRead": 0, "inputCacheCreation": 0 } } }
-      [wire] context.append_loop_event   { "event": { "type": "step.begin", "uuid": "<uuid-3>", "turnId": "0", "step": 2 }, "time": "<time>" }
-      [emit] turn.step.started           { "turnId": 0, "step": 2, "stepId": "<uuid-3>" }
-      [emit] assistant.delta             { "turnId": 0, "delta": "The safe command printed plan-safe." }
-      [wire] context.append_loop_event   { "event": { "type": "content.part", "uuid": "<uuid-4>", "turnId": "0", "step": 2, "stepUuid": "<uuid-3>", "part": { "type": "text", "text": "The safe command printed plan-safe." } }, "time": "<time>" }
-      [wire] context.append_loop_event   { "event": { "type": "step.end", "uuid": "<uuid-3>", "turnId": "0", "step": 2, "usage": { "inputOther": 2392, "output": 12, "inputCacheRead": 0, "inputCacheCreation": 0 }, "finishReason": "end_turn" }, "time": "<time>" }
-      [emit] turn.step.completed         { "turnId": 0, "step": 2, "stepId": "<uuid-3>", "usage": { "inputOther": 2392, "output": 12, "inputCacheRead": 0, "inputCacheCreation": 0 }, "finishReason": "end_turn" }
-      [wire] usage.record                { "model": "mock-model", "usage": { "inputOther": 2392, "output": 12, "inputCacheRead": 0, "inputCacheCreation": 0 }, "usageScope": "turn", "time": "<time>" }
-      [emit] agent.status.updated        { "model": "mock-model", "contextTokens": 2404, "maxContextTokens": 1000000, "contextUsage": 0.002404, "sessionMode": "plan", "sessionModeFilePath": "/Users/ranwei/workspace/ody-code/.ody-code/plans/test-plan.md", "permission": "yolo", "usage": { "byModel": { "mock-model": { "inputOther": 4757, "output": 35, "inputCacheRead": 0, "inputCacheCreation": 0 } }, "total": { "inputOther": 4757, "output": 35, "inputCacheRead": 0, "inputCacheCreation": 0 }, "currentTurn": { "inputOther": 4757, "output": 35, "inputCacheRead": 0, "inputCacheCreation": 0 } } }
-      [emit] turn.ended                  { "turnId": 0, "reason": "completed" }
-    `);
+    await ctx.untilTurnEnd();
+    expect(ctx.agent.sessionMode.isActive).toBe(true);
+    expect(ctx.agent.sessionMode.kind).toBe('plan');
+    expect(
+      ctx.allEvents.some((event) => event.type === '[rpc]' && event.event === 'requestApproval'),
+    ).toBe(false);
     await ctx.expectResumeMatches();
   });
 });
@@ -519,38 +474,9 @@ describe('plan mode Bash ordinary permission behavior', () => {
     ctx.mockNextResponse({ type: 'text', text: 'The command completed.' });
     await ctx.rpc.prompt({ input: [{ type: 'text', text: 'Remove forbidden.txt' }] });
 
-    expect(await ctx.untilTurnEnd()).toMatchInlineSnapshot(`
-      [wire] permission.set_mode         { "mode": "yolo", "time": "<time>" }
-      [emit] agent.status.updated        { "model": "mock-model", "contextTokens": 0, "maxContextTokens": 1000000, "contextUsage": 0, "sessionMode": "normal", "sessionModeFilePath": null, "permission": "yolo" }
-      [wire] session_mode.enter          { "id": "test-plan", "kind": "plan", "path": "/Users/ranwei/workspace/ody-code/.ody-code/plans/test-plan.md", "time": "<time>" }
-      [emit] agent.status.updated        { "model": "mock-model", "contextTokens": 0, "maxContextTokens": 1000000, "contextUsage": 0, "sessionMode": "plan", "sessionModeFilePath": "/Users/ranwei/workspace/ody-code/.ody-code/plans/test-plan.md", "permission": "yolo" }
-      [wire] turn.prompt                 { "input": [ { "type": "text", "text": "Remove forbidden.txt" } ], "origin": { "kind": "user" }, "time": "<time>" }
-      [emit] turn.started                { "turnId": 0, "origin": { "kind": "user" } }
-      [wire] context.append_message      { "message": { "role": "user", "content": [ { "type": "text", "text": "Remove forbidden.txt" } ], "toolCalls": [], "origin": { "kind": "user" } }, "time": "<time>" }
-      [wire] context.append_message      { "message": { "role": "user", "content": [ { "type": "text", "text": "<plan-mode-reminder>" } ], "toolCalls": [], "origin": { "kind": "injection", "variant": "plan_mode" } }, "time": "<time>" }
-      [wire] context.append_loop_event   { "event": { "type": "step.begin", "uuid": "<uuid-1>", "turnId": "0", "step": 1 }, "time": "<time>" }
-      [emit] turn.step.started           { "turnId": 0, "step": 1, "stepId": "<uuid-1>" }
-      [emit] assistant.delta             { "turnId": 0, "delta": "I will mutate a file." }
-      [emit] tool.call.delta             { "turnId": 0, "toolCallId": "call_bash", "name": "Bash", "argumentsPart": "{\\"command\\":\\"rm forbidden.txt\\",\\"timeout\\":60}" }
-      [wire] context.append_loop_event   { "event": { "type": "content.part", "uuid": "<uuid-2>", "turnId": "0", "step": 1, "stepUuid": "<uuid-1>", "part": { "type": "text", "text": "I will mutate a file." } }, "time": "<time>" }
-      [wire] context.append_loop_event   { "event": { "type": "tool.call", "uuid": "call_bash", "turnId": "0", "step": 1, "stepUuid": "<uuid-1>", "toolCallId": "call_bash", "name": "Bash", "args": { "command": "rm forbidden.txt", "timeout": 60 }, "description": "Running: rm forbidden.txt", "display": { "kind": "command", "command": "rm forbidden.txt", "cwd": "<cwd>", "language": "bash" } }, "time": "<time>" }
-      [emit] tool.call.started           { "turnId": 0, "toolCallId": "call_bash", "name": "Bash", "args": { "command": "rm forbidden.txt", "timeout": 60 }, "description": "Running: rm forbidden.txt", "display": { "kind": "command", "command": "rm forbidden.txt", "cwd": "<cwd>", "language": "bash" } }
-      [wire] context.append_loop_event   { "event": { "type": "tool.result", "parentUuid": "call_bash", "toolCallId": "call_bash", "result": { "output": "removed" } }, "time": "<time>" }
-      [emit] tool.result                 { "turnId": 0, "toolCallId": "call_bash", "output": "removed" }
-      [wire] context.append_loop_event   { "event": { "type": "step.end", "uuid": "<uuid-1>", "turnId": "0", "step": 1, "usage": { "inputOther": 2362, "output": 23, "inputCacheRead": 0, "inputCacheCreation": 0 }, "finishReason": "tool_use" }, "time": "<time>" }
-      [emit] turn.step.completed         { "turnId": 0, "step": 1, "stepId": "<uuid-1>", "usage": { "inputOther": 2362, "output": 23, "inputCacheRead": 0, "inputCacheCreation": 0 }, "finishReason": "tool_use" }
-      [wire] usage.record                { "model": "mock-model", "usage": { "inputOther": 2362, "output": 23, "inputCacheRead": 0, "inputCacheCreation": 0 }, "usageScope": "turn", "time": "<time>" }
-      [emit] agent.status.updated        { "model": "mock-model", "contextTokens": 2385, "maxContextTokens": 1000000, "contextUsage": 0.002385, "sessionMode": "plan", "sessionModeFilePath": "/Users/ranwei/workspace/ody-code/.ody-code/plans/test-plan.md", "permission": "yolo", "usage": { "byModel": { "mock-model": { "inputOther": 2362, "output": 23, "inputCacheRead": 0, "inputCacheCreation": 0 } }, "total": { "inputOther": 2362, "output": 23, "inputCacheRead": 0, "inputCacheCreation": 0 }, "currentTurn": { "inputOther": 2362, "output": 23, "inputCacheRead": 0, "inputCacheCreation": 0 } } }
-      [wire] context.append_loop_event   { "event": { "type": "step.begin", "uuid": "<uuid-3>", "turnId": "0", "step": 2 }, "time": "<time>" }
-      [emit] turn.step.started           { "turnId": 0, "step": 2, "stepId": "<uuid-3>" }
-      [emit] assistant.delta             { "turnId": 0, "delta": "The command completed." }
-      [wire] context.append_loop_event   { "event": { "type": "content.part", "uuid": "<uuid-4>", "turnId": "0", "step": 2, "stepUuid": "<uuid-3>", "part": { "type": "text", "text": "The command completed." } }, "time": "<time>" }
-      [wire] context.append_loop_event   { "event": { "type": "step.end", "uuid": "<uuid-3>", "turnId": "0", "step": 2, "usage": { "inputOther": 2388, "output": 9, "inputCacheRead": 0, "inputCacheCreation": 0 }, "finishReason": "end_turn" }, "time": "<time>" }
-      [emit] turn.step.completed         { "turnId": 0, "step": 2, "stepId": "<uuid-3>", "usage": { "inputOther": 2388, "output": 9, "inputCacheRead": 0, "inputCacheCreation": 0 }, "finishReason": "end_turn" }
-      [wire] usage.record                { "model": "mock-model", "usage": { "inputOther": 2388, "output": 9, "inputCacheRead": 0, "inputCacheCreation": 0 }, "usageScope": "turn", "time": "<time>" }
-      [emit] agent.status.updated        { "model": "mock-model", "contextTokens": 2397, "maxContextTokens": 1000000, "contextUsage": 0.002397, "sessionMode": "plan", "sessionModeFilePath": "/Users/ranwei/workspace/ody-code/.ody-code/plans/test-plan.md", "permission": "yolo", "usage": { "byModel": { "mock-model": { "inputOther": 4750, "output": 32, "inputCacheRead": 0, "inputCacheCreation": 0 } }, "total": { "inputOther": 4750, "output": 32, "inputCacheRead": 0, "inputCacheCreation": 0 }, "currentTurn": { "inputOther": 4750, "output": 32, "inputCacheRead": 0, "inputCacheCreation": 0 } } }
-      [emit] turn.ended                  { "turnId": 0, "reason": "completed" }
-    `);
+    await ctx.untilTurnEnd();
+    expect(ctx.agent.sessionMode.isActive).toBe(true);
+    expect(ctx.agent.sessionMode.kind).toBe('plan');
     expect(toolResultText(ctx.agent.context.history)).toContain('removed');
     await ctx.expectResumeMatches();
   });
@@ -565,7 +491,6 @@ describe('plan mode injection cadence', () => {
     await ctx.agent.injection.inject();
     const afterFull = ctx.agent.context.history.length;
     expect(lastUserText(ctx.agent.context.history)).toContain('Plan mode is active');
-    expect(lastUserText(ctx.agent.context.history)).toContain('Plan file:');
 
     await ctx.agent.injection.inject();
     expect(ctx.agent.context.history).toHaveLength(afterFull);
@@ -575,7 +500,7 @@ describe('plan mode injection cadence', () => {
     await ctx.agent.injection.inject();
 
     expect(lastUserText(ctx.agent.context.history)).toContain('Plan mode still active');
-    expect(lastUserText(ctx.agent.context.history)).toContain('Plan file:');
+    expect(lastUserText(ctx.agent.context.history)).toContain('ExitPlanMode');
     await ctx.expectResumeMatches();
   });
 
@@ -590,6 +515,7 @@ describe('plan mode injection cadence', () => {
       type: 'session_mode.enter',
       id: 'restored-plan',
     });
+    (ctx.agent.sessionMode as unknown as { _sessionModeFilePath: string | null })._sessionModeFilePath = '/workspace/.ody-code/plans/restored-plan.md';
 
     await ctx.agent.injection.inject();
 
@@ -771,323 +697,210 @@ function toolResultText(history: readonly { role: string; content: readonly unkn
     .join('\n');
 }
 
+describe('lazy file path resolution', () => {
+  it('enter does not create a file and leaves path null', async () => {
+    const mkdir = vi.fn().mockResolvedValue(undefined);
+    const writeText = vi.fn().mockResolvedValue(0);
+    const ctx = testAgent({
+      kaos: createFakeKaos({ mkdir, writeText }),
+    });
+    await ctx.agent.sessionMode.enter('test-id', false, false, 'plan');
 
-describe('lazy fileStem and design reuse', () => {
-  it('enter uses planId as fileStem when none provided', async () => {
+    expect(ctx.agent.sessionMode.isActive).toBe(true);
+    expect(ctx.agent.sessionMode.sessionModeFilePath).toBeNull();
+    expect(writeText).not.toHaveBeenCalled();
+  });
+
+  it('enter uses a UUID as the internal session mode id', async () => {
     const ctx = testAgent({
       kaos: createPlanKaos(),
     });
-    await ctx.agent.sessionMode.enter('brave-fox-1234', false, false, 'plan');
-    expect(ctx.agent.sessionMode.fileStem).toBe('brave-fox-1234');
-    expect(ctx.agent.sessionMode.sessionModeFilePath).toContain('.ody-code/plans/brave-fox-1234.md');
+    await ctx.agent.sessionMode.enter();
+
+    const id = (ctx.agent.sessionMode as unknown as { _sessionModeId: string })._sessionModeId;
+    expect(id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
   });
 
-  it('enter stores manual topic slug', async () => {
-    const ctx = testAgent({
-      kaos: createPlanKaos(),
+  it('restoreEnter does not restore file path', async () => {
+    const ctx = testAgent({ kaos: createFakeKaos() });
+    ctx.dispatch({
+      type: 'session_mode.enter',
+      id: 'restored-id',
+      kind: 'plan',
     });
-    await ctx.agent.sessionMode.enter('brave-fox-1234', false, false, 'plan', 'my-feature');
-    expect((ctx.agent.sessionMode as any)._manualTopicSlug).toBe('my-feature');
+
+    expect(ctx.agent.sessionMode.sessionModeFilePath).toBeNull();
+    expect(ctx.agent.sessionMode.isActive).toBe(true);
   });
 
-  it('enter reuses design title for plan mode', async () => {
-    const ctx = testAgent({
-      kaos: createPlanKaos(),
-    });
-    // simulate a prior design exit
-    (ctx.agent.sessionMode as any)._lastDesignFileStem = '2024-06-05-implement-glm';
-    await ctx.agent.sessionMode.enter('brave-fox-1234', false, false, 'plan');
-    const today = formatDatePrefix(new Date());
-    expect(ctx.agent.sessionMode.fileStem).toBe(`${today}-implement-glm`);
+  it('finalizeFileName method is removed', () => {
+    const ctx = testAgent({ kaos: createFakeKaos() });
+    expect('finalizeFileName' in ctx.agent.sessionMode).toBe(false);
   });
 
-  it('exit saves design fileStem for reuse', async () => {
-    const ctx = testAgent({
-      kaos: createPlanKaos(),
-    });
-    await ctx.agent.sessionMode.enter('brave-fox-1234', false, false, 'design', 'my-design');
-    ctx.agent.sessionMode.exit();
-    expect((ctx.agent.sessionMode as any)._lastDesignFileStem).toBe('my-design');
-    expect((ctx.agent.sessionMode as any)._manualTopicSlug).toBeNull();
+  it('fileStem getter is removed', () => {
+    const ctx = testAgent({ kaos: createFakeKaos() });
+    expect('fileStem' in ctx.agent.sessionMode).toBe(false);
   });
-});
 
-
-describe('finalizeFileName', () => {
-  it('renames file based on H1 heading', async () => {
+  it('resolveFilePathFromContent extracts heading and formats dated slug', async () => {
     const files = new Map<string, string>();
     const mkdir = vi.fn().mockResolvedValue(undefined);
-    const readText = vi.fn(async (path: string) => files.get(path) ?? '');
-    const writeText = vi.fn(async (path: string, content: string) => {
-      files.set(path, content);
-      return content.length;
-    });
-    const ctx = testAgent({
-      kaos: createFakeKaos({ mkdir, readText, writeText }),
-    });
-    await ctx.agent.sessionMode.enter('brave-fox-1234', false, false, 'plan');
-    const tempPath = ctx.agent.sessionMode.sessionModeFilePath!;
-    await writeText(tempPath, '# My Plan\n\ncontent');
-
-    const finalPath = await ctx.agent.sessionMode.finalizeFileName();
-
-    const today = formatDatePrefix(new Date());
-    expect(finalPath).toContain(`.ody-code/plans/${today}-my-plan.md`);
-    expect(ctx.agent.sessionMode.sessionModeFilePath).toBe(finalPath);
-    expect(ctx.agent.sessionMode.fileStem).toBe(`${today}-my-plan`);
-  });
-
-  it('appends suffix on collision', async () => {
-    const files = new Map<string, string>();
-    const mkdir = vi.fn().mockResolvedValue(undefined);
-    const readText = vi.fn(async (path: string) => files.get(path) ?? '');
-    const writeText = vi.fn(async (path: string, content: string) => {
-      files.set(path, content);
-      return content.length;
-    });
+    const writeText = vi.fn().mockResolvedValue(0);
     const stat = vi.fn(async (path: string) => {
-      if (files.has(path)) {
-        return {
-          stMode: 0o100644,
-          stIno: 1,
-          stDev: 1,
-          stNlink: 1,
-          stUid: 1000,
-          stGid: 1000,
-          stSize: files.get(path)!.length,
-          stAtime: Date.now(),
-          stMtime: Date.now(),
-          stCtime: Date.now(),
-        };
-      }
+      if (files.has(path)) return { stMode: 0o100644, stIno: 1, stDev: 1, stNlink: 1, stUid: 1000, stGid: 1000, stSize: files.get(path)!.length, stAtime: Date.now(), stMtime: Date.now(), stCtime: Date.now() };
       throw Object.assign(new Error('ENOENT'), { code: 'ENOENT' });
     });
     const ctx = testAgent({
-      kaos: createFakeKaos({ mkdir, readText, writeText, stat }),
+      kaos: createFakeKaos({ mkdir, writeText, stat }),
     });
-    await ctx.agent.sessionMode.enter('brave-fox-1234', false, false, 'plan');
-    const today = formatDatePrefix(new Date());
-    // pre-create the target file
-    const targetPath = `/workspace/.ody-code/plans/${today}-my-plan.md`;
-    files.set(targetPath, 'existing');
-    const tempPath = ctx.agent.sessionMode.sessionModeFilePath!;
-    await writeText(tempPath, '# My Plan\n\ncontent');
+    await ctx.agent.sessionMode.enter('test-id', false, false, 'plan');
 
-    const finalPath = await ctx.agent.sessionMode.finalizeFileName();
-
-    expect(finalPath).toContain(`.ody-code/plans/${today}-my-plan-1.md`);
-  });
-
-  it('falls back to manual topic when no H1', async () => {
-    const files = new Map<string, string>();
-    const mkdir = vi.fn().mockResolvedValue(undefined);
-    const readText = vi.fn(async (path: string) => files.get(path) ?? '');
-    const writeText = vi.fn(async (path: string, content: string) => {
-      files.set(path, content);
-      return content.length;
-    });
-    const ctx = testAgent({
-      kaos: createFakeKaos({ mkdir, readText, writeText }),
-    });
-    await ctx.agent.sessionMode.enter('brave-fox-1234', false, false, 'plan', 'custom-topic');
-    const tempPath = ctx.agent.sessionMode.sessionModeFilePath!;
-    await writeText(tempPath, 'no heading here');
-
-    const finalPath = await ctx.agent.sessionMode.finalizeFileName();
+    const path = await ctx.agent.sessionMode.resolveFilePathFromContent('# My Design\n\ncontent');
 
     const today = formatDatePrefix(new Date());
-    expect(finalPath).toContain(`.ody-code/plans/${today}-custom-topic.md`);
+    expect(path).toBe(`/workspace/.ody-code/plans/${today}-my-design.md`);
+    expect(ctx.agent.sessionMode.sessionModeFilePath).toBe(path);
   });
 
-  it('falls back to planId when no H1 and no manual topic', async () => {
+  it('resolveFilePathFromContent calls LLM when no heading exists', async () => {
     const files = new Map<string, string>();
     const mkdir = vi.fn().mockResolvedValue(undefined);
-    const readText = vi.fn(async (path: string) => files.get(path) ?? '');
-    const writeText = vi.fn(async (path: string, content: string) => {
-      files.set(path, content);
-      return content.length;
-    });
-    const ctx = testAgent({
-      kaos: createFakeKaos({ mkdir, readText, writeText }),
-    });
-    await ctx.agent.sessionMode.enter('brave-fox-1234', false, false, 'plan');
-    const tempPath = ctx.agent.sessionMode.sessionModeFilePath!;
-    await writeText(tempPath, 'no heading here');
-
-    const finalPath = await ctx.agent.sessionMode.finalizeFileName();
-
-    const today = formatDatePrefix(new Date());
-    expect(finalPath).toContain(`.ody-code/plans/${today}-brave-fox-1234.md`);
-  });
-
-  it('returns temp path on empty file', async () => {
-    const files = new Map<string, string>();
-    const mkdir = vi.fn().mockResolvedValue(undefined);
-    const readText = vi.fn(async (path: string) => files.get(path) ?? '');
-    const writeText = vi.fn(async (path: string, content: string) => {
-      files.set(path, content);
-      return content.length;
-    });
-    const ctx = testAgent({
-      kaos: createFakeKaos({ mkdir, readText, writeText }),
-    });
-    await ctx.agent.sessionMode.enter('brave-fox-1234', false, false, 'plan');
-    const tempPath = ctx.agent.sessionMode.sessionModeFilePath;
-    const result = await ctx.agent.sessionMode.finalizeFileName();
-    expect(result).toBe(tempPath);
-  });
-
-  it('isWritableSessionModePath works after finalize', async () => {
-    const files = new Map<string, string>();
-    const mkdir = vi.fn().mockResolvedValue(undefined);
-    const readText = vi.fn(async (path: string) => files.get(path) ?? '');
-    const writeText = vi.fn(async (path: string, content: string) => {
-      files.set(path, content);
-      return content.length;
-    });
-    const ctx = testAgent({
-      kaos: createFakeKaos({ mkdir, readText, writeText }),
-    });
-    await ctx.agent.sessionMode.enter('brave-fox-1234', false, false, 'plan');
-    const tempPath = ctx.agent.sessionMode.sessionModeFilePath!;
-    await writeText(tempPath, '# My Plan\n');
-    await ctx.agent.sessionMode.finalizeFileName();
-    expect(ctx.agent.sessionMode.isWritableSessionModePath(ctx.agent.sessionMode.sessionModeFilePath!)).toBe(true);
-  });
-
-  it('findUniqueStem caps suffix at 1000 and falls back to timestamp', async () => {
-    const mkdir = vi.fn().mockResolvedValue(undefined);
+    const writeText = vi.fn().mockResolvedValue(0);
     const stat = vi.fn(async (path: string) => {
-      // Pretend every path containing 'my-plan' exists, EXCEPT those ending
-      // with a 13-digit timestamp (the cap-fallback pattern).
-      if (path.includes('my-plan') && !/\d{13}\.md$/.test(path)) {
-        return {
-          stMode: 0o100644,
-          stIno: 1,
-          stDev: 1,
-          stNlink: 1,
-          stUid: 1000,
-          stGid: 1000,
-          stSize: 1,
-          stAtime: Date.now(),
-          stMtime: Date.now(),
-          stCtime: Date.now(),
-        };
-      }
+      if (files.has(path)) return { stMode: 0o100644, stIno: 1, stDev: 1, stNlink: 1, stUid: 1000, stGid: 1000, stSize: files.get(path)!.length, stAtime: Date.now(), stMtime: Date.now(), stCtime: Date.now() };
       throw Object.assign(new Error('ENOENT'), { code: 'ENOENT' });
     });
     const ctx = testAgent({
-      kaos: createFakeKaos({ mkdir, stat }),
+      kaos: createFakeKaos({ mkdir, writeText, stat }),
     });
-    await ctx.agent.sessionMode.enter('brave-fox-1234', false, false, 'plan');
+    ctx.configure();
+    ctx.mockNextResponse({ type: 'text', text: 'API Design' });
+    await ctx.agent.sessionMode.enter('test-id', false, false, 'plan');
 
-    const baseStem = '2024-06-05-my-plan';
-    const result = await (ctx.agent.sessionMode as unknown as { findUniqueStem(s: string): Promise<string> }).findUniqueStem(baseStem);
+    const path = await ctx.agent.sessionMode.resolveFilePathFromContent('Some prose without a heading.');
 
-    // Must be baseStem followed by a 13-digit timestamp (Date.now), not a small numeric suffix
-    expect(result).toMatch(/^2024-06-05-my-plan-\d{13}$/);
+    const today = formatDatePrefix(new Date());
+    expect(path).toBe(`${process.cwd()}/.ody-code/plans/${today}-api-design.md`);
+    expect(ctx.llmCalls).toHaveLength(1);
+  });
+
+  it('resolveFilePathFromContent falls back to untitled on LLM failure', async () => {
+    const files = new Map<string, string>();
+    const mkdir = vi.fn().mockResolvedValue(undefined);
+    const writeText = vi.fn().mockResolvedValue(0);
+    const stat = vi.fn(async (path: string) => {
+      if (files.has(path)) return { stMode: 0o100644, stIno: 1, stDev: 1, stNlink: 1, stUid: 1000, stGid: 1000, stSize: files.get(path)!.length, stAtime: Date.now(), stMtime: Date.now(), stCtime: Date.now() };
+      throw Object.assign(new Error('ENOENT'), { code: 'ENOENT' });
+    });
+    const generate = vi.fn(async () => { throw new Error('LLM timeout'); });
+    const ctx = testAgent({
+      kaos: createFakeKaos({ mkdir, writeText, stat }),
+      generate,
+    });
+    await ctx.agent.sessionMode.enter('test-id', false, false, 'plan');
+
+    const path = await ctx.agent.sessionMode.resolveFilePathFromContent('No heading.');
+
+    const today = formatDatePrefix(new Date());
+    expect(path).toBe(`/workspace/.ody-code/plans/${today}-untitled.md`);
+  });
+
+  it('resolveFilePathFromContent resolves collision with suffix', async () => {
+    const files = new Map<string, string>();
+    const today = formatDatePrefix(new Date());
+    files.set(`/workspace/.ody-code/plans/${today}-foo.md`, 'existing');
+    const mkdir = vi.fn().mockResolvedValue(undefined);
+    const writeText = vi.fn().mockResolvedValue(0);
+    const stat = vi.fn(async (path: string) => {
+      if (files.has(path)) return { stMode: 0o100644, stIno: 1, stDev: 1, stNlink: 1, stUid: 1000, stGid: 1000, stSize: files.get(path)!.length, stAtime: Date.now(), stMtime: Date.now(), stCtime: Date.now() };
+      throw Object.assign(new Error('ENOENT'), { code: 'ENOENT' });
+    });
+    const ctx = testAgent({
+      kaos: createFakeKaos({ mkdir, writeText, stat }),
+    });
+    await ctx.agent.sessionMode.enter('test-id', false, false, 'plan');
+
+    const path = await ctx.agent.sessionMode.resolveFilePathFromContent('# Foo\n\ncontent');
+
+    expect(path).toBe(`/workspace/.ody-code/plans/${today}-foo-1.md`);
+  });
+
+  it('resolveFilePathFromContent returns existing path if already resolved', async () => {
+    const ctx = testAgent({ kaos: createPlanKaos() });
+    await ctx.agent.sessionMode.enter('test-id', false, false, 'plan');
+    (ctx.agent.sessionMode as unknown as { _sessionModeFilePath: string | null })._sessionModeFilePath = '/workspace/.ody-code/plans/existing.md';
+
+    const path = await ctx.agent.sessionMode.resolveFilePathFromContent('# New Heading\n\ncontent');
+
+    expect(path).toBe('/workspace/.ody-code/plans/existing.md');
   });
 });
 
+describe('isWritableSessionModePath subdirectory model', () => {
+  it('allows the main session mode file', async () => {
+    const ctx = testAgent({ kaos: createPlanKaos() });
+    await ctx.agent.sessionMode.enter('test-id', false, false, 'plan');
+    (ctx.agent.sessionMode as unknown as { _sessionModeFilePath: string | null })._sessionModeFilePath = '/workspace/.ody-code/plans/2026-06-06-foo.md';
+
+    expect(ctx.agent.sessionMode.isWritableSessionModePath('/workspace/.ody-code/plans/2026-06-06-foo.md')).toBe(true);
+  });
+
+  it('allows .md files inside a subdirectory named after the main stem', async () => {
+    const ctx = testAgent({ kaos: createPlanKaos() });
+    await ctx.agent.sessionMode.enter('test-id', false, false, 'plan');
+    (ctx.agent.sessionMode as unknown as { _sessionModeFilePath: string | null })._sessionModeFilePath = '/workspace/.ody-code/plans/2026-06-06-foo.md';
+
+    expect(ctx.agent.sessionMode.isWritableSessionModePath('/workspace/.ody-code/plans/2026-06-06-foo/subsystem-a.md')).toBe(true);
+  });
+
+  it('denies non-.md files inside the subdirectory', async () => {
+    const ctx = testAgent({ kaos: createPlanKaos() });
+    await ctx.agent.sessionMode.enter('test-id', false, false, 'plan');
+    (ctx.agent.sessionMode as unknown as { _sessionModeFilePath: string | null })._sessionModeFilePath = '/workspace/.ody-code/plans/2026-06-06-foo.md';
+
+    expect(ctx.agent.sessionMode.isWritableSessionModePath('/workspace/.ody-code/plans/2026-06-06-foo/data.json')).toBe(false);
+  });
+
+  it('denies .md files in a sibling subdirectory', async () => {
+    const ctx = testAgent({ kaos: createPlanKaos() });
+    await ctx.agent.sessionMode.enter('test-id', false, false, 'plan');
+    (ctx.agent.sessionMode as unknown as { _sessionModeFilePath: string | null })._sessionModeFilePath = '/workspace/.ody-code/plans/2026-06-06-foo.md';
+
+    expect(ctx.agent.sessionMode.isWritableSessionModePath('/workspace/.ody-code/plans/2026-06-06-bar/anything.md')).toBe(false);
+  });
+
+  it('denies path traversal escaping the subdirectory', async () => {
+    const ctx = testAgent({ kaos: createPlanKaos() });
+    await ctx.agent.sessionMode.enter('test-id', false, false, 'plan');
+    (ctx.agent.sessionMode as unknown as { _sessionModeFilePath: string | null })._sessionModeFilePath = '/workspace/.ody-code/plans/2026-06-06-foo.md';
+
+    expect(ctx.agent.sessionMode.isWritableSessionModePath('/workspace/.ody-code/plans/2026-06-06-foo/../2026-06-06-bar.md')).toBe(false);
+  });
+});
 
 describe('code review fixes', () => {
-  it('cancel resets manual topic slug', async () => {
+  it('cancelPlan RPC handler exits plan mode without finalizing', async () => {
     const ctx = testAgent({
       kaos: createPlanKaos(),
     });
-    await ctx.agent.sessionMode.enter('brave-fox-1234', false, false, 'plan', 'custom-topic');
-    expect((ctx.agent.sessionMode as any)._manualTopicSlug).toBe('custom-topic');
-    ctx.agent.sessionMode.cancel();
-    expect((ctx.agent.sessionMode as any)._manualTopicSlug).toBeNull();
-  });
-
-  it('finalizeFileName falls back to existing fileStem slug when no H1 and no manual topic', async () => {
-    const files = new Map<string, string>();
-    const mkdir = vi.fn().mockResolvedValue(undefined);
-    const readText = vi.fn(async (path: string) => files.get(path) ?? '');
-    const writeText = vi.fn(async (path: string, content: string) => {
-      files.set(path, content);
-      return content.length;
-    });
-    const ctx = testAgent({
-      kaos: createFakeKaos({ mkdir, readText, writeText }),
-    });
-    // simulate a resumed session with a dated fileStem
-    ctx.agent.sessionMode.restoreEnter({ id: 'restored-id', kind: 'plan', fileStem: '2024-06-05-my-feature' });
-    const tempPath = ctx.agent.sessionMode.sessionModeFilePath!;
-    await writeText(tempPath, 'no heading here');
-
-    const finalPath = await ctx.agent.sessionMode.finalizeFileName();
-
-    const today = formatDatePrefix(new Date());
-    expect(finalPath).toContain(`plan/${today}-my-feature.md`);
-  });
-
-  it('finalizeFileName handles empty manualTopicSlug with || fallback', async () => {
-    const files = new Map<string, string>();
-    const mkdir = vi.fn().mockResolvedValue(undefined);
-    const readText = vi.fn(async (path: string) => files.get(path) ?? '');
-    const writeText = vi.fn(async (path: string, content: string) => {
-      files.set(path, content);
-      return content.length;
-    });
-    const ctx = testAgent({
-      kaos: createFakeKaos({ mkdir, readText, writeText }),
-    });
     await ctx.agent.sessionMode.enter('brave-fox-1234', false, false, 'plan');
-    // simulate an edge case where manualTopicSlug is empty string
-    (ctx.agent.sessionMode as any)._manualTopicSlug = '';
-    const tempPath = ctx.agent.sessionMode.sessionModeFilePath!;
-    await writeText(tempPath, 'no heading here');
-
-    const finalPath = await ctx.agent.sessionMode.finalizeFileName();
-
-    const today = formatDatePrefix(new Date());
-    expect(finalPath).toContain(`.ody-code/plans/${today}-brave-fox-1234.md`);
-  });
-
-  it('cancelPlan RPC handler calls finalizeFileName before cancel', async () => {
-    const files = new Map<string, string>();
-    const mkdir = vi.fn().mockResolvedValue(undefined);
-    const readText = vi.fn(async (path: string) => files.get(path) ?? '');
-    const writeText = vi.fn(async (path: string, content: string) => {
-      files.set(path, content);
-      return content.length;
-    });
-    const ctx = testAgent({
-      kaos: createFakeKaos({ mkdir, readText, writeText }),
-    });
-    await ctx.agent.sessionMode.enter('brave-fox-1234', false, false, 'plan');
-    const tempPath = ctx.agent.sessionMode.sessionModeFilePath!;
-    await writeText(tempPath, '# My Plan\n\ncontent');
 
     await ctx.rpc.cancelPlan({ id: 'brave-fox-1234' });
 
-    const today = formatDatePrefix(new Date());
-    expect(files.has(`/workspace/.ody-code/plans/${today}-my-plan.md`)).toBe(true);
     expect(ctx.agent.sessionMode.isActive).toBe(false);
   });
 
-  it('enterPlan RPC handler finalizes before switching kind', async () => {
-    const files = new Map<string, string>();
-    const mkdir = vi.fn().mockResolvedValue(undefined);
-    const readText = vi.fn(async (path: string) => files.get(path) ?? '');
-    const writeText = vi.fn(async (path: string, content: string) => {
-      files.set(path, content);
-      return content.length;
-    });
+  it('enterPlan RPC handler switches kind without finalizing', async () => {
     const ctx = testAgent({
-      kaos: createFakeKaos({ mkdir, readText, writeText }),
+      kaos: createPlanKaos(),
     });
     await ctx.agent.sessionMode.enter('brave-fox-1234', false, false, 'plan');
-    const planPath = ctx.agent.sessionMode.sessionModeFilePath!;
-    await writeText(planPath, '# Plan Title\n\ncontent');
 
     await ctx.rpc.enterPlan({ kind: 'design' });
 
-    const today = formatDatePrefix(new Date());
-    expect(files.has(`/workspace/.ody-code/plans/${today}-plan-title.md`)).toBe(true);
     expect(ctx.agent.sessionMode.kind).toBe('design');
+    expect(ctx.agent.sessionMode.isActive).toBe(true);
   });
 });
 
@@ -1096,7 +909,7 @@ describe('project-scoped directory resolution', () => {
     const mkdir = vi.fn().mockResolvedValue(undefined);
     const ctx = testAgent({ kaos: createFakeKaos({ mkdir }) });
     await ctx.agent.sessionMode.enter('test-plan', false, false, 'plan');
-    expect(ctx.agent.sessionMode.sessionModeFilePath).toBe('/workspace/.ody-code/plans/test-plan.md');
+    expect(ctx.agent.sessionMode.sessionModeFilePath).toBeNull();
     expect(mkdir).toHaveBeenCalledWith('/workspace/.ody-code/plans', { parents: true, existOk: true });
   });
 
@@ -1108,7 +921,7 @@ describe('project-scoped directory resolution', () => {
     });
     const ctx = testAgent({ kaos: createFakeKaos({ mkdir }), homedir: '/home/session' });
     await ctx.agent.sessionMode.enter('test-plan', false, false, 'plan');
-    expect(ctx.agent.sessionMode.sessionModeFilePath).toBe('/home/session/plans/test-plan.md');
+    expect(ctx.agent.sessionMode.sessionModeFilePath).toBeNull();
     expect(mkdir).toHaveBeenCalledWith('/workspace/.ody-code/plans', { parents: true, existOk: true });
     expect(mkdir).toHaveBeenCalledWith('/home/session/plans', { parents: true, existOk: true });
   });
@@ -1161,7 +974,7 @@ describe('project-scoped directory resolution', () => {
 });
 
 describe('enter with project-scoped paths', () => {
-  it('logs persisted path in session_mode.enter record', async () => {
+  it('does not log persisted path in session_mode.enter record', async () => {
     const mkdir = vi.fn().mockResolvedValue(undefined);
     const ctx = testAgent({ kaos: createFakeKaos({ mkdir }) });
     await ctx.agent.sessionMode.enter('test-plan', false, false, 'plan');
@@ -1169,10 +982,10 @@ describe('enter with project-scoped paths', () => {
     const enterRecord = ctx.allEvents.find(
       (event) => event.type === '[wire]' && event.event === 'session_mode.enter',
     );
-    expect(enterRecord?.args).toMatchObject({
+    expect(enterRecord?.args).toEqual({
       id: 'test-plan',
       kind: 'plan',
-      path: '/workspace/.ody-code/plans/test-plan.md',
+      time: expect.any(Number),
     });
   });
 
@@ -1180,72 +993,28 @@ describe('enter with project-scoped paths', () => {
     const mkdir = vi.fn().mockResolvedValue(undefined);
     const ctx = testAgent({ kaos: createFakeKaos({ mkdir }) });
     await ctx.agent.sessionMode.enter('test-design', false, false, 'design');
-    expect(ctx.agent.sessionMode.sessionModeFilePath).toBe('/workspace/.ody-code/designs/test-design.md');
+    expect(ctx.agent.sessionMode.sessionModeFilePath).toBeNull();
     expect(mkdir).toHaveBeenCalledWith('/workspace/.ody-code/designs', { parents: true, existOk: true });
   });
 });
 
 describe('resume and finalize with project-scoped paths', () => {
-  it('restores exact persisted path on resume', async () => {
+  it('does not restore exact persisted path on resume', async () => {
     const ctx = testAgent({ kaos: createFakeKaos() });
     ctx.dispatch({
       type: 'session_mode.enter',
       id: 'restored-plan',
       path: '/workspace/.ody-code/plans/restored-plan.md',
     });
-    expect(ctx.agent.sessionMode.sessionModeFilePath).toBe('/workspace/.ody-code/plans/restored-plan.md');
+    expect(ctx.agent.sessionMode.sessionModeFilePath).toBeNull();
   });
 
-  it('falls back to legacy path when no persisted path on resume', async () => {
+  it('does not fall back to legacy path when no persisted path on resume', async () => {
     const ctx = testAgent({ kaos: createFakeKaos() });
     ctx.dispatch({
       type: 'session_mode.enter',
       id: 'legacy-plan',
     });
-    expect(ctx.agent.sessionMode.sessionModeFilePath).toBe('/workspace/plan/legacy-plan.md');
-  });
-
-  it('finalizes in the same project-scoped directory', async () => {
-    const files = new Map<string, string>();
-    const mkdir = vi.fn().mockResolvedValue(undefined);
-    const readText = vi.fn(async (path: string) => files.get(path) ?? '');
-    const writeText = vi.fn(async (path: string, content: string) => {
-      files.set(path, content);
-      return content.length;
-    });
-    const ctx = testAgent({ kaos: createFakeKaos({ mkdir, readText, writeText }) });
-    await ctx.agent.sessionMode.enter('test-plan', false, false, 'plan');
-    const planPath = ctx.agent.sessionMode.sessionModeFilePath!;
-    files.set(planPath, '# My Plan\n\ncontent');
-
-    const finalPath = await ctx.agent.sessionMode.finalizeFileName();
-
-    const today = formatDatePrefix(new Date());
-    expect(finalPath).toBe(`/workspace/.ody-code/plans/${today}-my-plan.md`);
-    expect(ctx.agent.sessionMode.sessionModeFilePath).toBe(finalPath);
-  });
-
-  it('finalizes in the same fallback directory when project-scoped was denied', async () => {
-    const files = new Map<string, string>();
-    const mkdir = vi.fn(async (path: string) => {
-      if (path === '/workspace/.ody-code/plans') {
-        throw Object.assign(new Error('EACCES'), { code: 'EACCES' });
-      }
-    });
-    const readText = vi.fn(async (path: string) => files.get(path) ?? '');
-    const writeText = vi.fn(async (path: string, content: string) => {
-      files.set(path, content);
-      return content.length;
-    });
-    const ctx = testAgent({ kaos: createFakeKaos({ mkdir, readText, writeText }), homedir: '/home/session' });
-    await ctx.agent.sessionMode.enter('test-plan', false, false, 'plan');
-    const planPath = ctx.agent.sessionMode.sessionModeFilePath!;
-    files.set(planPath, '# My Plan\n\ncontent');
-
-    const finalPath = await ctx.agent.sessionMode.finalizeFileName();
-
-    const today = formatDatePrefix(new Date());
-    expect(finalPath).toBe(`/home/session/plans/${today}-my-plan.md`);
-    expect(ctx.agent.sessionMode.sessionModeFilePath).toBe(finalPath);
+    expect(ctx.agent.sessionMode.sessionModeFilePath).toBeNull();
   });
 });

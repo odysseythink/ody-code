@@ -1,13 +1,13 @@
 import { randomUUID } from 'node:crypto';
-import { basename, dirname, join } from 'pathe';
+import { basename, dirname, join, normalize } from 'pathe';
 
 import type { Agent } from '..';
 import {
   extractFirstHeading,
   formatDatePrefix,
   slugifyTitle,
+  buildTitlePrompt,
 } from './topic-generator';
-import { generateHeroSlug } from '../../utils/hero-slug';
 
 /**
  * Whether the current planning session is a regular implementation `plan`
@@ -30,15 +30,12 @@ export class SessionMode {
   protected _sessionModeId: null | string = null;
   protected _sessionModeFilePath: SessionModeFilePath = null;
   protected _kind: SessionModeKind = 'plan';
-  protected _fileStem: string | null = null;
-  protected _lastDesignFileStem: string | null = null;
-  protected _manualTopicSlug: string | null = null;
   private _preModeModelAlias: { value: string | undefined } | null = null;
 
   constructor(protected readonly agent: Agent) {}
 
   createSessionModeId(): string {
-    return generateHeroSlug(randomUUID(), new Set());
+    return randomUUID();
   }
 
   updatePreModeModelAlias(alias: string | undefined): void {
@@ -49,10 +46,9 @@ export class SessionMode {
 
   async enter(
     id = this.createSessionModeId(),
-    createFile = false,
+    _createFile = false, // ignored — no file is created on enter
     emitStatus = true,
     kind: SessionModeKind = 'plan',
-    fileStem?: string,
   ): Promise<void> {
     if (this._isActive) {
       if (this._kind === kind) {
@@ -67,19 +63,6 @@ export class SessionMode {
     this._kind = kind;
     this._sessionModeFilePath = null;
 
-    let effectiveStem = fileStem;
-    if (!effectiveStem) {
-      if (kind === 'plan' && this._lastDesignFileStem) {
-        const designSlug = extractSlugFromDatedStem(this._lastDesignFileStem);
-        effectiveStem = `${formatDatePrefix(new Date())}-${designSlug}`;
-      }
-    }
-    if (fileStem) {
-      const slug = slugifyTitle(fileStem);
-      if (slug) this._manualTopicSlug = slug;
-    }
-    this._fileStem = effectiveStem ?? id;
-
     const modeModel = this.agent.kimiConfig?.modeModels?.[kind];
     if (modeModel !== undefined && modeModel !== this.agent.config.modelAlias) {
       try {
@@ -92,13 +75,8 @@ export class SessionMode {
       }
     }
 
-    let enterRecorded = false;
     try {
       const { dir, isProjectScoped } = await this.resolveSessionModeDirectory(kind);
-      const sessionModeFilePath = join(dir, `${this._fileStem}.md`);
-      this._sessionModeFilePath = sessionModeFilePath;
-      await this.ensureSessionModeDirectory(sessionModeFilePath);
-
       if (isProjectScoped) {
         try {
           await this.ensureGitignore(this.agent.config.cwd);
@@ -111,27 +89,16 @@ export class SessionMode {
         type: 'session_mode.enter',
         id,
         kind,
-        ...(this._fileStem !== id ? { fileStem: this._fileStem } : {}),
-        path: sessionModeFilePath,
       });
-      enterRecorded = true;
-      if (createFile) {
-        await this.writeEmptySessionModeFile(sessionModeFilePath);
-      }
     } catch (error) {
-      if (enterRecorded) {
-        this.cancel(id);
-      } else {
-        if (this._preModeModelAlias !== null) {
-          this.agent.config.update({ modelAlias: this._preModeModelAlias.value });
-          this._preModeModelAlias = null;
-        }
-        this._isActive = false;
-        this._sessionModeId = null;
-        this._sessionModeFilePath = null;
-        this._fileStem = null;
-        this._kind = 'plan';
+      if (this._preModeModelAlias !== null) {
+        this.agent.config.update({ modelAlias: this._preModeModelAlias.value });
+        this._preModeModelAlias = null;
       }
+      this._isActive = false;
+      this._sessionModeId = null;
+      this._sessionModeFilePath = null;
+      this._kind = 'plan';
       throw error;
     }
 
@@ -141,13 +108,9 @@ export class SessionMode {
   restoreEnter({
     id,
     kind = 'plan',
-    fileStem,
-    path,
   }: {
     readonly id: string;
     readonly kind?: SessionModeKind;
-    readonly fileStem?: string;
-    readonly path?: string;
   }): void {
     this.agent.replayBuilder.push({
       type: 'session_mode_updated',
@@ -158,13 +121,7 @@ export class SessionMode {
     this._isActive = true;
     this._sessionModeId = id;
     this._kind = kind;
-    this._fileStem = fileStem ?? id;
-
-    if (path) {
-      this._sessionModeFilePath = path;
-    } else {
-      this._sessionModeFilePath = this.sessionModeFilePathFor(this._fileStem);
-    }
+    this._sessionModeFilePath = null;
   }
 
   cancel(id?: string): void {
@@ -178,11 +135,9 @@ export class SessionMode {
       enabled: false,
       kind: this._kind,
     });
-    this._manualTopicSlug = null;
     this._isActive = false;
     this._sessionModeId = null;
     this._sessionModeFilePath = null;
-    this._fileStem = null;
     this._kind = 'plan';
     this.agent.emitStatusUpdated();
   }
@@ -203,14 +158,9 @@ export class SessionMode {
       enabled: false,
       kind: this._kind,
     });
-    if (this._kind === 'design' && this._fileStem) {
-      this._lastDesignFileStem = this._fileStem;
-    }
-    this._manualTopicSlug = null;
     this._isActive = false;
     this._sessionModeId = null;
     this._sessionModeFilePath = null;
-    this._fileStem = null;
     this._kind = 'plan';
     this.agent.emitStatusUpdated();
   }
@@ -223,10 +173,6 @@ export class SessionMode {
     return this._kind;
   }
 
-  get fileStem(): string | null {
-    return this._fileStem;
-  }
-
   get sessionModeFilePath(): SessionModeFilePath {
     return this._sessionModeFilePath;
   }
@@ -236,19 +182,73 @@ export class SessionMode {
    * single source of truth the read-only guard ({@link PlanModeGuardDenyPermissionPolicy})
    * uses to decide what Write/Edit may touch while SessionMode mode is active.
    *
-   * The set is the main SessionMode file (`<id>.md`) plus its split siblings
-   * (`<id>-<subsystem>.md`) in the same directory — and nothing else, so source
-   * files outside the SessionModes directory stay denied. A single-file SessionMode (the
-   * common case, and all of design mode) only matches the main file exactly.
+   * The set is the main SessionMode file plus `.md` files inside a subdirectory
+   * named after the main file stem. Normalizes paths to defend against directory
+   * traversal (e.g., ../).
    */
   isWritableSessionModePath(path: string): boolean {
-    if (this._sessionModeFilePath === null || this._sessionModeId === null) return false;
+    if (this._sessionModeFilePath === null) return false;
     if (path === this._sessionModeFilePath) return true;
-    if (dirname(path) !== dirname(this._sessionModeFilePath)) return false;
-    const base = basename(path);
-    if (!base.endsWith('.md')) return false;
-    const stem = base.slice(0, -'.md'.length);
-    return stem === this._sessionModeId || stem.startsWith(`${this._sessionModeId}-`);
+
+    const mainDir = dirname(this._sessionModeFilePath);
+    const mainBase = basename(this._sessionModeFilePath);
+    const mainStem = mainBase.slice(0, -'.md'.length);
+
+    const splitDir = normalize(join(mainDir, mainStem));
+    const normalizedPath = normalize(path);
+    if (!normalizedPath.startsWith(splitDir + '/')) return false;
+    if (!basename(normalizedPath).endsWith('.md')) return false;
+    return true;
+  }
+
+  async resolveFilePathFromContent(content: string): Promise<string> {
+    if (this._sessionModeFilePath !== null) {
+      return this._sessionModeFilePath;
+    }
+
+    const { dir } = await this.resolveSessionModeDirectory(this._kind);
+
+    const heading = extractFirstHeading(content);
+    let slug: string;
+    if (heading) {
+      slug = slugifyTitle(heading);
+    } else {
+      const title = await this.llmSummarizeTitle(content);
+      slug = title ? slugifyTitle(title) : 'untitled';
+    }
+
+    const datePrefix = formatDatePrefix(new Date());
+    const stem = `${datePrefix}-${slug}`;
+    const finalStem = await this.findUniqueStemInDir(dir, stem);
+    const path = join(dir, `${finalStem}.md`);
+
+    this._sessionModeFilePath = path;
+    this.agent.emitStatusUpdated();
+    return path;
+  }
+
+  private async llmSummarizeTitle(content: string): Promise<string | null> {
+    const prompt = buildTitlePrompt(content);
+    try {
+      const provider = this.agent.config.provider;
+      const result = await this.agent.generate(
+        provider,
+        '',
+        [],
+        [{ role: 'user', content: [{ type: 'text', text: prompt }], toolCalls: [] }],
+        {},
+        { signal: AbortSignal.timeout(5000) },
+      );
+      const title = result.message.content
+        .filter((part) => part.type === 'text')
+        .map((part) => part.text)
+        .join('')
+        .trim();
+      return title.length > 0 ? title : null;
+    } catch (error) {
+      this.agent.log?.warn('Failed to summarize title for plan/design file', { error });
+      return null;
+    }
   }
 
   async data(): Promise<SessionModeData> {
@@ -277,15 +277,6 @@ export class SessionMode {
       parents: true,
       existOk: true,
     });
-  }
-
-  private sessionModeFilePathFor(stem: string): string {
-    const homeSubdir = this._kind === 'design' ? 'designs' : 'plans';
-    const cwdSubdir = this._kind === 'design' ? 'design' : 'plan';
-    if (this.agent.homedir !== undefined) {
-      return join(this.agent.homedir, homeSubdir, `${stem}.md`);
-    }
-    return join(this.agent.config.cwd, cwdSubdir, `${stem}.md`);
   }
 
   private async resolveSessionModeDirectory(kind: SessionModeKind): Promise<{ dir: string; isProjectScoped: boolean }> {
@@ -347,62 +338,10 @@ export class SessionMode {
     return `${baseStem}-${micro}`;
   }
 
-  async finalizeFileName(): Promise<string | null> {
-    if (!this._sessionModeFilePath || !this._fileStem) return this._sessionModeFilePath;
-
-    let content: string;
-    try {
-      content = await this.agent.kaos.readText(this._sessionModeFilePath);
-    } catch {
-      return this._sessionModeFilePath;
-    }
-
-    if (content.trim().length === 0) {
-      return this._sessionModeFilePath;
-    }
-
-    const heading = extractFirstHeading(content);
-    const today = formatDatePrefix(new Date());
-    const slug = heading
-      ? slugifyTitle(heading)
-      : (this._manualTopicSlug ||
-         (this._fileStem && this._fileStem !== this._sessionModeId
-           ? extractSlugFromDatedStem(this._fileStem)
-           : null) ||
-         this._sessionModeId ||
-         'untitled');
-
-    let finalStem = `${today}-${slug}`;
-    finalStem = await this.findUniqueStemInDir(dirname(this._sessionModeFilePath), finalStem);
-
-    if (finalStem === this._fileStem) {
-      return this._sessionModeFilePath;
-    }
-
-    const finalPath = join(dirname(this._sessionModeFilePath), `${finalStem}.md`);
-
-    try {
-      await this.agent.kaos.writeText(finalPath, content);
-    } catch (error) {
-      this.agent.log?.warn('Failed to write finalized plan/design file', { error });
-      return this._sessionModeFilePath;
-    }
-
-    this._sessionModeFilePath = finalPath;
-    this._fileStem = finalStem;
-    this.agent.emitStatusUpdated();
-    return finalPath;
-  }
-
   async findUniqueStem(baseStem: string): Promise<string> {
     if (!this._sessionModeFilePath) return baseStem;
     return this.findUniqueStemInDir(dirname(this._sessionModeFilePath), baseStem);
   }
-}
-
-function extractSlugFromDatedStem(stem: string): string {
-  const m = stem.match(/^\d{4}-\d{2}-\d{2}-(.+)$/);
-  return m ? (m[1] ?? stem) : stem;
 }
 
 function isMissingFileError(error: unknown): boolean {

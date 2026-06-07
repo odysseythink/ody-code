@@ -390,8 +390,8 @@ export class ToolManager {
     this.builtinTools = new Map(
       [
         new b.ReadTool(kaos, workspace),
-        new b.WriteTool(kaos, workspace),
-        new b.EditTool(kaos, workspace),
+        new b.WriteTool(this.agent),
+        new b.EditTool(this.agent),
         new b.GrepTool(kaos, workspace),
         new b.GlobTool(kaos, workspace),
         new b.BashTool(kaos, cwd, background, {

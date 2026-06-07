@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 
+import type { Agent } from '../../src/agent';
 import { type EditInput, EditInputSchema, EditTool } from '../../src/tools/builtin/file/edit';
+import type { WorkspaceConfig } from '../../src/tools/support/workspace';
 import { createFakeKaos, PERMISSIVE_WORKSPACE } from './fixtures/fake-kaos';
 import { executeTool } from './fixtures/execute-tool';
 
@@ -10,9 +12,17 @@ function context(args: EditInput) {
   return { turnId: '0', toolCallId: 'call_edit', args, signal };
 }
 
+function mockAgent(kaos: ReturnType<typeof createFakeKaos>, workspace: WorkspaceConfig): Agent {
+  return {
+    kaos,
+    config: { cwd: workspace.workspaceDir },
+    sessionMode: { isActive: false, sessionModeFilePath: null },
+  } as unknown as Agent;
+}
+
 describe('EditTool', () => {
   it('exposes before/after on the file_io display so the approval panel can render a diff', () => {
-    const tool = new EditTool(createFakeKaos(), PERMISSIVE_WORKSPACE);
+    const tool = new EditTool(mockAgent(createFakeKaos(), PERMISSIVE_WORKSPACE));
     const execution = tool.resolveExecution({
       path: '/tmp/foo.ts',
       old_string: 'a\nb\nc',
@@ -31,7 +41,7 @@ describe('EditTool', () => {
   });
 
   it('exposes current metadata and schema', () => {
-    const tool = new EditTool(createFakeKaos(), PERMISSIVE_WORKSPACE);
+    const tool = new EditTool(mockAgent(createFakeKaos(), PERMISSIVE_WORKSPACE));
 
     expect(tool.name).toBe('Edit');
     expect(tool.description).toContain('text view returned by Read');
@@ -80,11 +90,13 @@ describe('EditTool', () => {
   it('replaces a unique first occurrence and writes the updated content', async () => {
     const writeText = vi.fn().mockResolvedValue(0);
     const tool = new EditTool(
-      createFakeKaos({
-        readText: vi.fn().mockResolvedValue('alpha beta'),
-        writeText,
-      }),
-      PERMISSIVE_WORKSPACE,
+      mockAgent(
+        createFakeKaos({
+          readText: vi.fn().mockResolvedValue('alpha beta'),
+          writeText,
+        }),
+        PERMISSIVE_WORKSPACE,
+      ),
     );
 
     const result = await executeTool(tool,
@@ -98,7 +110,7 @@ describe('EditTool', () => {
   it('expands leading tilde paths using the kaos home directory', async () => {
     const readText = vi.fn().mockResolvedValue('alpha beta');
     const writeText = vi.fn().mockResolvedValue(0);
-    const tool = new EditTool(createFakeKaos({ readText, writeText }), PERMISSIVE_WORKSPACE);
+    const tool = new EditTool(mockAgent(createFakeKaos({ readText, writeText }), PERMISSIVE_WORKSPACE));
 
     const result = await executeTool(tool,
       context({ path: '~/notes/today.txt', old_string: 'beta', new_string: 'gamma' }),
@@ -112,11 +124,13 @@ describe('EditTool', () => {
   it('treats replacement dollar sequences literally for single edits', async () => {
     const writeText = vi.fn().mockResolvedValue(0);
     const tool = new EditTool(
-      createFakeKaos({
-        readText: vi.fn().mockResolvedValue('alpha beta gamma'),
-        writeText,
-      }),
-      PERMISSIVE_WORKSPACE,
+      mockAgent(
+        createFakeKaos({
+          readText: vi.fn().mockResolvedValue('alpha beta gamma'),
+          writeText,
+        }),
+        PERMISSIVE_WORKSPACE,
+      ),
     );
 
     const result = await executeTool(tool,
@@ -130,11 +144,13 @@ describe('EditTool', () => {
   it('treats replacement dollar sequences literally for replace_all edits', async () => {
     const writeText = vi.fn().mockResolvedValue(0);
     const tool = new EditTool(
-      createFakeKaos({
-        readText: vi.fn().mockResolvedValue('a b a'),
-        writeText,
-      }),
-      PERMISSIVE_WORKSPACE,
+      mockAgent(
+        createFakeKaos({
+          readText: vi.fn().mockResolvedValue('a b a'),
+          writeText,
+        }),
+        PERMISSIVE_WORKSPACE,
+      ),
     );
 
     const result = await executeTool(tool,
@@ -148,11 +164,13 @@ describe('EditTool', () => {
   it('matches pure CRLF files through the LF model view and writes back CRLF', async () => {
     const writeText = vi.fn().mockResolvedValue(0);
     const tool = new EditTool(
-      createFakeKaos({
-        readText: vi.fn().mockResolvedValue('alpha\r\nbeta\r\ngamma\r\n'),
-        writeText,
-      }),
-      PERMISSIVE_WORKSPACE,
+      mockAgent(
+        createFakeKaos({
+          readText: vi.fn().mockResolvedValue('alpha\r\nbeta\r\ngamma\r\n'),
+          writeText,
+        }),
+        PERMISSIVE_WORKSPACE,
+      ),
     );
 
     const result = await executeTool(tool,
@@ -166,11 +184,13 @@ describe('EditTool', () => {
   it('does not double carriage returns when editing pure CRLF files', async () => {
     const writeText = vi.fn().mockResolvedValue(0);
     const tool = new EditTool(
-      createFakeKaos({
-        readText: vi.fn().mockResolvedValue('alpha\r\nbeta\r\n'),
-        writeText,
-      }),
-      PERMISSIVE_WORKSPACE,
+      mockAgent(
+        createFakeKaos({
+          readText: vi.fn().mockResolvedValue('alpha\r\nbeta\r\n'),
+          writeText,
+        }),
+        PERMISSIVE_WORKSPACE,
+      ),
     );
 
     const result = await executeTool(tool,
@@ -184,11 +204,13 @@ describe('EditTool', () => {
   it('keeps mixed line ending files on the raw exact path', async () => {
     const writeText = vi.fn().mockResolvedValue(0);
     const tool = new EditTool(
-      createFakeKaos({
-        readText: vi.fn().mockResolvedValue('alpha\r\nbeta\ngamma\r\n'),
-        writeText,
-      }),
-      PERMISSIVE_WORKSPACE,
+      mockAgent(
+        createFakeKaos({
+          readText: vi.fn().mockResolvedValue('alpha\r\nbeta\ngamma\r\n'),
+          writeText,
+        }),
+        PERMISSIVE_WORKSPACE,
+      ),
     );
 
     const result = await executeTool(tool,
@@ -203,11 +225,13 @@ describe('EditTool', () => {
   it('allows exact raw edits in mixed line ending files without normalizing the rest', async () => {
     const writeText = vi.fn().mockResolvedValue(0);
     const tool = new EditTool(
-      createFakeKaos({
-        readText: vi.fn().mockResolvedValue('alpha\r\nbeta\ngamma\r\n'),
-        writeText,
-      }),
-      PERMISSIVE_WORKSPACE,
+      mockAgent(
+        createFakeKaos({
+          readText: vi.fn().mockResolvedValue('alpha\r\nbeta\ngamma\r\n'),
+          writeText,
+        }),
+        PERMISSIVE_WORKSPACE,
+      ),
     );
 
     const result = await executeTool(tool,
@@ -221,11 +245,13 @@ describe('EditTool', () => {
   it('replace_all replaces every occurrence', async () => {
     const writeText = vi.fn().mockResolvedValue(0);
     const tool = new EditTool(
-      createFakeKaos({
-        readText: vi.fn().mockResolvedValue('a b a'),
-        writeText,
-      }),
-      PERMISSIVE_WORKSPACE,
+      mockAgent(
+        createFakeKaos({
+          readText: vi.fn().mockResolvedValue('a b a'),
+          writeText,
+        }),
+        PERMISSIVE_WORKSPACE,
+      ),
     );
 
     const result = await executeTool(tool,
@@ -239,7 +265,7 @@ describe('EditTool', () => {
   it('rejects no-op edits before file I/O', async () => {
     const readText = vi.fn().mockResolvedValue('same');
     const writeText = vi.fn().mockResolvedValue(0);
-    const tool = new EditTool(createFakeKaos({ readText, writeText }), PERMISSIVE_WORKSPACE);
+    const tool = new EditTool(mockAgent(createFakeKaos({ readText, writeText }), PERMISSIVE_WORKSPACE));
 
     const result = await executeTool(tool,
       context({
@@ -259,11 +285,13 @@ describe('EditTool', () => {
   it('errors when old_string is missing', async () => {
     const writeText = vi.fn().mockResolvedValue(0);
     const tool = new EditTool(
-      createFakeKaos({
-        readText: vi.fn().mockResolvedValue('alpha beta'),
-        writeText,
-      }),
-      PERMISSIVE_WORKSPACE,
+      mockAgent(
+        createFakeKaos({
+          readText: vi.fn().mockResolvedValue('alpha beta'),
+          writeText,
+        }),
+        PERMISSIVE_WORKSPACE,
+      ),
     );
 
     const result = await executeTool(tool,
@@ -278,11 +306,13 @@ describe('EditTool', () => {
   it('errors when old_string is not unique and replace_all is false', async () => {
     const writeText = vi.fn().mockResolvedValue(0);
     const tool = new EditTool(
-      createFakeKaos({
-        readText: vi.fn().mockResolvedValue('same same'),
-        writeText,
-      }),
-      PERMISSIVE_WORKSPACE,
+      mockAgent(
+        createFakeKaos({
+          readText: vi.fn().mockResolvedValue('same same'),
+          writeText,
+        }),
+        PERMISSIVE_WORKSPACE,
+      ),
     );
 
     const result = await executeTool(tool,
@@ -298,10 +328,10 @@ describe('EditTool', () => {
 
   it('rejects relative traversal edits before reading', async () => {
     const readText = vi.fn().mockResolvedValue('secret');
-    const tool = new EditTool(createFakeKaos({ readText }), {
+    const tool = new EditTool(mockAgent(createFakeKaos({ readText }), {
       workspaceDir: '/workspace/project',
       additionalDirs: [],
-    });
+    }));
 
     const result = await executeTool(tool,
       context({ path: '../outside.txt', old_string: 'secret', new_string: 'x' }),
@@ -315,11 +345,13 @@ describe('EditTool', () => {
   it('replaces unicode strings (CJK) and round-trips the surrounding text', async () => {
     const writeText = vi.fn().mockResolvedValue(0);
     const tool = new EditTool(
-      createFakeKaos({
-        readText: vi.fn().mockResolvedValue('Hello 世界! café'),
-        writeText,
-      }),
-      PERMISSIVE_WORKSPACE,
+      mockAgent(
+        createFakeKaos({
+          readText: vi.fn().mockResolvedValue('Hello 世界! café'),
+          writeText,
+        }),
+        PERMISSIVE_WORKSPACE,
+      ),
     );
 
     const result = await executeTool(tool,
@@ -334,11 +366,13 @@ describe('EditTool', () => {
     const writeText = vi.fn().mockResolvedValue(0);
     const original = 'Hello world!';
     const tool = new EditTool(
-      createFakeKaos({
-        readText: vi.fn().mockResolvedValue(original),
-        writeText,
-      }),
-      PERMISSIVE_WORKSPACE,
+      mockAgent(
+        createFakeKaos({
+          readText: vi.fn().mockResolvedValue(original),
+          writeText,
+        }),
+        PERMISSIVE_WORKSPACE,
+      ),
     );
 
     const result = await executeTool(tool,
@@ -356,14 +390,16 @@ describe('EditTool', () => {
     // readText error today — fail-divergent until the path-type check moves
     // upstream of read.
     const tool = new EditTool(
-      createFakeKaos({
-        readText: vi.fn().mockRejectedValue(
-          Object.assign(new Error('EISDIR: illegal operation on a directory'), {
-            code: 'EISDIR',
-          }),
-        ),
-      }),
-      PERMISSIVE_WORKSPACE,
+      mockAgent(
+        createFakeKaos({
+          readText: vi.fn().mockRejectedValue(
+            Object.assign(new Error('EISDIR: illegal operation on a directory'), {
+              code: 'EISDIR',
+            }),
+          ),
+        }),
+        PERMISSIVE_WORKSPACE,
+      ),
     );
 
     const result = await executeTool(tool,
@@ -377,11 +413,13 @@ describe('EditTool', () => {
   it('replaces a substring with an empty new_string (deletion)', async () => {
     const writeText = vi.fn().mockResolvedValue(0);
     const tool = new EditTool(
-      createFakeKaos({
-        readText: vi.fn().mockResolvedValue('Hello world!'),
-        writeText,
-      }),
-      PERMISSIVE_WORKSPACE,
+      mockAgent(
+        createFakeKaos({
+          readText: vi.fn().mockResolvedValue('Hello world!'),
+          writeText,
+        }),
+        PERMISSIVE_WORKSPACE,
+      ),
     );
 
     const result = await executeTool(tool,
@@ -395,11 +433,13 @@ describe('EditTool', () => {
   it('allows absolute edits outside the workspace under default policy', async () => {
     const writeText = vi.fn().mockResolvedValue(0);
     const tool = new EditTool(
-      createFakeKaos({
-        readText: vi.fn().mockResolvedValue('old content'),
-        writeText,
-      }),
-      { workspaceDir: '/workspace', additionalDirs: [] },
+      mockAgent(
+        createFakeKaos({
+          readText: vi.fn().mockResolvedValue('old content'),
+          writeText,
+        }),
+        { workspaceDir: '/workspace', additionalDirs: [] },
+      ),
     );
 
     const result = await executeTool(tool,
@@ -415,11 +455,13 @@ describe('EditTool', () => {
     // mistake "shares a prefix" for "inside workspace".
     const writeText = vi.fn().mockResolvedValue(0);
     const tool = new EditTool(
-      createFakeKaos({
-        readText: vi.fn().mockResolvedValue('content'),
-        writeText,
-      }),
-      { workspaceDir: '/workspace', additionalDirs: [] },
+      mockAgent(
+        createFakeKaos({
+          readText: vi.fn().mockResolvedValue('content'),
+          writeText,
+        }),
+        { workspaceDir: '/workspace', additionalDirs: [] },
+      ),
     );
 
     const result = await executeTool(tool,

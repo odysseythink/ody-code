@@ -13,7 +13,6 @@ import type { Agent } from '#/agent';
 import { z } from 'zod';
 
 import { designModeEntryMessage } from '../../../agent/injection/design-mode-contract';
-import { cleanupTopic } from '../../../agent/session-mode/topic-generator';
 import type { BuiltinTool } from '../../../agent/tool';
 import type { ToolExecution } from '../../../loop/types';
 import { toInputJsonSchema } from '../../support/input-schema';
@@ -21,11 +20,7 @@ import DESCRIPTION from './enter-design-mode.md';
 
 // ── Input schema ─────────────────────────────────────────────────────
 
-export const EnterDesignModeInputSchema = z
-  .object({
-    topic: z.string().max(100).optional(),
-  })
-  .strict();
+export const EnterDesignModeInputSchema = z.object({}).strict();
 export type EnterDesignModeInput = z.infer<typeof EnterDesignModeInputSchema>;
 
 export class EnterDesignModeTool implements BuiltinTool<EnterDesignModeInput> {
@@ -49,16 +44,8 @@ export class EnterDesignModeTool implements BuiltinTool<EnterDesignModeInput> {
           };
         }
 
-        let fileStem: string | undefined;
-        if (_args.topic !== undefined) {
-          const cleaned = cleanupTopic(_args.topic);
-          if (cleaned !== null) {
-            fileStem = cleaned;
-          }
-        }
-
         try {
-          await this.agent.sessionMode.enter(undefined, undefined, undefined, 'design', fileStem);
+          await this.agent.sessionMode.enter(undefined, undefined, undefined, 'design');
         } catch (error) {
           const message = error instanceof Error ? error.message : 'Failed to enter design mode.';
           return { isError: true, output: `Failed to enter design mode: ${message}` };

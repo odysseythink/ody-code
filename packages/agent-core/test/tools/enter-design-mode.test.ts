@@ -74,12 +74,10 @@ describe('EnterDesignModeTool', () => {
     expect(tool.name).toBe('EnterDesignMode');
     expect(tool.description.length).toBeGreaterThan(0);
     expect(EnterDesignModeInputSchema.safeParse({}).success).toBe(true);
-    expect(EnterDesignModeInputSchema.safeParse({ topic: 'Auth Refactor' }).success).toBe(true);
+    expect(EnterDesignModeInputSchema.safeParse({ topic: 'Auth Refactor' }).success).toBe(false);
     expect(tool.parameters).toMatchObject({
       type: 'object',
-      properties: {
-        topic: { type: 'string' },
-      },
+      properties: {},
     });
   });
 
@@ -134,30 +132,9 @@ describe('EnterDesignModeTool', () => {
         undefined,
         undefined,
         'design',
-        undefined,
       );
     },
   );
-
-  it('uses user-provided topic when given', async () => {
-    const { agent, enterSpy } = makeAgent({ mode: 'yolo' });
-
-    const result = await executeTool(new EnterDesignModeTool(agent), {
-      turnId: '0',
-      toolCallId: 'tc_topic',
-      args: { topic: 'User Profile' },
-      signal,
-    });
-
-    expect(result.isError).toBeFalsy();
-    expect(enterSpy).toHaveBeenCalledWith(
-      undefined,
-      undefined,
-      undefined,
-      'design',
-      'user-profile',
-    );
-  });
 
   it('returns an error when entering design mode fails', async () => {
     const { agent } = makeAgent({
