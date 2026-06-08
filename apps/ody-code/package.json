@@ -27,6 +27,7 @@
   },
   "files": [
     "dist",
+    "built-in",
     "scripts/postinstall.mjs",
     "scripts/postinstall",
     "README.md"

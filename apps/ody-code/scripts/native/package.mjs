@@ -1,12 +1,12 @@
 import { createHash } from 'node:crypto';
 import { createReadStream, createWriteStream } from 'node:fs';
-import { mkdir, stat, writeFile } from 'node:fs/promises';
-import { basename, resolve } from 'node:path';
+import { mkdir, readdir, stat as fsStat, writeFile } from 'node:fs/promises';
+import { basename, relative, resolve, sep } from 'node:path';
 import { pipeline } from 'node:stream/promises';
 
 import { ZipFile } from 'yazl';
 
-import { executableName, nativeArtifactsDir, nativeBinPath, targetTriple } from './paths.mjs';
+import { appRoot, executableName, nativeArtifactsDir, nativeBinPath, targetTriple } from './paths.mjs';
 
 const target = targetTriple();
 const execName = executableName();
@@ -34,7 +34,7 @@ async function sha256(path) {
 }
 
 try {
-  await stat(sourceBinary);
+  await fsStat(sourceBinary);
 } catch {
   fail(`Native executable not found at ${sourceBinary}. Run build:native:sea first.`);
 }
@@ -43,8 +43,35 @@ await mkdir(artifactsDir, { recursive: true });
 
 const zip = new ZipFile();
 zip.addFile(sourceBinary, execName, { mode: 0o100755 });
+
+const builtInDir = resolve(appRoot, 'built-in');
+try {
+  await fsStat(builtInDir);
+  await addDirectoryToZip(zip, builtInDir, 'built-in');
+} catch {
+  // built-in/ directory may not exist in all build contexts; skip silently.
+}
+
 zip.end();
 await pipeline(zip.outputStream, createWriteStream(artifactPath));
+
+async function addDirectoryToZip(
+  zip,
+  sourceDir,
+  zipPrefix,
+) {
+  const entries = await readdir(sourceDir, { withFileTypes: true, recursive: true });
+  for (const entry of entries) {
+    const fullPath = resolve(sourceDir, entry.parentPath ?? sourceDir, entry.name);
+    const relativePath = relative(sourceDir, fullPath);
+    const zipPath = zipPrefix + '/' + relativePath.split(sep).join('/');
+    if (entry.isDirectory()) {
+      zip.addEmptyDirectory(zipPath);
+    } else {
+      zip.addFile(fullPath, zipPath);
+    }
+  }
+}
 
 const digest = await sha256(artifactPath);
 await writeFile(checksumPath, `${digest}  ${basename(artifactPath)}\n`);
