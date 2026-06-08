@@ -87,14 +87,21 @@ export class ChromeTraceRecorder {
   private sanitizeArgs(
     args: Record<string, unknown>,
   ): Record<string, unknown> {
-    const sanitized: Record<string, unknown> = {};
-    for (const [key, value] of Object.entries(args)) {
-      if (SENSITIVE_KEYS.has(key.toLowerCase())) {
-        sanitized[key] = '<redacted>';
-      } else {
-        sanitized[key] = value;
+    return this.sanitizeValue(args) as Record<string, unknown>;
+  }
+
+  private sanitizeValue(value: unknown): unknown {
+    if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
+      const sanitized: Record<string, unknown> = {};
+      for (const [key, nestedValue] of Object.entries(value)) {
+        if (SENSITIVE_KEYS.has(key.toLowerCase())) {
+          sanitized[key] = '<redacted>';
+        } else {
+          sanitized[key] = this.sanitizeValue(nestedValue);
+        }
       }
+      return sanitized;
     }
-    return sanitized;
+    return value;
   }
 }

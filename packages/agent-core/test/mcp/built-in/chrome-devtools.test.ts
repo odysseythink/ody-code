@@ -10,40 +10,43 @@ describe('createChromeDevToolsServerDefinition', () => {
     expect(def.config.transport).toBe('stdio');
     const cfg = def.config as Record<string, unknown>;
     expect(cfg['command']).toBe('node');
-    expect(cfg['args']).toEqual(['./build/src/index.js']);
     expect(cfg['cwd']).toBe('/mock/built-in/chrome-devtools');
     expect(def.config.startupTimeoutMs).toBe(30_000);
     expect(def.config.toolTimeoutMs).toBe(60_000);
   });
 
-  it('envResolver produces correct environment variables with custom port', () => {
+  it('has no static args in config', () => {
     const def = createChromeDevToolsServerDefinition('/mock');
-    const env = def.envResolver?.({
+    const cfg = def.config as Record<string, unknown>;
+    expect(cfg['args']).toBeUndefined();
+  });
+
+  it('argsResolver disables telemetry and sets browserUrl with custom port', () => {
+    const def = createChromeDevToolsServerDefinition('/mock');
+    const args = def.argsResolver?.({
       kimiHomeDir: '/home/user/.ody-code',
       sessionId: 'session_abc123',
       chromePort: 9333,
     });
-    expect(env).toEqual({
-      CHROME_REMOTE_DEBUGGING_PORT: '9333',
-      ODY_CODE_HOME: '/home/user/.ody-code',
-      CDP_TRACE_DIR: '/home/user/.ody-code/sessions/session_abc123/chrome-traces',
-    });
+    expect(args).toEqual([
+      './build/src/index.js',
+      '--no-usage-statistics',
+      '--no-performance-crux',
+      '--browserUrl=http://127.0.0.1:9333',
+    ]);
   });
 
-  it('envResolver falls back to default port 9222', () => {
+  it('argsResolver falls back to default port 9222', () => {
     const def = createChromeDevToolsServerDefinition('/mock');
-    const env = def.envResolver?.({
+    const args = def.argsResolver?.({
       kimiHomeDir: '/home/user/.ody-code',
       sessionId: 'session_abc123',
     });
-    expect(env?.['CHROME_REMOTE_DEBUGGING_PORT']).toBe('9222');
+    expect(args?.[3]).toBe('--browserUrl=http://127.0.0.1:9222');
   });
 
-  it('envResolver handles missing sessionId', () => {
+  it('has no envResolver', () => {
     const def = createChromeDevToolsServerDefinition('/mock');
-    const env = def.envResolver?.({
-      kimiHomeDir: '/home/user/.ody-code',
-    });
-    expect(env?.['CDP_TRACE_DIR']).toBe('/home/user/.ody-code/sessions/unknown/chrome-traces');
+    expect(def.envResolver).toBeUndefined();
   });
 });

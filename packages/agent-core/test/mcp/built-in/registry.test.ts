@@ -100,4 +100,20 @@ describe('BuiltInMcpRegistry', () => {
     );
     expect((configs['test-server'] as Record<string, unknown>)['env']).toEqual({ PORT: '9333' });
   });
+
+  it('argsResolver overrides static config args', () => {
+    const registry = new BuiltInMcpRegistry();
+    registry.register({
+      name: 'test-server',
+      displayName: 'Test',
+      enabledByDefault: true,
+      config: { transport: 'stdio' as const, command: 'node', args: ['--default'] },
+      argsResolver: (ctx) => ['--port', String(ctx.chromePort ?? 9222)],
+    });
+    const configs = registry.getEnabledConfigs(
+      { kimiHomeDir: '/tmp/home', chromePort: 9333 },
+      { providers: {} },
+    );
+    expect((configs['test-server'] as Record<string, unknown>)['args']).toEqual(['--port', '9333']);
+  });
 });

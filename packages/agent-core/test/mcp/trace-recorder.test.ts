@@ -57,6 +57,23 @@ describe('ChromeTraceRecorder', () => {
     expect(record.args.username).toBe('alice');
   });
 
+  it('redacts nested sensitive args', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'trace-test-'));
+    const recorder = new ChromeTraceRecorder(dir);
+    const result: MCPToolResult = { content: [], isError: false };
+    await recorder.record(
+      'fill',
+      { credentials: { password: 'secret123', username: 'alice' }, url: 'https://example.com' },
+      result,
+    );
+
+    const manifest = await readFile(join(dir, 'manifest.jsonl'), 'utf-8');
+    const record = JSON.parse(manifest.trim());
+    expect(record.args.credentials.password).toBe('<redacted>');
+    expect(record.args.credentials.username).toBe('alice');
+    expect(record.args.url).toBe('https://example.com');
+  });
+
   it('survives write failures without throwing', async () => {
     const recorder = new ChromeTraceRecorder('/dev/null/invalid-path');
     const result: MCPToolResult = { content: [], isError: false };

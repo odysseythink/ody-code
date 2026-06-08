@@ -144,7 +144,11 @@ export class ToolManager {
     this.unregisterMcpServer(serverName);
     const isChromeDevTools = serverName === 'chrome-devtools';
     let traceRecorder: ChromeTraceRecorder | undefined;
-    if (isChromeDevTools && this.agent.homedir) {
+    if (
+      isChromeDevTools &&
+      this.agent.homedir &&
+      this.agent.kimiConfig?.browser?.traceEnabled !== false
+    ) {
       const sessionDir = dirname(dirname(this.agent.homedir));
       traceRecorder = new ChromeTraceRecorder(
         join(sessionDir, 'chrome-traces'),

@@ -12,6 +12,7 @@ export interface BuiltInMcpServerDefinition {
   readonly enabledByDefault: boolean;
   readonly config: McpServerConfig;
   readonly envResolver?: (ctx: BuiltInContext) => Record<string, string>;
+  readonly argsResolver?: (ctx: BuiltInContext) => string[];
 }
 
 export class BuiltInMcpRegistry {
@@ -26,11 +27,16 @@ export class BuiltInMcpRegistry {
     for (const [name, def] of this.definitions) {
       if (this.isDisabled(name, config)) continue;
       const env = def.envResolver?.(ctx);
+      const args = def.argsResolver?.(ctx);
       const base = def.config as Record<string, unknown>;
-      result[name] = {
+      const merged: Record<string, unknown> = {
         ...def.config,
         env: env ? { ...(base['env'] as Record<string, string> | undefined), ...env } : base['env'],
-      } as McpServerConfig;
+      };
+      if (args !== undefined) {
+        merged['args'] = args;
+      }
+      result[name] = merged as McpServerConfig;
     }
     return result;
   }
