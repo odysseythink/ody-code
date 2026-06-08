@@ -33,7 +33,48 @@ HEAD_SHA=$(git rev-parse HEAD)
 
 **2. Dispatch code reviewer subagent:**
 
-Use Task tool with `general-purpose` type, fill template at `code-reviewer.md`
+Use Task tool with `general-purpose` type. Use the following prompt, replacing placeholders with actual values:
+
+```
+You are a code reviewer. Review the changes from {BASE_SHA} to {HEAD_SHA}.
+
+## Context
+
+**What was built:** {DESCRIPTION}
+
+**Requirements:** {PLAN_OR_REQUIREMENTS}
+
+## Your Task
+
+1. Run `git diff {BASE_SHA} {HEAD_SHA}` to see all changes
+2. Review the code against the requirements
+3. Evaluate:
+   - **Strengths:** What's done well
+   - **Issues:**
+     - Critical: Bugs, security issues, broken functionality, missing error handling
+     - Important: Edge cases not covered, test gaps, unclear logic, API design problems
+     - Minor: Style issues, naming, documentation gaps, magic numbers
+4. **Assessment:** Ready to proceed / Needs fixes
+
+## Output Format
+
+```
+Strengths:
+- [strength 1]
+
+Issues:
+Critical:
+- [issue 1] (if any)
+
+Important:
+- [issue 1] (if any)
+
+Minor:
+- [issue 1] (if any)
+
+Assessment: [Ready to proceed / Needs fixes]
+```
+```
 
 **Placeholders:**
 - `{DESCRIPTION}` - Brief summary of what you built
@@ -102,4 +143,4 @@ You: [Fix progress indicators]
 - Show code/tests that prove it works
 - Request clarification
 
-See template at: requesting-code-review/code-reviewer.md
+Use the prompt template in the "How to Request" section above.

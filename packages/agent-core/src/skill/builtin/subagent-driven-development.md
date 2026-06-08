@@ -49,14 +49,14 @@ digraph process {
 
     subgraph cluster_per_task {
         label="Per Task";
-        "Dispatch implementer subagent (./implementer-prompt.md)" [shape=box];
+        "Dispatch implementer subagent (see Implementer Prompt below)" [shape=box];
         "Implementer subagent asks questions?" [shape=diamond];
         "Answer questions, provide context" [shape=box];
         "Implementer subagent implements, tests, commits, self-reviews" [shape=box];
-        "Dispatch spec reviewer subagent (./spec-reviewer-prompt.md)" [shape=box];
+        "Dispatch spec reviewer subagent (see Spec Reviewer Prompt below)" [shape=box];
         "Spec reviewer subagent confirms code matches spec?" [shape=diamond];
         "Implementer subagent fixes spec gaps" [shape=box];
-        "Dispatch code quality reviewer subagent (./code-quality-reviewer-prompt.md)" [shape=box];
+        "Dispatch code quality reviewer subagent (see Code Quality Reviewer Prompt below)" [shape=box];
         "Code quality reviewer subagent approves?" [shape=diamond];
         "Implementer subagent fixes quality issues" [shape=box];
         "Mark task complete in TodoWrite" [shape=box];
@@ -67,22 +67,22 @@ digraph process {
     "Dispatch final code reviewer subagent for entire implementation" [shape=box];
     "Use gpowers:finishing-a-development-branch" [shape=box style=filled fillcolor=lightgreen];
 
-    "Read plan, extract all tasks with full text, note context, create TodoWrite" -> "Dispatch implementer subagent (./implementer-prompt.md)";
-    "Dispatch implementer subagent (./implementer-prompt.md)" -> "Implementer subagent asks questions?";
+    "Read plan, extract all tasks with full text, note context, create TodoWrite" -> "Dispatch implementer subagent (see Implementer Prompt below)";
+    "Dispatch implementer subagent (see Implementer Prompt below)" -> "Implementer subagent asks questions?";
     "Implementer subagent asks questions?" -> "Answer questions, provide context" [label="yes"];
-    "Answer questions, provide context" -> "Dispatch implementer subagent (./implementer-prompt.md)";
+    "Answer questions, provide context" -> "Dispatch implementer subagent (see Implementer Prompt below)";
     "Implementer subagent asks questions?" -> "Implementer subagent implements, tests, commits, self-reviews" [label="no"];
-    "Implementer subagent implements, tests, commits, self-reviews" -> "Dispatch spec reviewer subagent (./spec-reviewer-prompt.md)";
-    "Dispatch spec reviewer subagent (./spec-reviewer-prompt.md)" -> "Spec reviewer subagent confirms code matches spec?";
+    "Implementer subagent implements, tests, commits, self-reviews" -> "Dispatch spec reviewer subagent (see Spec Reviewer Prompt below)";
+    "Dispatch spec reviewer subagent (see Spec Reviewer Prompt below)" -> "Spec reviewer subagent confirms code matches spec?";
     "Spec reviewer subagent confirms code matches spec?" -> "Implementer subagent fixes spec gaps" [label="no"];
-    "Implementer subagent fixes spec gaps" -> "Dispatch spec reviewer subagent (./spec-reviewer-prompt.md)" [label="re-review"];
-    "Spec reviewer subagent confirms code matches spec?" -> "Dispatch code quality reviewer subagent (./code-quality-reviewer-prompt.md)" [label="yes"];
-    "Dispatch code quality reviewer subagent (./code-quality-reviewer-prompt.md)" -> "Code quality reviewer subagent approves?";
+    "Implementer subagent fixes spec gaps" -> "Dispatch spec reviewer subagent (see Spec Reviewer Prompt below)" [label="re-review"];
+    "Spec reviewer subagent confirms code matches spec?" -> "Dispatch code quality reviewer subagent (see Code Quality Reviewer Prompt below)" [label="yes"];
+    "Dispatch code quality reviewer subagent (see Code Quality Reviewer Prompt below)" -> "Code quality reviewer subagent approves?";
     "Code quality reviewer subagent approves?" -> "Implementer subagent fixes quality issues" [label="no"];
-    "Implementer subagent fixes quality issues" -> "Dispatch code quality reviewer subagent (./code-quality-reviewer-prompt.md)" [label="re-review"];
+    "Implementer subagent fixes quality issues" -> "Dispatch code quality reviewer subagent (see Code Quality Reviewer Prompt below)" [label="re-review"];
     "Code quality reviewer subagent approves?" -> "Mark task complete in TodoWrite" [label="yes"];
     "Mark task complete in TodoWrite" -> "More tasks remain?";
-    "More tasks remain?" -> "Dispatch implementer subagent (./implementer-prompt.md)" [label="yes"];
+    "More tasks remain?" -> "Dispatch implementer subagent (see Implementer Prompt below)" [label="yes"];
     "More tasks remain?" -> "Dispatch final code reviewer subagent for entire implementation" [label="no"];
     "Dispatch final code reviewer subagent for entire implementation" -> "Use gpowers:finishing-a-development-branch";
 }
@@ -123,9 +123,107 @@ Implementer subagents report one of four statuses. Handle each appropriately:
 
 ## Prompt Templates
 
-- `./implementer-prompt.md` - Dispatch implementer subagent
-- `./spec-reviewer-prompt.md` - Dispatch spec compliance reviewer subagent
-- `./code-quality-reviewer-prompt.md` - Dispatch code quality reviewer subagent
+### Implementer Prompt
+
+Dispatch a subagent with the following prompt. Replace `{TASK_DESCRIPTION}` and `{CONTEXT}` with actual values.
+
+```
+You are an implementer subagent. Your job is to implement ONE task precisely as specified.
+
+## Task
+
+{TASK_DESCRIPTION}
+
+## Context
+
+{CONTEXT}
+
+## Rules
+
+- Follow test-driven development: write tests first, then implementation
+- Ask clarifying questions before starting if anything is unclear
+- Implement exactly what is specified — no more, no less
+- Write tests for all new functionality
+- Commit when done with a clear commit message
+- Self-review before reporting completion
+
+## Status Reporting
+
+When done, report one of:
+- DONE: Task complete, all tests passing, self-review clean
+- DONE_WITH_CONCERNS: Task complete but note specific doubts
+- NEEDS_CONTEXT: Need more information before proceeding
+- BLOCKED: Cannot complete — explain why and what would unblock
+```
+
+### Spec Reviewer Prompt
+
+Dispatch a subagent with the following prompt. Replace `{TASK_SPEC}` with the actual task specification.
+
+```
+You are a spec compliance reviewer. Verify that the implementation matches the task specification exactly.
+
+## Task Spec
+
+{TASK_SPEC}
+
+## Changes
+
+Review the implementation changes.
+
+## Checklist
+
+- [ ] All requirements from the spec are implemented
+- [ ] No extra functionality beyond what was requested
+- [ ] Edge cases mentioned in the spec are handled
+- [ ] Behavior matches the spec description
+
+## Output
+
+Report:
+- ✅ Spec compliant — all requirements met, nothing extra
+- OR ❌ Issues: [specific list of gaps or extra features]
+```
+
+### Code Quality Reviewer Prompt
+
+Dispatch a subagent with the following prompt. Replace `{BASE_SHA}` and `{HEAD_SHA}` with actual commit SHAs.
+
+```
+You are a code quality reviewer. Evaluate the implementation for code quality.
+
+## Changes
+
+Run `git diff {BASE_SHA} {HEAD_SHA}` to review the implementation changes.
+
+## Checklist
+
+- Clean architecture and separation of concerns
+- Proper error handling
+- Good test coverage
+- Clear naming and readability
+- No magic numbers or hardcoded values without explanation
+- No obvious performance issues
+
+## Output Format
+
+```
+Strengths:
+- [strength 1]
+
+Issues:
+Critical:
+- [issue 1] (if any)
+
+Important:
+- [issue 1] (if any)
+
+Minor:
+- [issue 1] (if any)
+
+Assessment: [Approved / Needs fixes]
+```
+```
 
 ## Example Workflow
 
