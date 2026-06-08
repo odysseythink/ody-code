@@ -27,6 +27,7 @@ import {
   parseHeadlessGoalCreate,
   type HeadlessGoalCreate,
 } from './goal-prompt';
+import { arePathsEqual } from '#/utils/paths';
 import { createCliTelemetryBootstrap, initializeCliTelemetry } from './telemetry';
 import { createKimiCodeHostIdentity } from './version';
 
@@ -227,7 +228,7 @@ async function resolvePromptSession(
     if (target === undefined) {
       throw new Error(`Session "${opts.session}" not found.`);
     }
-    if (target.workDir !== workDir) {
+    if (!arePathsEqual(target.workDir, workDir)) {
       stderr.write(
         `${chalk.hex('#E8A838')(
           `Session "${opts.session}" was created under a different directory.\n` +

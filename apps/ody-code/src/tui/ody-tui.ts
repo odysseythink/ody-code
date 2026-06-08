@@ -29,7 +29,7 @@ import { MigrationScreenComponent, type MigrationScreenResult } from '#/migratio
 import type { GitLsFilesCache } from '#/utils/git/git-ls-files';
 import { createGitLsFilesCache } from '#/utils/git/git-ls-files';
 import { appendInputHistory, loadInputHistory } from '#/utils/history/input-history';
-import { getInputHistoryFile } from '#/utils/paths';
+import { arePathsEqual, getInputHistoryFile } from '#/utils/paths';
 import { detectFdPath } from '#/utils/process/fd-detect';
 
 import {
@@ -516,7 +516,7 @@ export class KimiTUI {
           if (target === undefined) {
             throw new Error(`Session "${startup.sessionFlag}" not found.`);
           }
-          if (target.workDir !== workDir) {
+          if (!arePathsEqual(target.workDir, workDir)) {
             this.state.ui.stop();
             process.stderr.write(
               `${chalk.hex(this.state.theme.colors.warning)(

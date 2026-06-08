@@ -7,7 +7,7 @@
 
 import { createHash } from 'node:crypto';
 import { homedir } from 'node:os';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 
 import {
   ODY_CODE_DATA_DIR_NAME,
@@ -68,4 +68,17 @@ export function getUpdateInstallLockFile(): string {
 export function getInputHistoryFile(workDir: string): string {
   const hash = createHash('md5').update(workDir, 'utf-8').digest('hex');
   return join(getDataDir(), ODY_CODE_INPUT_HISTORY_DIR_NAME, `${hash}.jsonl`);
+}
+
+/**
+ * Compare two paths for equality, accounting for platform differences.
+ * On Windows, comparison is case-insensitive and normalizes slashes.
+ */
+export function arePathsEqual(a: string, b: string): boolean {
+  const resolvedA = resolve(a);
+  const resolvedB = resolve(b);
+  if (process.platform === 'win32') {
+    return resolvedA.toLowerCase() === resolvedB.toLowerCase();
+  }
+  return resolvedA === resolvedB;
 }

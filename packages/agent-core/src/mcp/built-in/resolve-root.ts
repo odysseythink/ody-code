@@ -10,6 +10,7 @@ export class BuiltInRootNotFoundError extends Error {
 export function resolveBuiltInRoot(serverName: string, candidates?: readonly string[]): string {
   const resolvedCandidates = candidates ?? [
     join(dirname(process.execPath), 'built-in', serverName),
+    join(__dirname, '..', 'built-in', serverName),
     join(__dirname, '..', '..', 'built-in', serverName),
     join(__dirname, '..', '..', '..', 'built-in', serverName),
   ];
