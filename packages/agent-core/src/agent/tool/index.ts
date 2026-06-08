@@ -1,5 +1,6 @@
 import { uniq } from '@antfu/utils';
 import type { ChatProvider, Tool } from '@odysseythink/kosong';
+import { dirname, join } from 'node:path';
 import picomatch from 'picomatch';
 
 import type { Agent } from '..';
@@ -8,6 +9,7 @@ import { flags } from '../../flags';
 import type { ExecutableTool } from '../../loop';
 import { createMcpAuthTool } from '../../mcp/auth-tool';
 import type { McpConnectionManager, McpServerEntry } from '../../mcp';
+import { ChromeTraceRecorder } from '../../mcp/trace-recorder';
 import { mcpResultToExecutableOutput } from '../../mcp/output';
 import { isMcpToolName, qualifyMcpToolName } from '../../mcp/tool-naming';
 import type { MCPClient } from '../../mcp/types';
@@ -140,6 +142,14 @@ export class ToolManager {
     enabledTools?: ReadonlySet<string>,
   ): McpServerRegistrationResult {
     this.unregisterMcpServer(serverName);
+    const isChromeDevTools = serverName === 'chrome-devtools';
+    let traceRecorder: ChromeTraceRecorder | undefined;
+    if (isChromeDevTools && this.agent.homedir) {
+      const sessionDir = dirname(dirname(this.agent.homedir));
+      traceRecorder = new ChromeTraceRecorder(
+        join(sessionDir, 'chrome-traces'),
+      );
+    }
     const qualifiedNames: string[] = [];
     const collisions: McpToolCollision[] = [];
     const seenInThisCall = new Map<string, string>();
@@ -181,6 +191,9 @@ export class ToolManager {
                 (args ?? {}) as Record<string, unknown>,
                 context.signal,
               );
+              if (traceRecorder) {
+                await traceRecorder.record(tool.name, (args ?? {}) as Record<string, unknown>, result);
+              }
               return mcpResultToExecutableOutput(result, qualified);
             },
           };
