@@ -192,6 +192,8 @@ export const BrowserConfigSchema = z.object({
   headless: z.boolean().optional(),
   executablePath: z.string().optional(),
   legacyMcpEnabled: z.boolean().optional(),
+  allowedHosts: z.array(z.string()).optional(),
+  sensitivePatterns: z.array(z.string()).optional(),
 });
 
 export type BrowserConfig = z.infer<typeof BrowserConfigSchema>;
