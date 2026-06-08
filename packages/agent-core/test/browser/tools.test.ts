@@ -1,4 +1,5 @@
 import { vi, describe, expect, it, beforeEach } from 'vitest';
+import type { Mock } from 'vitest';
 import {
   BrowserBrowseTool,
   BrowserExtractTool,
@@ -8,18 +9,19 @@ import {
 } from '../../src/tools/builtin/browser';
 import type { BrowserConnectionManager } from '../../src/browser/connection';
 import type { BrowserHandle } from '../../src/browser/types';
+import type { RunnableToolExecution } from '../../src/loop/types';
 
 function createMockPage(overrides: Partial<{
-  goto: typeof vi.fn;
-  title: typeof vi.fn;
-  url: typeof vi.fn;
-  evaluate: typeof vi.fn;
-  screenshot: typeof vi.fn;
-  click: typeof vi.fn;
-  type: typeof vi.fn;
-  waitForSelector: typeof vi.fn;
-  $: typeof vi.fn;
-} > = {}) {
+  goto: Mock;
+  title: Mock;
+  url: Mock;
+  evaluate: Mock;
+  screenshot: Mock;
+  click: Mock;
+  type: Mock;
+  waitForSelector: Mock;
+  $: Mock;
+}> = {}) {
   return {
     goto: vi.fn().mockResolvedValue(undefined),
     title: vi.fn().mockResolvedValue('Test Page'),
@@ -49,7 +51,7 @@ function createMockHandle(page: ReturnType<typeof createMockPage>): BrowserHandl
 }
 
 describe('Browser tools', () => {
-  let mockConnection: BrowserConnectionManager;
+  let mockConnection: BrowserConnectionManager & { resolveOrLaunchBrowser: Mock };
   let mockPage: ReturnType<typeof createMockPage>;
   let mockHandle: BrowserHandle;
 
@@ -61,14 +63,14 @@ describe('Browser tools', () => {
       resolveOrLaunchBrowser: vi.fn().mockResolvedValue(mockHandle),
       getActiveHandle: vi.fn(),
       closeAll: vi.fn(),
-    } as unknown as BrowserConnectionManager;
+    } as unknown as BrowserConnectionManager & { resolveOrLaunchBrowser: Mock };
   });
 
   describe('BrowserBrowseTool', () => {
     it('navigates and returns page info', async () => {
       mockPage.evaluate.mockResolvedValue('page content');
       const tool = new BrowserBrowseTool(mockConnection);
-      const execution = tool.resolveExecution({ url: 'https://example.com' });
+      const execution = tool.resolveExecution({ url: 'https://example.com' }) as RunnableToolExecution;
 
       const result = await execution.execute({ turnId: '1', toolCallId: 'c1', metadata: {}, signal: new AbortController().signal, onUpdate: vi.fn() });
 
@@ -80,7 +82,7 @@ describe('Browser tools', () => {
 
     it('sets approvalRule with host', () => {
       const tool = new BrowserBrowseTool(mockConnection);
-      const execution = tool.resolveExecution({ url: 'https://kimi.com/code' });
+      const execution = tool.resolveExecution({ url: 'https://kimi.com/code' }) as RunnableToolExecution;
       expect(execution.approvalRule).toBe('Browser*(kimi.com)');
       expect(execution.matchesRule?.('kimi.com')).toBe(true);
       expect(execution.matchesRule?.('evil.kimi.com')).toBe(false);
@@ -96,7 +98,7 @@ describe('Browser tools', () => {
   describe('BrowserNavigateTool', () => {
     it('navigates to URL', async () => {
       const tool = new BrowserNavigateTool(mockConnection);
-      const execution = tool.resolveExecution({ url: 'https://example.com' });
+      const execution = tool.resolveExecution({ url: 'https://example.com' }) as RunnableToolExecution;
       const result = await execution.execute({ turnId: '1', toolCallId: 'c1', metadata: {}, signal: new AbortController().signal, onUpdate: vi.fn() });
 
       expect(mockPage.goto).toHaveBeenCalledWith('https://example.com', expect.any(Object));
@@ -105,7 +107,7 @@ describe('Browser tools', () => {
 
     it('sets Browser*(host) approvalRule', () => {
       const tool = new BrowserNavigateTool(mockConnection);
-      const execution = tool.resolveExecution({ url: 'https://kimi.com' });
+      const execution = tool.resolveExecution({ url: 'https://kimi.com' }) as RunnableToolExecution;
       expect(execution.approvalRule).toBe('Browser*(kimi.com)');
     });
   });
@@ -114,7 +116,7 @@ describe('Browser tools', () => {
     it('returns page text content', async () => {
       mockPage.evaluate.mockResolvedValue('Hello world');
       const tool = new BrowserSnapshotTool(mockConnection);
-      const execution = tool.resolveExecution({});
+      const execution = tool.resolveExecution({}) as RunnableToolExecution;
       const result = await execution.execute({ turnId: '1', toolCallId: 'c1', metadata: {}, signal: new AbortController().signal, onUpdate: vi.fn() });
 
       expect(result.isError).toBeFalsy();
@@ -124,7 +126,7 @@ describe('Browser tools', () => {
     it('returns error for missing selector', async () => {
       mockPage.$.mockResolvedValue(null);
       const tool = new BrowserSnapshotTool(mockConnection);
-      const execution = tool.resolveExecution({ selector: '#missing' });
+      const execution = tool.resolveExecution({ selector: '#missing' }) as RunnableToolExecution;
       const result = await execution.execute({ turnId: '1', toolCallId: 'c1', metadata: {}, signal: new AbortController().signal, onUpdate: vi.fn() });
 
       expect(result.isError).toBe(true);
@@ -138,7 +140,7 @@ describe('Browser tools', () => {
       const tool = new BrowserExtractTool(mockConnection);
       const execution = tool.resolveExecution({
         schema: { title: 'h1', body: 'p' },
-      });
+      }) as RunnableToolExecution;
       const result = await execution.execute({ turnId: '1', toolCallId: 'c1', metadata: {}, signal: new AbortController().signal, onUpdate: vi.fn() });
 
       expect(result.isError).toBeFalsy();
@@ -148,7 +150,7 @@ describe('Browser tools', () => {
 
     it('uses tool name approvalRule when no URL', () => {
       const tool = new BrowserExtractTool(mockConnection);
-      const execution = tool.resolveExecution({ schema: { title: 'h1' } });
+      const execution = tool.resolveExecution({ schema: { title: 'h1' } }) as RunnableToolExecution;
       expect(execution.approvalRule).toBe('BrowserExtract');
       expect(execution.matchesRule).toBeUndefined();
     });
@@ -158,7 +160,7 @@ describe('Browser tools', () => {
       const execution = tool.resolveExecution({
         url: 'https://kimi.com',
         schema: { title: 'h1' },
-      });
+      }) as RunnableToolExecution;
       expect(execution.approvalRule).toBe('Browser*(kimi.com)');
       expect(execution.matchesRule?.('kimi.com')).toBe(true);
     });
@@ -167,7 +169,7 @@ describe('Browser tools', () => {
   describe('BrowserActTool', () => {
     it('clicks element', async () => {
       const tool = new BrowserActTool(mockConnection);
-      const execution = tool.resolveExecution({ action: 'click', selector: '#btn' });
+      const execution = tool.resolveExecution({ action: 'click', selector: '#btn' }) as RunnableToolExecution;
       const result = await execution.execute({ turnId: '1', toolCallId: 'c1', metadata: {}, signal: new AbortController().signal, onUpdate: vi.fn() });
 
       expect(mockPage.click).toHaveBeenCalledWith('#btn');
@@ -176,7 +178,7 @@ describe('Browser tools', () => {
 
     it('returns error for click without selector', async () => {
       const tool = new BrowserActTool(mockConnection);
-      const execution = tool.resolveExecution({ action: 'click' });
+      const execution = tool.resolveExecution({ action: 'click' }) as RunnableToolExecution;
       const result = await execution.execute({ turnId: '1', toolCallId: 'c1', metadata: {}, signal: new AbortController().signal, onUpdate: vi.fn() });
 
       expect(result.isError).toBe(true);
@@ -185,7 +187,7 @@ describe('Browser tools', () => {
 
     it('uses tool name approvalRule', () => {
       const tool = new BrowserActTool(mockConnection);
-      const execution = tool.resolveExecution({ action: 'scroll_down' });
+      const execution = tool.resolveExecution({ action: 'scroll_down' }) as RunnableToolExecution;
       expect(execution.approvalRule).toBe('BrowserAct');
     });
   });
