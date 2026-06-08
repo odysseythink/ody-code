@@ -456,6 +456,15 @@ export class ToolManager {
           ),
         toolServices?.webSearcher && new b.WebSearchTool(toolServices.webSearcher),
         toolServices?.urlFetcher && new b.FetchURLTool(toolServices.urlFetcher),
+        this.agent.browserConnection && new b.BrowserBrowseTool(this.agent.browserConnection),
+        this.agent.browserConnection && new b.BrowserExtractTool(this.agent.browserConnection),
+        this.agent.browserConnection && new b.BrowserActTool(this.agent.browserConnection),
+        this.agent.browserConnection && new b.BrowserNavigateTool(this.agent.browserConnection),
+        this.agent.browserConnection && new b.BrowserSnapshotTool(this.agent.browserConnection),
+        this.agent.browserConnection && new b.BrowserClickTool(this.agent.browserConnection),
+        this.agent.browserConnection && new b.BrowserFillTool(this.agent.browserConnection),
+        this.agent.browserConnection && new b.BrowserEvaluateTool(this.agent.browserConnection),
+        this.agent.browserConnection && new b.BrowserScreenshotTool(this.agent.browserConnection),
       ]
         .filter((tool) => !!tool)
         .map((tool) => [tool.name, tool] as const),

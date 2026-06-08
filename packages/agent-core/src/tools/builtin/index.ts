@@ -26,3 +26,4 @@ export * from './state/todo-list';
 export * from './visual/show-design-mockup';
 export * from './web/fetch-url';
 export * from './web/web-search';
+export * from './browser';

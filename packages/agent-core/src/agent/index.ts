@@ -64,6 +64,7 @@ import { UsageRecorder } from './usage';
 import { resolveCompletionBudget } from '../utils/completion-budget';
 import type { Kaos } from '@odysseythink/kaos';
 import type { ToolServices } from '../tools/support/services';
+import { BrowserConnectionManager } from '../browser';
 
 export type { AgentRecord, AgentRecordPersistence } from './records';
 export type { BuiltinTool, ToolInfo, ToolSource, UserToolRegistration } from './tool';
@@ -128,6 +129,7 @@ export class Agent {
   readonly tools: ToolManager;
   readonly background: BackgroundManager;
   readonly cron: CronManager | null;
+  readonly browserConnection?: BrowserConnectionManager;
   readonly replayBuilder: ReplayBuilder;
 
   private lastLlmConfigLogSignature?: string;
@@ -175,6 +177,14 @@ export class Agent {
     this.sessionMode = new SessionMode(this);
     this.usage = new UsageRecorder(this);
     this.skills = options.skills ? new SkillManager(this, options.skills) : null;
+    if (this.config.hasProvider && this.kimiConfig?.browser?.enabled !== false) {
+      this.browserConnection = new BrowserConnectionManager({
+        chromePort: this.kimiConfig?.browser?.chromePort,
+        autoLaunch: this.kimiConfig?.browser?.autoLaunch,
+        headless: this.kimiConfig?.browser?.headless,
+        executablePath: this.kimiConfig?.browser?.executablePath,
+      });
+    }
     this.tools = new ToolManager(this);
     this.background = new BackgroundManager(
       this,
