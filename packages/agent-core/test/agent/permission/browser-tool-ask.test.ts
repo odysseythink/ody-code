@@ -57,4 +57,25 @@ describe('BrowserToolAskPermissionPolicy', () => {
   it('returns undefined for Write tool', () => {
     expect(policy.evaluate(policyContext('Write'))).toBeUndefined();
   });
+
+  it('returns ask for native BrowserBrowse tool', () => {
+    const result = policy.evaluate(policyContext('BrowserBrowse'));
+    expect(result).toEqual({
+      kind: 'ask',
+      reason: { tool: 'BrowserBrowse' },
+    });
+  });
+
+  it('returns ask for native BrowserSnapshot tool', () => {
+    const result = policy.evaluate(policyContext('BrowserSnapshot'));
+    expect(result).toEqual({
+      kind: 'ask',
+      reason: { tool: 'BrowserSnapshot' },
+    });
+  });
+
+  it('returns undefined for non-browser builtin tools', () => {
+    expect(policy.evaluate(policyContext('Read'))).toBeUndefined();
+    expect(policy.evaluate(policyContext('Write'))).toBeUndefined();
+  });
 });

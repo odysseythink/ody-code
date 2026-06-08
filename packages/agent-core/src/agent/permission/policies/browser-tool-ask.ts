@@ -8,10 +8,11 @@ export class BrowserToolAskPermissionPolicy implements PermissionPolicy {
   readonly name = 'browser-tool-ask';
 
   evaluate(context: PermissionPolicyContext): PermissionPolicyResult | undefined {
-    if (!context.toolCall.name.startsWith('mcp__chrome-devtools__')) return;
+    const name = context.toolCall.name;
+    if (!name.startsWith('mcp__chrome-devtools__') && !name.startsWith('Browser')) return;
     return {
       kind: 'ask',
-      reason: { tool: context.toolCall.name },
+      reason: { tool: name },
     };
   }
 }
