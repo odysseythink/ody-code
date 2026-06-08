@@ -20,12 +20,17 @@ describe('Built-in chrome-devtools MCP integration', () => {
     }
   });
 
-  it('injects chrome-devtools server config into new sessions', async () => {
+  it('injects chrome-devtools server config into new sessions when legacyMcpEnabled is true', async () => {
     tmp = await mkdtemp(join(tmpdir(), 'kimi-core-built-in-'));
     const homeDir = join(tmp, 'home');
     const workDir = join(tmp, 'work');
     await mkdir(homeDir, { recursive: true });
     await mkdir(workDir, { recursive: true });
+    await writeFile(
+      join(homeDir, 'config.toml'),
+      '[browser]\nlegacyMcpEnabled = true\n',
+      'utf-8',
+    );
 
     const [coreRpc, sdkRpc] = createRPC<CoreAPI, SDKAPI>();
     const core = new KimiCore(coreRpc, { homeDir });
