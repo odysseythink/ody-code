@@ -29,7 +29,7 @@ describe('createChromeDevToolsServerDefinition', () => {
       chromePort: 9333,
     });
     expect(args).toEqual([
-      './build/src/index.js',
+      './build/src/bin/chrome-devtools-mcp.js',
       '--no-usage-statistics',
       '--no-performance-crux',
       '--browserUrl=http://127.0.0.1:9333',

@@ -18,7 +18,7 @@ export function createChromeDevToolsServerDefinition(
     argsResolver: (ctx: BuiltInContext) => {
       const port = ctx.chromePort ?? 9222;
       return [
-        './build/src/index.js',
+        './build/src/bin/chrome-devtools-mcp.js',
         '--no-usage-statistics',
         '--no-performance-crux',
         `--browserUrl=http://127.0.0.1:${port}`,
