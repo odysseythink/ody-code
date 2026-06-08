@@ -71,10 +71,18 @@ async function fetchOpenAICompatibleModels(
       return {
         id: item['id'],
         contextLength: Number.isInteger(contextLength) && contextLength > 0 ? contextLength : 64000,
-        supportsToolUse: true,
-        supportsReasoning: false,
-        supportsImageIn: false,
-        supportsVideoIn: false,
+        supportsToolUse: Object.hasOwn(item, 'supports_tool_use')
+          ? Boolean(item['supports_tool_use'])
+          : true,
+        supportsReasoning: Object.hasOwn(item, 'supports_reasoning')
+          ? Boolean(item['supports_reasoning'])
+          : false,
+        supportsImageIn: Object.hasOwn(item, 'supports_image_in')
+          ? Boolean(item['supports_image_in'])
+          : false,
+        supportsVideoIn: Object.hasOwn(item, 'supports_video_in')
+          ? Boolean(item['supports_video_in'])
+          : false,
         ...(displayName !== undefined ? { displayName } : {}),
       };
     })
@@ -142,6 +150,9 @@ export async function fetchProviderModels(
   if (definition.type === 'glm') {
     return models.map((model) => applyGLMModelOverrides(model));
   }
+  if (definition.type === 'kimi') {
+    return models.map((model) => applyKimiModelOverrides(model));
+  }
   return models;
 }
 
@@ -168,6 +179,15 @@ function applyGLMModelOverrides(model: ProviderModelInfo): ProviderModelInfo {
     };
   }
 
+  return model;
+}
+
+function applyKimiModelOverrides(model: ProviderModelInfo): ProviderModelInfo {
+  const id = model.id.toLowerCase();
+  // Kimi k2 series supports thinking (e.g. kimi-k2.5, kimi-k2-turbo-preview)
+  if (id.startsWith('kimi-k2')) {
+    return { ...model, supportsReasoning: true };
+  }
   return model;
 }
 

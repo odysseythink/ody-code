@@ -51,6 +51,38 @@ describe('fetchProviderModels (openai-compatible)', () => {
     });
   });
 
+  it('reads capability fields from API response when present', async () => {
+    const fetchMock = vi.fn(async () =>
+      new Response(
+        JSON.stringify({
+          data: [
+            {
+              id: 'model-a',
+              context_length: 64000,
+              supports_reasoning: true,
+              supports_image_in: true,
+              supports_tool_use: false,
+            },
+            { id: 'model-b', context_length: 64000, supports_reasoning: false },
+          ],
+        }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } },
+      ),
+    );
+    const def = getProviderLoginDefinition('deepseek')!;
+    const models = await fetchProviderModels(def, 'sk-test', fetchMock as unknown as typeof fetch);
+    expect(models[0]).toMatchObject({
+      id: 'model-a',
+      supportsReasoning: true,
+      supportsImageIn: true,
+      supportsToolUse: false,
+    });
+    expect(models[1]).toMatchObject({
+      id: 'model-b',
+      supportsReasoning: false,
+    });
+  });
+
   it('throws OpenPlatformApiError on 401', async () => {
     const fetchMock = vi.fn(async () =>
       new Response(JSON.stringify({ error: { message: 'invalid key' } }), { status: 401 }),
@@ -61,6 +93,49 @@ describe('fetchProviderModels (openai-compatible)', () => {
     );
     expect(error).toBeInstanceOf(OpenPlatformApiError);
     expect((error as OpenPlatformApiError).status).toBe(401);
+  });
+});
+
+describe('fetchProviderModels (kimi overrides)', () => {
+  it('overrides kimi-k2 series to supportsReasoning=true', async () => {
+    const fetchMock = vi.fn(async () =>
+      new Response(
+        JSON.stringify({
+          data: [
+            { id: 'kimi-k2.5', context_length: 256000 },
+            { id: 'kimi-k2-turbo-preview', context_length: 256000 },
+            { id: 'kimi-k2', context_length: 256000 },
+            { id: 'kimi-other', context_length: 64000 },
+          ],
+        }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } },
+      ),
+    );
+    const def = getProviderLoginDefinition('kimi')!;
+    const models = await fetchProviderModels(def, 'sk-test', fetchMock as unknown as typeof fetch);
+    expect(models).toHaveLength(4);
+    expect(models[0]!.supportsReasoning).toBe(true);
+    expect(models[1]!.supportsReasoning).toBe(true);
+    expect(models[2]!.supportsReasoning).toBe(true);
+    expect(models[3]!.supportsReasoning).toBe(false);
+  });
+
+  it('preserves API-reported supports_reasoning for kimi models', async () => {
+    const fetchMock = vi.fn(async () =>
+      new Response(
+        JSON.stringify({
+          data: [
+            { id: 'kimi-k2.5', context_length: 256000, supports_reasoning: true },
+            { id: 'kimi-other', context_length: 64000, supports_reasoning: true },
+          ],
+        }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } },
+      ),
+    );
+    const def = getProviderLoginDefinition('kimi')!;
+    const models = await fetchProviderModels(def, 'sk-test', fetchMock as unknown as typeof fetch);
+    expect(models[0]!.supportsReasoning).toBe(true);
+    expect(models[1]!.supportsReasoning).toBe(true);
   });
 });
 

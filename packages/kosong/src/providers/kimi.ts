@@ -82,6 +82,15 @@ export interface ExtraBody {
   thinking?: ThinkingConfig;
   [key: string]: unknown;
 }
+const KIMI_K2_CAPABILITY: ModelCapability = Object.freeze({
+  image_in: false,
+  video_in: false,
+  audio_in: false,
+  thinking: true,
+  tool_use: true,
+  max_context_tokens: 0,
+});
+
 const KIMI_TOOL_CALL_ID_POLICY: ToolCallIdPolicy = {
   normalize: (id) => sanitizeToolCallId(id, 64),
   maxLength: 64,
@@ -498,7 +507,11 @@ export class KimiChatProvider implements ChatProvider {
     }
   }
 
-  getCapability(_model?: string): ModelCapability {
+  getCapability(model?: string): ModelCapability {
+    const normalized = (model ?? this._model).toLowerCase();
+    if (normalized.startsWith('kimi-k2')) {
+      return KIMI_K2_CAPABILITY;
+    }
     return UNKNOWN_CAPABILITY;
   }
 

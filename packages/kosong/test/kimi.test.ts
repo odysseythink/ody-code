@@ -818,6 +818,25 @@ describe('KimiChatProvider', () => {
       expect(getGenerationState(provider)).toEqual({});
       expect(getGenerationState(newProvider)).toEqual({ temperature: 0.5 });
     });
+
+    it('returns thinking capability for kimi-k2 models', () => {
+      const provider = new KimiChatProvider({ model: 'kimi-k2.5', apiKey: 'test' });
+      const cap = provider.getCapability();
+      expect(cap.thinking).toBe(true);
+      expect(cap.tool_use).toBe(true);
+    });
+
+    it('returns unknown capability for non-k2 models', () => {
+      const provider = new KimiChatProvider({ model: 'kimi-latest', apiKey: 'test' });
+      const cap = provider.getCapability();
+      expect(cap.thinking).toBe(false);
+    });
+
+    it('accepts an explicit model parameter for getCapability', () => {
+      const provider = new KimiChatProvider({ model: 'kimi-latest', apiKey: 'test' });
+      const cap = provider.getCapability('kimi-k2-turbo-preview');
+      expect(cap.thinking).toBe(true);
+    });
   });
 
   describe('clone client sharing', () => {
