@@ -79,4 +79,13 @@ const nativeAssetOutput = await runKimiWithEnv(['--version'], {
 });
 assertIncludes(nativeAssetOutput, `Native asset smoke passed: ${target}`, 'native asset smoke');
 
+const builtInPackageJson = resolve(appRoot, 'built-in', 'chrome-devtools', 'package.json');
+try {
+  await stat(builtInPackageJson);
+  console.log(`Built-in chrome-devtools found: ${builtInPackageJson}`);
+} catch {
+  // In CI the native build step may run before vendoring; warn but do not fail.
+  console.log(`Warning: built-in chrome-devtools not found at ${builtInPackageJson}`);
+}
+
 console.log(`Native smoke passed: ${executablePath}`);

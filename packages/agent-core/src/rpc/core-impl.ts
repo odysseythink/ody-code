@@ -174,6 +174,9 @@ export class KimiCore implements PromisableMethods<CoreAPI> {
     } catch (error) {
       if (error instanceof BuiltInRootNotFoundError) {
         log.warn('Built-in MCP server not found', { server: error.serverName });
+        // Register with undefined cwd so the server still appears in MCP lists;
+        // it will fail on connect because the entry point is missing, which is expected.
+        this.builtInMcpRegistry.register(createChromeDevToolsServerDefinition(null));
       } else {
         throw error;
       }

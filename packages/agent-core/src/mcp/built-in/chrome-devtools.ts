@@ -3,7 +3,7 @@ import type { BuiltInContext, BuiltInMcpServerDefinition } from './registry';
 import { resolveBuiltInRoot } from './resolve-root';
 
 export function createChromeDevToolsServerDefinition(
-  rootPath?: string,
+  rootPath?: string | null,
 ): BuiltInMcpServerDefinition {
   return {
     name: 'chrome-devtools',
@@ -13,7 +13,7 @@ export function createChromeDevToolsServerDefinition(
       transport: 'stdio',
       command: 'node',
       args: ['./build/src/index.js'],
-      cwd: rootPath ?? resolveBuiltInRoot('chrome-devtools'),
+      cwd: rootPath === null ? undefined : (rootPath ?? resolveBuiltInRoot('chrome-devtools')),
       startupTimeoutMs: 30_000,
       toolTimeoutMs: 60_000,
     },
