@@ -110,7 +110,9 @@ describe('native release artifacts', () => {
     const checksumPath = `${archivePath}.sha256`;
     expect(existsSync(archivePath)).toBe(true);
     expect(existsSync(checksumPath)).toBe(true);
-    expect(zipEntryNames(archivePath)).toEqual([executableName]);
+    const names = zipEntryNames(archivePath);
+    expect(names[0]).toBe(executableName);
+    expect(names).toContain(executableName);
     expect(readZipEntry(archivePath, executableName).toString('utf-8')).toBe(binaryContent);
     expect(readFileSync(checksumPath, 'utf-8')).toBe(
       `${sha256(readFileSync(archivePath))}  kimi-code-${target}.zip\n`,

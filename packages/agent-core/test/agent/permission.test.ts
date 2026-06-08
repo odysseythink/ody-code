@@ -673,6 +673,7 @@ describe('Permission policy chain', () => {
       'session-approval-history',
       'user-configured-ask',
       'user-configured-allow',
+      'browser-tool-ask',
       'exit-plan-mode-review-ask',
       'plan-mode-tool-approve',
       'sensitive-file-access-ask',
