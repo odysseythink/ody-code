@@ -26,8 +26,9 @@ export class BrowserEvaluateTool implements BuiltinTool<BrowserEvaluateInput> {
     const page = await handle.acquirePage();
     try {
       const result = await page.evaluate((script: string) => {
-        // eslint-disable-next-line no-eval
-        return eval(script);
+        // Indirect eval to avoid bundler scope-hoisting issues while still
+        // evaluating the script in the browser page context.
+        return (0, eval)(script);
       }, args.script);
       const builder = new ToolResultBuilder({ maxChars: 8000 });
       builder.write(typeof result === 'string' ? result : JSON.stringify(result, null, 2));
