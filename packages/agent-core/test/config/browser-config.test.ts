@@ -49,4 +49,29 @@ describe('BrowserConfigSchema', () => {
     const patch = KimiConfigPatchSchema.parse({ browser: { enabled: false } });
     expect(patch.browser).toEqual({ enabled: false });
   });
+
+  it('parses new fields: autoLaunch, headless, executablePath, legacyMcpEnabled', () => {
+    const parsed = BrowserConfigSchema.parse({
+      enabled: true,
+      chromePort: 9222,
+      autoLaunch: true,
+      headless: false,
+      executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+      legacyMcpEnabled: false,
+    });
+    expect(parsed).toEqual({
+      enabled: true,
+      chromePort: 9222,
+      autoLaunch: true,
+      headless: false,
+      executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+      legacyMcpEnabled: false,
+    });
+  });
+
+  it('parses with only legacyMcpEnabled', () => {
+    expect(BrowserConfigSchema.parse({ legacyMcpEnabled: true })).toEqual({
+      legacyMcpEnabled: true,
+    });
+  });
 });

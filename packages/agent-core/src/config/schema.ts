@@ -188,6 +188,10 @@ export const BrowserConfigSchema = z.object({
   chromePort: z.number().int().min(1).max(65535).optional(),
   traceEnabled: z.boolean().optional(),
   traceRetentionDays: z.number().int().min(1).optional(),
+  autoLaunch: z.boolean().optional(),
+  headless: z.boolean().optional(),
+  executablePath: z.string().optional(),
+  legacyMcpEnabled: z.boolean().optional(),
 });
 
 export type BrowserConfig = z.infer<typeof BrowserConfigSchema>;
