@@ -10,7 +10,7 @@ describe('createChromeDevToolsServerDefinition', () => {
     expect(def.config.transport).toBe('stdio');
     const cfg = def.config as Record<string, unknown>;
     expect(cfg['command']).toBe('node');
-    expect(cfg['args']).toEqual(['--experimental-strip-types', './dist/index.js']);
+    expect(cfg['args']).toEqual(['./build/src/index.js']);
     expect(cfg['cwd']).toBe('/mock/built-in/chrome-devtools');
     expect(def.config.startupTimeoutMs).toBe(30_000);
     expect(def.config.toolTimeoutMs).toBe(60_000);

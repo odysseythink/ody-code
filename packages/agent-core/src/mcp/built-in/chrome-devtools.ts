@@ -12,7 +12,7 @@ export function createChromeDevToolsServerDefinition(
     config: {
       transport: 'stdio',
       command: 'node',
-      args: ['--experimental-strip-types', './dist/index.js'],
+      args: ['./build/src/index.js'],
       cwd: rootPath ?? resolveBuiltInRoot('chrome-devtools'),
       startupTimeoutMs: 30_000,
       toolTimeoutMs: 60_000,
