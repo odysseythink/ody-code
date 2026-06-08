@@ -66,7 +66,7 @@ export class BrowserActTool implements BuiltinTool<BrowserActInput> {
             await page.waitForSelector(args.selector, { timeout: 10000 });
             return { output: `Waited for ${args.selector}`, isError: false };
           }
-          return { output: 'Wait action requires a selector or timeout value', isError: true };
+          return { output: 'Wait action requires a selector', isError: true };
         }
         default:
           return { output: `Unknown action: ${args.action}`, isError: true };

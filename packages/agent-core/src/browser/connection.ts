@@ -1,4 +1,5 @@
 import puppeteer, { type Browser, type Page, type LaunchOptions } from 'puppeteer-core';
+import type { Logger } from '#/logging/types';
 import {
   BrowserConnectionError,
   type BrowserConnectionOptions,
@@ -9,6 +10,7 @@ export class BrowserConnectionManager {
   private activeHandle?: BrowserHandle;
   private readonly options: Required<Pick<BrowserConnectionOptions, 'autoLaunch' | 'headless'>> &
     BrowserConnectionOptions;
+  private readonly log?: Logger;
 
   constructor(options: BrowserConnectionOptions = {}) {
     this.options = {
@@ -16,6 +18,7 @@ export class BrowserConnectionManager {
       headless: true,
       ...options,
     };
+    this.log = options.log;
   }
 
   async resolveOrLaunchBrowser(): Promise<BrowserHandle> {
@@ -58,9 +61,10 @@ export class BrowserConnectionManager {
   }
 
   async closeAll(): Promise<void> {
-    if (this.activeHandle) {
-      await this.activeHandle.close();
-      this.activeHandle = undefined;
+    const handle = this.activeHandle;
+    this.activeHandle = undefined;
+    if (handle) {
+      await handle.close().catch(() => {});
     }
   }
 
@@ -76,7 +80,8 @@ export class BrowserConnectionManager {
           defaultViewport: null,
         });
         return await this.createHandle(browser, 'connected');
-      } catch {
+      } catch (error) {
+        this.log?.debug(`browser connect failed on port ${port}`, error);
         // Try next port
       }
     }
@@ -97,7 +102,8 @@ export class BrowserConnectionManager {
       }
       const browser = await puppeteer.launch(launchOptions);
       return await this.createHandle(browser, 'launched');
-    } catch {
+    } catch (error) {
+      this.log?.debug('browser launch failed', error);
       return undefined;
     }
   }
@@ -140,7 +146,9 @@ export class BrowserConnectionManager {
         }
         pagePool.length = 0;
         acquiredPages.clear();
-        if (browser.connected) {
+        if (kind === 'connected') {
+          await browser.disconnect().catch(() => {});
+        } else if (browser.connected) {
           await browser.close().catch(() => {});
         }
       },

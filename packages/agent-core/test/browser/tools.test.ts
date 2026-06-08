@@ -6,6 +6,10 @@ import {
   BrowserActTool,
   BrowserNavigateTool,
   BrowserSnapshotTool,
+  BrowserClickTool,
+  BrowserFillTool,
+  BrowserEvaluateTool,
+  BrowserScreenshotTool,
 } from '../../src/tools/builtin/browser';
 import type { BrowserConnectionManager } from '../../src/browser/connection';
 import type { BrowserHandle } from '../../src/browser/types';
@@ -189,6 +193,95 @@ describe('Browser tools', () => {
       const tool = new BrowserActTool(mockConnection);
       const execution = tool.resolveExecution({ action: 'scroll_down' }) as RunnableToolExecution;
       expect(execution.approvalRule).toBe('BrowserAct');
+    });
+  });
+
+  describe('BrowserClickTool', () => {
+    it('clicks element by selector', async () => {
+      const tool = new BrowserClickTool(mockConnection);
+      const execution = tool.resolveExecution({ selector: '#submit' }) as RunnableToolExecution;
+      const result = await execution.execute({ turnId: '1', toolCallId: 'c1', metadata: {}, signal: new AbortController().signal, onUpdate: vi.fn() });
+
+      expect(mockPage.click).toHaveBeenCalledWith('#submit');
+      expect(result.isError).toBeFalsy();
+    });
+
+    it('uses tool name approvalRule', () => {
+      const tool = new BrowserClickTool(mockConnection);
+      const execution = tool.resolveExecution({ selector: '#btn' }) as RunnableToolExecution;
+      expect(execution.approvalRule).toBe('BrowserClick');
+    });
+  });
+
+  describe('BrowserFillTool', () => {
+    it('fills input element', async () => {
+      const tool = new BrowserFillTool(mockConnection);
+      const execution = tool.resolveExecution({ selector: '#search', value: 'query' }) as RunnableToolExecution;
+      const result = await execution.execute({ turnId: '1', toolCallId: 'c1', metadata: {}, signal: new AbortController().signal, onUpdate: vi.fn() });
+
+      expect(mockPage.type).toHaveBeenCalledWith('#search', 'query');
+      expect(result.isError).toBeFalsy();
+    });
+
+    it('uses tool name approvalRule', () => {
+      const tool = new BrowserFillTool(mockConnection);
+      const execution = tool.resolveExecution({ selector: '#input', value: 'x' }) as RunnableToolExecution;
+      expect(execution.approvalRule).toBe('BrowserFill');
+    });
+  });
+
+  describe('BrowserEvaluateTool', () => {
+    it('evaluates script and returns string result', async () => {
+      mockPage.evaluate.mockResolvedValue('eval result');
+      const tool = new BrowserEvaluateTool(mockConnection);
+      const execution = tool.resolveExecution({ script: 'document.title' }) as RunnableToolExecution;
+      const result = await execution.execute({ turnId: '1', toolCallId: 'c1', metadata: {}, signal: new AbortController().signal, onUpdate: vi.fn() });
+
+      expect(result.isError).toBeFalsy();
+      expect(result.output).toContain('eval result');
+    });
+
+    it('evaluates script and returns JSON result', async () => {
+      mockPage.evaluate.mockResolvedValue({ a: 1 });
+      const tool = new BrowserEvaluateTool(mockConnection);
+      const execution = tool.resolveExecution({ script: '({a:1})' }) as RunnableToolExecution;
+      const result = await execution.execute({ turnId: '1', toolCallId: 'c1', metadata: {}, signal: new AbortController().signal, onUpdate: vi.fn() });
+
+      expect(result.isError).toBeFalsy();
+      expect(result.output).toContain('"a": 1');
+    });
+
+    it('uses tool name approvalRule', () => {
+      const tool = new BrowserEvaluateTool(mockConnection);
+      const execution = tool.resolveExecution({ script: '1+1' }) as RunnableToolExecution;
+      expect(execution.approvalRule).toBe('BrowserEvaluate');
+    });
+  });
+
+  describe('BrowserScreenshotTool', () => {
+    it('takes viewport screenshot', async () => {
+      const tool = new BrowserScreenshotTool(mockConnection);
+      const execution = tool.resolveExecution({}) as RunnableToolExecution;
+      const result = await execution.execute({ turnId: '1', toolCallId: 'c1', metadata: {}, signal: new AbortController().signal, onUpdate: vi.fn() });
+
+      expect(mockPage.screenshot).toHaveBeenCalledWith(expect.objectContaining({ fullPage: false }));
+      expect(result.isError).toBeFalsy();
+      expect(result.output).toContain('base64screenshot');
+    });
+
+    it('takes full-page screenshot', async () => {
+      const tool = new BrowserScreenshotTool(mockConnection);
+      const execution = tool.resolveExecution({ fullPage: true }) as RunnableToolExecution;
+      const result = await execution.execute({ turnId: '1', toolCallId: 'c1', metadata: {}, signal: new AbortController().signal, onUpdate: vi.fn() });
+
+      expect(mockPage.screenshot).toHaveBeenCalledWith(expect.objectContaining({ fullPage: true }));
+      expect(result.isError).toBeFalsy();
+    });
+
+    it('uses tool name approvalRule', () => {
+      const tool = new BrowserScreenshotTool(mockConnection);
+      const execution = tool.resolveExecution({}) as RunnableToolExecution;
+      expect(execution.approvalRule).toBe('BrowserScreenshot');
     });
   });
 });

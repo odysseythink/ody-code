@@ -183,6 +183,7 @@ export class Agent {
         autoLaunch: this.kimiConfig?.browser?.autoLaunch,
         headless: this.kimiConfig?.browser?.headless,
         executablePath: this.kimiConfig?.browser?.executablePath,
+        log: this.log,
       });
     }
     this.tools = new ToolManager(this);

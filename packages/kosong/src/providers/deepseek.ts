@@ -119,7 +119,9 @@ export class DeepSeekChatProvider implements ChatProvider {
   }
 
   withMaxCompletionTokens(maxCompletionTokens: number): DeepSeekChatProvider {
-    return this.withGenerationKwargs({ max_tokens: maxCompletionTokens });
+    const clone = this._clone();
+    clone._delegate = this._delegate.withMaxCompletionTokens(maxCompletionTokens);
+    return clone;
   }
 
   private _clone(): DeepSeekChatProvider {

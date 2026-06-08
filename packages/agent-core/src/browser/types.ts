@@ -14,6 +14,8 @@ export interface BrowserConnectionOptions {
   executablePath?: string;
   /** User data dir for launched instances. */
   userDataDir?: string;
+  /** Optional logger for connection diagnostics. */
+  log?: import('#/logging/types').Logger;
 }
 
 // ─── Browser Handle ───

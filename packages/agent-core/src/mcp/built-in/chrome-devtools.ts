@@ -16,13 +16,18 @@ export function createChromeDevToolsServerDefinition(
       toolTimeoutMs: 60_000,
     },
     argsResolver: (ctx: BuiltInContext) => {
-      const port = ctx.chromePort ?? 9222;
-      return [
+      const args = [
         './build/src/bin/chrome-devtools-mcp.js',
         '--no-usage-statistics',
         '--no-performance-crux',
-        `--browserUrl=http://127.0.0.1:${port}`,
       ];
+      const port = ctx.chromePort;
+      if (port !== undefined) {
+        args.push(`--browserUrl=http://127.0.0.1:${port}`);
+      } else {
+        args.push('--autoConnect');
+      }
+      return args;
     },
   };
 }

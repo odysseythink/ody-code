@@ -299,6 +299,7 @@ export class GLMChatProvider implements ChatProvider {
   private _baseUrl: string | undefined;
   private _defaultHeaders: Record<string, string> | undefined;
   private _thinkingEffort: ThinkingEffort | null = null;
+  private _maxOutputTokensCap: number | undefined;
   private _generationKwargs: GLMGenerationKwargs;
   private _httpClient: unknown;
   private _client: OpenAI | undefined;
@@ -309,6 +310,7 @@ export class GLMChatProvider implements ChatProvider {
     this._baseUrl = options.baseUrl ?? 'https://api.z.ai/api/paas/v4/';
     this._model = options.model;
     this._stream = options.stream ?? true;
+    this._maxOutputTokensCap = options.maxTokens;
     this._generationKwargs = {};
     if (options.maxTokens !== undefined) {
       this._generationKwargs.max_tokens = options.maxTokens;
@@ -409,7 +411,11 @@ export class GLMChatProvider implements ChatProvider {
   }
 
   withMaxCompletionTokens(maxCompletionTokens: number): GLMChatProvider {
-    return this.withGenerationKwargs({ max_tokens: maxCompletionTokens });
+    const effective =
+      this._maxOutputTokensCap !== undefined
+        ? Math.min(maxCompletionTokens, this._maxOutputTokensCap)
+        : maxCompletionTokens;
+    return this.withGenerationKwargs({ max_tokens: effective });
   }
 
   private _clone(): GLMChatProvider {

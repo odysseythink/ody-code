@@ -148,5 +148,25 @@ describe('DeepSeekChatProvider', () => {
       expect(cloned).not.toBe(original);
       expect(cloned.modelParameters['max_tokens']).toBe(1024);
     });
+
+    it('withMaxCompletionTokens clamps to maxTokens cap when budget exceeds it', () => {
+      const original = new DeepSeekChatProvider({
+        model: 'deepseek-v4-pro',
+        apiKey: 'test-key',
+        maxTokens: 384000,
+      });
+      const cloned = original.withMaxCompletionTokens(1_000_000);
+      expect(cloned.modelParameters['max_tokens']).toBe(384000);
+    });
+
+    it('withMaxCompletionTokens can tighten below maxTokens cap', () => {
+      const original = new DeepSeekChatProvider({
+        model: 'deepseek-v4-pro',
+        apiKey: 'test-key',
+        maxTokens: 384000,
+      });
+      const cloned = original.withMaxCompletionTokens(16000);
+      expect(cloned.modelParameters['max_tokens']).toBe(16000);
+    });
   });
 });

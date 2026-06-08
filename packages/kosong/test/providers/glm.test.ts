@@ -86,6 +86,26 @@ describe('GLMChatProvider', () => {
       expect(cloned).not.toBe(original);
       expect(cloned.modelParameters['max_tokens']).toBe(1024);
     });
+
+    it('withMaxCompletionTokens clamps to maxTokens cap when budget exceeds it', () => {
+      const original = new GLMChatProvider({
+        model: 'glm-4.5',
+        apiKey: 'test-key',
+        maxTokens: 96000,
+      });
+      const cloned = original.withMaxCompletionTokens(200000);
+      expect(cloned.modelParameters['max_tokens']).toBe(96000);
+    });
+
+    it('withMaxCompletionTokens can tighten below maxTokens cap', () => {
+      const original = new GLMChatProvider({
+        model: 'glm-4.5',
+        apiKey: 'test-key',
+        maxTokens: 96000,
+      });
+      const cloned = original.withMaxCompletionTokens(8000);
+      expect(cloned.modelParameters['max_tokens']).toBe(8000);
+    });
   });
 
   describe('message conversion', () => {

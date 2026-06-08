@@ -36,13 +36,18 @@ describe('createChromeDevToolsServerDefinition', () => {
     ]);
   });
 
-  it('argsResolver falls back to default port 9222', () => {
+  it('argsResolver uses autoConnect when no chromePort is set', () => {
     const def = createChromeDevToolsServerDefinition('/mock');
     const args = def.argsResolver?.({
       kimiHomeDir: '/home/user/.ody-code',
       sessionId: 'session_abc123',
     });
-    expect(args?.[3]).toBe('--browserUrl=http://127.0.0.1:9222');
+    expect(args).toEqual([
+      './build/src/bin/chrome-devtools-mcp.js',
+      '--no-usage-statistics',
+      '--no-performance-crux',
+      '--autoConnect',
+    ]);
   });
 
   it('has no envResolver', () => {

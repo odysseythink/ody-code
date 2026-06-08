@@ -342,6 +342,7 @@ export class OpenAILegacyChatProvider implements ChatProvider {
   private _defaultHeaders: Record<string, string> | undefined;
   private _reasoningKey: string | undefined;
   private _reasoningEffort: string | undefined;
+  private _maxOutputTokensCap: number | undefined;
   private _generationKwargs: OpenAILegacyGenerationKwargs;
   private _toolMessageConversion: ToolMessageConversion;
   private _client: OpenAI | undefined;
@@ -365,6 +366,7 @@ export class OpenAILegacyChatProvider implements ChatProvider {
         ? normalizedReasoningKey
         : undefined;
     this._reasoningEffort = undefined;
+    this._maxOutputTokensCap = options.maxTokens;
     this._generationKwargs = {};
     if (options.maxTokens !== undefined) {
       this._generationKwargs.max_tokens = options.maxTokens;
@@ -490,7 +492,11 @@ export class OpenAILegacyChatProvider implements ChatProvider {
   }
 
   withMaxCompletionTokens(maxCompletionTokens: number): OpenAILegacyChatProvider {
-    return this.withGenerationKwargs({ max_tokens: maxCompletionTokens });
+    const effective =
+      this._maxOutputTokensCap !== undefined
+        ? Math.min(maxCompletionTokens, this._maxOutputTokensCap)
+        : maxCompletionTokens;
+    return this.withGenerationKwargs({ max_tokens: effective });
   }
 
   private _clone(): OpenAILegacyChatProvider {

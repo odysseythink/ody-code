@@ -18,6 +18,7 @@ function createMockBrowser() {
       close: vi.fn().mockResolvedValue(undefined),
     }),
     close: vi.fn().mockResolvedValue(undefined),
+    disconnect: vi.fn().mockResolvedValue(undefined),
   };
 }
 
@@ -28,7 +29,7 @@ describe('BrowserConnectionManager', () => {
 
   it('connects to existing Chrome on port 9222', async () => {
     const mockBrowser = createMockBrowser();
-    vi.mocked(puppeteer.connect).mockResolvedValue(mockBrowser as unknown as ReturnType<typeof puppeteer.connect>);
+    vi.mocked(puppeteer.connect).mockResolvedValue(mockBrowser as unknown as import("puppeteer-core").Browser);
 
     const manager = new BrowserConnectionManager();
     const handle = await manager.resolveOrLaunchBrowser();
@@ -42,7 +43,7 @@ describe('BrowserConnectionManager', () => {
 
   it('tries custom chromePort when provided', async () => {
     const mockBrowser = createMockBrowser();
-    vi.mocked(puppeteer.connect).mockResolvedValue(mockBrowser as unknown as ReturnType<typeof puppeteer.connect>);
+    vi.mocked(puppeteer.connect).mockResolvedValue(mockBrowser as unknown as import("puppeteer-core").Browser);
 
     const manager = new BrowserConnectionManager({ chromePort: 9333 });
     await manager.resolveOrLaunchBrowser();
@@ -56,7 +57,7 @@ describe('BrowserConnectionManager', () => {
   it('falls back to launch when connect fails and autoLaunch=true', async () => {
     vi.mocked(puppeteer.connect).mockRejectedValue(new Error('Connection failed'));
     const mockBrowser = createMockBrowser();
-    vi.mocked(puppeteer.launch).mockResolvedValue(mockBrowser as unknown as ReturnType<typeof puppeteer.launch>);
+    vi.mocked(puppeteer.launch).mockResolvedValue(mockBrowser as unknown as import("puppeteer-core").Browser);
 
     const manager = new BrowserConnectionManager();
     const handle = await manager.resolveOrLaunchBrowser();
@@ -70,7 +71,7 @@ describe('BrowserConnectionManager', () => {
   it('passes executablePath to launch when configured', async () => {
     vi.mocked(puppeteer.connect).mockRejectedValue(new Error('Connection failed'));
     const mockBrowser = createMockBrowser();
-    vi.mocked(puppeteer.launch).mockResolvedValue(mockBrowser as unknown as ReturnType<typeof puppeteer.launch>);
+    vi.mocked(puppeteer.launch).mockResolvedValue(mockBrowser as unknown as import("puppeteer-core").Browser);
 
     const manager = new BrowserConnectionManager({
       executablePath: '/usr/bin/google-chrome',
@@ -92,7 +93,7 @@ describe('BrowserConnectionManager', () => {
 
   it('returns same handle on subsequent calls (singleton)', async () => {
     const mockBrowser = createMockBrowser();
-    vi.mocked(puppeteer.connect).mockResolvedValue(mockBrowser as unknown as ReturnType<typeof puppeteer.connect>);
+    vi.mocked(puppeteer.connect).mockResolvedValue(mockBrowser as unknown as import("puppeteer-core").Browser);
 
     const manager = new BrowserConnectionManager();
     const handle1 = await manager.resolveOrLaunchBrowser();
@@ -107,8 +108,8 @@ describe('BrowserConnectionManager', () => {
     const mockBrowser2 = createMockBrowser();
 
     vi.mocked(puppeteer.connect)
-      .mockResolvedValueOnce(mockBrowser1 as unknown as ReturnType<typeof puppeteer.connect>)
-      .mockResolvedValueOnce(mockBrowser2 as unknown as ReturnType<typeof puppeteer.connect>);
+      .mockResolvedValueOnce(mockBrowser1 as unknown as import("puppeteer-core").Browser)
+      .mockResolvedValueOnce(mockBrowser2 as unknown as import("puppeteer-core").Browser);
 
     const manager = new BrowserConnectionManager();
     const handle1 = await manager.resolveOrLaunchBrowser();
@@ -119,15 +120,44 @@ describe('BrowserConnectionManager', () => {
     expect(puppeteer.connect).toHaveBeenCalledTimes(2);
   });
 
-  it('closeAll closes browser and clears active handle', async () => {
+  it('closeAll disconnects connected browser and clears active handle', async () => {
     const mockBrowser = createMockBrowser();
-    vi.mocked(puppeteer.connect).mockResolvedValue(mockBrowser as unknown as ReturnType<typeof puppeteer.connect>);
+    vi.mocked(puppeteer.connect).mockResolvedValue(mockBrowser as unknown as import("puppeteer-core").Browser);
+
+    const manager = new BrowserConnectionManager();
+    await manager.resolveOrLaunchBrowser();
+    await manager.closeAll();
+
+    expect(mockBrowser.disconnect).toHaveBeenCalled();
+    expect(mockBrowser.close).not.toHaveBeenCalled();
+    expect(manager.getActiveHandle()).toBeUndefined();
+  });
+
+  it('closeAll closes launched browser and clears active handle', async () => {
+    vi.mocked(puppeteer.connect).mockRejectedValue(new Error('Connection failed'));
+    const mockBrowser = createMockBrowser();
+    vi.mocked(puppeteer.launch).mockResolvedValue(mockBrowser as unknown as import("puppeteer-core").Browser);
 
     const manager = new BrowserConnectionManager();
     await manager.resolveOrLaunchBrowser();
     await manager.closeAll();
 
     expect(mockBrowser.close).toHaveBeenCalled();
+    expect(mockBrowser.disconnect).not.toHaveBeenCalled();
+    expect(manager.getActiveHandle()).toBeUndefined();
+  });
+
+  it('closeAll clears active handle even if close throws', async () => {
+    const mockBrowser = {
+      ...createMockBrowser(),
+      disconnect: vi.fn().mockRejectedValue(new Error('Disconnect failed')),
+    };
+    vi.mocked(puppeteer.connect).mockResolvedValue(mockBrowser as unknown as import("puppeteer-core").Browser);
+
+    const manager = new BrowserConnectionManager();
+    await manager.resolveOrLaunchBrowser();
+    await manager.closeAll();
+
     expect(manager.getActiveHandle()).toBeUndefined();
   });
 });
