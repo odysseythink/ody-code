@@ -183,6 +183,15 @@ export const McpServerConfigSchema = z.preprocess((raw) => {
 
 export type McpServerConfig = z.infer<typeof McpServerConfigSchema>;
 
+export const BrowserConfigSchema = z.object({
+  enabled: z.boolean().optional(),
+  chromePort: z.number().int().min(1).max(65535).optional(),
+  traceEnabled: z.boolean().optional(),
+  traceRetentionDays: z.number().int().min(1).optional(),
+});
+
+export type BrowserConfig = z.infer<typeof BrowserConfigSchema>;
+
 export const KimiConfigSchema = z.object({
   providers: z.record(z.string(), ProviderConfigSchema).default({}),
   defaultProvider: z.string().optional(),
@@ -207,6 +216,7 @@ export const KimiConfigSchema = z.object({
     design: z.string().optional(),
     review: z.string().optional(),
   }).optional(),
+  browser: BrowserConfigSchema.optional(),
   raw: z.record(z.string(), z.unknown()).optional(),
 });
 
@@ -249,6 +259,7 @@ export const KimiConfigPatchSchema = z
       design: z.string().optional(),
       review: z.string().optional(),
     }).optional(),
+    browser: BrowserConfigSchema.optional(),
   })
   .strict();
 
