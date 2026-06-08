@@ -121,6 +121,10 @@ custom_headers = { "X-Search" = "1" }
 base_url = "https://api.kimi.com/coding/v1/fetch"
 api_key = "sk-fetch"
 
+[browser]
+enabled = false
+chrome_port = 9223
+
 [notifications]
 claim_stale_after_ms = 15000
 `;
@@ -188,6 +192,7 @@ describe('harness config TOML loader', () => {
     ]);
     expect(config.services?.moonshotSearch?.customHeaders).toEqual({ 'X-Search': '1' });
     expect(config.services?.moonshotFetch?.apiKey).toBe('sk-fetch');
+    expect(config.browser).toEqual({ enabled: false, chromePort: 9223 });
 
     expect('theme' in config).toBe(false);
     expect(config.raw?.['theme']).toBe('dark');
@@ -257,11 +262,14 @@ source = { kind = "apiJson", url = "https://registry.example/api.json", apiKey =
     expect(text).toContain('[[hooks]]');
     expect(text).toContain('event = "PreToolUse"');
     expect(text).toContain('command = "echo pre"');
+    expect(text).toContain('enabled = false');
+    expect(text).toContain('chrome_port = 9223');
 
     const reloaded = readConfigFile(configPath);
     expect(reloaded.loopControl?.maxStepsPerTurn).toBe(7);
     expect(reloaded.hooks?.[0]?.event).toBe('PreToolUse');
     expect(reloaded.raw?.['theme']).toBe('dark');
+    expect(reloaded.browser).toEqual({ enabled: false, chromePort: 9223 });
   });
 
   it('creates a parseable default config scaffold without changing runtime defaults', async () => {

@@ -9,6 +9,7 @@ import {
   formatConfigValidationError,
   getDefaultConfig,
   type BackgroundConfig,
+  type BrowserConfig,
   type HookDefConfig,
   type KimiConfig,
   type LoopControl,
@@ -133,6 +134,8 @@ export function transformTomlData(data: Record<string, unknown>): Record<string,
     } else if (targetKey === 'background' && isPlainObject(value)) {
       result[targetKey] = transformPlainObject(value);
     } else if (targetKey === 'modeModels' && isPlainObject(value)) {
+      result[targetKey] = transformPlainObject(value);
+    } else if (targetKey === 'browser' && isPlainObject(value)) {
       result[targetKey] = transformPlainObject(value);
     } else if (!isPlainObject(value)) {
       result[targetKey] = value;
@@ -306,6 +309,7 @@ export function configToTomlData(config: KimiConfig): Record<string, unknown> {
   setSection(out, 'background', config.background, backgroundToToml);
   setSection(out, 'permission', config.permission, permissionToToml);
   setSection(out, 'mode_models', config.modeModels, modeModelsToToml);
+  setSection(out, 'browser', config.browser, browserToToml);
   setHooks(out, config.hooks);
 
   return out;
@@ -473,6 +477,17 @@ function modeModelsToToml(
   const out: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(modeModels)) {
     setDefined(out, key, value);
+  }
+  return out;
+}
+
+function browserToToml(
+  browser: BrowserConfig,
+  rawBrowser: unknown,
+): Record<string, unknown> {
+  const out = cloneRecord(rawBrowser);
+  for (const [key, value] of Object.entries(browser)) {
+    setDefined(out, camelToSnake(key), value);
   }
   return out;
 }

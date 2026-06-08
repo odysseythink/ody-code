@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, rm } from 'node:fs/promises';
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'pathe';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -59,5 +59,43 @@ describe('Built-in chrome-devtools MCP integration', () => {
     expect(['pending', 'connected', 'failed']).toContain(
       chromeDevTools!.status,
     );
+  }, 30000);
+
+  it('omits chrome-devtools when browser.enabled is false in config.toml', async () => {
+    tmp = await mkdtemp(join(tmpdir(), 'kimi-core-built-in-'));
+    const homeDir = join(tmp, 'home');
+    const workDir = join(tmp, 'work');
+    await mkdir(homeDir, { recursive: true });
+    await mkdir(workDir, { recursive: true });
+    await writeFile(
+      join(homeDir, 'config.toml'),
+      '[browser]\nenabled = false\n',
+      'utf-8',
+    );
+
+    const [coreRpc, sdkRpc] = createRPC<CoreAPI, SDKAPI>();
+    const core = new KimiCore(coreRpc, { homeDir });
+    const rpc = await sdkRpc({
+      emitEvent: vi.fn(),
+      requestApproval: vi.fn(
+        async (): Promise<ApprovalResponse> => ({ decision: 'rejected' }),
+      ),
+      requestQuestion: vi.fn(async () => null),
+      openExternal: vi.fn(async () => ({ opened: false })),
+      toolCall: vi.fn(async () => ({ output: '' })),
+    });
+
+    const created = await rpc.createSession({
+      id: 'ses_builtin_disabled',
+      workDir,
+    });
+    const session = core.sessions.get(created.id);
+    expect(session).toBeDefined();
+
+    await session!.mcp.waitForInitialLoad();
+
+    const entries = session!.mcp.list();
+    const chromeDevTools = entries.find((e) => e.name === 'chrome-devtools');
+    expect(chromeDevTools).toBeUndefined();
   }, 30000);
 });
