@@ -106,6 +106,16 @@ describe('GLMChatProvider', () => {
       const cloned = original.withMaxCompletionTokens(8000);
       expect(cloned.modelParameters['max_tokens']).toBe(8000);
     });
+
+    it('withGenerationKwargs clamps max_tokens to maxTokens cap', () => {
+      const original = new GLMChatProvider({
+        model: 'glm-4.5',
+        apiKey: 'test-key',
+        maxTokens: 96000,
+      });
+      const cloned = original.withGenerationKwargs({ max_tokens: 200000 });
+      expect(cloned.modelParameters['max_tokens']).toBe(96000);
+    });
   });
 
   describe('message conversion', () => {

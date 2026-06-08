@@ -168,5 +168,15 @@ describe('DeepSeekChatProvider', () => {
       const cloned = original.withMaxCompletionTokens(16000);
       expect(cloned.modelParameters['max_tokens']).toBe(16000);
     });
+
+    it('withGenerationKwargs clamps max_tokens to maxTokens cap', () => {
+      const original = new DeepSeekChatProvider({
+        model: 'deepseek-v4-pro',
+        apiKey: 'test-key',
+        maxTokens: 384000,
+      });
+      const cloned = original.withGenerationKwargs({ max_tokens: 1_000_000 });
+      expect(cloned.modelParameters['max_tokens']).toBe(384000);
+    });
   });
 });

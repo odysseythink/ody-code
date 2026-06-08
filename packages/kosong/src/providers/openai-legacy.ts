@@ -487,7 +487,11 @@ export class OpenAILegacyChatProvider implements ChatProvider {
 
   withGenerationKwargs(kwargs: OpenAILegacyGenerationKwargs): OpenAILegacyChatProvider {
     const clone = this._clone();
-    clone._generationKwargs = { ...clone._generationKwargs, ...kwargs };
+    const merged = { ...clone._generationKwargs, ...kwargs };
+    if (this._maxOutputTokensCap !== undefined && merged.max_tokens !== undefined) {
+      merged.max_tokens = Math.min(merged.max_tokens, this._maxOutputTokensCap);
+    }
+    clone._generationKwargs = merged;
     return clone;
   }
 
