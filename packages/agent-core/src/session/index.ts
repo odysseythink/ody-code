@@ -221,11 +221,18 @@ export class Session {
       await this.triggerSessionEnd('exit');
     } finally {
       try {
+        await this.closeBrowserConnections();
         await this.mcp.shutdown();
       } finally {
         await this.logHandle?.close();
       }
     }
+  }
+
+  private async closeBrowserConnections(): Promise<void> {
+    await Promise.allSettled(
+      Array.from(this.agents.values(), (agent) => agent.browserConnection?.closeAll()),
+    );
   }
 
   private async stopBackgroundTasksOnExit(): Promise<void> {
