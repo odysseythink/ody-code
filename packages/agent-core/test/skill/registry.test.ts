@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { SkillRegistry } from '../../src/skill';
 import type { SkillDefinition, SkillSource } from '../../src/skill';
+import { DISPATCHING_PARALLEL_AGENTS_SKILL } from '../../src/skill/builtin';
 
 describe('skill registry prompt rendering', () => {
   it('groups skills by scope under canonical section headings', () => {
@@ -119,6 +120,42 @@ function makeSkill(
     source,
   };
 }
+
+describe('built-in skill shadowing', () => {
+  it('user skill shadows built-in skill of the same name', () => {
+    const registry = new SkillRegistry();
+
+    // Register a user skill first
+    registry.register({
+      name: 'dispatching-parallel-agents',
+      description: 'user version',
+      path: '/tmp/user/dispatching-parallel-agents/SKILL.md',
+      dir: '/tmp/user/dispatching-parallel-agents',
+      content: '',
+      metadata: { type: 'prompt' },
+      source: 'user',
+    });
+
+    // Then register the built-in skill
+    registry.registerBuiltinSkill(DISPATCHING_PARALLEL_AGENTS_SKILL);
+
+    const found = registry.getSkill('dispatching-parallel-agents');
+    expect(found).toBeDefined();
+    expect(found!.source).toBe('user');
+    expect(found!.description).toBe('user version');
+  });
+
+  it('built-in skill registers when no user shadow exists', () => {
+    const registry = new SkillRegistry();
+
+    registry.registerBuiltinSkill(DISPATCHING_PARALLEL_AGENTS_SKILL);
+
+    const found = registry.getSkill('dispatching-parallel-agents');
+    expect(found).toBeDefined();
+    expect(found!.source).toBe('builtin');
+    expect(found!.path).toBe('builtin://dispatching-parallel-agents');
+  });
+});
 
 function sectionFor(rendered: string, header: string): string {
   const start = rendered.indexOf(header);

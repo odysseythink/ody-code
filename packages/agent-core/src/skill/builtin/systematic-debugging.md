@@ -92,7 +92,7 @@ You MUST complete each phase before proceeding to the next.
    ```bash
    # Layer 1: Workflow
    echo "=== Secrets available in workflow: ==="
-   echo "IDENTITY: ${IDENTITY:+SET}${IDENTITY:-UNSET}"
+   test -n "$IDENTITY" && echo "IDENTITY: SET" || echo "IDENTITY: UNSET"
 
    # Layer 2: Build script
    echo "=== Env vars in build script: ==="
