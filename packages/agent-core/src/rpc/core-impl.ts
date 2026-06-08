@@ -98,6 +98,9 @@ import type { SDKRPC } from './sdk-api';
 import { proxyWithExtraPayload } from './types';
 import { KaosShellNotFoundError, LocalKaos, type Kaos } from '@odysseythink/kaos';
 import type { ToolServices } from '../tools/support/services';
+import { BuiltInMcpRegistry } from '../mcp/built-in';
+import { createChromeDevToolsServerDefinition } from '../mcp/built-in/chrome-devtools';
+import { BuiltInRootNotFoundError } from '../mcp/built-in/resolve-root';
 
 const ODY_CODE_PROVIDER_NAME = 'managed:ody-code';
 
@@ -137,6 +140,7 @@ export class KimiCore implements PromisableMethods<CoreAPI> {
   private pluginsReady: Promise<void>;
   private pluginsLoadError: Error | undefined;
   private readonly appVersion: string | undefined;
+  private builtInMcpRegistry: BuiltInMcpRegistry;
 
   constructor(
     protected readonly rpcClient: CoreRPCClient,
@@ -164,6 +168,16 @@ export class KimiCore implements PromisableMethods<CoreAPI> {
     this.config = loadRuntimeConfig(this.configPath);
     this.sessionStore = new SessionStore(this.homeDir);
     this.plugins = new PluginManager({ kimiHomeDir: this.homeDir });
+    this.builtInMcpRegistry = new BuiltInMcpRegistry();
+    try {
+      this.builtInMcpRegistry.register(createChromeDevToolsServerDefinition());
+    } catch (error) {
+      if (error instanceof BuiltInRootNotFoundError) {
+        log.warn('Built-in MCP server not found', { server: error.serverName });
+      } else {
+        throw error;
+      }
+    }
     // Capture the error rather than swallow it: mutators and explicit /plugins
     // reads rethrow so the user sees what's wrong; createSession/resumeSession
     // degrade silently (no plugin skills, no sessionStart injections) so the harness still
@@ -197,7 +211,8 @@ export class KimiCore implements PromisableMethods<CoreAPI> {
 
     await this.pluginsReady;
     const pluginSessionStarts = this.plugins.enabledSessionStarts();
-    const mcpConfig = this.mergePluginMcpConfig(baseMcpConfig);
+    let mcpConfig = this.mergePluginMcpConfig(baseMcpConfig);
+    mcpConfig = this.mergeBuiltInMcpConfig(mcpConfig, { sessionId: id, config });
 
     // Session ctor attaches its own log sink. If anything in the setup-after-
     // ctor block throws, `session.close()` releases the sink (and mcp).
@@ -287,7 +302,8 @@ export class KimiCore implements PromisableMethods<CoreAPI> {
     });
     await this.pluginsReady;
     const pluginSessionStarts = this.plugins.enabledSessionStarts();
-    const mcpConfig = this.mergePluginMcpConfig(baseMcpConfig);
+    let mcpConfig = this.mergePluginMcpConfig(baseMcpConfig);
+    mcpConfig = this.mergeBuiltInMcpConfig(mcpConfig, { sessionId: summary.id, config });
     const runtime = await this.resolveRuntime(config);
     const session = new Session({
       kaos: (await this.kaos).withCwd(summary.workDir),
@@ -740,6 +756,27 @@ export class KimiCore implements PromisableMethods<CoreAPI> {
       servers: {
         ...base?.servers,
         ...pluginServers,
+      },
+    };
+  }
+
+  private mergeBuiltInMcpConfig(
+    base: SessionMcpConfig | undefined,
+    ctx: { sessionId: string; config: KimiConfig },
+  ): SessionMcpConfig | undefined {
+    const builtInServers = this.builtInMcpRegistry.getEnabledConfigs(
+      {
+        kimiHomeDir: this.homeDir,
+        sessionId: ctx.sessionId,
+        chromePort: ctx.config.browser?.chromePort,
+      },
+      ctx.config,
+    );
+    if (Object.keys(builtInServers).length === 0) return base;
+    return {
+      servers: {
+        ...base?.servers,
+        ...builtInServers,
       },
     };
   }
