@@ -40,12 +40,6 @@ export class SessionMode {
     return randomUUID();
   }
 
-  updatePreModeModelAlias(alias: string | undefined): void {
-    if (this._preModeModelAlias !== null) {
-      this._preModeModelAlias = { value: alias };
-    }
-  }
-
   async enter(
     id = this.createSessionModeId(),
     _createFile = false, // ignored — no file is created on enter

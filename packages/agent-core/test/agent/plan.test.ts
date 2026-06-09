@@ -686,7 +686,7 @@ describe('modeModels: per-mode model routing', () => {
     expect(ctx.agent.sessionMode.isActive).toBe(true);
   });
 
-  it('remembers the model chosen inside plan mode so exit restores it', async () => {
+  it('exits plan mode and restores the pre-plan default model', async () => {
     const ctx = testAgent({
       kaos: planKaos,
       initialConfig: {
@@ -703,9 +703,10 @@ describe('modeModels: per-mode model routing', () => {
     ctx.agent.rpcMethods.setModel({ model: 'switched-model' });
     expect(ctx.agent.config.modelAlias).toBe('switched-model');
 
-    // Exit should restore to the model the user had inside plan mode
+    // Exit should restore the pre-plan (normal mode) model, not the model
+    // that was temporarily switched to inside plan mode.
     ctx.agent.sessionMode.exit();
-    expect(ctx.agent.config.modelAlias).toBe('switched-model');
+    expect(ctx.agent.config.modelAlias).toBe('mock-model');
   });
 });
 
