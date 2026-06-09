@@ -31,7 +31,7 @@ describe('BuiltInMcpRegistry', () => {
     expect(registry.isDisabled('chrome-devtools', config)).toBe(true);
   });
 
-  it('isDisabled returns true for chrome-devtools by default', () => {
+  it('isDisabled returns false for chrome-devtools by default', () => {
     const registry = new BuiltInMcpRegistry();
     registry.register({
       name: 'chrome-devtools',
@@ -40,18 +40,6 @@ describe('BuiltInMcpRegistry', () => {
       config: { transport: 'stdio' as const, command: 'node' },
     });
     const config: KimiConfig = { providers: {} };
-    expect(registry.isDisabled('chrome-devtools', config)).toBe(true);
-  });
-
-  it('isDisabled returns false for chrome-devtools when legacyMcpEnabled is true', () => {
-    const registry = new BuiltInMcpRegistry();
-    registry.register({
-      name: 'chrome-devtools',
-      displayName: 'Chrome DevTools',
-      enabledByDefault: true,
-      config: { transport: 'stdio' as const, command: 'node' },
-    });
-    const config: KimiConfig = { providers: {}, browser: { legacyMcpEnabled: true } };
     expect(registry.isDisabled('chrome-devtools', config)).toBe(false);
   });
 

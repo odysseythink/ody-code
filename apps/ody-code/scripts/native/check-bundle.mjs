@@ -18,7 +18,6 @@ const optionalRuntimeRequires = new Set([
   'canvas',
   'chokidar',
   'cpu-features',
-  'proxy-agent',
   'utf-8-validate',
 ]);
 const optionalRelativeRuntimeRequires = new Set(['./crypto/build/Release/sshcrypto.node']);
