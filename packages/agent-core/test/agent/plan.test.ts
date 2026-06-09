@@ -78,6 +78,22 @@ describe('manual plan entry', () => {
     expect(resumed.agent.sessionMode.sessionModeFilePath).toBeNull();
   });
 
+  it('plan mode inherits design file stem when entered after design mode exits', async () => {
+    const stat = vi.fn().mockRejectedValue(Object.assign(new Error('ENOENT'), { code: 'ENOENT' }));
+    const ctx = testAgent({ kaos: createFakeKaos({ mkdir: vi.fn().mockResolvedValue(undefined), stat }) });
+
+    await ctx.agent.sessionMode.enter('design-id', false, false, 'design');
+    (ctx.agent.sessionMode as unknown as { _sessionModeFilePath: string | null })._sessionModeFilePath =
+      '/workspace/.ody-code/designs/2026-06-09-continue-sub-project-2.md';
+    ctx.agent.sessionMode.exit('design-id');
+    expect(ctx.agent.sessionMode.isActive).toBe(false);
+
+    await ctx.agent.sessionMode.enter('plan-id', false, false, 'plan');
+    expect(ctx.agent.sessionMode.sessionModeFilePath).toBe(
+      '/workspace/.ody-code/plans/2026-06-09-continue-sub-project-2.md',
+    );
+  });
+
   it('enters plan mode through the EnterPlanMode tool and reminds the next step', async () => {
     const enterPlanModeCall: ToolCall = {
       type: 'function',

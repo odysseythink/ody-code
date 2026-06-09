@@ -33,6 +33,7 @@ export class SessionMode {
   protected _sessionModeFilePath: SessionModeFilePath = null;
   protected _kind: SessionModeKind = 'plan';
   private _preModeModelAlias: { value: string | undefined } | null = null;
+  private _lastCompletedDesignFilePath: string | null = null;
 
   constructor(protected readonly agent: Agent) {}
 
@@ -168,6 +169,9 @@ export class SessionMode {
       enabled: false,
       kind: this._kind,
     });
+    if (this._kind === 'design' && this._sessionModeFilePath !== null) {
+      this._lastCompletedDesignFilePath = this._sessionModeFilePath;
+    }
     this._isActive = false;
     this._sessionModeId = null;
     this._sessionModeFilePath = null;
@@ -230,6 +234,15 @@ export class SessionMode {
    */
   private async resolveFilePathEagerly(dir: string): Promise<void> {
     if (this._sessionModeFilePath !== null) return;
+    // If entering plan mode right after a design session, mirror the design file's stem.
+    if (this._kind === 'plan' && this._lastCompletedDesignFilePath !== null) {
+      const designBase = basename(this._lastCompletedDesignFilePath);
+      const designStem = designBase.endsWith('.md') ? designBase.slice(0, -'.md'.length) : designBase;
+      this._lastCompletedDesignFilePath = null;
+      const stem = await this.findUniqueStemInDir(dir, designStem);
+      this._sessionModeFilePath = join(dir, `${stem}.md`);
+      return;
+    }
     // The topic source is the user's prompt. When the mode is activated BEFORE
     // the first prompt (e.g. the session launches already in design mode), the
     // history has no prompt yet — do NOT lock in an "untitled" placeholder, or
@@ -272,6 +285,18 @@ export class SessionMode {
     }
 
     const { dir } = await this.resolveSessionModeDirectory(this._kind);
+
+    // Lazy fallback: if design stem is known, use it instead of deriving from content.
+    if (this._kind === 'plan' && this._lastCompletedDesignFilePath !== null) {
+      const designBase = basename(this._lastCompletedDesignFilePath);
+      const designStem = designBase.endsWith('.md') ? designBase.slice(0, -'.md'.length) : designBase;
+      this._lastCompletedDesignFilePath = null;
+      const stem = await this.findUniqueStemInDir(dir, designStem);
+      const path = join(dir, `${stem}.md`);
+      this._sessionModeFilePath = path;
+      this.agent.emitStatusUpdated();
+      return path;
+    }
 
     // Topic source priority: the user's prompt (now present even if the mode was
     // entered before it), then the document's H1 heading, then an LLM summary,
