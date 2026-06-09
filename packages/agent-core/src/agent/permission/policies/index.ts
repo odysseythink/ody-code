@@ -15,7 +15,6 @@ import { PlanModeGuardDenyPermissionPolicy } from './plan-mode-guard-deny';
 import { PlanModeToolApprovePermissionPolicy } from './plan-mode-tool-approve';
 import { PreToolCallHookPermissionPolicy } from './pre-tool-call-hook';
 import { SessionApprovalHistoryPermissionPolicy } from './session-approval-history';
-import { BrowserHostPermissionPolicy } from './browser-host';
 import { BrowserToolAskPermissionPolicy } from './browser-tool-ask';
 import {
   UserConfiguredAllowPermissionPolicy,
@@ -43,8 +42,6 @@ export function createPermissionDecisionPolicies(agent: Agent): readonly Permiss
     new UserConfiguredAskPermissionPolicy(agent),
     // User-configured allow rule matches → approve.
     new UserConfiguredAllowPermissionPolicy(agent),
-    // Browser automation: per-host authorization
-    new BrowserHostPermissionPolicy(agent),
     // Browser automation tools require first-use confirmation within a session.
     new BrowserToolAskPermissionPolicy(),
     // ExitPlanMode with active plan_review + non-empty plan + non-auto → ask (tracks plan_submitted/plan_resolved itself). Runs before session history so a stale session approval can't bypass review of a new plan body.

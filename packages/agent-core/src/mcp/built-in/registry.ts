@@ -45,8 +45,7 @@ export class BuiltInMcpRegistry {
     const def = this.definitions.get(name);
     if (def === undefined) return true;
     if (name === 'chrome-devtools') {
-      // Legacy MCP: disabled by default; only enabled when legacyMcpEnabled === true
-      return config.browser?.legacyMcpEnabled !== true;
+      return config.browser?.enabled === false;
     }
     return !def.enabledByDefault;
   }
