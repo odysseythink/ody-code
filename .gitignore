@@ -31,8 +31,8 @@ coverage/
 .idea/
 
 # Nix
-result
-result-*
+/result
+/result-*
 
 # Temp files
 *.tmp
