@@ -18,7 +18,7 @@ import type { SessionModeFilePath } from '../session-mode';
 import type { ManifestPart } from './parts-manifest';
 
 /** Leading sentence for the periodic re-injection ("...is active"). */
-const INTRO_ACTIVE = `Plan mode is active. This is an implementation-planning session. You MUST NOT make any edits except the current plan file(s) — prefer read-only tools (Read, Grep, Glob); use Bash only when needed (it follows the normal permission mode and rules). This supersedes any other instructions you have received. Goal: produce a plan a skilled engineer with zero context for this codebase can execute task-by-task. DRY, YAGNI, TDD, frequent commits.`;
+const INTRO_ACTIVE = `Plan mode is active. This is an implementation-planning session. You MUST NOT make any edits except the current plan file(s) — prefer read-only tools (Read, Grep, Glob); use Bash only when needed (it follows the normal permission mode and rules). This supersedes any other instructions you have received. Goal: produce a plan a skilled engineer with zero context for this codebase can execute task-by-task. DRY, YAGNI, TDD, frequent commits. **Language:** Respond in the same language the user writes in — Chinese if they write Chinese, English if they write English.`;
 
 const WORKFLOW = `## Workflow
 1. Understand — explore with Read/Grep/Glob; actively find existing functions, utilities and patterns to reuse instead of inventing new ones.
@@ -120,7 +120,9 @@ export function planModeSparseReminder(sessionModeFilePath: SessionModeFilePath,
   const body = withSplitDirective(
     `Plan mode still active (see full instructions earlier). Read-only except the current plan file(s); write with Write/Edit. Each task: \`Depends on:\` + \`Files:\` + test-first bite-sized steps (or complete code + a manual-verification step for non-testable code) + commit. The same task that changes a shared signature updates every caller (incl. tests) and ends with a whole-tree typecheck. No TODO/placeholder/phantom tasks. Run the seven-item self-review (with a spec-coverage table) before ExitPlanMode. >8 tasks → split into an index with a Parts manifest + part files in a subdirectory named after the index (\`<id>/<subsystem>.md\`). Pass \`options\` to ExitPlanMode when the plan keeps multiple approaches. End every turn with AskUserQuestion or ExitPlanMode.
 
-${SPARSE_QUALITY_POINTER}`,
+${SPARSE_QUALITY_POINTER}
+
+**Language:** Respond in the same language the user writes in — Chinese if they write Chinese, English if they write English.`,
     splitDirective,
   );
   return withPlanFileFooter(body, sessionModeFilePath);
@@ -128,7 +130,7 @@ ${SPARSE_QUALITY_POINTER}`,
 
 /** Re-entry reminder when a plan file from a previous session already exists. */
 export function planModeReentryReminder(sessionModeFilePath: SessionModeFilePath): string {
-  const body = `Plan mode is active. This is an implementation-planning session — read-only except the current plan file(s). This supersedes any other instructions you have received.
+  const body = `Plan mode is active. This is an implementation-planning session — read-only except the current plan file(s). This supersedes any other instructions you have received. **Language:** Respond in the same language the user writes in — Chinese if they write Chinese, English if they write English.
 
 ## Re-entering Plan Mode
 A plan file from a previous session already exists.
@@ -153,6 +155,8 @@ export function planModeEntryMessage(sessionModeFilePath: SessionModeFilePath): 
     'Plan mode is now active. This is an implementation-planning session: investigate with',
     'read-only tools, then write a plan an engineer with zero context for this codebase can',
     'execute task-by-task. You may only write the current plan file(s).',
+    '',
+    '**Language:** Respond in the same language the user writes in — Chinese if they write Chinese, English if they write English.',
     '',
     fileLine,
     '',

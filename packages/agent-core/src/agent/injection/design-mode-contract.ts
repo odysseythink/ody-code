@@ -23,7 +23,7 @@ import type { SessionModeFilePath } from '../session-mode';
 import type { ManifestPart } from './parts-manifest';
 
 /** Leading sentence for the periodic re-injection ("...is active"). */
-const INTRO_ACTIVE = `Design mode is active. This is a brainstorming / spec-exploration session — NOT an implementation session. You MUST NOT make any edits (with the exception of the current design file(s)) or otherwise change the system. Prefer read-only tools. Use Bash only when needed; Bash follows the normal permission mode and rules. This supersedes any other instructions you have received.`;
+const INTRO_ACTIVE = `Design mode is active. This is a brainstorming / spec-exploration session — NOT an implementation session. You MUST NOT make any edits (with the exception of the current design file(s)) or otherwise change the system. Prefer read-only tools. Use Bash only when needed; Bash follows the normal permission mode and rules. This supersedes any other instructions you have received. **Language:** Respond in the same language the user writes in — Chinese if they write Chinese, English if they write English.`;
 
 const HARD_GATE = `<HARD-GATE>
 Do NOT write code, scaffold, refactor, or take ANY implementation action until you have presented a design AND the user has approved it via ExitDesignMode. This applies to EVERY task regardless of how simple it seems — "too simple to need a design" is exactly where unexamined assumptions waste the most work; the design may be short, but you MUST present it and get approval.
@@ -205,6 +205,8 @@ export function designModeSparseReminder(
   const body = withSplitDirective(
     `Design mode still active (see full instructions earlier). This is a brainstorming session, NOT implementation — no code until the user approves the design via ExitDesignMode. Confirm the audit level (Basic/Standard/Deep) was asked; clarify one question per turn until all seven decision dimensions are settled (and verify any data source / hook point the design relies on actually exists in code); propose 2-3 approaches; present the design section by section for approval; then write the design file with [C:USER]/[C:INFERRED]/[C:DEFERRED]/[C:UPSTREAM] tags and an ## Assumptions chapter. A design spanning multiple independent subsystems → SPLIT into an index with a Parts manifest + part files written inside a subdirectory named after the index (\`<id>/<subsystem>.md\`). Pass options to ExitDesignMode when there is a real choice. End every turn with AskUserQuestion or ExitDesignMode — never any other way.
 
+**Language:** Respond in the same language the user writes in — Chinese if they write Chinese, English if they write English.
+
 ${SPARSE_QUALITY_POINTER}${mockupPointer}`,
     splitDirective,
   );
@@ -217,7 +219,7 @@ export function designModeReentryReminder(
   mockupAvailable: boolean,
   splitDirective?: string,
 ): string {
-  const base = `Design mode is active. This is a brainstorming session, NOT implementation — no code until the user approves via ExitDesignMode. Prefer read-only tools; you may only write the current design file(s).
+  const base = `Design mode is active. This is a brainstorming session, NOT implementation — no code until the user approves via ExitDesignMode. Prefer read-only tools; you may only write the current design file(s). **Language:** Respond in the same language the user writes in — Chinese if they write Chinese, English if they write English.
 
 ## Re-entering Design Mode
 A design file from a previous session already exists.
@@ -250,6 +252,8 @@ export function designModeEntryMessage(
     'Design mode is now active. This is a brainstorming / spec-exploration session — NOT an',
     'implementation session. Do NOT write or edit code until the user approves a design via',
     'ExitDesignMode. You may only write the current design file(s).',
+    '',
+    '**Language:** Respond in the same language the user writes in — Chinese if they write Chinese, English if they write English.',
     '',
     fileLine,
     '',
