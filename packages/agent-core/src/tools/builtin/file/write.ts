@@ -68,14 +68,18 @@ export class WriteTool implements BuiltinTool<WriteInput> {
       operation: 'write',
     });
 
-    // Lazy path resolution for plan/design mode (fallback when the path was not
-    // already reserved eagerly at session-mode entry).
+    // Lazy path resolution for plan/design mode: the model invents its own
+    // filename on first write; the host extracts the basename slug, normalizes
+    // it (date prefix, dedup), and redirects the write to the host-assigned path.
     let path = requestedPath;
     if (
       this.agent.sessionMode.isActive &&
       this.agent.sessionMode.sessionModeFilePath === null
     ) {
-      path = await this.agent.sessionMode.resolveFilePathFromContent(args.content);
+      path = await this.agent.sessionMode.resolveFilePathFromModelRequest(
+        requestedPath,
+        args.content,
+      );
     }
     // When the host redirects the write to the assigned session-mode file, the
     // success message MUST report where the bytes actually landed — otherwise the

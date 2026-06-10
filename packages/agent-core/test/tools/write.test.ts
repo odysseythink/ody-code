@@ -120,7 +120,7 @@ describe('WriteTool', () => {
     expect(result.output).toContain('Wrote 5 bytes');
   });
 
-  it('reports the host-assigned path (not the requested path) when session mode redirects the write', async () => {
+  it('redirects to host-assigned path via resolveFilePathFromModelRequest', async () => {
     const writeText = vi.fn().mockResolvedValue(6);
     const redirectPath = '/workspace/.ody-code/designs/2026-01-01-foo.md';
     const agent = {
@@ -129,7 +129,7 @@ describe('WriteTool', () => {
       sessionMode: {
         isActive: true,
         sessionModeFilePath: null,
-        resolveFilePathFromContent: vi.fn().mockResolvedValue(redirectPath),
+        resolveFilePathFromModelRequest: vi.fn().mockResolvedValue(redirectPath),
       },
     } as unknown as Agent;
     const tool = new WriteTool(agent);
@@ -137,6 +137,13 @@ describe('WriteTool', () => {
     const result = await executeTool(
       tool,
       context({ path: '.gpowers/designs/my-slug.md', content: '# Foo' }),
+    );
+
+    // Verify the new method was called with both arguments (path is resolved
+    // to absolute by resolvePathAccessPath before being passed).
+    expect(agent.sessionMode.resolveFilePathFromModelRequest).toHaveBeenCalledWith(
+      '/workspace/.gpowers/designs/my-slug.md',
+      '# Foo',
     );
 
     // Bytes actually land at the host-assigned path, and the message says so —
