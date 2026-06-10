@@ -178,6 +178,16 @@ export class Session {
     await this.rpc.clearPlan({ sessionId: this.id });
   }
 
+  /**
+   * Convert a source file into an execution plan (the `/writing-plan` command).
+   * Enters plan mode and locks the plan file to the source file's name. Rejects
+   * if the source file does not exist.
+   */
+  async writingPlan(input: { filePath: string }): Promise<void> {
+    this.ensureOpen();
+    await this.rpc.writingPlan({ sessionId: this.id, filePath: input.filePath });
+  }
+
   async compact(options: CompactOptions = {}): Promise<void> {
     this.ensureOpen();
     const instruction = normalizeOptionalString(options.instruction);

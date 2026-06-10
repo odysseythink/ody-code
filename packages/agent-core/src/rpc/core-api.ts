@@ -165,6 +165,8 @@ export interface CancelPlanPayload {
 export interface EnterPlanPayload {
   readonly kind?: SessionModeKind;
   readonly fileStem?: string;
+  /** When set, lock the plan file to this source file's name (used by `/writing-plan`). */
+  readonly sourceFilePath?: string;
 }
 export interface BeginCompactionPayload {
   readonly instruction?: string;

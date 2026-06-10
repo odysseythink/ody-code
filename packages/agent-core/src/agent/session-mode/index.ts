@@ -179,6 +179,48 @@ export class SessionMode {
     this.agent.emitStatusUpdated();
   }
 
+  /**
+   * Lock the plan-mode output file to an explicit SOURCE file's name, used by the
+   * `/writing-plan <file>` command. The plan is written to `<plans>/<source-basename>.md`
+   * (same name as the source, deduplicated on disk), bypassing topic-based naming AND
+   * the design→plan filename handoff ({@link _lastCompletedDesignFilePath}, which is
+   * cleared here so it can never override the explicit name).
+   *
+   * Throws if the source file does not exist. Caller must already be in plan mode.
+   */
+  async setWritingPlanSource(sourceFilePath: string): Promise<void> {
+    await this.validatePlanSource(sourceFilePath);
+    const { dir } = await this.resolveSessionModeDirectory('plan');
+    const base = basename(sourceFilePath);
+    const sourceStem = base.endsWith('.md') ? base.slice(0, -'.md'.length) : base;
+    const stem = await this.findUniqueStemInDir(dir, sourceStem);
+    // Sever any pending design handoff so it cannot win over the explicit name.
+    this._lastCompletedDesignFilePath = null;
+    // NOTE: the locked path is not recorded, so a resume BEFORE the first write
+    // falls back to topic-based naming — same narrow limitation as the design→plan
+    // handoff. Once the model writes, the correctly-named file exists on disk.
+    this._sessionModeFilePath = join(dir, `${stem}.md`);
+    this.agent.emitStatusUpdated();
+  }
+
+  /**
+   * Validate that `sourceFilePath` is an existing regular file (not a directory).
+   * Throws otherwise. Callable before {@link enter} so a bad path never mutates
+   * session mode. Used by {@link setWritingPlanSource} and the `enterPlan` handler.
+   */
+  async validatePlanSource(sourceFilePath: string): Promise<void> {
+    let st;
+    try {
+      st = await this.agent.kaos.stat(sourceFilePath);
+    } catch {
+      throw new Error(`文件不存在: ${sourceFilePath}`);
+    }
+    // POSIX mode: (stMode & S_IFMT) === S_IFDIR → it's a directory.
+    if ((st.stMode & 0o170000) === 0o040000) {
+      throw new Error(`不是文件（是目录）: ${sourceFilePath}`);
+    }
+  }
+
   get isActive() {
     return this._isActive;
   }

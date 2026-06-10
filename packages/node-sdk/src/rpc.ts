@@ -317,6 +317,16 @@ export class SDKRpcClient {
     });
   }
 
+  async writingPlan(input: SessionIdRpcInput & { filePath: string }): Promise<void> {
+    const rpc = await this.getRpc();
+    await rpc.enterPlan({
+      sessionId: input.sessionId,
+      agentId: this.interactiveAgentId,
+      kind: 'plan',
+      sourceFilePath: input.filePath,
+    });
+  }
+
   async reviewDesign(input: ReviewDesignRpcInput): Promise<DesignReviewData> {
     const rpc = await this.getRpc();
     return rpc.reviewDesign({

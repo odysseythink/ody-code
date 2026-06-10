@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { basename, dirname, join } from 'pathe';
+import { basename, dirname, isAbsolute, join } from 'pathe';
 
 import { ErrorCodes, KimiError, makeErrorPayload } from '#/errors';
 import { log } from '#/logging/logger';
@@ -361,12 +361,24 @@ export class Agent {
         ) {
           // No finalize needed — path is resolved lazily on first write
         }
+        let sourceAbs: string | undefined;
+        if (payload.sourceFilePath !== undefined) {
+          sourceAbs = isAbsolute(payload.sourceFilePath)
+            ? payload.sourceFilePath
+            : join(this.config.cwd, payload.sourceFilePath);
+          // Validate BEFORE mutating session mode: a bad path must not leave the
+          // session stuck in an empty plan mode. Throws propagate over RPC.
+          await this.sessionMode.validatePlanSource(sourceAbs);
+        }
         await this.sessionMode.enter(
           undefined,
           undefined,
           undefined,
           payload.kind ?? 'plan',
         );
+        if (sourceAbs !== undefined) {
+          await this.sessionMode.setWritingPlanSource(sourceAbs);
+        }
       },
       cancelPlan: async (payload) => {
         this.sessionMode.cancel(payload.id);

@@ -79,6 +79,14 @@ export const BUILTIN_SLASH_COMMANDS = [
     hiddenInModes: ['design', 'normal'],
   },
   {
+    name: 'writing-plan',
+    aliases: [],
+    description: '将指定文件转换为执行计划（仅 plan 模式，需文件参数）',
+    priority: 94,
+    availability: 'idle-only',
+    hiddenInModes: ['design', 'normal'],
+  },
+  {
     name: 'model',
     aliases: [],
     description: 'Switch LLM model',

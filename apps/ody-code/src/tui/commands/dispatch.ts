@@ -48,6 +48,7 @@ import {
   handleTitleCommand,
 } from './session';
 import { handleUndoCommand } from './undo';
+import { handleWritingPlanCommand } from './writing-plan';
 
 // ---------------------------------------------------------------------------
 // Re-exports — keep existing consumers working
@@ -86,6 +87,7 @@ export {
   handleTitleCommand,
 } from './session';
 export { handleUndoCommand } from './undo';
+export { handleWritingPlanCommand } from './writing-plan';
 
 // ---------------------------------------------------------------------------
 // Host interface
@@ -286,6 +288,9 @@ async function handleBuiltInSlashCommand(
       return;
     case 'plan-review':
       await handlePlanReviewCommand(host, args);
+      return;
+    case 'writing-plan':
+      await handleWritingPlanCommand(host, args);
       return;
     case 'compact':
       await handleCompactCommand(host, args);
