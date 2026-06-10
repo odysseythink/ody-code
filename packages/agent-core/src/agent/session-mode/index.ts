@@ -82,12 +82,6 @@ export class SessionMode {
         }
       }
 
-      // Resolve an authoritative file path NOW (at entry), so the model is handed
-      // a concrete path up front and never invents its own (e.g. a `.gpowers/...`
-      // path from an unrelated convention). Best-effort: if it fails the path
-      // stays null and lazy resolution (resolveFilePathFromContent) takes over.
-      await this.resolveFilePathEagerly(dir);
-
       this.agent.records.logRecord({
         type: 'session_mode.enter',
         id,
@@ -255,51 +249,6 @@ export class SessionMode {
     if (!normalizedPath.startsWith(splitDir + '/')) return false;
     if (!basename(normalizedPath).endsWith('.md')) return false;
     return true;
-  }
-
-  /**
-   * Reserve the session-mode file path at entry time from the conversation topic.
-   * Sets {@link _sessionModeFilePath} so the guard's writable set and the
-   * entry message both have an authoritative path before the model writes
-   * anything (otherwise the model invents its own path — e.g. a `.gpowers/...`
-   * convention — and collides with the guard). No file is created here: the
-   * first Write creates it; this only reserves a deduplicated name.
-   *
-   * Uses a synchronous, non-LLM topic extraction from the latest user message —
-   * no model round-trip, so entering plan/design mode stays instant. Best-effort:
-   * any failure leaves the path null so {@link resolveFilePathFromContent} can
-   * resolve it lazily on first write instead.
-   *
-   * The reserved name is deduplicated against files ON DISK, but since no file is
-   * created here it is not collision-proof against another session reserving the
-   * same name concurrently — acceptable for single-user interactive sessions.
-   */
-  private async resolveFilePathEagerly(dir: string): Promise<void> {
-    if (this._sessionModeFilePath !== null) return;
-    // If entering plan mode right after a design session, mirror the design file's stem.
-    if (this._kind === 'plan' && this._lastCompletedDesignFilePath !== null) {
-      const designBase = basename(this._lastCompletedDesignFilePath);
-      const designStem = designBase.endsWith('.md') ? designBase.slice(0, -'.md'.length) : designBase;
-      this._lastCompletedDesignFilePath = null;
-      const stem = await this.findUniqueStemInDir(dir, designStem);
-      this._sessionModeFilePath = join(dir, `${stem}.md`);
-      return;
-    }
-    // The topic source is the user's prompt. When the mode is activated BEFORE
-    // the first prompt (e.g. the session launches already in design mode), the
-    // history has no prompt yet — do NOT lock in an "untitled" placeholder, or
-    // it would stick forever and block the later prompt from naming the file.
-    // Defer to first-write resolution (resolveFilePathFromContent) instead.
-    const slug = this.topicSlugFromHistory();
-    if (slug === null) return;
-    try {
-      const stem = await this.findUniqueStemInDir(dir, `${formatDatePrefix(new Date())}-${slug}`);
-      this._sessionModeFilePath = join(dir, `${stem}.md`);
-    } catch (error) {
-      this.agent.log?.warn('Eager session-mode path resolution failed; will resolve lazily', {
-        error,
-      });
-    }
   }
 
   /** Kebab topic from the latest real user message, or null when none is usable. */
