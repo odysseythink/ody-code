@@ -337,6 +337,10 @@ async function performModelSwitch(host: SlashCommandHost, alias: string, thinkin
     } else if (session !== undefined) {
       if (alias !== prevModel) {
         await session.setModel(alias);
+        log.debug('diag:model-bug > performModelSwitch after setModel', {
+          sessionMode: host.state.appState.sessionMode,
+          model: host.state.appState.model,
+        });
       }
       if (thinking !== prevThinking) {
         await session.setThinking(level);
