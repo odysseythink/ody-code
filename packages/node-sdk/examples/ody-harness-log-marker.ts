@@ -54,7 +54,7 @@ async function main(): Promise<void> {
       throw new Error(`Session "${session.id}" resumed without a sessionDir summary`);
     }
 
-    sessionLogPath = join(sessionDir, 'logs', 'kimi-code.log');
+    sessionLogPath = join(sessionDir, 'logs', 'ody-code.log');
     const payload = {
       sessionId: session.id,
       purpose: 'manual-log-marker',
@@ -89,7 +89,7 @@ async function main(): Promise<void> {
     process.stderr.write(
       [
         'error: marker was not found in the session log.',
-        'Check that KIMI_LOG_LEVEL is not "off" and that the session id exists in this ODY_CODE_HOME.',
+        'Check that ODY_LOG_LEVEL is not "off" and that the session id exists in this ODY_CODE_HOME.',
         '',
       ].join('\n'),
     );

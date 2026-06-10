@@ -93,7 +93,7 @@ export interface KimiErrorInfo {
   readonly action?: string;
 }
 
-export const KIMI_ERROR_INFO = {
+export const ODY_ERROR_INFO = {
   'config.invalid': {
     title: 'Invalid configuration',
     retryable: false,

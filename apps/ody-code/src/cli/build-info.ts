@@ -3,7 +3,7 @@ declare const __ODY_CODE_CHANNEL__: string | undefined;
 declare const __ODY_CODE_COMMIT__: string | undefined;
 declare const __ODY_CODE_BUILD_TARGET__: string | undefined;
 
-export interface KimiBuildInfo {
+export interface OdyBuildInfo {
   readonly version?: string;
   readonly channel?: string;
   readonly commit?: string;
@@ -14,7 +14,7 @@ function optionalBuildString(value: unknown): string | undefined {
   return typeof value === 'string' && value.length > 0 ? value : undefined;
 }
 
-export const KIMI_BUILD_INFO: KimiBuildInfo = {
+export const ODY_BUILD_INFO: OdyBuildInfo = {
   version:
     typeof __ODY_CODE_VERSION__ === 'string'
       ? optionalBuildString(__ODY_CODE_VERSION__)

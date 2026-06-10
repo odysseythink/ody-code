@@ -356,11 +356,11 @@ describe('ody provider add', () => {
     expect(final.models?.['kohub-responses/legacy-model']).toBeUndefined();
   });
 
-  it('reads the api key from KIMI_REGISTRY_API_KEY when --api-key is omitted', async () => {
+  it('reads the api key from ODY_REGISTRY_API_KEY when --api-key is omitted', async () => {
     const fetchMock = mockRegistryFetch();
     const { harness } = makeHarness({ providers: {} } as KimiConfig);
     const { deps, exitCodes } = makeDeps(harness, {
-      env: { KIMI_REGISTRY_API_KEY: 'sk-env-token' },
+      env: { ODY_REGISTRY_API_KEY: 'sk-env-token' },
     });
 
     await tryRun(() => handleProviderAdd(deps, REGISTRY_URL, {}));
@@ -851,11 +851,11 @@ describe('ody provider catalog add', () => {
     expect(current().defaultModel).toBeUndefined();
   });
 
-  it('falls back to KIMI_REGISTRY_API_KEY when --api-key is omitted', async () => {
+  it('falls back to ODY_REGISTRY_API_KEY when --api-key is omitted', async () => {
     mockRegistryFetch(CATALOG_BODY);
     const { harness, current } = makeHarness({ providers: {} } as KimiConfig);
     const { deps, exitCodes } = makeDeps(harness, {
-      env: { KIMI_REGISTRY_API_KEY: 'sk-env' },
+      env: { ODY_REGISTRY_API_KEY: 'sk-env' },
     });
 
     await tryRun(() => handleCatalogAdd(deps, 'openai', {}));

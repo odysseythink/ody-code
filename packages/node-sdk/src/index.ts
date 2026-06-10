@@ -29,7 +29,7 @@ export {
   type KimiErrorInfo,
   type KimiErrorOptions,
   type KimiErrorPayload,
-  KIMI_ERROR_INFO,
+  ODY_ERROR_INFO,
   fromKimiErrorPayload,
   isKimiError,
   toKimiErrorPayload,

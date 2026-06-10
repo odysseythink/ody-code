@@ -83,7 +83,7 @@ describe('kimi-datasource MCP server', () => {
         env: {
           ...process.env,
           ODY_CODE_HOME: kimiHome,
-          KIMI_DATASOURCE_API_URL: `http://127.0.0.1:${address.port}`,
+          ODY_DATASOURCE_API_URL: `http://127.0.0.1:${address.port}`,
         },
         stdio: ['pipe', 'pipe', 'pipe'],
       });

@@ -10,7 +10,7 @@ import {
   type PluginManifestKind,
 } from './types';
 
-const KIMI_PLUGIN_ROOT_PATH = 'kimi.plugin.json';
+const ODY_PLUGIN_ROOT_PATH = 'kimi.plugin.json';
 const KIMI_PLUGIN_DIR_PATH = '.kimi-plugin/plugin.json';
 
 // Fields that look like third-party runtime extensions (Claude / Codex / old
@@ -36,7 +36,7 @@ export interface ParsedManifestResult {
 }
 
 export async function parseManifest(pluginRoot: string): Promise<ParsedManifestResult> {
-  const rootJsonPath = path.join(pluginRoot, KIMI_PLUGIN_ROOT_PATH);
+  const rootJsonPath = path.join(pluginRoot, ODY_PLUGIN_ROOT_PATH);
   const dirJsonPath = path.join(pluginRoot, KIMI_PLUGIN_DIR_PATH);
   const rootJsonExists = await isFile(rootJsonPath);
   const dirJsonExists = await isFile(dirJsonPath);
@@ -46,7 +46,7 @@ export async function parseManifest(pluginRoot: string): Promise<ParsedManifestR
       diagnostics: [
         {
           severity: 'error',
-          message: `No manifest at ${KIMI_PLUGIN_ROOT_PATH} or ${KIMI_PLUGIN_DIR_PATH}`,
+          message: `No manifest at ${ODY_PLUGIN_ROOT_PATH} or ${KIMI_PLUGIN_DIR_PATH}`,
         },
       ],
     };

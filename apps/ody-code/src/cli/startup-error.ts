@@ -1,4 +1,4 @@
-import { KIMI_ERROR_INFO, isKimiError } from '@odysseythink/kimi-code-sdk';
+import { ODY_ERROR_INFO, isKimiError } from '@odysseythink/kimi-code-sdk';
 import { chalkStderr } from 'chalk';
 
 import { STARTUP_ERROR_COLOR } from '#/constant/startup-error';
@@ -23,7 +23,7 @@ export function formatStartupError(
     return `${errorStyle(`error: failed to ${operation}: ${formatUnknownErrorMessage(error)}`)}\n`;
   }
 
-  const info = KIMI_ERROR_INFO[error.code];
+  const info = ODY_ERROR_INFO[error.code];
   const lines = [
     errorStyle(`error: ${info.title}`),
     '',

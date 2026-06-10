@@ -19,7 +19,7 @@ import path from 'node:path';
 import readline from 'node:readline';
 
 const VERSION = '3.1.1';
-const API_URL = process.env.KIMI_DATASOURCE_API_URL ?? 'https://api.kimi.com/coding/v1/tools';
+const API_URL = process.env.ODY_DATASOURCE_API_URL ?? 'https://api.kimi.com/coding/v1/tools';
 const REQUEST_TIMEOUT_MS = 30_000;
 const PROTOCOL_VERSION = '2025-06-18';
 

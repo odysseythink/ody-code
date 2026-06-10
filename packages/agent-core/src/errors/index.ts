@@ -1,6 +1,6 @@
 export {
   ErrorCodes,
-  KIMI_ERROR_INFO,
+  ODY_ERROR_INFO,
   type KimiErrorCode,
   type KimiErrorInfo,
 } from './codes';

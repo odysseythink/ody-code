@@ -6,7 +6,7 @@ import {
 } from '@odysseythink/kosong';
 
 import { KimiError } from './classes';
-import { ErrorCodes, KIMI_ERROR_INFO, type KimiErrorCode } from './codes';
+import { ErrorCodes, ODY_ERROR_INFO, type KimiErrorCode } from './codes';
 
 /**
  * Wire-safe payload of a Kimi error.
@@ -35,7 +35,7 @@ export function isKimiError(error: unknown): error is KimiError {
  * Build a KimiErrorPayload directly from a code + message (no Error instance
  * needed). Use this for synthetic error events that are signaled, not thrown
  * -- e.g. "turn busy" or "compaction failed". `retryable` is filled from
- * KIMI_ERROR_INFO so callers cannot drift out of sync with the registry.
+ * ODY_ERROR_INFO so callers cannot drift out of sync with the registry.
  */
 export function makeErrorPayload(
   code: KimiErrorCode,
@@ -47,7 +47,7 @@ export function makeErrorPayload(
     message,
     name: options?.name,
     details: options?.details,
-    retryable: KIMI_ERROR_INFO[code].retryable,
+    retryable: ODY_ERROR_INFO[code].retryable,
   };
 }
 
@@ -70,7 +70,7 @@ export function toKimiErrorPayload(error: unknown): KimiErrorPayload {
       message: error.message,
       name: error.name,
       details: error.details,
-      retryable: KIMI_ERROR_INFO[error.code].retryable,
+      retryable: ODY_ERROR_INFO[error.code].retryable,
     };
   }
 
@@ -89,7 +89,7 @@ export function toKimiErrorPayload(error: unknown): KimiErrorPayload {
         statusCode: error.statusCode,
         requestId: error.requestId,
       },
-      retryable: KIMI_ERROR_INFO[code].retryable,
+      retryable: ODY_ERROR_INFO[code].retryable,
     };
   }
 
@@ -98,7 +98,7 @@ export function toKimiErrorPayload(error: unknown): KimiErrorPayload {
       code: ErrorCodes.PROVIDER_CONNECTION_ERROR,
       message: error.message,
       name: error.name,
-      retryable: KIMI_ERROR_INFO[ErrorCodes.PROVIDER_CONNECTION_ERROR].retryable,
+      retryable: ODY_ERROR_INFO[ErrorCodes.PROVIDER_CONNECTION_ERROR].retryable,
     };
   }
 
@@ -107,7 +107,7 @@ export function toKimiErrorPayload(error: unknown): KimiErrorPayload {
       code: ErrorCodes.PROVIDER_API_ERROR,
       message: error.message,
       name: error.name,
-      retryable: KIMI_ERROR_INFO[ErrorCodes.PROVIDER_API_ERROR].retryable,
+      retryable: ODY_ERROR_INFO[ErrorCodes.PROVIDER_API_ERROR].retryable,
     };
   }
 
@@ -116,14 +116,14 @@ export function toKimiErrorPayload(error: unknown): KimiErrorPayload {
       code: ErrorCodes.INTERNAL,
       message: error.message,
       name: error.name,
-      retryable: KIMI_ERROR_INFO[ErrorCodes.INTERNAL].retryable,
+      retryable: ODY_ERROR_INFO[ErrorCodes.INTERNAL].retryable,
     };
   }
 
   return {
     code: ErrorCodes.INTERNAL,
     message: String(error),
-    retryable: KIMI_ERROR_INFO[ErrorCodes.INTERNAL].retryable,
+    retryable: ODY_ERROR_INFO[ErrorCodes.INTERNAL].retryable,
   };
 }
 

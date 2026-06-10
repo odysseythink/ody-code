@@ -19,20 +19,20 @@ export interface ResolveLoggingInput {
  * flux and reading it adds a startup-time failure surface. Users who need to
  * override the defaults set env vars:
  *
- *   KIMI_LOG_LEVEL=debug
- *   KIMI_LOG_GLOBAL_MAX_BYTES=... KIMI_LOG_GLOBAL_FILES=...
- *   KIMI_LOG_SESSION_MAX_BYTES=... KIMI_LOG_SESSION_FILES=...
+ *   ODY_LOG_LEVEL=debug
+ *   ODY_LOG_GLOBAL_MAX_BYTES=... ODY_LOG_GLOBAL_FILES=...
+ *   ODY_LOG_SESSION_MAX_BYTES=... ODY_LOG_SESSION_FILES=...
  */
 export function resolveLoggingConfig(input: ResolveLoggingInput): LoggingConfig {
   const env = input.env ?? process.env;
   return {
-    level: parseLevel(env['KIMI_LOG_LEVEL']) ?? DEFAULT_LOG_LEVEL,
+    level: parseLevel(env['ODY_LOG_LEVEL']) ?? DEFAULT_LOG_LEVEL,
     globalLogPath: resolveGlobalLogPath(input.homeDir),
-    globalMaxBytes: parsePositiveInt(env['KIMI_LOG_GLOBAL_MAX_BYTES']) ?? DEFAULT_GLOBAL_MAX_BYTES,
-    globalFiles: parsePositiveInt(env['KIMI_LOG_GLOBAL_FILES']) ?? DEFAULT_GLOBAL_FILES,
+    globalMaxBytes: parsePositiveInt(env['ODY_LOG_GLOBAL_MAX_BYTES']) ?? DEFAULT_GLOBAL_MAX_BYTES,
+    globalFiles: parsePositiveInt(env['ODY_LOG_GLOBAL_FILES']) ?? DEFAULT_GLOBAL_FILES,
     sessionMaxBytes:
-      parsePositiveInt(env['KIMI_LOG_SESSION_MAX_BYTES']) ?? DEFAULT_SESSION_MAX_BYTES,
-    sessionFiles: parsePositiveInt(env['KIMI_LOG_SESSION_FILES']) ?? DEFAULT_SESSION_FILES,
+      parsePositiveInt(env['ODY_LOG_SESSION_MAX_BYTES']) ?? DEFAULT_SESSION_MAX_BYTES,
+    sessionFiles: parsePositiveInt(env['ODY_LOG_SESSION_FILES']) ?? DEFAULT_SESSION_FILES,
   };
 }
 

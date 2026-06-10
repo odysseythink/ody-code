@@ -459,7 +459,7 @@ function withPluginMcpRuntime(
   const env = {
     ...config.env,
     ODY_CODE_HOME: kimiHomeDir,
-    KIMI_PLUGIN_ROOT: pluginRoot,
+    ODY_PLUGIN_ROOT: pluginRoot,
   };
 
   if (config.command === 'node' && isKimiNativeBinary()) {

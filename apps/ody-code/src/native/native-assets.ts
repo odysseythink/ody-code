@@ -13,7 +13,7 @@ import { createRequire } from 'node:module';
 import { homedir } from 'node:os';
 import { dirname, join, win32 as pathWin32 } from 'node:path';
 
-import { KIMI_BUILD_INFO } from '#/cli/build-info';
+import { ODY_BUILD_INFO } from '#/cli/build-info';
 import { NATIVE_ASSET_MANIFEST_VERSION as MANIFEST_VERSION, buildManifestKey } from '../../scripts/native/manifest.mjs';
 
 export const NATIVE_ASSET_MANIFEST_VERSION = MANIFEST_VERSION;
@@ -76,7 +76,7 @@ function loadSeaModule(): NodeSeaModule | null {
 }
 
 function currentTarget(): string {
-  return KIMI_BUILD_INFO.buildTarget ?? `${process.platform}-${process.arch}`;
+  return ODY_BUILD_INFO.buildTarget ?? `${process.platform}-${process.arch}`;
 }
 
 export function nativeAssetManifestKey(target: string = currentTarget()): string {
@@ -158,7 +158,7 @@ export function getNativeAssetCacheRoot(
   manifest: NativeAssetManifest,
   options: NativeAssetOptions = {},
 ): string {
-  const version = sanitizeSegment(options.version ?? KIMI_BUILD_INFO.version ?? 'dev');
+  const version = sanitizeSegment(options.version ?? ODY_BUILD_INFO.version ?? 'dev');
   const manifestHash = sha256(JSON.stringify(manifest));
   return join(
     getNativeCacheBase(options),
@@ -359,7 +359,7 @@ export function cleanupStaleNativeCacheForCurrent(
   if (manifest === null) return null;
 
   const cacheBase = getNativeCacheBase(options);
-  const version = KIMI_BUILD_INFO.version ?? 'dev';
+  const version = ODY_BUILD_INFO.version ?? 'dev';
   const currentRoot = getNativeAssetCacheRoot(manifest, options);
 
   return cleanupStaleNativeCache({

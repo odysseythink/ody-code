@@ -814,36 +814,19 @@ export class KimiCore implements PromisableMethods<CoreAPI> {
     session: Session,
     config: KimiConfig,
   ): Promise<void> {
+    const main = session.agents.get('main')!;
+    const currentMode = main.sessionMode.isActive ? main.sessionMode.kind : 'normal';
+    const fromConfig =
+      currentMode === 'plan'
+        ? config.modeModels?.plan
+        : currentMode === 'design'
+          ? config.modeModels?.design
+          : config.defaultModel;
+    const model = fromConfig?.trim() ?? '';
+    if (model.length === 0) return;
     const api = new SessionAPIImpl(session);
-    // A session migrated from an external tool carries no model, and any
-    // session may reference a model alias that no longer exists in config.toml.
-    // Try the session's own model first, then fall back to the configured
-    // default, so resume degrades gracefully instead of hard-failing.
-    const requested = (await api.getModel({ agentId: 'main' })).trim();
-    const fallback = config.defaultModel?.trim() ?? '';
-    const candidates = [...new Set([requested, fallback].filter((model) => model.length > 0))];
-    for (const model of candidates) {
-      try {
-        await api.setModel({ agentId: 'main', model });
-        await session.flushMetadata();
-        return;
-      } catch (error) {
-        // Skip a candidate only when the alias is genuinely absent from
-        // config (a stale or migrated model) — that is the graceful-degrade
-        // case. A *configured* alias that fails to resolve (missing provider,
-        // no credentials, bad max_context_size) is an actionable config error
-        // the user must see; surface it instead of silently swapping models.
-        const aliasMissing = config.models?.[model] === undefined;
-        if (
-          aliasMissing &&
-          error instanceof KimiError &&
-          error.code === ErrorCodes.CONFIG_INVALID
-        ) {
-          continue;
-        }
-        throw error;
-      }
-    }
+    await api.setModel({ agentId: 'main', model });
+    await session.flushMetadata();
   }
 }
 

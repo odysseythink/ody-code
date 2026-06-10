@@ -11,10 +11,10 @@ import { createKimiCodeHostIdentity } from '#/cli/version';
 import { KimiHarness, log } from '@odysseythink/kimi-code-sdk';
 import { __resetRootLoggerForTest } from '@odysseythink/agent-core';
 
-const SESSION_LOG = 'logs/kimi-code.log';
-const GLOBAL_LOG = 'logs/global/kimi-code.log';
+const SESSION_LOG = 'logs/ody-code.log';
+const GLOBAL_LOG = 'logs/global/ody-code.log';
 const MAIN_WIRE = 'agents/main/wire.jsonl';
-const ENABLED = process.env['KIMI_E2E'] === '1';
+const ENABLED = process.env['ODY_E2E'] === '1';
 
 let homeDir: string;
 let workDir: string;

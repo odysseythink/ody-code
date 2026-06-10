@@ -10,7 +10,7 @@ import { dirname, resolve } from 'node:path';
 import { createKimiDefaultHeaders, type KimiHostIdentity } from '@odysseythink/kimi-code-oauth';
 
 import { getDataDir } from '../utils/paths';
-import { KIMI_BUILD_INFO } from './build-info';
+import { ODY_BUILD_INFO } from './build-info';
 
 const MODULE_DIR = import.meta.dirname;
 
@@ -37,8 +37,8 @@ export function getHostPackageRoot(): string {
 }
 
 export function getVersion(): string {
-  if (KIMI_BUILD_INFO.version !== undefined) {
-    return KIMI_BUILD_INFO.version;
+  if (ODY_BUILD_INFO.version !== undefined) {
+    return ODY_BUILD_INFO.version;
   }
   const pkg = JSON.parse(readFileSync(getHostPackageJsonPath(), 'utf-8')) as {
     version: string;
