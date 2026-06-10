@@ -129,6 +129,15 @@ describe('resolveSlashCommandInput', () => {
     });
   });
 
+  it('treats unknown skill command as plain message (defense-in-depth)', () => {
+    // When a skill is not in the skillCommandMap (e.g. server filtered it out due to mode),
+    // typing /skill:executing-plans should be treated as a plain message.
+    expect(resolve('/skill:executing-plans')).toEqual({
+      kind: 'message',
+      input: '/skill:executing-plans',
+    });
+  });
+
 });
 
 describe('goal command resolution', () => {

@@ -85,6 +85,7 @@ function makeHost(): SessionEventHost {
       setTasks: vi.fn(),
       setVisible: vi.fn(),
     } as unknown as SessionEventHost['tasksBrowserController'],
+    refreshSkillCommands: vi.fn(),
   } as unknown as SessionEventHost;
 }
 
