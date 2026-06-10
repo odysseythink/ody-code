@@ -18,5 +18,6 @@ export const FINISHING_A_DEVELOPMENT_BRANCH_SKILL: SkillDefinition = {
   metadata: {
     ...parsed.metadata,
     type: parsed.metadata.type ?? 'inline',
+    hiddenInModes: ['plan', 'design'],
   },
 };

@@ -18,5 +18,6 @@ export const VERIFICATION_BEFORE_COMPLETION_SKILL: SkillDefinition = {
   metadata: {
     ...parsed.metadata,
     type: parsed.metadata.type ?? 'inline',
+    hiddenInModes: ['plan', 'design'],
   },
 };

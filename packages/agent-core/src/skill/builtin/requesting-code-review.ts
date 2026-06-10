@@ -18,5 +18,6 @@ export const REQUESTING_CODE_REVIEW_SKILL: SkillDefinition = {
   metadata: {
     ...parsed.metadata,
     type: parsed.metadata.type ?? 'inline',
+    hiddenInModes: ['plan', 'design'],
   },
 };
