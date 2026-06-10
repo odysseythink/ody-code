@@ -50,6 +50,7 @@ import {
 import { formatBackgroundAgentTranscript } from '../utils/background-agent-status';
 import { formatBackgroundTaskTranscript } from '../utils/background-task-status';
 import { formatHookResultMarkdown, formatHookResultPlain } from '../utils/hook-result-format';
+import type { SkillListSession } from '../commands/skills';
 import { McpOAuthAuthorizationUrlOpener } from '../utils/mcp-oauth';
 import {
   formatMcpStartupStatusSummary,
@@ -93,6 +94,7 @@ export interface SessionEventHost {
   sendQueuedMessage(session: Session, item: QueuedMessage): void;
   shiftQueuedMessage(): QueuedMessage | undefined;
   readonly tasksBrowserController: TasksBrowserController;
+  refreshSkillCommands(session?: SkillListSession): Promise<void>;
 }
 
 export class SessionEventHandler {
@@ -551,7 +553,12 @@ export class SessionEventHandler {
       patch.permissionMode = event.permission;
     }
     if (event.model !== undefined) patch.model = event.model;
-    if (Object.keys(patch).length > 0) this.host.setAppState(patch);
+    if (Object.keys(patch).length > 0) {
+      this.host.setAppState(patch);
+      if (event.sessionMode !== undefined) {
+        void this.host.refreshSkillCommands(this.host.session);
+      }
+    }
   }
 
   private handleGoalUpdated(event: GoalUpdatedEvent): void {
