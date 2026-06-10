@@ -61,11 +61,13 @@ export class SessionMode {
     this._sessionModeFilePath = null;
 
     const modeModel = this.agent.kimiConfig?.modeModels?.[kind];
-    if (modeModel !== undefined && modeModel !== this.agent.config.modelAlias) {
+    if (modeModel !== undefined) {
       try {
         this.agent.modelProvider?.resolveProviderConfig(modeModel);
         this._preModeModelAlias = { value: this.agent.config.modelAlias };
-        this.agent.config.update({ modelAlias: modeModel });
+        if (modeModel !== this.agent.config.modelAlias) {
+          this.agent.config.update({ modelAlias: modeModel });
+        }
       } catch {
         this.agent.log?.warn(`modeModels.${kind} "${modeModel}" not found, keeping current model`);
         this._preModeModelAlias = null;
