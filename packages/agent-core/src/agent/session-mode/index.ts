@@ -105,9 +105,11 @@ export class SessionMode {
   restoreEnter({
     id,
     kind = 'plan',
+    path,
   }: {
     readonly id: string;
     readonly kind?: SessionModeKind;
+    readonly path?: string;
   }): void {
     this.agent.replayBuilder.push({
       type: 'session_mode_updated',
@@ -118,7 +120,7 @@ export class SessionMode {
     this._isActive = true;
     this._sessionModeId = id;
     this._kind = kind;
-    this._sessionModeFilePath = null;
+    this._sessionModeFilePath = path && path.length > 0 ? path : null;
   }
 
   cancel(id?: string): void {
@@ -286,6 +288,12 @@ export class SessionMode {
       const path = join(dir, `${stem}.md`);
       this._sessionModeFilePath = path;
       this.agent.emitStatusUpdated();
+      this.agent.records.logRecord({
+        type: 'session_mode.enter',
+        id: this._sessionModeId!,
+        kind: this._kind,
+        path,
+      });
       return path;
     }
 
@@ -310,6 +318,64 @@ export class SessionMode {
 
     this._sessionModeFilePath = path;
     this.agent.emitStatusUpdated();
+    this.agent.records.logRecord({
+      type: 'session_mode.enter',
+      id: this._sessionModeId!,
+      kind: this._kind,
+      path,
+    });
+    return path;
+  }
+
+  /**
+   * Resolve the session-mode file path from the model's first Write request.
+   * Extracts a slug from the requested path basename, normalizes it with
+   * a date prefix, deduplicates, and commits the path to the wire record.
+   *
+   * When the basename yields an unusable slug after sanitization (e.g. the
+   * model requests `---.md`), falls back to content-based resolution via
+   * {@link resolveFilePathFromContent}.
+   */
+  async resolveFilePathFromModelRequest(
+    requestedPath: string,
+    content: string,
+  ): Promise<string> {
+    if (this._sessionModeFilePath !== null) {
+      return this._sessionModeFilePath;
+    }
+
+    const { dir } = await this.resolveSessionModeDirectory(this._kind);
+
+    // Extract slug from the model's requested path basename.  basename()
+    // strips any directory structure the model may have invented, so the
+    // host remains in control of where the file actually lands.
+    const base = basename(requestedPath);
+    let slug = base.endsWith('.md') ? base.slice(0, -'.md'.length) : base;
+    slug = slugifyTitle(slug);
+
+    if (slug.length < 2) {
+      // The model invented a path whose basename yields no usable slug.
+      // Fall through to the existing content-based resolution (heading,
+      // LLM summary, "untitled") which will set up the path + logRecord
+      // internally.
+      return this.resolveFilePathFromContent(content);
+    }
+
+    const datePrefix = formatDatePrefix(new Date());
+    const stem = `${datePrefix}-${slug}`;
+    const finalStem = await this.findUniqueStemInDir(dir, stem);
+    const path = join(dir, `${finalStem}.md`);
+
+    this._sessionModeFilePath = path;
+    this.agent.emitStatusUpdated();
+
+    this.agent.records.logRecord({
+      type: 'session_mode.enter',
+      id: this._sessionModeId!,
+      kind: this._kind,
+      path,
+    });
+
     return path;
   }
 

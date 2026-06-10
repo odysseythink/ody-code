@@ -63,6 +63,7 @@ function restoreAgentRecord(agent: Agent, input: AgentRecord): void {
       agent.sessionMode.restoreEnter({
         id: input.id,
         kind: input.kind ?? 'plan',
+        path: input.path,
       });
       return;
     case 'session_mode.cancel':
