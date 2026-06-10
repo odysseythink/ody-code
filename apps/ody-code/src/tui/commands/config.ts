@@ -337,10 +337,6 @@ async function performModelSwitch(host: SlashCommandHost, alias: string, thinkin
     } else if (session !== undefined) {
       if (alias !== prevModel) {
         await session.setModel(alias);
-        log.debug('diag:model-bug > performModelSwitch after setModel', {
-          sessionMode: host.state.appState.sessionMode,
-          model: host.state.appState.model,
-        });
       }
       if (thinking !== prevThinking) {
         await session.setThinking(level);
@@ -382,22 +378,10 @@ async function performModelSwitch(host: SlashCommandHost, alias: string, thinkin
 export async function persistModelSelection(host: SlashCommandHost, alias: string, thinking: boolean): Promise<boolean> {
   const config = await host.harness.getConfig({ reload: true });
 
-  log.debug('diag:model-bug > persistModelSelection', {
-    sessionMode: host.state.appState.sessionMode,
-    alias,
-    thinking,
-    configDefaultModel: config.defaultModel,
-    configModeModels: config.modeModels,
-  });
-
   if (host.state.appState.sessionMode === 'plan') {
     if (config.modeModels?.plan === alias && config.defaultThinking === thinking) {
       return false;
     }
-    log.debug('diag:model-bug > persistModelSelection -> plan branch', {
-      modeModels: { ...config.modeModels, plan: alias },
-      defaultThinking: thinking,
-    });
     await host.harness.setConfig({
       modeModels: { ...config.modeModels, plan: alias },
       defaultThinking: thinking,
@@ -406,10 +390,6 @@ export async function persistModelSelection(host: SlashCommandHost, alias: strin
     if (config.modeModels?.design === alias && config.defaultThinking === thinking) {
       return false;
     }
-    log.debug('diag:model-bug > persistModelSelection -> design branch', {
-      modeModels: { ...config.modeModels, design: alias },
-      defaultThinking: thinking,
-    });
     await host.harness.setConfig({
       modeModels: { ...config.modeModels, design: alias },
       defaultThinking: thinking,
@@ -418,10 +398,6 @@ export async function persistModelSelection(host: SlashCommandHost, alias: strin
     if (config.defaultModel === alias && config.defaultThinking === thinking) {
       return false;
     }
-    log.debug('diag:model-bug > persistModelSelection -> normal branch', {
-      defaultModel: alias,
-      defaultThinking: thinking,
-    });
     await host.harness.setConfig({
       defaultModel: alias,
       defaultThinking: thinking,

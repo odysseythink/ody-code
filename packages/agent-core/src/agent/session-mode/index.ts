@@ -124,6 +124,14 @@ export class SessionMode {
     this._sessionModeId = id;
     this._kind = kind;
     this._sessionModeFilePath = path && path.length > 0 ? path : null;
+
+    // Resume boots directly into a session mode without the live enter() path, so
+    // _preModeModelAlias was never captured. Without it, a later exit/cancel back
+    // to normal mode cannot restore the normal-mode model and stays stuck on this
+    // mode's model. Seed it with the normal-mode model (defaultModel), mirroring
+    // what enter() captures when entering a mode from normal.
+    const normalModel = this.agent.kimiConfig?.defaultModel;
+    this._preModeModelAlias = normalModel !== undefined ? { value: normalModel } : null;
   }
 
   cancel(id?: string): void {

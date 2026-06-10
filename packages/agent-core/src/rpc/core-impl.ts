@@ -256,11 +256,6 @@ export class KimiCore implements PromisableMethods<CoreAPI> {
         modelAlias: options.model ?? config.defaultModel,
         thinkingLevel,
       });
-      log.debug('diag:model-bug > createSession model init', {
-        optionsModel: options.model,
-        configDefaultModel: config.defaultModel,
-        finalModelAlias: options.model ?? config.defaultModel,
-      });
       if (permissionMode !== undefined) {
         mainAgent.permission.setMode(permissionMode);
       }
@@ -418,15 +413,8 @@ export class KimiCore implements PromisableMethods<CoreAPI> {
 
   async setKimiConfig(input: SetKimiConfigPayload): Promise<KimiConfig> {
     const config = mergeConfigPatch(readConfigFile(this.configPath), input);
-    log.debug('diag:model-bug > setKimiConfig', {
-      patch: { defaultModel: input.defaultModel, modeModels: input.modeModels, defaultThinking: input.defaultThinking },
-      merged: { defaultModel: config.defaultModel, modeModels: config.modeModels, defaultThinking: config.defaultThinking },
-    });
     await writeConfigFile(this.configPath, config);
     this.config = loadRuntimeConfig(this.configPath);
-    log.debug('diag:model-bug > setKimiConfig written', {
-      verified: { defaultModel: this.config.defaultModel, modeModels: this.config.modeModels },
-    });
     // Propagate the fresh config to every active agent so runtime changes
     // (including modeModels) are visible without restarting the session.
     for (const session of this.sessions.values()) {

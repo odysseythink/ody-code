@@ -1,5 +1,4 @@
 import { ErrorCodes, KimiError } from '#/errors';
-import { log } from '#/logging/logger';
 import { parseBooleanEnv } from './resolve';
 import {
   validateConfig,
@@ -198,12 +197,6 @@ export function stripEnvModelConfig(config: KimiConfig): KimiConfig {
     delete models[ENV_MODEL_ALIAS_KEY];
   }
 
-  log.debug('diag:model-bug > stripEnvModelConfig', {
-    before: { defaultModel: config.defaultModel, modeModels: config.modeModels },
-    hasEnvModel: true,
-    defaultIsEnv,
-  });
-
   const result: KimiConfig = {
     ...config,
     providers,
@@ -212,10 +205,6 @@ export function stripEnvModelConfig(config: KimiConfig): KimiConfig {
     thinking: rawThinking(config),
     defaultThinking: rawDefaultThinking(config),
   };
-
-  log.debug('diag:model-bug > stripEnvModelConfig after', {
-    after: { defaultModel: result.defaultModel, modeModels: result.modeModels },
-  });
 
   return result;
 }

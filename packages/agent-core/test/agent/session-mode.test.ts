@@ -8,11 +8,14 @@ const CWD = '/workspace/project';
 
 function makeAgent(overrides: {
   existingPaths?: Set<string>;
+  modelAlias?: string;
+  kimiConfig?: { defaultModel?: string };
 } = {}): Agent {
   const existing = overrides.existingPaths ?? new Set<string>();
   return {
     homedir: '/home/user',
-    config: { cwd: CWD, modelAlias: 'test', provider: 'test', update: vi.fn() },
+    config: { cwd: CWD, modelAlias: overrides.modelAlias ?? 'test', provider: 'test', update: vi.fn() },
+    kimiConfig: overrides.kimiConfig,
     emitStatusUpdated: vi.fn(),
     replayBuilder: { push: vi.fn() },
     records: { logRecord: vi.fn() },
@@ -205,6 +208,39 @@ describe('SessionMode', () => {
       const sm = new SessionMode(agent);
       sm.restoreEnter({ id: 'id', kind: 'design', path: '' });
       expect(sm.sessionModeFilePath).toBeNull();
+    });
+
+    it('restores the normal-mode model (defaultModel) on exit after a resumed enter', () => {
+      // Resume boots straight into design mode on the resumed mode's model; a later
+      // exit must revert to the normal-mode model, not stay on the design model.
+      const agent = makeAgent({
+        modelAlias: 'design-model',
+        kimiConfig: { defaultModel: 'normal-model' },
+      });
+      const sm = new SessionMode(agent);
+      sm.restoreEnter({ id: 'id', kind: 'design' });
+      sm.exit();
+      expect(agent.config.update).toHaveBeenCalledWith({ modelAlias: 'normal-model' });
+    });
+
+    it('restores the normal-mode model (defaultModel) on cancel after a resumed enter', () => {
+      const agent = makeAgent({
+        modelAlias: 'plan-model',
+        kimiConfig: { defaultModel: 'normal-model' },
+      });
+      const sm = new SessionMode(agent);
+      sm.restoreEnter({ id: 'id', kind: 'plan' });
+      sm.cancel();
+      expect(agent.config.update).toHaveBeenCalledWith({ modelAlias: 'normal-model' });
+    });
+
+    it('does not restore (or throw) when no defaultModel is configured', () => {
+      const agent = makeAgent({ modelAlias: 'design-model' }); // kimiConfig undefined
+      const sm = new SessionMode(agent);
+      sm.restoreEnter({ id: 'id', kind: 'design' });
+      expect(() => sm.exit()).not.toThrow();
+      // No pre-mode alias was seeded → exit must not push a model restore.
+      expect(agent.config.update).not.toHaveBeenCalled();
     });
   });
 
