@@ -93,6 +93,18 @@ describe('DesignModeInjector content', () => {
     expect(text).toContain('Design file: /tmp/design.md');
   });
 
+  it('tells the model to invent its own filename when path is null', () => {
+    const entry = designModeEntryMessage(null, false);
+    expect(entry).toContain('Invent your own filename');
+    expect(entry).not.toContain('wait for one before calling ExitDesignMode');
+  });
+
+  it('shows assigned path and "do not invent" when path is non-null', () => {
+    const entry = designModeEntryMessage('/workspace/.ody-code/designs/2026-06-10-my-topic.md', false);
+    expect(entry).toContain('Design file:');
+    expect(entry).toContain('Do NOT invent your own path');
+  });
+
   it('keeps the entry message and the full reminder in sync (shared contract)', async () => {
     const agent = designAgent({ isActive: true, sessionModeFilePath: '/tmp/design.md' });
     const injector = new DesignModeInjector(agent);

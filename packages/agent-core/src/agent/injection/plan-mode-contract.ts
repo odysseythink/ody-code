@@ -100,7 +100,7 @@ function contractBody(): string {
 
 function withPlanFileFooter(body: string, sessionModeFilePath: SessionModeFilePath): string {
   if (sessionModeFilePath === null || sessionModeFilePath.length === 0) {
-    return `${body}\n\nNo plan file path is available in this host yet. Wait for the host to provide a plan file path before calling ExitPlanMode; do not use Write or Edit until then.`;
+    return body;
   }
   return `${body}\n\nPlan file: ${sessionModeFilePath}`;
 }
@@ -148,7 +148,7 @@ Your turn must end with either AskUserQuestion (to clarify requirements) or Exit
 export function planModeEntryMessage(sessionModeFilePath: SessionModeFilePath): string {
   const fileLine =
     sessionModeFilePath === null || sessionModeFilePath.length === 0
-      ? 'No plan file path is available in this host yet; wait for one before calling ExitPlanMode, and do not use Write or Edit until then.'
+      ? 'No plan file path is assigned yet. Invent your own filename under `.ody-code/plans/` (format: `YYYY-MM-DD-<topic>.md`). The host will normalize and deduplicate it on first write.'
       : `Plan file: ${sessionModeFilePath}\nWrite the plan to EXACTLY this path (a split plan's parts go in the matching \`<stem>/\` subdirectory). Do NOT invent your own path, directory, or filename, and do NOT follow another tool's or skill's convention (e.g. \`.gpowers/…\`).`;
 
   return [

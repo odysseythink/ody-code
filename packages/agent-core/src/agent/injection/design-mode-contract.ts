@@ -245,7 +245,7 @@ export function designModeEntryMessage(
 ): string {
   const fileLine =
     designFilePath === null || designFilePath.length === 0
-      ? 'No design file path is available in this host yet; wait for one before calling ExitDesignMode.'
+      ? 'No design file path is assigned yet. Invent your own filename under `.ody-code/designs/` (format: `YYYY-MM-DD-<topic>.md`). The host will normalize and deduplicate it on first write.'
       : `Design file: ${designFilePath}\nWrite the design to EXACTLY this path (its split parts go in the matching \`<stem>/\` subdirectory). Do NOT invent your own path, directory, or filename, and do NOT follow another tool's or skill's convention (e.g. \`.gpowers/designs/…\`).`;
 
   return [

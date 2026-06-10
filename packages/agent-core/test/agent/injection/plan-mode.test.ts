@@ -78,6 +78,27 @@ describe('PlanModeInjector content', () => {
     expect(text).toContain('Plan file: /tmp/plan.md');
   });
 
+  it('tells the model to invent its own filename when path is null', () => {
+    const entry = planModeEntryMessage(null);
+    expect(entry).toContain('Invent your own filename');
+    expect(entry).not.toContain('wait for one before calling ExitPlanMode');
+  });
+
+  it('shows assigned path and "do not invent" when path is non-null', () => {
+    const entry = planModeEntryMessage('/workspace/.ody-code/plans/2026-06-10-my-topic.md');
+    expect(entry).toContain('Plan file:');
+    expect(entry).toContain('Do NOT invent your own path');
+  });
+
+  it('does not append a null-path footer in the full reminder', async () => {
+    const agent = planAgent({ isActive: true, sessionModeFilePath: null });
+    const injector = new PlanModeInjector(agent);
+    await injector.inject();
+    const full = lastReminder(agent);
+    expect(full).not.toContain('No plan file path is available');
+    expect(full).not.toContain('do not use Write or Edit until then');
+  });
+
   it('keeps the entry message and the full reminder in sync (shared contract)', async () => {
     const agent = planAgent({ isActive: true, sessionModeFilePath: '/tmp/plan.md' });
     const injector = new PlanModeInjector(agent);
@@ -178,7 +199,7 @@ describe('PlanModeInjector content', () => {
 
     const text = lastReminder(agent);
     expect(text).toContain('Plan mode is active');
-    expect(text).toContain('Wait for the host to provide a plan file path');
+    expect(text).not.toContain('Wait for the host to provide a plan file path');
     expect(text).not.toContain('Plan file:');
   });
 
