@@ -240,8 +240,8 @@ describe('CronManager', () => {
       expect(manager.isStale(task)).toBe(false);
     });
 
-    it('KIMI_CRON_NO_STALE=1 disables stale judgment for recurring', () => {
-      vi.stubEnv('KIMI_CRON_NO_STALE', '1');
+    it('ODY_CRON_NO_STALE=1 disables stale judgment for recurring', () => {
+      vi.stubEnv('ODY_CRON_NO_STALE', '1');
       const { agent } = createAgentStub();
       const harness = createClocks();
       const manager = new CronManager(agent, {

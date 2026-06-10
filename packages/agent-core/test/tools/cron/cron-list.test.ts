@@ -326,7 +326,7 @@ describe('CronListTool', () => {
     // slot — otherwise the model is told the fire is one period away
     // when the scheduler will actually deliver inside the jitter cap.
     vi.unstubAllEnvs();
-    vi.stubEnv('KIMI_CRON_NO_STALE', '1');
+    vi.stubEnv('ODY_CRON_NO_STALE', '1');
     const stub = createAgentStub();
     const harness = createClocks();
     const manager = new CronManager(stub.agent, {

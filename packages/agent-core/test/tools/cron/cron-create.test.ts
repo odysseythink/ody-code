@@ -226,8 +226,8 @@ describe('CronCreateTool', () => {
     expect(stub.telemetryCalls).toHaveLength(0);
   });
 
-  it('returns an error when KIMI_DISABLE_CRON=1', async () => {
-    vi.stubEnv('KIMI_DISABLE_CRON', '1');
+  it('returns an error when ODY_DISABLE_CRON=1', async () => {
+    vi.stubEnv('ODY_DISABLE_CRON', '1');
     const { manager, tool, stub } = makeHarness();
     const msg = assertError(
       await runTool(tool, {
@@ -237,7 +237,7 @@ describe('CronCreateTool', () => {
       }),
     );
     expect(msg).toMatchInlineSnapshot(
-      `"Cron scheduling is disabled (KIMI_DISABLE_CRON=1)."`,
+      `"Cron scheduling is disabled (ODY_DISABLE_CRON=1)."`,
     );
 
     expect(manager.store.list()).toHaveLength(0);

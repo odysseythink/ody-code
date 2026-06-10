@@ -50,7 +50,7 @@ the last delivery. If the schedule is still wanted, call `CronCreate`
 again with the same `cron` and `prompt` — that resets `createdAt` and
 starts a fresh 7-day window. One-shot tasks are never marked stale.
 
-Bench / acceptance runs can set `KIMI_CRON_NO_STALE=1` to disable the
+Bench / acceptance runs can set `ODY_CRON_NO_STALE=1` to disable the
 judgment entirely.
 
 ## Jitter behavior
