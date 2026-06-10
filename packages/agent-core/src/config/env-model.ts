@@ -1,4 +1,5 @@
 import { ErrorCodes, KimiError } from '#/errors';
+import { log } from '#/logging/logger';
 import { parseBooleanEnv } from './resolve';
 import {
   validateConfig,
@@ -197,19 +198,26 @@ export function stripEnvModelConfig(config: KimiConfig): KimiConfig {
     delete models[ENV_MODEL_ALIAS_KEY];
   }
 
-  return {
+  log.debug('diag:model-bug > stripEnvModelConfig', {
+    before: { defaultModel: config.defaultModel, modeModels: config.modeModels },
+    hasEnvModel: true,
+    defaultIsEnv,
+  });
+
+  const result: KimiConfig = {
     ...config,
     providers,
     ...(models !== undefined ? { models } : {}),
-    // Restore env-injected top-level fields from raw instead of persisting the
-    // shell overrides: the env default_model (when it points at the env alias),
-    // and the env thinking / default_thinking. Reaching here means env-model
-    // mode is active (the synthetic provider/model exist), so these may be env
-    // values; an unset raw field restores to undefined (i.e. drops it).
     ...(defaultIsEnv ? { defaultModel: rawDefaultModel(config) } : {}),
     thinking: rawThinking(config),
     defaultThinking: rawDefaultThinking(config),
   };
+
+  log.debug('diag:model-bug > stripEnvModelConfig after', {
+    after: { defaultModel: result.defaultModel, modeModels: result.modeModels },
+  });
+
+  return result;
 }
 
 function rawDefaultModel(config: KimiConfig): string | undefined {
