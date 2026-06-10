@@ -7,6 +7,7 @@ import {
   extractTopicFromMessage,
   formatDatePrefix,
   slugifyTitle,
+  stripDatePrefix,
   stripLocators,
   buildTitlePrompt,
 } from './topic-generator';
@@ -313,6 +314,7 @@ export class SessionMode {
       }
     }
 
+    slug = stripDatePrefix(slug);
     const datePrefix = formatDatePrefix(new Date());
     const stem = `${datePrefix}-${slug && slug.length > 0 ? slug : 'untitled'}`;
     const finalStem = await this.findUniqueStemInDir(dir, stem);
@@ -354,6 +356,9 @@ export class SessionMode {
     const base = basename(requestedPath);
     let slug = base.endsWith('.md') ? base.slice(0, -'.md'.length) : base;
     slug = slugifyTitle(slug);
+    // The model may already include a `YYYY-MM-DD-` prefix in its requested
+    // basename; strip it so the host's own date prefix isn't doubled.
+    slug = stripDatePrefix(slug);
 
     if (slug.length < 2) {
       // The model invented a path whose basename yields no usable slug.

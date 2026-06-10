@@ -161,6 +161,18 @@ export function extractFirstHeading(content: string): string | null {
   return cleaned.length > 0 ? cleaned : null;
 }
 
+/**
+ * Strip a leading `YYYY-MM-DD-` date prefix from a slug (repeated prefixes are
+ * all removed) so the host can prepend a single authoritative date prefix
+ * without producing doubled prefixes.
+ */
+export function stripDatePrefix(slug: string): string {
+  // The trailing `(?:-|$)` (not a bare `-`) is deliberate: it also matches a
+  // bare date, so a slug that is *only* a date ("2026-06-10") strips to "" and
+  // falls through to the content/untitled fallback instead of being re-dated.
+  return slug.replace(/^(?:\d{4}-\d{2}-\d{2}(?:-|$))+/, '');
+}
+
 export function slugifyTitle(title: string): string {
   let s = title
     .toLowerCase()

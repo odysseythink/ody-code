@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { join } from 'pathe';
 import { SessionMode } from '../../src/agent/session-mode';
+import { stripDatePrefix } from '../../src/agent/session-mode/topic-generator';
 import type { Agent } from '../../src/agent';
 
 const CWD = '/workspace/project';
@@ -120,6 +121,44 @@ describe('SessionMode', () => {
       expect(path).not.toMatch(/my-topic-1/);
     });
 
+    it('does not double the date prefix when the request already has one', async () => {
+      const agent = makeAgent();
+      const sm = new SessionMode(agent);
+      await sm.enter('id-1', undefined, false, 'design');
+      const path = await sm.resolveFilePathFromModelRequest(
+        '.ody-code/designs/2026-06-10-resume-session-model-from-config.md',
+        '# Content',
+      );
+      // Exactly one date prefix, then the slug — no doubled date.
+      expect(path).toMatch(/\/\d{4}-\d{2}-\d{2}-resume-session-model-from-config\.md$/);
+      expect(path).not.toMatch(/\d{4}-\d{2}-\d{2}-\d{4}-\d{2}-\d{2}-/);
+    });
+
+    it('collapses multiple existing date prefixes into a single one', async () => {
+      const agent = makeAgent();
+      const sm = new SessionMode(agent);
+      await sm.enter('id-1', undefined, false, 'design');
+      const path = await sm.resolveFilePathFromModelRequest(
+        '.ody-code/designs/2026-06-10-2026-06-10-foo.md',
+        '# Content',
+      );
+      expect(path).toMatch(/\/\d{4}-\d{2}-\d{2}-foo\.md$/);
+      expect(path).not.toMatch(/\d{4}-\d{2}-\d{2}-\d{4}-\d{2}-\d{2}-/);
+    });
+
+    it('falls back to content heading when the basename is only a date', async () => {
+      const agent = makeAgent();
+      const sm = new SessionMode(agent);
+      await sm.enter('id-1', undefined, false, 'design');
+      const path = await sm.resolveFilePathFromModelRequest(
+        '.ody-code/designs/2026-06-10.md',
+        '# Actual Heading\n\nContent',
+      );
+      // Stripping the date leaves an empty slug → content heading fallback.
+      expect(path).toMatch(/actual-heading\.md$/);
+      expect(path).not.toMatch(/\d{4}-\d{2}-\d{2}-\d{4}-\d{2}-\d{2}-/);
+    });
+
     it('logs session_mode.enter record with path after resolution', async () => {
       const agent = makeAgent();
       const sm = new SessionMode(agent);
@@ -166,6 +205,29 @@ describe('SessionMode', () => {
       const sm = new SessionMode(agent);
       sm.restoreEnter({ id: 'id', kind: 'design', path: '' });
       expect(sm.sessionModeFilePath).toBeNull();
+    });
+  });
+
+  describe('stripDatePrefix', () => {
+    it('removes a single leading date prefix', () => {
+      expect(stripDatePrefix('2026-06-10-foo')).toBe('foo');
+    });
+
+    it('removes repeated leading date prefixes', () => {
+      expect(stripDatePrefix('2026-06-10-2026-06-10-foo')).toBe('foo');
+    });
+
+    it('leaves a slug without a date prefix untouched', () => {
+      expect(stripDatePrefix('foo')).toBe('foo');
+    });
+
+    it('strips a bare date to an empty string', () => {
+      expect(stripDatePrefix('2026-06-10')).toBe('');
+      expect(stripDatePrefix('2026-06-10-2026-06-10')).toBe('');
+    });
+
+    it('only strips prefixes, not dates embedded later', () => {
+      expect(stripDatePrefix('foo-2026-06-10')).toBe('foo-2026-06-10');
     });
   });
 });
