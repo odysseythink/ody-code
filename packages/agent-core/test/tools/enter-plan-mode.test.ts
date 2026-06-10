@@ -140,7 +140,7 @@ describe('EnterPlanModeTool', () => {
       signal,
     });
 
-    expect(result.output).toContain('No plan file path is available in this host yet');
+    expect(result.output).toContain('Invent your own filename');
     expect(result.output).not.toContain('`plan` parameter');
     expect(result.output).not.toContain('Plan file:');
   });

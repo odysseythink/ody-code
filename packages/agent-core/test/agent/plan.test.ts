@@ -75,10 +75,12 @@ describe('manual plan entry', () => {
       path: '/workspace/.ody-code/plans/stable-plan.md',
     });
 
-    expect(resumed.agent.sessionMode.sessionModeFilePath).toBeNull();
+    expect(resumed.agent.sessionMode.sessionModeFilePath).toBe(
+      '/workspace/.ody-code/plans/stable-plan.md',
+    );
   });
 
-  it('plan mode inherits design file stem when entered after design mode exits', async () => {
+  it('plan mode inherits design file stem on first write after design mode exits', async () => {
     const stat = vi.fn().mockRejectedValue(Object.assign(new Error('ENOENT'), { code: 'ENOENT' }));
     const ctx = testAgent({ kaos: createFakeKaos({ mkdir: vi.fn().mockResolvedValue(undefined), stat }) });
 
@@ -89,9 +91,12 @@ describe('manual plan entry', () => {
     expect(ctx.agent.sessionMode.isActive).toBe(false);
 
     await ctx.agent.sessionMode.enter('plan-id', false, false, 'plan');
-    expect(ctx.agent.sessionMode.sessionModeFilePath).toBe(
-      '/workspace/.ody-code/plans/2026-06-09-continue-sub-project-2.md',
-    );
+    // Path is no longer eagerly resolved at entry; it stays null until first write.
+    expect(ctx.agent.sessionMode.sessionModeFilePath).toBeNull();
+
+    // First write (or resolveFilePathFromContent) resolves the design→plan handoff.
+    const path = await ctx.agent.sessionMode.resolveFilePathFromContent('# Plan\n\ncontent');
+    expect(path).toBe('/workspace/.ody-code/plans/2026-06-09-continue-sub-project-2.md');
   });
 
   it('enters plan mode through the EnterPlanMode tool and reminds the next step', async () => {
@@ -817,9 +822,10 @@ describe('lazy file path resolution', () => {
     expect(path).toBe(`/workspace/.ody-code/designs/${today}-合并两份设计.md`);
   });
 
-  it('derives the eagerly-reserved path from the latest user message topic', async () => {
+  it('path stays null after enter even when a user message topic is present', async () => {
     const ctx = testAgent({ kaos: createPlanKaos() });
-    // Seed a real user message; the eager resolver extracts a kebab topic from it.
+    // Seed a real user message; before eager resolution was removed this would
+    // have set the path immediately. Now it stays null until first write.
     (ctx.agent.context.history as unknown as unknown[]).push({
       role: 'user',
       origin: { kind: 'user' },
@@ -828,10 +834,7 @@ describe('lazy file path resolution', () => {
 
     await ctx.agent.sessionMode.enter('topic-plan', false, false, 'plan');
 
-    const today = formatDatePrefix(new Date());
-    expect(ctx.agent.sessionMode.sessionModeFilePath).toBe(
-      `/workspace/.ody-code/plans/${today}-add-a-billing-module.md`,
-    );
+    expect(ctx.agent.sessionMode.sessionModeFilePath).toBeNull();
     // Synchronous extraction — no LLM round-trip on entry.
     expect(ctx.llmCalls).toHaveLength(0);
   });
@@ -852,22 +855,18 @@ describe('lazy file path resolution', () => {
     expect(ctx.agent.sessionMode.sessionModeFilePath).toBeNull();
   });
 
-  it('clear() is a no-op when the eagerly-reserved file has not been written yet', async () => {
+  it('clear() is a no-op when the reserved file has not been written yet', async () => {
     const writeText = vi.fn(async (_p: string, c: string) => c.length);
     const stat = vi.fn(async () => {
       throw Object.assign(new Error('ENOENT'), { code: 'ENOENT' });
     });
     const ctx = testAgent({ kaos: createPlanKaos({ writeText, stat }) });
-    // Seed a prompt so entry reserves a concrete path eagerly.
-    (ctx.agent.context.history as unknown as unknown[]).push({
-      role: 'user',
-      origin: { kind: 'user' },
-      content: [{ type: 'text', text: 'add a billing module' }],
-    });
     await ctx.agent.sessionMode.enter('unwritten-plan', false, false, 'plan');
 
-    // Path is reserved, but nothing has been written to disk.
-    expect(ctx.agent.sessionMode.sessionModeFilePath).not.toBeNull();
+    // Manually set a path (simulating a resolved but unwritten plan).
+    (ctx.agent.sessionMode as unknown as { _sessionModeFilePath: string | null })._sessionModeFilePath = '/workspace/.ody-code/plans/unwritten.md';
+
+    // Nothing has been written to disk.
     await ctx.agent.sessionMode.clear();
 
     // No empty file is materialised for a plan the model never started.
@@ -884,7 +883,20 @@ describe('lazy file path resolution', () => {
     expect(id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
   });
 
-  it('restoreEnter does not restore file path', async () => {
+  it('restoreEnter restores file path when path is present', async () => {
+    const ctx = testAgent({ kaos: createFakeKaos() });
+    ctx.dispatch({
+      type: 'session_mode.enter',
+      id: 'restored-id',
+      kind: 'plan',
+      path: '/workspace/.ody-code/plans/restored.md',
+    });
+
+    expect(ctx.agent.sessionMode.sessionModeFilePath).toBe('/workspace/.ody-code/plans/restored.md');
+    expect(ctx.agent.sessionMode.isActive).toBe(true);
+  });
+
+  it('restoreEnter leaves file path null for legacy records without path', async () => {
     const ctx = testAgent({ kaos: createFakeKaos() });
     ctx.dispatch({
       type: 'session_mode.enter',
@@ -906,6 +918,36 @@ describe('lazy file path resolution', () => {
     expect('fileStem' in ctx.agent.sessionMode).toBe(false);
   });
 
+  it('resolveFilePathFromModelRequest extracts basename slug on first write', async () => {
+    const ctx = testAgent({ kaos: createPlanKaos() });
+    await ctx.agent.sessionMode.enter('test-id', false, false, 'plan');
+
+    const path = await ctx.agent.sessionMode.resolveFilePathFromModelRequest(
+      '.ody-code/plans/my-feature-plan.md',
+      '# Plan: My Feature',
+    );
+
+    const today = formatDatePrefix(new Date());
+    expect(path).toBe(`/workspace/.ody-code/plans/${today}-my-feature-plan.md`);
+    expect(ctx.agent.sessionMode.sessionModeFilePath).toBe(path);
+  });
+
+  it('resolveFilePathFromModelRequest is idempotent (reuses resolved path)', async () => {
+    const ctx = testAgent({ kaos: createPlanKaos() });
+    await ctx.agent.sessionMode.enter('test-id', false, false, 'plan');
+
+    const first = await ctx.agent.sessionMode.resolveFilePathFromModelRequest(
+      '.ody-code/plans/one.md',
+      '# One',
+    );
+    const second = await ctx.agent.sessionMode.resolveFilePathFromModelRequest(
+      '.ody-code/plans/two.md',
+      '# Two',
+    );
+
+    expect(second).toBe(first);
+  });
+
   it('resolveFilePathFromContent extracts heading and formats dated slug', async () => {
     const files = new Map<string, string>();
     const mkdir = vi.fn().mockResolvedValue(undefined);
@@ -918,8 +960,6 @@ describe('lazy file path resolution', () => {
       kaos: createFakeKaos({ mkdir, writeText, stat }),
     });
     await ctx.agent.sessionMode.enter('test-id', false, false, 'plan');
-    // Clear the eagerly-reserved path so the lazy content-based resolver runs.
-    (ctx.agent.sessionMode as unknown as { _sessionModeFilePath: string | null })._sessionModeFilePath = null;
 
     const path = await ctx.agent.sessionMode.resolveFilePathFromContent('# My Design\n\ncontent');
 
@@ -942,8 +982,6 @@ describe('lazy file path resolution', () => {
     ctx.configure();
     ctx.mockNextResponse({ type: 'text', text: 'API Design' });
     await ctx.agent.sessionMode.enter('test-id', false, false, 'plan');
-    // Clear the eagerly-reserved path so the lazy content-based resolver (LLM) runs.
-    (ctx.agent.sessionMode as unknown as { _sessionModeFilePath: string | null })._sessionModeFilePath = null;
 
     const path = await ctx.agent.sessionMode.resolveFilePathFromContent('Some prose without a heading.');
 
@@ -966,8 +1004,6 @@ describe('lazy file path resolution', () => {
       generate,
     });
     await ctx.agent.sessionMode.enter('test-id', false, false, 'plan');
-    // Clear the eagerly-reserved path so the lazy resolver runs and hits the LLM fallback.
-    (ctx.agent.sessionMode as unknown as { _sessionModeFilePath: string | null })._sessionModeFilePath = null;
 
     const path = await ctx.agent.sessionMode.resolveFilePathFromContent('No heading.');
 
@@ -989,8 +1025,6 @@ describe('lazy file path resolution', () => {
       kaos: createFakeKaos({ mkdir, writeText, stat }),
     });
     await ctx.agent.sessionMode.enter('test-id', false, false, 'plan');
-    // Clear the eagerly-reserved path so the lazy content-based resolver runs.
-    (ctx.agent.sessionMode as unknown as { _sessionModeFilePath: string | null })._sessionModeFilePath = null;
 
     const path = await ctx.agent.sessionMode.resolveFilePathFromContent('# Foo\n\ncontent');
 
@@ -1106,9 +1140,11 @@ describe('project-scoped directory resolution', () => {
     const ctx = testAgent({ kaos: createFakeKaos({ mkdir }) });
     seedPrompt(ctx, 'add a billing module');
     await ctx.agent.sessionMode.enter('test-plan', false, false, 'plan');
-    expect(ctx.agent.sessionMode.sessionModeFilePath).toBe(
-      `/workspace/.ody-code/plans/${formatDatePrefix(new Date())}-add-a-billing-module.md`,
-    );
+    // Path is no longer eagerly resolved at entry; resolved lazily on first write.
+    expect(ctx.agent.sessionMode.sessionModeFilePath).toBeNull();
+
+    const path = await ctx.agent.sessionMode.resolveFilePathFromContent('# Plan\n\ncontent');
+    expect(path).toBe(`/workspace/.ody-code/plans/${formatDatePrefix(new Date())}-add-a-billing-module.md`);
     expect(mkdir).toHaveBeenCalledWith('/workspace/.ody-code/plans', { parents: true, existOk: true });
   });
 
@@ -1121,9 +1157,11 @@ describe('project-scoped directory resolution', () => {
     const ctx = testAgent({ kaos: createFakeKaos({ mkdir }), homedir: '/home/session' });
     seedPrompt(ctx, 'add a billing module');
     await ctx.agent.sessionMode.enter('test-plan', false, false, 'plan');
-    expect(ctx.agent.sessionMode.sessionModeFilePath).toBe(
-      `/home/session/plans/${formatDatePrefix(new Date())}-add-a-billing-module.md`,
-    );
+    // Path is no longer eagerly resolved at entry; resolved lazily on first write.
+    expect(ctx.agent.sessionMode.sessionModeFilePath).toBeNull();
+
+    const path = await ctx.agent.sessionMode.resolveFilePathFromContent('# Plan\n\ncontent');
+    expect(path).toBe(`/home/session/plans/${formatDatePrefix(new Date())}-add-a-billing-module.md`);
     expect(mkdir).toHaveBeenCalledWith('/workspace/.ody-code/plans', { parents: true, existOk: true });
     expect(mkdir).toHaveBeenCalledWith('/home/session/plans', { parents: true, existOk: true });
   });
@@ -1196,22 +1234,26 @@ describe('enter with project-scoped paths', () => {
     const ctx = testAgent({ kaos: createFakeKaos({ mkdir }) });
     seedPrompt(ctx, 'add a billing module');
     await ctx.agent.sessionMode.enter('test-design', false, false, 'design');
-    expect(ctx.agent.sessionMode.sessionModeFilePath).toBe(
-      `/workspace/.ody-code/designs/${formatDatePrefix(new Date())}-add-a-billing-module.md`,
-    );
+    // Path is no longer eagerly resolved at entry; resolved lazily on first write.
+    expect(ctx.agent.sessionMode.sessionModeFilePath).toBeNull();
+
+    const path = await ctx.agent.sessionMode.resolveFilePathFromContent('# Design\n\ncontent');
+    expect(path).toBe(`/workspace/.ody-code/designs/${formatDatePrefix(new Date())}-add-a-billing-module.md`);
     expect(mkdir).toHaveBeenCalledWith('/workspace/.ody-code/designs', { parents: true, existOk: true });
   });
 });
 
 describe('resume and finalize with project-scoped paths', () => {
-  it('does not restore exact persisted path on resume', async () => {
+  it('restores exact persisted path on resume', async () => {
     const ctx = testAgent({ kaos: createFakeKaos() });
     ctx.dispatch({
       type: 'session_mode.enter',
       id: 'restored-plan',
       path: '/workspace/.ody-code/plans/restored-plan.md',
     });
-    expect(ctx.agent.sessionMode.sessionModeFilePath).toBeNull();
+    expect(ctx.agent.sessionMode.sessionModeFilePath).toBe(
+      '/workspace/.ody-code/plans/restored-plan.md',
+    );
   });
 
   it('does not fall back to legacy path when no persisted path on resume', async () => {
