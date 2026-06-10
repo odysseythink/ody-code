@@ -284,6 +284,7 @@ export class Agent {
       skills: this.skills?.registry,
       cwdListing: context?.cwdListing,
       agentsMd: context?.agentsMd,
+      sessionMode: this.sessionMode.isActive ? this.sessionMode.kind : 'normal',
     });
     this.config.update({ profileName: profile.name, systemPrompt });
     this.tools.setActiveTools(profile.tools);

@@ -41,23 +41,25 @@ export class DesignModeInjector extends DynamicInjector {
       this.injectedAt = null;
       return exitReminder();
     }
+    const skillsReminder = this.agent.skills?.registry.getUnavailableSkillsReminder('design') ?? '';
     const content = await this.currentDesignContent();
     if (!this.wasActive) {
       this.injectedAt = null;
       this.wasActive = true;
       if (content.trim().length > 0) {
         const directive = splitDirectiveFor(content, sessionModeFilePath);
-        return designModeReentryReminder(sessionModeFilePath, mockupAvailable, directive);
+        return appendSkillsReminder(designModeReentryReminder(sessionModeFilePath, mockupAvailable, directive), skillsReminder);
       }
     }
     const variant = this.getVariant();
     if (variant === null) return undefined;
-    if (variant === 'reentry') return designModeReentryReminder(sessionModeFilePath, mockupAvailable);
+    if (variant === 'reentry') return appendSkillsReminder(designModeReentryReminder(sessionModeFilePath, mockupAvailable), skillsReminder);
 
     const directive = splitDirectiveFor(content, sessionModeFilePath);
-    return variant === 'full'
+    const body = variant === 'full'
       ? designModeFullReminder(sessionModeFilePath, mockupAvailable, directive)
       : designModeSparseReminder(sessionModeFilePath, mockupAvailable, directive);
+    return appendSkillsReminder(body, skillsReminder);
   }
 
   protected getVariant(): DesignModeVariant | null {
@@ -112,4 +114,8 @@ function indexStemFor(sessionModeFilePath: SessionModeFilePath): string {
 
 function exitReminder(): string {
   return `Design mode is no longer active. The design has been approved. STOP — do NOT begin implementing, writing, or editing code now. Your ONLY next action is to recommend the user run /plan to turn the approved design into a concrete implementation plan, then wait for them. Implementation happens after a plan is approved, not here.`;
+}
+
+function appendSkillsReminder(body: string, reminder: string): string {
+  return reminder.length > 0 ? `${body}\n\n${reminder}` : body;
 }

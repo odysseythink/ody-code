@@ -15,6 +15,7 @@ import {
   type SDKAPI,
   type TelemetryClient,
 } from '../../src';
+import { EXECUTING_PLANS_SKILL } from '../../src/skill/builtin';
 import {
   recordingContextTelemetry,
   type TelemetryContextRecord,
@@ -61,6 +62,40 @@ describe('HarnessAPI session skills', () => {
     });
     expect(listed?.path.endsWith('/.ody-code/skills/phase-one-review/SKILL.md')).toBe(true);
     expect(JSON.stringify(skills)).not.toContain('Review the requested file.');
+  });
+
+  describe('listSkills with sessionMode', () => {
+    it('returns all skills when no sessionMode is passed (backward compat)', async () => {
+      const { rpc } = await createTestRpc();
+      const created = await rpc.createSession({ id: 'ses_mode_all', workDir });
+      const skills = await rpc.listSkills({ sessionId: created.id });
+      const names = skills.map((s) => s.name);
+      expect(names).toContain('executing-plans');
+    });
+
+    it('filters skills hidden in plan mode when sessionMode=plan', async () => {
+      const { rpc } = await createTestRpc();
+      const created = await rpc.createSession({ id: 'ses_mode_plan', workDir });
+      const skills = await rpc.listSkills({ sessionId: created.id, sessionMode: 'plan' });
+      const names = skills.map((s) => s.name);
+      expect(names).not.toContain('executing-plans');
+    });
+
+    it('filters skills hidden in design mode when sessionMode=design', async () => {
+      const { rpc } = await createTestRpc();
+      const created = await rpc.createSession({ id: 'ses_mode_design', workDir });
+      const skills = await rpc.listSkills({ sessionId: created.id, sessionMode: 'design' });
+      const names = skills.map((s) => s.name);
+      expect(names).not.toContain('executing-plans');
+    });
+
+    it('does not filter when sessionMode=normal', async () => {
+      const { rpc } = await createTestRpc();
+      const created = await rpc.createSession({ id: 'ses_mode_normal', workDir });
+      const skills = await rpc.listSkills({ sessionId: created.id, sessionMode: 'normal' });
+      const names = skills.map((s) => s.name);
+      expect(names).toContain('executing-plans');
+    });
   });
 
   it('uses the first body line when a flat skill description is missing', async () => {

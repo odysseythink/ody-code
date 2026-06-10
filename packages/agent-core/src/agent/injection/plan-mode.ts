@@ -44,22 +44,24 @@ export class PlanModeInjector extends DynamicInjector {
       this.injectedAt = null;
       return exitReminder();
     }
+    const skillsReminder = this.agent.skills?.registry.getUnavailableSkillsReminder('plan') ?? '';
     const content = await this.currentPlanContent();
     if (!this.wasActive) {
       this.injectedAt = null;
       this.wasActive = true;
       if (content.trim().length > 0) {
-        return planModeReentryReminder(sessionModeFilePath);
+        return appendSkillsReminder(planModeReentryReminder(sessionModeFilePath), skillsReminder);
       }
     }
     const variant = this.getVariant();
     if (variant === null) return undefined;
-    if (variant === 'reentry') return planModeReentryReminder(sessionModeFilePath);
+    if (variant === 'reentry') return appendSkillsReminder(planModeReentryReminder(sessionModeFilePath), skillsReminder);
 
     const directive = splitDirectiveFor(content, sessionModeFilePath);
-    return variant === 'full'
+    const body = variant === 'full'
       ? planModeFullReminder(sessionModeFilePath, directive)
       : planModeSparseReminder(sessionModeFilePath, directive);
+    return appendSkillsReminder(body, skillsReminder);
   }
 
   protected getVariant(): PlanModeVariant | null {
@@ -116,4 +118,8 @@ function indexStemFor(sessionModeFilePath: SessionModeFilePath): string {
 
 function exitReminder(): string {
   return `Plan mode is no longer active. The read-only and plan-file-only restrictions from plan mode no longer apply. Continue with the approved plan using the normal tool and permission rules.`;
+}
+
+function appendSkillsReminder(body: string, reminder: string): string {
+  return reminder.length > 0 ? `${body}\n\n${reminder}` : body;
 }

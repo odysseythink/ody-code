@@ -222,9 +222,9 @@ export class Session {
     return this.rpc.getStatus({ sessionId: this.id });
   }
 
-  async listSkills(): Promise<readonly SkillSummary[]> {
+  async listSkills(options?: { sessionMode?: 'normal' | 'plan' | 'design' }): Promise<readonly SkillSummary[]> {
     this.ensureOpen();
-    return this.rpc.listSkills({ sessionId: this.id });
+    return this.rpc.listSkills({ sessionId: this.id, sessionMode: options?.sessionMode });
   }
 
   /**

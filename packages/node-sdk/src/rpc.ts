@@ -422,9 +422,9 @@ export class SDKRpcClient {
     };
   }
 
-  async listSkills(input: SessionIdRpcInput): Promise<readonly SkillSummary[]> {
+  async listSkills(input: SessionIdRpcInput & { sessionMode?: 'normal' | 'plan' | 'design' }): Promise<readonly SkillSummary[]> {
     const rpc = await this.getRpc();
-    return rpc.listSkills({ sessionId: input.sessionId });
+    return rpc.listSkills({ sessionId: input.sessionId, sessionMode: input.sessionMode });
   }
 
   async listBackgroundTasks(

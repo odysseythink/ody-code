@@ -42,6 +42,7 @@ export interface SystemPromptContext {
   readonly skills?: SkillRegistry | string;
   readonly additionalDirsInfo?: string;
   readonly roleAdditional?: string;
+  readonly sessionMode?: 'normal' | 'plan' | 'design';
 }
 
 export type SystemPromptRenderer = (context: SystemPromptContext) => string;

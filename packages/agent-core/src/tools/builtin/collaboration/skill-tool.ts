@@ -128,6 +128,19 @@ export class SkillTool implements BuiltinTool<SkillToolInput> {
       );
     }
 
+    const sessionKind = this.agent.sessionMode?.isActive
+      ? this.agent.sessionMode.kind
+      : 'normal';
+    if (
+      sessionKind !== 'normal' &&
+      Array.isArray(skill.metadata.hiddenInModes) &&
+      skill.metadata.hiddenInModes.includes(sessionKind)
+    ) {
+      return errorResult(
+        `Skill "${skill.name}" is not available in ${sessionKind} mode.`,
+      );
+    }
+
     const origin = skillOrigin(skill, skillArgs, currentDepth);
     skills.recordActivation(origin);
     const skillContent = skills.registry.renderSkillPrompt(skill, skillArgs);

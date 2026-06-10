@@ -6,6 +6,7 @@ export interface SkillMetadata {
   readonly type?: string | undefined;
   readonly whenToUse?: string | undefined;
   readonly disableModelInvocation?: boolean | undefined;
+  readonly hiddenInModes?: readonly string[] | undefined;
   readonly safe?: boolean | undefined;
   readonly arguments?: readonly unknown[] | string | undefined;
   readonly [key: string]: unknown;
@@ -53,7 +54,8 @@ export interface SkippedSkill {
 export interface SkillCatalog {
   getSkill(name: string): SkillDefinition | undefined;
   listSkills(): readonly SkillDefinition[];
-  listInvocableSkills(): readonly SkillDefinition[];
+  listInvocableSkills(sessionMode?: 'normal' | 'plan' | 'design'): readonly SkillDefinition[];
+  getModelSkillListing(sessionMode?: 'normal' | 'plan' | 'design'): string;
 }
 
 export function normalizeSkillName(name: string): string {

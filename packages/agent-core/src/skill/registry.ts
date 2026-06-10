@@ -109,11 +109,22 @@ export class SkillRegistry {
     return [...this.byName.values()].toSorted((a, b) => a.name.localeCompare(b.name));
   }
 
-  listInvocableSkills(): readonly SkillDefinition[] {
-    return this.listSkills().filter(
-      (skill) =>
-        skill.metadata.disableModelInvocation !== true && isInlineSkillType(skill.metadata.type),
-    );
+  listInvocableSkills(
+    sessionMode?: 'normal' | 'plan' | 'design',
+  ): readonly SkillDefinition[] {
+    return this.listSkills().filter((skill) => {
+      if (skill.metadata.disableModelInvocation === true) return false;
+      if (!isInlineSkillType(skill.metadata.type)) return false;
+      if (
+        sessionMode !== undefined &&
+        sessionMode !== 'normal' &&
+        Array.isArray(skill.metadata.hiddenInModes) &&
+        skill.metadata.hiddenInModes.includes(sessionMode)
+      ) {
+        return false;
+      }
+      return true;
+    });
   }
 
   getSkillRoots(): readonly string[] {
@@ -129,13 +140,36 @@ export class SkillRegistry {
     return rendered.length === 0 ? 'No skills' : rendered;
   }
 
-  getModelSkillListing(): string {
+  getModelSkillListing(sessionMode?: 'normal' | 'plan' | 'design'): string {
     const lines = ['DISREGARD any earlier skill listings. Current available skills:'];
-    const listing = renderGroupedSkills(this.listInvocableSkills(), formatModelSkill);
+    const listing = renderGroupedSkills(this.listInvocableSkills(sessionMode), formatModelSkill);
     if (listing.length > 0) {
       lines.push(listing);
     }
     return lines.length === 1 ? '' : lines.join('\n');
+  }
+
+  /**
+   * Returns a reminder listing skills hidden in the given session mode,
+   * or an empty string when no skills are affected.
+   */
+  getUnavailableSkillsReminder(sessionMode: 'plan' | 'design'): string {
+    const hidden = this.listSkills().filter((skill) => {
+      if (!isInlineSkillType(skill.metadata.type)) return false;
+      if (skill.metadata.disableModelInvocation === true) return false;
+      return (
+        Array.isArray(skill.metadata.hiddenInModes) &&
+        skill.metadata.hiddenInModes.includes(sessionMode)
+      );
+    });
+
+    if (hidden.length === 0) return '';
+
+    const names = hidden
+      .map((s) => s.name)
+      .sort()
+      .join(', ');
+    return `The following skills are not available in ${sessionMode} mode and must not be invoked: ${names}.`;
   }
 }
 

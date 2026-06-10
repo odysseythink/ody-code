@@ -144,7 +144,7 @@ function buildTemplateVars(
   const skills =
     typeof context.skills === 'string'
       ? context.skills
-      : (context.skills?.getModelSkillListing() ?? '');
+      : (context.skills?.getModelSkillListing(context.sessionMode) ?? '');
   const now =
     context.now instanceof Date
       ? context.now.toISOString()
