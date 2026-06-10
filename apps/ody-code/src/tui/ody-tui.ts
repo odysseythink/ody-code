@@ -345,7 +345,8 @@ export class KimiTUI {
 
     let skills;
     try {
-      skills = await session.listSkills();
+      const mode = this.state.appState.sessionMode;
+      skills = await session.listSkills(mode && mode !== 'normal' ? { sessionMode: mode } : undefined);
     } catch {
       return;
     }
