@@ -33,6 +33,7 @@ function planAgent(stub: PlanModeStub): Agent {
         stub.content === undefined
           ? null
           : { id: 'p1', content: stub.content, path: stub.sessionModeFilePath ?? '', kind: 'plan' },
+      consumePendingHandoffForNormal: () => null,
     },
     context: {
       history,
@@ -213,6 +214,41 @@ describe('PlanModeInjector content', () => {
     await injector.inject();
 
     expect(lastReminder(agent)).toContain('Plan mode is no longer active');
+  });
+
+  it('injects the handoff reminder (with plan artifact) when a pending handoff for normal is set', async () => {
+    const stub: PlanModeStub = { isActive: true, sessionModeFilePath: '/tmp/plan.md' };
+    let pendingHandoff: { content: string; path: string } | null = {
+      content: '## Step 1\n\nDo this',
+      path: '/tmp/plan.md',
+    };
+    const base = planAgent(stub);
+    const agent = {
+      ...base,
+      sessionMode: {
+        ...base.sessionMode,
+        get isActive() { return stub.isActive; },
+        get kind() { return 'plan'; },
+        get sessionModeFilePath() { return stub.sessionModeFilePath ?? null; },
+        data: async () => stub.content === undefined ? null : { id: 'p1', content: stub.content, path: stub.sessionModeFilePath ?? '', kind: 'plan' },
+        consumePendingHandoffForNormal: () => {
+          const p = pendingHandoff;
+          pendingHandoff = null;
+          return p;
+        },
+      },
+    } as unknown as import('../../../src/agent').Agent;
+    const injector = new PlanModeInjector(agent);
+
+    await injector.inject();
+    stub.isActive = false;
+    await injector.inject();
+
+    const text = lastReminder(agent);
+    expect(text).toContain('Plan mode is no longer active');
+    expect(text).toContain('handed off');
+    expect(text).toContain('## Step 1');
+    expect(text).not.toContain('Continue with the approved plan using the normal tool');
   });
 
   it('does not inject anything when plan mode is inactive from the start', async () => {

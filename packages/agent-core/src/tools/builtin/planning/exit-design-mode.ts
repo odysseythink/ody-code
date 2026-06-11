@@ -126,22 +126,22 @@ export class ExitDesignModeTool implements BuiltinTool<ExitDesignModeInput> {
       has_options: args.options !== undefined && args.options.length >= 2,
     });
 
-    const failed = this.exitDesignMode();
+    const failed = await this.handoffToPlan();
     if (failed !== undefined) return failed;
 
     this.agent.telemetry.track('design_resolved', { outcome: 'auto_approved' });
 
     return {
       isError: false,
-      output: `Exited design mode. ${formatDesignForOutput(resolved.design ?? '', resolved.path)}`,
+      output: `Exited design mode. ${formatDesignHandoffOutput(resolved.design ?? '', resolved.path)}`,
     };
   }
 
-  private exitDesignMode(): ExecutableToolResult | undefined {
+  private async handoffToPlan(): Promise<ExecutableToolResult | undefined> {
     try {
-      this.agent.sessionMode.exit();
+      await this.agent.sessionMode.handoffTo('plan');
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to exit design mode.';
+      const message = error instanceof Error ? error.message : 'Failed to hand off to plan mode.';
       return {
         isError: true,
         output: `Failed to exit design mode: ${message}`,
@@ -197,7 +197,7 @@ function normalizeOptionLabel(label: string): string {
   return label.trim().toLowerCase();
 }
 
-function formatDesignForOutput(design: string, path: string | undefined): string {
+function formatDesignHandoffOutput(design: string, path: string | undefined): string {
   const savedTo = path !== undefined ? `Design saved to: ${path}\n\n` : '';
-  return `Design mode deactivated.\n${savedTo}## Approved Design:\n${design}\n\nSTOP — do NOT begin implementing now. Do not write or edit code. Your ONLY next action is to recommend the user run /plan to turn this approved design into a concrete implementation plan, then wait for them. Implementation happens after a plan is approved, not here.`;
+  return `Design mode deactivated. Now in plan mode.\n${savedTo}## Approved Design:\n${design}\n\nYou are now in plan mode. Create a concrete, step-by-step implementation plan based on the approved design above.`;
 }

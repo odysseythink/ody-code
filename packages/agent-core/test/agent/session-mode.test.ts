@@ -20,6 +20,7 @@ function makeAgent(overrides: {
     replayBuilder: { push: vi.fn() },
     records: { logRecord: vi.fn() },
     context: { history: undefined },
+    contexts: { normal: { history: [] }, plan: { history: [] }, design: { history: [] } },
     kaos: {
       mkdir: vi.fn().mockResolvedValue(undefined),
       stat: vi.fn(async (p: string) => {
@@ -30,6 +31,7 @@ function makeAgent(overrides: {
       writeText: vi.fn().mockResolvedValue(undefined),
     },
     log: { warn: vi.fn() },
+    setContextMode: vi.fn(),
   } as unknown as Agent;
 }
 
@@ -264,6 +266,124 @@ describe('SessionMode', () => {
 
     it('only strips prefixes, not dates embedded later', () => {
       expect(stripDatePrefix('foo-2026-06-10')).toBe('foo-2026-06-10');
+    });
+  });
+
+  describe('handoffTo', () => {
+    it('handoffTo("plan") exits design, enters plan, stores artifact in _pendingHandoffForPlan', async () => {
+      const agent = makeAgent();
+      vi.mocked(agent.kaos.readText).mockResolvedValue('# My Design\n\nSome content');
+      const sm = new SessionMode(agent);
+      await sm.enter('design-id', undefined, false, 'design');
+      // Resolve a file path so data() has something to return
+      await sm.resolveFilePathFromModelRequest('.ody-code/designs/my-feature.md', '# My Design\nSome content');
+
+      vi.mocked(agent.records.logRecord).mockClear();
+
+      await sm.handoffTo('plan');
+
+      // Should have exited design and entered plan
+      expect(sm.isActive).toBe(true);
+      expect(sm.kind).toBe('plan');
+
+      // Pending handoff for plan is set
+      const handoff = sm.consumePendingHandoffForPlan();
+      expect(handoff).not.toBeNull();
+      expect(handoff?.content).toBe('# My Design\n\nSome content');
+      expect(handoff?.path).toMatch(/my-feature\.md$/);
+
+      // Consumed — second call returns null
+      expect(sm.consumePendingHandoffForPlan()).toBeNull();
+    });
+
+    it('handoffTo("plan") stores null artifact when design file is empty', async () => {
+      const agent = makeAgent();
+      // readText returns empty content
+      vi.mocked(agent.kaos.readText).mockResolvedValue('');
+      const sm = new SessionMode(agent);
+      await sm.enter('design-id', undefined, false, 'design');
+      await sm.resolveFilePathFromModelRequest('.ody-code/designs/my-feature.md', '');
+
+      await sm.handoffTo('plan');
+
+      expect(sm.consumePendingHandoffForPlan()).toBeNull();
+    });
+
+    it('handoffTo("plan") stores null artifact when no file path is set', async () => {
+      const agent = makeAgent();
+      const sm = new SessionMode(agent);
+      await sm.enter('design-id', undefined, false, 'design');
+      // No resolveFilePathFromModelRequest called — _sessionModeFilePath is null
+
+      await sm.handoffTo('plan');
+
+      expect(sm.consumePendingHandoffForPlan()).toBeNull();
+    });
+
+    it('handoffTo("normal") exits plan, stores artifact in _pendingHandoffForNormal', async () => {
+      const agent = makeAgent();
+      vi.mocked(agent.kaos.readText).mockResolvedValue('## Step 1\n\nDo this');
+      const sm = new SessionMode(agent);
+      await sm.enter('plan-id', undefined, false, 'plan');
+      await sm.resolveFilePathFromModelRequest('.ody-code/plans/my-plan.md', '## Step 1\nDo this');
+
+      vi.mocked(agent.records.logRecord).mockClear();
+
+      await sm.handoffTo('normal');
+
+      // Should have exited plan — not active anymore
+      expect(sm.isActive).toBe(false);
+
+      const handoff = sm.consumePendingHandoffForNormal();
+      expect(handoff).not.toBeNull();
+      expect(handoff?.content).toBe('## Step 1\n\nDo this');
+      expect(handoff?.path).toMatch(/my-plan\.md$/);
+
+      expect(sm.consumePendingHandoffForNormal()).toBeNull();
+    });
+
+    it('handoffTo("normal") stores null artifact when plan file is empty', async () => {
+      const agent = makeAgent();
+      vi.mocked(agent.kaos.readText).mockResolvedValue('');
+      const sm = new SessionMode(agent);
+      await sm.enter('plan-id', undefined, false, 'plan');
+      await sm.resolveFilePathFromModelRequest('.ody-code/plans/my-plan.md', '');
+
+      await sm.handoffTo('normal');
+
+      expect(sm.consumePendingHandoffForNormal()).toBeNull();
+    });
+
+    it('handoffTo("plan") clears _pendingHandoffForPlan when enter throws', async () => {
+      const agent = makeAgent();
+      vi.mocked(agent.kaos.readText).mockResolvedValue('# Design');
+      const sm = new SessionMode(agent);
+      // enter('design') and resolveFilePathFromModelRequest each call mkdir once.
+      // The third mkdir call is from enter('plan') inside handoffTo — make it throw
+      // with a non-permission error so the homedir fallback is not attempted.
+      vi.mocked(agent.kaos.mkdir)
+        .mockResolvedValue(undefined)  // default: succeed
+      await sm.enter('design-id', undefined, false, 'design');
+      await sm.resolveFilePathFromModelRequest('.ody-code/designs/foo.md', '# Design');
+      vi.mocked(agent.kaos.mkdir).mockRejectedValue(new Error('disk full'));
+
+      await expect(sm.handoffTo('plan')).rejects.toThrow('disk full');
+
+      // Pending must be cleared — no ghost injection on next turn
+      expect(sm.consumePendingHandoffForPlan()).toBeNull();
+    });
+
+    it('cancel() does NOT store a pending handoff', async () => {
+      const agent = makeAgent();
+      vi.mocked(agent.kaos.readText).mockResolvedValue('## Plan content');
+      const sm = new SessionMode(agent);
+      await sm.enter('plan-id', undefined, false, 'plan');
+      await sm.resolveFilePathFromModelRequest('.ody-code/plans/my-plan.md', '## Plan content');
+
+      sm.cancel();
+
+      expect(sm.consumePendingHandoffForNormal()).toBeNull();
+      expect(sm.consumePendingHandoffForPlan()).toBeNull();
     });
   });
 });

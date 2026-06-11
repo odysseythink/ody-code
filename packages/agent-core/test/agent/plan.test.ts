@@ -201,9 +201,10 @@ describe('plan exit tool', () => {
     // ExitPlanMode hard-stops the turn: no second model step runs after approval,
     // so the planning context can be freed before the user starts execution.
     expect(ctx.llmCalls).toHaveLength(1);
-    expect(toolResultText(ctx.agent.context.history)).toContain('Plan mode deactivated');
-    expect(toolResultText(ctx.agent.context.history)).toContain('# Plan');
-    expect(toolResultText(ctx.agent.context.history)).toContain('STOP');
+    // ExitPlanMode tool exchange lives in the plan partition; after exit active = normal.
+    expect(toolResultText(ctx.agent.contexts.plan.history)).toContain('Plan mode deactivated');
+    expect(toolResultText(ctx.agent.contexts.plan.history)).toContain('# Plan');
+    expect(toolResultText(ctx.agent.contexts.plan.history)).toContain('STOP');
     await ctx.expectResumeMatches();
   });
 
@@ -239,9 +240,10 @@ describe('plan exit tool', () => {
     expect(ctx.agent.sessionMode.isActive).toBe(false);
     // Approval ends the turn — the model gets no follow-up step to auto-execute.
     expect(ctx.llmCalls).toHaveLength(1);
-    expect(toolResultText(ctx.agent.context.history)).toContain('Plan mode deactivated');
-    expect(toolResultText(ctx.agent.context.history)).toContain('# Plan');
-    expect(toolResultText(ctx.agent.context.history)).toContain('STOP');
+    // ExitPlanMode tool exchange lives in the plan partition; after exit active = normal.
+    expect(toolResultText(ctx.agent.contexts.plan.history)).toContain('Plan mode deactivated');
+    expect(toolResultText(ctx.agent.contexts.plan.history)).toContain('# Plan');
+    expect(toolResultText(ctx.agent.contexts.plan.history)).toContain('STOP');
     await ctx.expectResumeMatches();
   });
 
@@ -406,8 +408,9 @@ describe('plan exit tool options', () => {
     approval.respond({ decision: 'approved', selectedLabel: 'Approach A' });
     await ctx.untilTurnEnd();
     expect(ctx.llmCalls).toHaveLength(1);
-    expect(toolResultText(ctx.agent.context.history)).toContain('Selected approach: Approach A');
-    expect(toolResultText(ctx.agent.context.history)).toContain('STOP');
+    // ExitPlanMode tool exchange lives in the plan partition; after exit active = normal.
+    expect(toolResultText(ctx.agent.contexts.plan.history)).toContain('Selected approach: Approach A');
+    expect(toolResultText(ctx.agent.contexts.plan.history)).toContain('STOP');
   });
 });
 

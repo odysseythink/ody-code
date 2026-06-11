@@ -41,6 +41,7 @@ function designAgent(stub: DesignModeStub): Agent {
         stub.content === undefined
           ? null
           : { id: 'd1', content: stub.content, path: stub.sessionModeFilePath ?? '', kind: 'design' },
+      consumePendingHandoffForPlan: () => null,
     },
     context: {
       history,
@@ -267,6 +268,40 @@ describe('DesignModeInjector content', () => {
     await injector.inject();
 
     expect(lastReminder(agent)).toContain('Design mode is no longer active');
+  });
+
+  it('injects the handoff reminder (with design artifact) when a pending handoff for plan is set', async () => {
+    const stub: DesignModeStub = { isActive: true, sessionModeFilePath: '/tmp/design.md' };
+    let pendingHandoff: { content: string; path: string } | null = {
+      content: '# My Design\n\nSome content',
+      path: '/tmp/design.md',
+    };
+    const agent = {
+      ...designAgent(stub),
+      sessionMode: {
+        ...designAgent(stub).sessionMode,
+        get isActive() { return stub.isActive; },
+        get kind() { return 'design'; },
+        get sessionModeFilePath() { return stub.sessionModeFilePath ?? null; },
+        data: async () => stub.content === undefined ? null : { id: 'd1', content: stub.content, path: stub.sessionModeFilePath ?? '', kind: 'design' },
+        consumePendingHandoffForPlan: () => {
+          const p = pendingHandoff;
+          pendingHandoff = null;
+          return p;
+        },
+      },
+    } as unknown as import('../../../src/agent').Agent;
+    const injector = new DesignModeInjector(agent);
+
+    await injector.inject();
+    stub.isActive = false;
+    await injector.inject();
+
+    const text = lastReminder(agent);
+    expect(text).toContain('Design mode completed');
+    expect(text).toContain('plan mode');
+    expect(text).toContain('# My Design');
+    expect(text).not.toContain('Design mode is no longer active');
   });
 
   it('does not inject anything when design mode is inactive from the start', async () => {

@@ -39,6 +39,10 @@ export class DesignModeInjector extends DynamicInjector {
       if (!this.wasActive) return undefined;
       this.wasActive = false;
       this.injectedAt = null;
+      const handoff = this.agent.sessionMode.consumePendingHandoffForPlan();
+      if (handoff !== null) {
+        return designToPlanHandoffReminder(handoff.content, handoff.path);
+      }
       return exitReminder();
     }
     const skillsReminder = this.agent.skills?.registry.getUnavailableSkillsReminder('design') ?? '';
@@ -114,6 +118,11 @@ function indexStemFor(sessionModeFilePath: SessionModeFilePath): string {
 
 function exitReminder(): string {
   return `Design mode is no longer active. The design has been approved. STOP — do NOT begin implementing, writing, or editing code now. Your ONLY next action is to recommend the user run /plan to turn the approved design into a concrete implementation plan, then wait for them. Implementation happens after a plan is approved, not here.`;
+}
+
+function designToPlanHandoffReminder(content: string, path: string): string {
+  const savedTo = path ? `Design saved to: ${path}\n\n` : '';
+  return `Design mode completed. The approved design has been handed off — you are now in plan mode.\n\n${savedTo}## Approved Design\n\n${content}\n\nCreate a concrete, step-by-step implementation plan based on the approved design above. Do not implement anything yet.`;
 }
 
 function appendSkillsReminder(body: string, reminder: string): string {

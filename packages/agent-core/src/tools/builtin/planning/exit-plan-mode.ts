@@ -133,7 +133,7 @@ export class ExitPlanModeTool implements BuiltinTool<ExitPlanModeInput> {
       has_options: args.options !== undefined && args.options.length >= 2,
     });
 
-    const failed = this.exitPlanMode();
+    const failed = await this.handoffToNormal();
     if (failed !== undefined) return failed;
 
     this.agent.telemetry.track('plan_resolved', { outcome: 'auto_approved' });
@@ -141,13 +141,13 @@ export class ExitPlanModeTool implements BuiltinTool<ExitPlanModeInput> {
     return {
       isError: false,
       stopTurn: true,
-      output: `Exited plan mode. ${formatPlanForOutput(resolvedPlan.plan, resolvedPlan.path)}`,
+      output: `Exited plan mode. ${formatPlanHandoffOutput(resolvedPlan.plan, resolvedPlan.path)}`,
     };
   }
 
-  private exitPlanMode(): ExecutableToolResult | undefined {
+  private async handoffToNormal(): Promise<ExecutableToolResult | undefined> {
     try {
-      this.agent.sessionMode.exit();
+      await this.agent.sessionMode.handoffTo('normal');
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to exit plan mode.';
       return {
@@ -210,7 +210,7 @@ function normalizeOptionLabel(label: string): string {
   return label.trim().toLowerCase();
 }
 
-function formatPlanForOutput(plan: string, path: string | undefined): string {
+function formatPlanHandoffOutput(plan: string, path: string | undefined): string {
   const savedTo = path !== undefined ? `Plan saved to: ${path}\n\n` : '';
-  return `Plan mode deactivated.\n${savedTo}## Approved Plan:\n${plan}\n\nSTOP — do NOT begin executing now. This turn ends here so the planning context can be freed before execution. Do not write or edit code. The user will start execution themselves — typically by running /compact to free up context, then sending a message or invoking the gpowers executing-plans skill. Wait for them.`;
+  return `Plan mode deactivated. The approved plan has been handed off to the main conversation context.\n${savedTo}## Approved Plan:\n${plan}\n\nSTOP — do NOT begin executing now. This turn ends here. The user will start implementation themselves — the plan is now available in their main conversation context.`;
 }

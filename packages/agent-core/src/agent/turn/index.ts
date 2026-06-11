@@ -464,6 +464,10 @@ export class TurnFlow {
         }
       }
     }
+    // Safety-net: if a step ended abnormally (e.g. aborted before step.end fired),
+    // step.end's flush may not have run. Force-flush here so the context partition
+    // is always in the correct state at the start of the next turn.
+    this.agent.flushDeferredContextSwitch();
     // Emit the terminal turn.ended and (for a standalone turn) release the active
     // turn in the SAME synchronous frame, so the session is observably idle the
     // instant turn.ended fires. A goal drive keeps the active turn across its

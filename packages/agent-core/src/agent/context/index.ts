@@ -205,6 +205,8 @@ export class ContextMemory {
             openStepIndex === -1 ? this._history.length : openStepIndex + 1;
         }
         this.flushDeferredMessagesIfToolExchangeClosed();
+        // After the step closes, apply any deferred context partition switch.
+        this.agent.flushDeferredContextSwitch();
         return;
       }
       case 'content.part': {
@@ -264,6 +266,21 @@ export class ContextMemory {
       return;
     }
     this.pushHistory(...this.deferredMessages);
+    this.deferredMessages = [];
+  }
+
+  hasOpenSteps(): boolean {
+    return this.openSteps.size > 0;
+  }
+
+  /**
+   * Clear in-flight step/tool-exchange tracking without touching history.
+   * Called when the active partition switches away mid-exchange so the old
+   * partition's runtime state doesn't bleed into a future re-entry.
+   */
+  resetRuntimeState(): void {
+    this.openSteps.clear();
+    this.pendingToolResultIds.clear();
     this.deferredMessages = [];
   }
 

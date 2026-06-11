@@ -776,6 +776,47 @@ describe('Agent context notification projection', () => {
   });
 });
 
+describe('ContextMemory.resetRuntimeState', () => {
+  it('clears openSteps so hasOpenSteps() returns false', () => {
+    const ctx = testAgent();
+    ctx.configure();
+
+    // Open a step in the active (normal) partition
+    ctx.dispatch({
+      type: 'context.append_loop_event',
+      event: { type: 'step.begin', uuid: 'step-1', turnId: '', step: 1 },
+    });
+    expect(ctx.agent.context.hasOpenSteps()).toBe(true);
+
+    ctx.agent.context.resetRuntimeState();
+
+    expect(ctx.agent.context.hasOpenSteps()).toBe(false);
+  });
+
+  it('setContextMode cancels deferred switch and clears old partition runtime state', () => {
+    const ctx = testAgent();
+    ctx.configure();
+
+    // Open a step in normal partition
+    ctx.dispatch({
+      type: 'context.append_loop_event',
+      event: { type: 'step.begin', uuid: 'step-1', turnId: '', step: 1 },
+    });
+    expect(ctx.agent.contexts.normal.hasOpenSteps()).toBe(true);
+
+    // Switching to 'normal' while step is open should defer
+    ctx.agent.setContextMode('normal');
+    // Still pointing to normal (was already normal), deferred is set
+    // Now switch to 'plan' — should cancel the pending switch and clear normal's runtime state
+    ctx.agent.setContextMode('plan');
+
+    // normal partition's openSteps cleared
+    expect(ctx.agent.contexts.normal.hasOpenSteps()).toBe(false);
+    // active partition is now plan
+    expect(ctx.agent.context).toBe(ctx.agent.contexts.plan);
+  });
+});
+
 function userMessage(text: string, origin?: ContextMessage['origin']): ContextMessage {
   return {
     role: 'user',

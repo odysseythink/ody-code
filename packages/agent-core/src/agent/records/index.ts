@@ -200,8 +200,10 @@ export class AgentRecords {
       await this.persistence.flush();
     }
     if (this.agent.blobStore !== undefined) {
-      for (const msg of this.agent.context.history) {
-        await this.agent.blobStore.rehydrateParts(msg.content);
+      for (const partitionContext of Object.values(this.agent.contexts)) {
+        for (const msg of partitionContext.history) {
+          await this.agent.blobStore.rehydrateParts(msg.content);
+        }
       }
     }
     const firstRecord = replayedRecords[0];

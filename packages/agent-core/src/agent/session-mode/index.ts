@@ -35,6 +35,8 @@ export class SessionMode {
   protected _kind: SessionModeKind = 'plan';
   private _preModeModelAlias: { value: string | undefined } | null = null;
   private _lastCompletedDesignFilePath: string | null = null;
+  private _pendingHandoffForPlan: { content: string; path: string } | null = null;
+  private _pendingHandoffForNormal: { content: string; path: string } | null = null;
 
   constructor(protected readonly agent: Agent) {}
 
@@ -90,7 +92,12 @@ export class SessionMode {
         id,
         kind,
       });
+      // Switch the active context partition AFTER the WAL record so that
+      // during replay the session_mode.enter record precedes any context
+      // records that belong to this partition.
+      this.agent.setContextMode(kind);
     } catch (error) {
+      this.agent.setContextMode('normal');
       if (this._preModeModelAlias !== null) {
         this.agent.config.update({ modelAlias: this._preModeModelAlias.value });
         this._preModeModelAlias = null;
@@ -132,6 +139,9 @@ export class SessionMode {
     // what enter() captures when entering a mode from normal.
     const normalModel = this.agent.kimiConfig?.defaultModel;
     this._preModeModelAlias = normalModel !== undefined ? { value: normalModel } : null;
+
+    // Route subsequent replay records to this mode's context partition.
+    this.agent.setContextMode(kind);
   }
 
   cancel(id?: string): void {
@@ -140,6 +150,9 @@ export class SessionMode {
       this._preModeModelAlias = null;
     }
     this.agent.records.logRecord({ type: 'session_mode.cancel', id });
+    // Return to the normal context partition AFTER the WAL record so replay
+    // routes subsequent context records correctly.
+    this.agent.setContextMode('normal');
     this.agent.replayBuilder.push({
       type: 'session_mode_updated',
       enabled: false,
@@ -171,6 +184,9 @@ export class SessionMode {
       this._preModeModelAlias = null;
     }
     this.agent.records.logRecord({ type: 'session_mode.exit', id });
+    // Return to the normal context partition AFTER the WAL record so replay
+    // routes subsequent context records correctly.
+    this.agent.setContextMode('normal');
     this.agent.replayBuilder.push({
       type: 'session_mode_updated',
       enabled: false,
@@ -228,6 +244,51 @@ export class SessionMode {
     }
   }
 
+  /** Consume and return the pending design→plan handoff artifact (if any). */
+  consumePendingHandoffForPlan(): { content: string; path: string } | null {
+    const p = this._pendingHandoffForPlan;
+    this._pendingHandoffForPlan = null;
+    return p;
+  }
+
+  /** Consume and return the pending plan→normal handoff artifact (if any). */
+  consumePendingHandoffForNormal(): { content: string; path: string } | null {
+    const p = this._pendingHandoffForNormal;
+    this._pendingHandoffForNormal = null;
+    return p;
+  }
+
+  /**
+   * Exit the current mode and chain into `target`, carrying the current artifact
+   * into the target partition via the injection system's next-turn reminder.
+   *
+   * design → plan: exits design, enters plan, stores artifact for DesignModeInjector.
+   * plan → normal: exits plan, stores artifact for PlanModeInjector.
+   *
+   * `cancel()` still bypasses this and does a plain exit with no handoff.
+   */
+  async handoffTo(target: 'plan' | 'normal'): Promise<void> {
+    const data = await this.data();
+    const artifact =
+      data !== null && data.content.trim().length > 0
+        ? { content: data.content, path: data.path }
+        : null;
+
+    if (target === 'plan') {
+      this._pendingHandoffForPlan = artifact;
+      this.exit();
+      try {
+        await this.enter(this.createSessionModeId(), false, true, 'plan');
+      } catch (error) {
+        this._pendingHandoffForPlan = null;  // prevent ghost injection on next turn
+        throw error;
+      }
+    } else {
+      this._pendingHandoffForNormal = artifact;
+      this.exit();
+    }
+  }
+
   get isActive() {
     return this._isActive;
   }
@@ -266,15 +327,20 @@ export class SessionMode {
 
   /** Kebab topic from the latest real user message, or null when none is usable. */
   private topicSlugFromHistory(): string | null {
-    const history = this.agent.context?.history;
-    if (history === undefined) return null;
-    const lastUserMessage = history.findLast(
-      (msg) => msg.role === 'user' && msg.origin?.kind === 'user',
-    );
+    const isUserOrigin = (msg: { role: string; origin?: { kind: string } }) =>
+      msg.role === 'user' && msg.origin?.kind === 'user';
+
+    // Check the current mode's partition first (user may have prompted after entering
+    // this mode), then fall back to normal (user prompted before entering).
+    const currentHistory = this.agent.context?.history as readonly { role: string; origin?: { kind: string }; content: readonly { type: string; text?: string }[] }[] | undefined;
+    const normalHistory = this.agent.contexts?.normal?.history as readonly { role: string; origin?: { kind: string }; content: readonly { type: string; text?: string }[] }[] | undefined;
+    const lastUserMessage =
+      currentHistory?.findLast(isUserOrigin) ??
+      normalHistory?.findLast(isUserOrigin);
     if (lastUserMessage === undefined) return null;
     const text = lastUserMessage.content
       .filter((part) => part.type === 'text')
-      .map((part) => part.text)
+      .map((part) => part.text ?? '')
       .join('')
       .trim();
     if (text.length === 0) return null;

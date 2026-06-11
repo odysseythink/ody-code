@@ -54,7 +54,11 @@ describe('Agent resume', () => {
     expect(execWithEnv).not.toHaveBeenCalled();
     expect(ctx.llmCalls).toHaveLength(1);
     const lastCall = ctx.llmCalls[0]!;
-    expect(lastCall.history.some((m) => m.role === 'assistant' && m.content.some((c) => c.type === 'text' && c.text === 'Historical compacted summary.'))).toBe(true);
+    // With P2 isolation the plan partition is separate from normal. Pre-mode context
+    // (including the compacted summary) lives in the normal partition; after entering
+    // plan mode it is not automatically visible to the plan context. Verify the
+    // compacted summary was preserved in the normal partition after replay.
+    expect(ctx.agent.contexts.normal.history.some((m) => m.role === 'assistant' && m.content.some((c) => c.type === 'text' && c.text === 'Historical compacted summary.'))).toBe(true);
     expect(lastCall.history.some((m) => m.role === 'user' && m.content.some((c) => c.type === 'text' && c.text === 'Fresh prompt after resume'))).toBe(true);
     expect(lastCall.history.some((m) => m.role === 'user' && m.content.some((c) => c.type === 'text' && c.text.includes('Plan mode is active')))).toBe(true);
   });

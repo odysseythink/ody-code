@@ -71,6 +71,7 @@ export type { BuiltinTool, ToolInfo, ToolSource, UserToolRegistration } from './
 export { buildGoalCompletionMessage } from './goal/completion';
 
 export type AgentType = 'main' | 'sub' | 'independent';
+export type ModeKey = 'normal' | 'plan' | 'design';
 
 export interface AgentOptions {
   readonly kaos: Kaos;
@@ -116,10 +117,21 @@ export class Agent {
 
   readonly blobStore: BlobStore | undefined;
   readonly records: AgentRecords;
-  readonly fullCompaction: FullCompaction;
-  readonly microCompaction: MicroCompaction;
-  readonly context: ContextMemory;
   readonly config: ConfigState;
+
+  // Per-mode context partitions. Each mode has its own isolated conversation
+  // history, compaction state, and micro-compaction cursor. _activeMode
+  // determines which partition agent.context / fullCompaction / microCompaction
+  // point to. Changed by setContextMode() as modes are entered and exited.
+  private readonly _contexts: Record<ModeKey, ContextMemory>;
+  private readonly _fullCompactions: Record<ModeKey, FullCompaction>;
+  private readonly _microCompactions: Record<ModeKey, MicroCompaction>;
+  private _activeMode: ModeKey = 'normal';
+  // When setContextMode is called while the current partition has an open step
+  // (mid tool-exchange), we defer the switch so the tool.call / tool.result
+  // events route to the same partition as step.begin. The flush happens at
+  // step.end (via flushDeferredContextSwitch) or at turn end (safety net).
+  private _pendingContextSwitch: ModeKey | null = null;
   readonly turn: TurnFlow;
   readonly injection: InjectionManager;
   readonly permission: PermissionManager;
@@ -166,9 +178,21 @@ export class Agent {
             })
           : undefined),
     );
-    this.fullCompaction = new FullCompaction(this, options.compactionStrategy);
-    this.microCompaction = new MicroCompaction(this, options.microCompaction);
-    this.context = new ContextMemory(this);
+    this._contexts = {
+      normal: new ContextMemory(this),
+      plan: new ContextMemory(this),
+      design: new ContextMemory(this),
+    };
+    this._fullCompactions = {
+      normal: new FullCompaction(this, options.compactionStrategy),
+      plan: new FullCompaction(this, options.compactionStrategy),
+      design: new FullCompaction(this, options.compactionStrategy),
+    };
+    this._microCompactions = {
+      normal: new MicroCompaction(this, options.microCompaction),
+      plan: new MicroCompaction(this, options.microCompaction),
+      design: new MicroCompaction(this, options.microCompaction),
+    };
     this.config = new ConfigState(this);
     this.turn = new TurnFlow(this);
     this.injection = new InjectionManager(this);
@@ -183,6 +207,56 @@ export class Agent {
     );
     this.cron = this.type === 'sub' ? null : new CronManager(this);
     this.replayBuilder = new ReplayBuilder(this);
+  }
+
+  /** Active partition's conversation history — routes to the current mode. */
+  get context(): ContextMemory {
+    return this._contexts[this._activeMode];
+  }
+
+  /** Active partition's full-compaction state. */
+  get fullCompaction(): FullCompaction {
+    return this._fullCompactions[this._activeMode];
+  }
+
+  /** Active partition's micro-compaction state. */
+  get microCompaction(): MicroCompaction {
+    return this._microCompactions[this._activeMode];
+  }
+
+  /** All three partition contexts, keyed by mode. Used for bulk operations (e.g. blob rehydration). */
+  get contexts(): Readonly<Record<ModeKey, ContextMemory>> {
+    return this._contexts;
+  }
+
+  /** Switch the active context partition. Called by SessionMode on enter/exit/cancel.
+   * When switching back to normal while the current partition has an open step
+   * (mid tool-exchange on an exit), the switch is deferred until step.end so all
+   * events in the exchange route to the same partition. Entering a new mode
+   * (plan/design) is always applied immediately. */
+  setContextMode(mode: ModeKey): void {
+    if (mode === 'normal' && this._contexts[this._activeMode].hasOpenSteps()) {
+      this._pendingContextSwitch = mode;
+    } else {
+      if (this._pendingContextSwitch !== null) {
+        // A pending return-to-normal is being cancelled by entering a new mode.
+        // The old partition's open-step / tool-exchange tracking is now orphaned
+        // (those events will route to the new partition). Clear it so the old
+        // partition starts clean if re-entered later in the same live session.
+        this._contexts[this._activeMode].resetRuntimeState();
+      }
+      this._activeMode = mode;
+      this._pendingContextSwitch = null;
+    }
+  }
+
+  /** Apply any pending context partition switch. Called from step.end and as a
+   * safety net at turn end so the partition is never stuck after an abort. */
+  flushDeferredContextSwitch(): void {
+    if (this._pendingContextSwitch !== null) {
+      this._activeMode = this._pendingContextSwitch;
+      this._pendingContextSwitch = null;
+    }
   }
 
   get generate(): typeof generate {
