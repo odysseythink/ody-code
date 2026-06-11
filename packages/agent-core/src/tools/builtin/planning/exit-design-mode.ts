@@ -84,7 +84,7 @@ export class ExitDesignModeTool implements BuiltinTool<ExitDesignModeInput> {
       description: 'Presenting design and exiting design mode',
       display: await this.resolveDesignReviewDisplay(args),
       approvalRule: this.name,
-      execute: () => this.execution(args),
+      execute: (ctx) => this.execution(args, ctx.metadata),
     };
   }
 
@@ -110,7 +110,7 @@ export class ExitDesignModeTool implements BuiltinTool<ExitDesignModeInput> {
     return display;
   }
 
-  private async execution(args: ExitDesignModeInput): Promise<ExecutableToolResult> {
+  private async execution(args: ExitDesignModeInput, metadata?: unknown): Promise<ExecutableToolResult> {
     if (!this.agent.sessionMode.isActive) {
       return {
         isError: true,
@@ -122,18 +122,12 @@ export class ExitDesignModeTool implements BuiltinTool<ExitDesignModeInput> {
     const resolved = await this.resolveDesign();
     if (!resolved.ok) return resolved.error as ExecutableToolResult;
 
-    this.agent.telemetry.track('design_submitted', {
-      has_options: args.options !== undefined && args.options.length >= 2,
-    });
-
     const failed = await this.handoffToPlan();
     if (failed !== undefined) return failed;
 
-    this.agent.telemetry.track('design_resolved', { outcome: 'auto_approved' });
-
     return {
       isError: false,
-      output: `Exited design mode. ${formatDesignHandoffOutput(resolved.design ?? '', resolved.path)}`,
+      output: `Exited design mode. ${formatDesignHandoffOutput(resolved.design ?? '', resolved.path, metadata)}`,
     };
   }
 
@@ -197,7 +191,15 @@ function normalizeOptionLabel(label: string): string {
   return label.trim().toLowerCase();
 }
 
-function formatDesignHandoffOutput(design: string, path: string | undefined): string {
+function formatDesignHandoffOutput(design: string, path: string | undefined, metadata?: unknown): string {
+  const selectedLabel =
+    metadata !== null && typeof metadata === 'object' && 'selectedLabel' in metadata
+      ? (metadata as { selectedLabel?: string }).selectedLabel
+      : undefined;
+  const optionPrefix =
+    selectedLabel !== undefined && selectedLabel.length > 0
+      ? `Selected approach: ${selectedLabel}\nExecute ONLY the selected approach. Do not execute any unselected alternatives.\n\n`
+      : '';
   const savedTo = path !== undefined ? `Design saved to: ${path}\n\n` : '';
-  return `Design mode deactivated. Now in plan mode.\n${savedTo}## Approved Design:\n${design}\n\nYou are now in plan mode. Create a concrete, step-by-step implementation plan based on the approved design above.`;
+  return `${optionPrefix}Design mode deactivated. Now in plan mode.\n${savedTo}## Approved Design:\n${design}\n\nYou are now in plan mode. Create a concrete, step-by-step implementation plan based on the approved design above.`;
 }

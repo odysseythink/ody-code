@@ -58,6 +58,22 @@ export class ExitPlanModeReviewAskPermissionPolicy implements PermissionPolicy {
       return this.rejectedExitModeApprovalResult(result, isDesign);
     }
 
+    if (isDesign) {
+      // For design: let the tool's execute() call handoffTo('plan'), which enters
+      // plan mode and injects the design artifact into the plan partition.
+      // Pass selectedLabel via executionMetadata so the tool can include it in output.
+      if (result.selectedLabel !== undefined && result.selectedLabel.length > 0) {
+        this.agent.telemetry.track('design_resolved', { outcome: 'approved', chosen_option: result.selectedLabel });
+      } else {
+        this.agent.telemetry.track('design_resolved', { outcome: 'approved' });
+      }
+      return {
+        kind: 'approve' as const,
+        executionMetadata: { selectedLabel: result.selectedLabel },
+      };
+    }
+
+    // Plan case: call exit() directly and return a synthetic result with the plan content.
     const selected = selectedExitPlanModeOption(display.options, result.selectedLabel);
 
     const failed = this.exitMode();
@@ -65,32 +81,16 @@ export class ExitPlanModeReviewAskPermissionPolicy implements PermissionPolicy {
       return { kind: 'result' as const, syntheticResult: failed };
     }
 
-    const eventPrefix = isDesign ? 'design' : 'plan';
     if (result.selectedLabel !== undefined && result.selectedLabel.length > 0) {
-      this.agent.telemetry.track(`${eventPrefix}_resolved`, {
-        outcome: 'approved',
-        chosen_option: result.selectedLabel,
-      });
+      this.agent.telemetry.track('plan_resolved', { outcome: 'approved', chosen_option: result.selectedLabel });
     } else {
-      this.agent.telemetry.track(`${eventPrefix}_resolved`, { outcome: 'approved' });
+      this.agent.telemetry.track('plan_resolved', { outcome: 'approved' });
     }
 
     const optionPrefix =
       selected === undefined
         ? ''
         : `Selected approach: ${selected.label}\nExecute ONLY the selected approach. Do not execute any unselected alternatives.\n\n`;
-
-    if (isDesign) {
-      const savedTo = display.path !== undefined ? `Design saved to: ${display.path}\n\n` : '';
-      const formattedDesign = `Design mode deactivated.\n${savedTo}## Approved Design:\n${display.plan}\n\nSTOP — do NOT begin implementing now. Do not write or edit code. Your ONLY next action is to recommend the user run /plan to turn this approved design into a concrete implementation plan, then wait for them. Implementation happens after a plan is approved, not here.`;
-      return {
-        kind: 'result' as const,
-        syntheticResult: {
-          isError: false,
-          output: `Exited design mode. ${optionPrefix}${formattedDesign}`,
-        },
-      };
-    }
 
     const savedTo = display.path !== undefined ? `Plan saved to: ${display.path}\n\n` : '';
     const formattedPlan = `Plan mode deactivated.\n${savedTo}## Approved Plan:\n${display.plan}\n\nSTOP — do NOT begin executing now. This turn ends here so the planning context can be freed before execution. Do not write or edit code. The user will start execution themselves — typically by running /compact to free up context, then sending a message or invoking the gpowers executing-plans skill. Wait for them.`;
