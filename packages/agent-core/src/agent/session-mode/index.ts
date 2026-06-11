@@ -36,7 +36,11 @@ export class SessionMode {
   private _preModeModelAlias: { value: string | undefined } | null = null;
   private _lastCompletedDesignFilePath: string | null = null;
   private _pendingHandoffForPlan: { content: string; path: string } | null = null;
-  private _pendingHandoffForNormal: { content: string; path: string } | null = null;
+  private _pendingHandoffForNormal: {
+    content: string;
+    path: string;
+    selectedLabel?: string;
+  } | null = null;
 
   constructor(protected readonly agent: Agent) {}
 
@@ -252,7 +256,11 @@ export class SessionMode {
   }
 
   /** Consume and return the pending plan→normal handoff artifact (if any). */
-  consumePendingHandoffForNormal(): { content: string; path: string } | null {
+  consumePendingHandoffForNormal(): {
+    content: string;
+    path: string;
+    selectedLabel?: string;
+  } | null {
     const p = this._pendingHandoffForNormal;
     this._pendingHandoffForNormal = null;
     return p;
@@ -267,7 +275,10 @@ export class SessionMode {
    *
    * `cancel()` still bypasses this and does a plain exit with no handoff.
    */
-  async handoffTo(target: 'plan' | 'normal'): Promise<void> {
+  async handoffTo(
+    target: 'plan' | 'normal',
+    opts?: { selectedLabel?: string },
+  ): Promise<void> {
     const data = await this.data();
     const artifact =
       data !== null && data.content.trim().length > 0
@@ -284,7 +295,15 @@ export class SessionMode {
         throw error;
       }
     } else {
-      this._pendingHandoffForNormal = artifact;
+      // The plan→normal tool result stays in the plan partition (deferred context
+      // switch), so the selected approach is carried into normal via the injection.
+      const selectedLabel = opts?.selectedLabel;
+      this._pendingHandoffForNormal =
+        artifact === null
+          ? null
+          : selectedLabel !== undefined && selectedLabel.length > 0
+            ? { ...artifact, selectedLabel }
+            : artifact;
       this.exit();
     }
   }

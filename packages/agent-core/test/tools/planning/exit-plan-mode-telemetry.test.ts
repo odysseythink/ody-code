@@ -46,6 +46,12 @@ function makeAgent(input: {
       })),
       finalizeFileName: vi.fn().mockResolvedValue(null),
       exit: exitPlanMode,
+      // Mirror the real handoffTo('normal'): read the artifact, then exit. When the
+      // exit mock throws, the rejection propagates so the tool surfaces the error and
+      // skips plan_resolved (the "exit fails" telemetry cases depend on this).
+      handoffTo: vi.fn(async () => {
+        exitPlanMode();
+      }),
     },
     permission: { mode: input.mode },
     type: 'main',
@@ -139,6 +145,27 @@ describe('ExitPlanMode telemetry', () => {
       outcome: 'approved',
       chosen_option: 'Approach B',
     });
+    // The chosen option is a declared option, so it is surfaced as a selected-approach prefix.
+    expect(result.output).toContain('Selected approach: Approach B');
+  });
+
+  it('tracks the chosen option but omits the prefix for an out-of-options label', async () => {
+    const { agent, telemetryTrack, exitPlanMode } = makeAgent({
+      mode: 'manual',
+      approval: { decision: 'approved', selectedLabel: 'Approach C' },
+    });
+
+    const result = await execute(agent, { options });
+
+    expect(result.isError).toBe(false);
+    expect(exitPlanMode).toHaveBeenCalledTimes(1);
+    // The raw label is tracked, but it is not one of the declared options, so the tool
+    // does not echo it as a "Selected approach:" directive.
+    expect(telemetryTrack).toHaveBeenCalledWith('plan_resolved', {
+      outcome: 'approved',
+      chosen_option: 'Approach C',
+    });
+    expect(result.output).not.toContain('Selected approach:');
   });
 
   it('handles revision requests with feedback through permission approval telemetry', async () => {

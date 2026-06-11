@@ -15,6 +15,7 @@ import type { BuiltinTool } from '../../../agent/tool';
 import type { ExecutableToolResult, ToolExecution } from '../../../loop/types';
 import type { ToolInputDisplay } from '../../display';
 import { toInputJsonSchema } from '../../support/input-schema';
+import { declaredOptionLabel, selectedApproachPrefix, selectedLabelOf } from './exit-mode-output';
 import DESCRIPTION from './exit-design-mode.md';
 
 // ── Input schema ─────────────────────────────────────────────────────
@@ -125,9 +126,13 @@ export class ExitDesignModeTool implements BuiltinTool<ExitDesignModeInput> {
     const failed = await this.handoffToPlan();
     if (failed !== undefined) return failed;
 
+    // Only surface the chosen approach when it is one of the declared options, so a
+    // plain approval ("Approve") never prints "Selected approach: Approve".
+    const optionLabel = declaredOptionLabel(args.options, selectedLabelOf(metadata));
+
     return {
       isError: false,
-      output: `Exited design mode. ${formatDesignHandoffOutput(resolved.design ?? '', resolved.path, metadata)}`,
+      output: `Exited design mode. ${formatDesignHandoffOutput(resolved.design ?? '', resolved.path, optionLabel)}`,
     };
   }
 
@@ -191,15 +196,12 @@ function normalizeOptionLabel(label: string): string {
   return label.trim().toLowerCase();
 }
 
-function formatDesignHandoffOutput(design: string, path: string | undefined, metadata?: unknown): string {
-  const selectedLabel =
-    metadata !== null && typeof metadata === 'object' && 'selectedLabel' in metadata
-      ? (metadata as { selectedLabel?: string }).selectedLabel
-      : undefined;
-  const optionPrefix =
-    selectedLabel !== undefined && selectedLabel.length > 0
-      ? `Selected approach: ${selectedLabel}\nExecute ONLY the selected approach. Do not execute any unselected alternatives.\n\n`
-      : '';
+function formatDesignHandoffOutput(
+  design: string,
+  path: string | undefined,
+  selectedLabel: string | undefined,
+): string {
+  const optionPrefix = selectedApproachPrefix(selectedLabel);
   const savedTo = path !== undefined ? `Design saved to: ${path}\n\n` : '';
   return `${optionPrefix}Design mode deactivated. Now in plan mode.\n${savedTo}## Approved Design:\n${design}\n\nYou are now in plan mode. Create a concrete, step-by-step implementation plan based on the approved design above.`;
 }

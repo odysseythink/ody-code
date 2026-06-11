@@ -247,6 +247,53 @@ describe('plan exit tool', () => {
     await ctx.expectResumeMatches();
   });
 
+  it('hands the approved plan off into the normal partition on the next turn (manual mode)', async () => {
+    const files = new Map<string, string>();
+    const readText = vi.fn(async (path: string) => files.get(path) ?? '');
+    const ctx = testAgent({
+      kaos: createPlanKaos({ readText }),
+    });
+    ctx.configure({ tools: ['ExitPlanMode'] });
+    await ctx.rpc.setPermission({ mode: 'manual' });
+    await ctx.agent.sessionMode.enter('handoff-plan', false);
+    await setPlanPath(ctx);
+
+    const planPath = ctx.agent.sessionMode.sessionModeFilePath;
+    if (planPath === null) throw new Error('expected active plan path');
+    files.set(planPath, '# Plan\n\n- Inspect\n- Change\n- Verify');
+
+    // Establish plan-mode injection state (the injector must have seen plan active so it
+    // emits the handoff — not the cancel reminder — once the mode is left).
+    await ctx.agent.injection.inject();
+
+    const exitPlanModeCall: ToolCall = {
+      type: 'function',
+      id: 'call_exit_handoff',
+      name: 'ExitPlanMode',
+      arguments: '{}',
+    };
+    ctx.mockNextResponse({ type: 'text', text: 'Presenting the plan.' }, exitPlanModeCall);
+    ctx.mockNextResponse({ type: 'text', text: 'This response must not be requested.' });
+    await ctx.rpc.prompt({ input: [{ type: 'text', text: 'Show the plan' }] });
+
+    const approval = await ctx.takeApprovalRequest();
+    approval.respond({ decision: 'approved' });
+
+    await ctx.untilTurnEnd();
+    expect(ctx.agent.sessionMode.isActive).toBe(false);
+
+    // The bug: in manual mode the approval policy used to exit() directly and skip the
+    // handoff, leaving the normal partition empty. Now the tool runs handoffTo('normal'),
+    // and the next injection carries the plan content + filename into normal.
+    await ctx.agent.injection.inject();
+    const normalText = lastUserText(ctx.agent.contexts.normal.history);
+    expect(normalText).toContain('handed off');
+    expect(normalText).toContain('# Plan');
+    expect(normalText).toContain(`Plan saved to: ${planPath}`);
+    // The cancel reminder must NOT appear — this was the symptom of the missing handoff.
+    expect(normalText).not.toContain('Plan mode was cancelled');
+  });
+
   it('stops the turn and stays in plan mode when the user rejects the plan', async () => {
     const files = new Map<string, string>();
     const readText = vi.fn(async (path: string) => files.get(path) ?? '');

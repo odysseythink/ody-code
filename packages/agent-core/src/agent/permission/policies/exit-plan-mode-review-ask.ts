@@ -1,17 +1,6 @@
 import type { Agent } from '../..';
 import type { ApprovalResponse, PermissionPolicy, PermissionPolicyContext, PermissionPolicyResult } from '../types';
 
-interface ExitPlanModeOption {
-  readonly label: string;
-  readonly description: string;
-}
-
-interface PlanReviewDisplay {
-  readonly plan: string;
-  readonly path?: string | undefined;
-  readonly options?: readonly ExitPlanModeOption[] | undefined;
-}
-
 export class ExitPlanModeReviewAskPermissionPolicy implements PermissionPolicy {
   readonly name = 'exit-plan-mode-review-ask';
 
@@ -40,30 +29,27 @@ export class ExitPlanModeReviewAskPermissionPolicy implements PermissionPolicy {
       reason: {
         has_options: display.options !== undefined,
       },
-      resolveApproval: (result) =>
-        this.exitModeApprovalResult(result, {
-          plan: display.plan,
-          path: display.path,
-          options: display.options,
-        }, isDesign),
+      resolveApproval: (result) => this.exitModeApprovalResult(result, isDesign),
     };
   }
 
-  private exitModeApprovalResult(
-    result: ApprovalResponse,
-    display: PlanReviewDisplay,
-    isDesign: boolean,
-  ) {
+  private exitModeApprovalResult(result: ApprovalResponse, isDesign: boolean) {
     if (result.decision !== 'approved') {
       return this.rejectedExitModeApprovalResult(result, isDesign);
     }
 
+    // Approved (both design and plan): let the tool's execute() run handoffTo(), which
+    // exits the current mode and stores the artifact so the injection system carries it
+    // into the target partition (design→plan, plan→normal) on the next turn. Pass
+    // selectedLabel (and viaApproval for plan) via executionMetadata so the tool can
+    // include the chosen option in its output.
     if (isDesign) {
-      // For design: let the tool's execute() call handoffTo('plan'), which enters
-      // plan mode and injects the design artifact into the plan partition.
-      // Pass selectedLabel via executionMetadata so the tool can include it in output.
+      // Design resolution is tracked here (the design tool does not track it).
       if (result.selectedLabel !== undefined && result.selectedLabel.length > 0) {
-        this.agent.telemetry.track('design_resolved', { outcome: 'approved', chosen_option: result.selectedLabel });
+        this.agent.telemetry.track('design_resolved', {
+          outcome: 'approved',
+          chosen_option: result.selectedLabel,
+        });
       } else {
         this.agent.telemetry.track('design_resolved', { outcome: 'approved' });
       }
@@ -73,34 +59,11 @@ export class ExitPlanModeReviewAskPermissionPolicy implements PermissionPolicy {
       };
     }
 
-    // Plan case: call exit() directly and return a synthetic result with the plan content.
-    const selected = selectedExitPlanModeOption(display.options, result.selectedLabel);
-
-    const failed = this.exitMode();
-    if (failed !== undefined) {
-      return { kind: 'result' as const, syntheticResult: failed };
-    }
-
-    if (result.selectedLabel !== undefined && result.selectedLabel.length > 0) {
-      this.agent.telemetry.track('plan_resolved', { outcome: 'approved', chosen_option: result.selectedLabel });
-    } else {
-      this.agent.telemetry.track('plan_resolved', { outcome: 'approved' });
-    }
-
-    const optionPrefix =
-      selected === undefined
-        ? ''
-        : `Selected approach: ${selected.label}\nExecute ONLY the selected approach. Do not execute any unselected alternatives.\n\n`;
-
-    const savedTo = display.path !== undefined ? `Plan saved to: ${display.path}\n\n` : '';
-    const formattedPlan = `Plan mode deactivated.\n${savedTo}## Approved Plan:\n${display.plan}\n\nSTOP — do NOT begin executing now. This turn ends here so the planning context can be freed before execution. Do not write or edit code. The user will start execution themselves — typically by running /compact to free up context, then sending a message or invoking the gpowers executing-plans skill. Wait for them.`;
+    // Plan resolution telemetry is fired by the tool AFTER a successful handoff, so a
+    // failed exit() does not emit a spurious approved event (see the telemetry tests).
     return {
-      kind: 'result' as const,
-      syntheticResult: {
-        isError: false,
-        stopTurn: true,
-        output: `Exited plan mode. ${optionPrefix}${formattedPlan}`,
-      },
+      kind: 'approve' as const,
+      executionMetadata: { selectedLabel: result.selectedLabel, viaApproval: true },
     };
   }
 
@@ -190,12 +153,4 @@ export class ExitPlanModeReviewAskPermissionPolicy implements PermissionPolicy {
     }
     this.agent.telemetry.track(`${eventPrefix}_resolved`, { outcome: 'rejected' });
   }
-}
-
-function selectedExitPlanModeOption(
-  options: readonly ExitPlanModeOption[] | undefined,
-  label: string | undefined,
-): ExitPlanModeOption | undefined {
-  if (options === undefined || label === undefined) return;
-  return options.find((option) => option.label === label);
 }

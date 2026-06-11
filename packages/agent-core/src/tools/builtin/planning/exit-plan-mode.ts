@@ -14,6 +14,12 @@ import type { BuiltinTool } from '../../../agent/tool';
 import type { ExecutableToolResult, ToolExecution } from '../../../loop/types';
 import type { ToolInputDisplay } from '../../display';
 import { toInputJsonSchema } from '../../support/input-schema';
+import {
+  declaredOptionLabel,
+  isViaApproval,
+  selectedApproachPrefix,
+  selectedLabelOf,
+} from './exit-mode-output';
 import DESCRIPTION from './exit-plan-mode.md';
 
 // ── Input schema ─────────────────────────────────────────────────────
@@ -91,7 +97,7 @@ export class ExitPlanModeTool implements BuiltinTool<ExitPlanModeInput> {
       description: 'Presenting plan and exiting plan mode',
       display: await this.resolvePlanReviewDisplay(args),
       approvalRule: this.name,
-      execute: () => this.execution(args),
+      execute: (ctx) => this.execution(args, ctx.metadata),
     };
   }
 
@@ -117,7 +123,10 @@ export class ExitPlanModeTool implements BuiltinTool<ExitPlanModeInput> {
     return display;
   }
 
-  private async execution(args: ExitPlanModeInput): Promise<ExecutableToolResult> {
+  private async execution(
+    args: ExitPlanModeInput,
+    metadata?: unknown,
+  ): Promise<ExecutableToolResult> {
     if (!this.agent.sessionMode.isActive) {
       return {
         isError: true,
@@ -129,25 +138,51 @@ export class ExitPlanModeTool implements BuiltinTool<ExitPlanModeInput> {
     const resolvedPlan = await this.resolvePlan();
     if (!resolvedPlan.ok) return resolvedPlan.error;
 
-    this.agent.telemetry.track('plan_submitted', {
-      has_options: args.options !== undefined && args.options.length >= 2,
-    });
+    // When the plan was approved through the review surface, the approval policy
+    // already tracked `plan_submitted` (in evaluate()) and forwarded the chosen
+    // option via executionMetadata. In auto mode the policy is skipped, so the
+    // tool is the only place these events fire.
+    const viaApproval = isViaApproval(metadata);
+    // The raw approval label (used for telemetry, even reserved labels like "Approve").
+    const rawLabel = selectedLabelOf(metadata);
+    // The approach prefix is only surfaced for a label that is one of the declared
+    // options, so a plain approval ("Approve") never prints "Selected approach: Approve".
+    const optionLabel = declaredOptionLabel(args.options, rawLabel);
 
-    const failed = await this.handoffToNormal();
+    if (!viaApproval) {
+      this.agent.telemetry.track('plan_submitted', {
+        has_options: args.options !== undefined && args.options.length >= 2,
+      });
+    }
+
+    const failed = await this.handoffToNormal(optionLabel);
     if (failed !== undefined) return failed;
 
-    this.agent.telemetry.track('plan_resolved', { outcome: 'auto_approved' });
+    // Track resolution only AFTER a successful handoff so a failed exit() does not
+    // emit a spurious approved/auto_approved event (see exit-plan-mode-telemetry.test.ts).
+    if (viaApproval) {
+      this.agent.telemetry.track(
+        'plan_resolved',
+        rawLabel !== undefined && rawLabel.length > 0
+          ? { outcome: 'approved', chosen_option: rawLabel }
+          : { outcome: 'approved' },
+      );
+    } else {
+      this.agent.telemetry.track('plan_resolved', { outcome: 'auto_approved' });
+    }
 
     return {
       isError: false,
       stopTurn: true,
-      output: `Exited plan mode. ${formatPlanHandoffOutput(resolvedPlan.plan, resolvedPlan.path)}`,
+      output: `Exited plan mode. ${formatPlanHandoffOutput(resolvedPlan.plan, resolvedPlan.path, optionLabel)}`,
     };
   }
 
-  private async handoffToNormal(): Promise<ExecutableToolResult | undefined> {
+  private async handoffToNormal(
+    selectedLabel: string | undefined,
+  ): Promise<ExecutableToolResult | undefined> {
     try {
-      await this.agent.sessionMode.handoffTo('normal');
+      await this.agent.sessionMode.handoffTo('normal', { selectedLabel });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to exit plan mode.';
       return {
@@ -210,7 +245,12 @@ function normalizeOptionLabel(label: string): string {
   return label.trim().toLowerCase();
 }
 
-function formatPlanHandoffOutput(plan: string, path: string | undefined): string {
+function formatPlanHandoffOutput(
+  plan: string,
+  path: string | undefined,
+  selectedLabel: string | undefined,
+): string {
+  const optionPrefix = selectedApproachPrefix(selectedLabel);
   const savedTo = path !== undefined ? `Plan saved to: ${path}\n\n` : '';
-  return `Plan mode deactivated. The approved plan has been handed off to the main conversation context.\n${savedTo}## Approved Plan:\n${plan}\n\nSTOP — do NOT begin executing now. This turn ends here. The user will start implementation themselves — the plan is now available in their main conversation context.`;
+  return `${optionPrefix}Plan mode deactivated. The approved plan has been handed off to the main conversation context.\n${savedTo}## Approved Plan:\n${plan}\n\nSTOP — do NOT begin executing now. This turn ends here. The user will start implementation themselves — the plan is now available in their main conversation context.`;
 }

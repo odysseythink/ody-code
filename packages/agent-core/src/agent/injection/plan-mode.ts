@@ -44,7 +44,7 @@ export class PlanModeInjector extends DynamicInjector {
       this.injectedAt = null;
       const handoff = this.agent.sessionMode.consumePendingHandoffForNormal();
       if (handoff !== null) {
-        return planToNormalHandoffReminder(handoff.content, handoff.path);
+        return planToNormalHandoffReminder(handoff.content, handoff.path, handoff.selectedLabel);
       }
       return exitReminder();
     }
@@ -124,9 +124,13 @@ function exitReminder(): string {
   return `Plan mode was cancelled — no plan was approved or handed off. The read-only and plan-file-only restrictions no longer apply. Continue with normal operation.`;
 }
 
-function planToNormalHandoffReminder(content: string, path: string): string {
+function planToNormalHandoffReminder(content: string, path: string, selectedLabel?: string): string {
   const savedTo = path ? `Plan saved to: ${path}\n\n` : '';
-  return `Plan mode is no longer active. The approved plan has been handed off to this context.\n\n${savedTo}## Approved Plan\n\n${content}\n\nProceed with implementing the plan above using the normal tool and permission rules.`;
+  const optionPrefix =
+    selectedLabel !== undefined && selectedLabel.length > 0
+      ? `Selected approach: ${selectedLabel}. Implement ONLY this approach; do not execute any unselected alternatives.\n\n`
+      : '';
+  return `Plan mode is no longer active. The approved plan has been handed off to this context.\n\n${optionPrefix}${savedTo}## Approved Plan\n\n${content}\n\nProceed with implementing the plan above using the normal tool and permission rules.`;
 }
 
 function appendSkillsReminder(body: string, reminder: string): string {

@@ -1550,10 +1550,9 @@ describe('Plan mode tool approve policy', () => {
         }),
       ),
     ).resolves.toMatchObject({
-      syntheticResult: {
-        isError: false,
-        output: expect.stringContaining('Exited plan mode.'),
-      },
+      // The policy delegates to the tool's execute() (which runs handoffTo('normal'))
+      // by approving with metadata, rather than producing the plan output itself.
+      executionMetadata: { viaApproval: true },
     });
 
     expect(requestApproval).toHaveBeenCalledTimes(1);
@@ -1675,7 +1674,7 @@ describe('ExitPlanMode permission policy', () => {
     expect(requestApproval).not.toHaveBeenCalled();
   });
 
-  it('requests plan-review approval in yolo mode and returns formatted output', async () => {
+  it('requests plan-review approval in yolo mode and delegates the exit to the tool', async () => {
     const { manager, record, requestApproval, exit } = makePlanPermissionManager({
       mode: 'yolo',
       plan: '# Plan\n\n- Step',
@@ -1720,12 +1719,11 @@ describe('ExitPlanMode permission policy', () => {
       sessionApprovalRule: undefined,
       result: { decision: 'approved', selectedLabel: 'Approach B' },
     });
-    expect(exit).toHaveBeenCalled();
+    // The policy no longer exits or formats output — it approves with metadata so the
+    // tool's execute() runs handoffTo('normal'). The chosen option rides on the metadata.
+    expect(exit).not.toHaveBeenCalled();
     expect(result).toMatchObject({
-      syntheticResult: {
-        isError: false,
-        output: expect.stringContaining('Selected approach: Approach B'),
-      },
+      executionMetadata: { selectedLabel: 'Approach B', viaApproval: true },
     });
   });
 
@@ -1860,8 +1858,8 @@ describe('ExitPlanMode permission policy', () => {
     });
   });
 
-  it('returns approved plan output without a saved-to line when display has no path', async () => {
-    const { manager } = makePlanPermissionManager({
+  it('approves a plain plan exit with viaApproval metadata and no selected label', async () => {
+    const { manager, exit } = makePlanPermissionManager({
       mode: 'manual',
       plan: '# Draft Plan',
       approval: { decision: 'approved' },
@@ -1876,16 +1874,15 @@ describe('ExitPlanMode permission policy', () => {
       }),
     );
 
+    // Output formatting (Approved Plan / saved-to) moved to the tool; the policy only
+    // delegates. A plain approval carries no selected label.
+    expect(exit).not.toHaveBeenCalled();
     expect(result).toMatchObject({
-      syntheticResult: {
-        isError: false,
-        output: expect.stringContaining('## Approved Plan:\n# Draft Plan'),
-      },
+      executionMetadata: { selectedLabel: undefined, viaApproval: true },
     });
-    expect(result?.syntheticResult?.output).not.toContain('Plan saved to:');
   });
 
-  it('does not force a selected-approach prefix for labels that are not in the options', async () => {
+  it('forwards an out-of-options selected label to the tool via metadata', async () => {
     const { manager, telemetryTrack } = makePlanPermissionManager({
       mode: 'manual',
       plan: '# Draft Plan',
@@ -1905,11 +1902,13 @@ describe('ExitPlanMode permission policy', () => {
       }),
     );
 
-    expect(result?.syntheticResult?.output).not.toContain('Selected approach:');
-    expect(telemetryTrack).toHaveBeenCalledWith('plan_resolved', {
-      outcome: 'approved',
-      chosen_option: 'Approach C',
+    // The policy passes the raw label through; the tool decides whether to surface it as a
+    // "Selected approach:" prefix (it does not, for an out-of-options label) and tracks
+    // plan_resolved after a successful handoff. The policy itself no longer tracks it.
+    expect(result).toMatchObject({
+      executionMetadata: { selectedLabel: 'Approach C', viaApproval: true },
     });
+    expect(telemetryTrack).not.toHaveBeenCalledWith('plan_resolved', expect.anything());
   });
 
   it('returns the exit failure when reject-and-exit cannot leave plan mode', async () => {
