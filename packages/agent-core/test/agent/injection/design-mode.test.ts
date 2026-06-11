@@ -267,7 +267,7 @@ describe('DesignModeInjector content', () => {
     stub.isActive = false;
     await injector.inject();
 
-    expect(lastReminder(agent)).toContain('Design mode is no longer active');
+    expect(lastReminder(agent)).toContain('Design mode was cancelled');
   });
 
   it('injects the handoff reminder (with design artifact) when a pending handoff for plan is set', async () => {

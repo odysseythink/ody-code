@@ -117,7 +117,7 @@ function indexStemFor(sessionModeFilePath: SessionModeFilePath): string {
 }
 
 function exitReminder(): string {
-  return `Design mode is no longer active. The design has been approved. STOP — do NOT begin implementing, writing, or editing code now. Your ONLY next action is to recommend the user run /plan to turn the approved design into a concrete implementation plan, then wait for them. Implementation happens after a plan is approved, not here.`;
+  return `Design mode was cancelled — no design was approved or handed off. Continue with normal operation.`;
 }
 
 function designToPlanHandoffReminder(content: string, path: string): string {

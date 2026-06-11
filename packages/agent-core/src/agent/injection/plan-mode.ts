@@ -121,7 +121,7 @@ function indexStemFor(sessionModeFilePath: SessionModeFilePath): string {
 }
 
 function exitReminder(): string {
-  return `Plan mode is no longer active. The read-only and plan-file-only restrictions from plan mode no longer apply. Continue with the approved plan using the normal tool and permission rules.`;
+  return `Plan mode was cancelled — no plan was approved or handed off. The read-only and plan-file-only restrictions no longer apply. Continue with normal operation.`;
 }
 
 function planToNormalHandoffReminder(content: string, path: string): string {

@@ -213,7 +213,7 @@ describe('PlanModeInjector content', () => {
     stub.isActive = false;
     await injector.inject();
 
-    expect(lastReminder(agent)).toContain('Plan mode is no longer active');
+    expect(lastReminder(agent)).toContain('Plan mode was cancelled');
   });
 
   it('injects the handoff reminder (with plan artifact) when a pending handoff for normal is set', async () => {

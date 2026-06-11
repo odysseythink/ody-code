@@ -609,7 +609,7 @@ describe('plan mode injection cadence', () => {
     ctx.agent.sessionMode.exit();
     await ctx.agent.injection.inject();
     const afterExit = ctx.agent.context.history.length;
-    expect(lastUserText(ctx.agent.context.history)).toContain('Plan mode is no longer active');
+    expect(lastUserText(ctx.agent.context.history)).toContain('Plan mode was cancelled');
 
     await ctx.agent.injection.inject();
     expect(ctx.agent.context.history).toHaveLength(afterExit);
