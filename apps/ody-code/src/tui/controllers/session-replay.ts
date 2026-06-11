@@ -272,6 +272,18 @@ export class SessionReplayRenderer {
       entries.push(replayEntry(context, 'assistant', trailing, 'markdown'));
     }
 
+    // Flush tool calls whose results never arrived (session ended mid-step).
+    for (const call of pendingCalls.values()) {
+      entries.push({
+        id: nextTranscriptId(),
+        kind: 'tool_call',
+        turnId: context.currentTurnId,
+        renderMode: 'plain',
+        content: call.name,
+        toolCallData: call,
+      });
+    }
+
     return entries;
   }
 

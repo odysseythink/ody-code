@@ -1389,10 +1389,17 @@ export class KimiTUI {
 
   private clearTranscriptAndRedraw(): void {
     this.streamingUI.discardPending();
-    // Reset entries — keep modeTranscriptEntries[activeMode] in sync.
-    this.state.transcriptEntries = [];
+    // Clear non-active mode containers so stale history from a previous session
+    // doesn't bleed through when the user switches modes after a session change.
+    for (const container of Object.values(this.state.modeContainers)) {
+      if (container !== this.state.transcriptContainer) container.clear();
+    }
+    // Reset ALL mode entry arrays, then re-link active mode to transcriptEntries.
     const activeMode = this.state.appState.sessionMode ?? 'normal';
-    this.state.modeTranscriptEntries[activeMode] = this.state.transcriptEntries;
+    const freshEntries: TranscriptEntry[] = [];
+    this.state.transcriptEntries = freshEntries;
+    this.state.modeTranscriptEntries = { normal: [], plan: [], design: [] };
+    this.state.modeTranscriptEntries[activeMode] = freshEntries;
     this.streamingUI.disposeActiveCompactionBlock();
     this.streamingUI.resetLiveText();
     this.streamingUI.resetToolUi();

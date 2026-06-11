@@ -35,8 +35,9 @@ export class ReplayBuilder {
   }
 
   buildResultForMode(mode: ModeKey): readonly AgentReplayRecord[] {
-    return this.records.filter(
-      (r) => r.type !== 'message' || (r as AgentReplayRecord & { mode?: string }).mode === mode,
-    );
+    return this.records.filter((r) => {
+      if (r.type !== 'message') return true;
+      return r.mode === mode;
+    });
   }
 }
