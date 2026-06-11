@@ -24,6 +24,8 @@ import {
   type TUIStartupState,
 } from './types';
 
+export { GutterContainer };
+
 export interface TUIState {
   ui: TUI;
   terminal: ProcessTerminal;
@@ -40,6 +42,10 @@ export interface TUIState {
   startupState: TUIStartupState;
   livePane: LivePaneState;
   transcriptEntries: TranscriptEntry[];
+  /** Per-mode entry arrays. `transcriptEntries` is always the same reference as `modeTranscriptEntries[activeMode]`. */
+  modeTranscriptEntries: Record<string, TranscriptEntry[]>;
+  /** Per-mode transcript containers. `transcriptContainer` is always the same reference as `modeContainers[activeMode]`. */
+  modeContainers: Record<string, GutterContainer>;
   terminalState: TerminalState;
   activitySpinner: { instance: MoonLoader; style: SpinnerStyle } | null;
   toolOutputExpanded: boolean;
@@ -70,6 +76,10 @@ export function createTUIState(options: KimiTUIOptions): TUIState {
     ui.requestRender();
   });
 
+  // Normal-mode entries share the same reference as transcriptEntries so that
+  // plain pushes to transcriptEntries are automatically tracked per-mode.
+  const normalEntries: TranscriptEntry[] = [];
+
   return {
     ui,
     terminal,
@@ -85,7 +95,13 @@ export function createTUIState(options: KimiTUIOptions): TUIState {
     appState: { ...initialAppState },
     startupState: 'pending',
     livePane: { ...INITIAL_LIVE_PANE },
-    transcriptEntries: [],
+    transcriptEntries: normalEntries,
+    modeTranscriptEntries: { normal: normalEntries, plan: [], design: [] },
+    modeContainers: {
+      normal: transcriptContainer,
+      plan: new GutterContainer(CHROME_GUTTER, CHROME_GUTTER),
+      design: new GutterContainer(CHROME_GUTTER, CHROME_GUTTER),
+    },
     terminalState: createTerminalState(),
     activitySpinner: null,
     toolOutputExpanded: false,

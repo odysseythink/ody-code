@@ -971,10 +971,15 @@ export class KimiTUI {
     if (!hasPatchChanges(this.state.appState, patch)) return;
     const busyChanged = 'streamingPhase' in patch || 'isCompacting' in patch;
     const modeChanged = 'sessionMode' in patch;
+    const oldMode = modeChanged ? (this.state.appState.sessionMode ?? 'normal') : '';
     Object.assign(this.state.appState, patch);
     if (modeChanged) {
       this.updateEditorBorderHighlight();
       this.setupAutocomplete();
+      const newMode = this.state.appState.sessionMode ?? 'normal';
+      if (!this.state.appState.isReplaying && newMode !== oldMode) {
+        this.switchModeTranscript(newMode);
+      }
     }
     this.state.footer.setState(this.state.appState);
     this.updateActivityPane();
@@ -1384,7 +1389,10 @@ export class KimiTUI {
 
   private clearTranscriptAndRedraw(): void {
     this.streamingUI.discardPending();
+    // Reset entries — keep modeTranscriptEntries[activeMode] in sync.
     this.state.transcriptEntries = [];
+    const activeMode = this.state.appState.sessionMode ?? 'normal';
+    this.state.modeTranscriptEntries[activeMode] = this.state.transcriptEntries;
     this.streamingUI.disposeActiveCompactionBlock();
     this.streamingUI.resetLiveText();
     this.streamingUI.resetToolUi();
@@ -1394,6 +1402,53 @@ export class KimiTUI {
     this.state.todoPanel.clear();
     this.state.todoPanelContainer.clear();
     this.imageStore.clear();
+    this.renderWelcome();
+  }
+
+  private switchModeTranscript(newMode: string): void {
+    this.streamingUI.discardPending();
+    this.streamingUI.disposeActiveCompactionBlock();
+    this.streamingUI.resetLiveText();
+    this.streamingUI.resetToolUi();
+    this.sessionEventHandler.stopAllMcpServerStatusSpinners();
+
+    // Ensure the new mode has a container.
+    let newContainer = this.state.modeContainers[newMode];
+    if (newContainer === undefined) {
+      newContainer = new GutterContainer(CHROME_GUTTER, CHROME_GUTTER);
+      this.state.modeContainers[newMode] = newContainer;
+    }
+
+    // Ensure the new mode has an entries array.
+    let newEntries = this.state.modeTranscriptEntries[newMode];
+    if (newEntries === undefined) {
+      newEntries = [];
+      this.state.modeTranscriptEntries[newMode] = newEntries;
+    }
+
+    // If the container is empty but we have cached entries (from session load),
+    // rebuild the visual components lazily now.
+    if (newContainer.children.length === 0 && newEntries.length > 0) {
+      for (const entry of newEntries) {
+        const component = this.createTranscriptComponent(entry);
+        if (component !== null) {
+          markTranscriptComponent(component, entry);
+          newContainer.addChild(component);
+        }
+      }
+    }
+
+    // Swap the transcript container in the UI tree (without clearing the layout).
+    const index = this.state.ui.children.indexOf(this.state.transcriptContainer);
+    if (index >= 0) {
+      this.state.ui.children[index] = newContainer;
+      this.state.ui.invalidate();
+    }
+
+    // Update active references so all subsequent appends go to the right place.
+    this.state.transcriptContainer = newContainer;
+    this.state.transcriptEntries = newEntries;
+
     this.renderWelcome();
   }
 

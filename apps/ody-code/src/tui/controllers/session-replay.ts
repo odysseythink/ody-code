@@ -8,12 +8,14 @@ import type {
   Session,
   ToolCall,
 } from '@odysseythink/kimi-code-sdk';
+import { nextTranscriptId } from '../utils/transcript-id';
 
 import { ToolCallComponent } from '../components/messages/tool-call';
 import type { TodoItem } from '../components/chrome/todo-panel';
 import type {
   AppState,
   BackgroundAgentMetadata,
+  ToolCallBlockData,
   ToolResultBlockData,
   TranscriptEntry,
 } from '../types';
@@ -158,12 +160,119 @@ export class SessionReplayRenderer {
   // ---------------------------------------------------------------------------
 
   private renderRecords(agent: ResumedAgentState): void {
-    const context = createReplayRenderContext();
-    for (const record of limitReplayRecordsByTurn(agent.replay, REPLAY_TURN_LIMIT)) {
-      this.renderRecord(context, record);
+    if (agent.replays !== undefined) {
+      const activeMode = agent.sessionMode?.kind ?? 'normal';
+
+      // Pre-populate non-active modes' entry caches (containers built lazily on first switch).
+      for (const [mode, records] of Object.entries(agent.replays)) {
+        if (mode === activeMode || records.length === 0) continue;
+        this.host.state.modeTranscriptEntries[mode] = this.buildHistoricalEntries(records);
+      }
+
+      // Full-fidelity render of the active mode.
+      const activeRecords = agent.replays[activeMode] ?? agent.replay;
+      const context = createReplayRenderContext();
+      for (const record of limitReplayRecordsByTurn(activeRecords, REPLAY_TURN_LIMIT)) {
+        this.renderRecord(context, record);
+      }
+      this.flushAssistant(context);
+      this.cleanupRuntime(context);
+    } else {
+      // Legacy fallback: single mixed replay (old sessions without per-mode records).
+      const context = createReplayRenderContext();
+      for (const record of limitReplayRecordsByTurn(agent.replay, REPLAY_TURN_LIMIT)) {
+        this.renderRecord(context, record);
+      }
+      this.flushAssistant(context);
+      this.cleanupRuntime(context);
     }
-    this.flushAssistant(context);
-    this.cleanupRuntime(context);
+  }
+
+  /** Simplified record-to-entry converter for non-active mode history.
+   *  Produces TranscriptEntry objects (including tool calls with results attached)
+   *  without touching streamingUI or the visible transcript container. */
+  private buildHistoricalEntries(records: readonly AgentReplayRecord[]): TranscriptEntry[] {
+    const entries: TranscriptEntry[] = [];
+    const context = createReplayRenderContext();
+    const pendingCalls = new Map<string, ToolCallBlockData>();
+
+    for (const record of limitReplayRecordsByTurn(records, REPLAY_TURN_LIMIT)) {
+      if (record.type !== 'message') continue;
+      const { message } = record;
+
+      switch (message.role) {
+        case 'user': {
+          if (
+            message.origin?.kind === 'injection' ||
+            message.origin?.kind === 'background_task'
+          ) break;
+          // Flush pending assistant text.
+          const text = context.assistant.text.join('');
+          context.assistant = { thinking: [], text: [] };
+          if (text.length > 0) {
+            entries.push(replayEntry(context, 'assistant', text, 'markdown'));
+          }
+          if (skillActivationFromOrigin(message.origin) !== undefined) break;
+          // Advance turn counter.
+          context.turnIndex += 1;
+          context.currentTurnId = `replay:${String(context.turnIndex)}`;
+          entries.push(replayEntry(context, 'user', contentPartsToText(message.content), 'plain'));
+          break;
+        }
+        case 'assistant': {
+          // Flush any accumulated text first.
+          const prev = context.assistant.text.join('');
+          context.assistant = { thinking: [], text: [] };
+          if (prev.length > 0) {
+            entries.push(replayEntry(context, 'assistant', prev, 'markdown'));
+          }
+          collectReplayMessageContent(context.assistant, message.content);
+          const text = context.assistant.text.join('');
+          context.assistant = { thinking: [], text: [] };
+          if (text.length > 0) {
+            entries.push(replayEntry(context, 'assistant', text, 'markdown'));
+          }
+          // Register tool calls so their results can be attached later.
+          context.stepIndex += 1;
+          for (const rawCall of message.toolCalls) {
+            const call = toolCallFromReplayMessage(rawCall, context);
+            if (call !== undefined) pendingCalls.set(call.id, call);
+          }
+          break;
+        }
+        case 'tool': {
+          const toolCallId = message.toolCallId;
+          if (toolCallId === undefined) break;
+          const call = pendingCalls.get(toolCallId);
+          if (call === undefined) break;
+          call.result = {
+            tool_call_id: toolCallId,
+            output: toolResultOutput(message.content),
+            is_error: message.isError,
+          };
+          entries.push({
+            id: nextTranscriptId(),
+            kind: 'tool_call',
+            turnId: context.currentTurnId,
+            renderMode: 'plain',
+            content: call.name,
+            toolCallData: call,
+          });
+          pendingCalls.delete(toolCallId);
+          break;
+        }
+        default:
+          break;
+      }
+    }
+
+    // Flush any trailing assistant text.
+    const trailing = context.assistant.text.join('');
+    if (trailing.length > 0) {
+      entries.push(replayEntry(context, 'assistant', trailing, 'markdown'));
+    }
+
+    return entries;
   }
 
   private renderRecord(context: ReplayRenderContext, record: AgentReplayRecord): void {

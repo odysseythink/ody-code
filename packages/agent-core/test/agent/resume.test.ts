@@ -313,14 +313,16 @@ describe('Agent resume', () => {
 
     await ctx.agent.resume();
 
-    expect(ctx.agent.replayBuilder.buildResult()).toContainEqual({
-      type: 'message',
-      message: expect.objectContaining({
-        role: 'tool',
-        toolCallId: 'call_failed_bash',
-        isError: true,
+    expect(ctx.agent.replayBuilder.buildResult()).toContainEqual(
+      expect.objectContaining({
+        type: 'message',
+        message: expect.objectContaining({
+          role: 'tool',
+          toolCallId: 'call_failed_bash',
+          isError: true,
+        }),
       }),
-    });
+    );
   });
 
   it('removes replay messages matching undone history', async () => {

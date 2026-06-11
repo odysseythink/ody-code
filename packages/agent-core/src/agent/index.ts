@@ -246,6 +246,7 @@ export class Agent {
         this._contexts[this._activeMode].resetRuntimeState();
       }
       this._activeMode = mode;
+      this.replayBuilder.setMode(mode);
       this._pendingContextSwitch = null;
     }
   }
@@ -255,6 +256,7 @@ export class Agent {
   flushDeferredContextSwitch(): void {
     if (this._pendingContextSwitch !== null) {
       this._activeMode = this._pendingContextSwitch;
+      this.replayBuilder.setMode(this._pendingContextSwitch);
       this._pendingContextSwitch = null;
     }
   }

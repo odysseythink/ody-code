@@ -907,6 +907,11 @@ async function resumeSessionResult(
       config,
       context,
       replay: agent.replayBuilder.buildResult(),
+      replays: {
+        normal: agent.replayBuilder.buildResultForMode('normal'),
+        plan: agent.replayBuilder.buildResultForMode('plan'),
+        design: agent.replayBuilder.buildResultForMode('design'),
+      },
       permission,
       sessionMode,
       usage,

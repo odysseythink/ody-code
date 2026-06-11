@@ -1,15 +1,22 @@
-import type { Agent } from '..';
+import type { Agent, ModeKey } from '..';
 import type { AgentReplayRecord } from '../..';
 import type { ContextMessage } from '../context';
 
 export class ReplayBuilder {
   protected readonly records: AgentReplayRecord[] = [];
+  private _mode: ModeKey = 'normal';
 
   constructor(public readonly agent: Agent) {}
 
+  setMode(mode: ModeKey): void {
+    this._mode = mode;
+  }
+
   push(record: AgentReplayRecord): void {
     if (this.agent.records.restoring) {
-      this.records.push(record);
+      const tagged: AgentReplayRecord =
+        record.type === 'message' ? { ...record, mode: this._mode } : record;
+      this.records.push(tagged);
     }
   }
 
@@ -25,5 +32,11 @@ export class ReplayBuilder {
 
   buildResult(): readonly AgentReplayRecord[] {
     return this.records;
+  }
+
+  buildResultForMode(mode: ModeKey): readonly AgentReplayRecord[] {
+    return this.records.filter(
+      (r) => r.type !== 'message' || (r as AgentReplayRecord & { mode?: string }).mode === mode,
+    );
   }
 }

@@ -14,7 +14,7 @@ import type { UsageStatus } from '#/rpc/events';
 import type { SessionMeta } from '#/session';
 
 export type AgentReplayRecord =
-  | { type: 'message'; message: ContextMessage }
+  | { type: 'message'; message: ContextMessage; mode?: string }
   | { type: 'session_mode_updated'; enabled: boolean; kind?: SessionModeKind }
   | { type: 'config_updated'; config: AgentConfigUpdateData }
   | { type: 'permission_updated'; mode: PermissionMode }
@@ -25,6 +25,7 @@ export interface ResumedAgentState {
   readonly config: AgentConfigData;
   readonly context: AgentContextData;
   readonly replay: readonly AgentReplayRecord[];
+  readonly replays?: Readonly<Record<string, readonly AgentReplayRecord[]>>;
   readonly permission: PermissionData;
   readonly sessionMode: SessionModeData;
   readonly usage: UsageStatus;
