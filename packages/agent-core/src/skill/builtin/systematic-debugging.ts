@@ -18,5 +18,6 @@ export const SYSTEMATIC_DEBUGGING_SKILL: SkillDefinition = {
   metadata: {
     ...parsed.metadata,
     type: parsed.metadata.type ?? 'inline',
+    hiddenInModes: ['plan', 'design'],
   },
 };
