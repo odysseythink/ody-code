@@ -122,7 +122,14 @@ describe('manual plan entry', () => {
     await delay(10);
     expect(ctx.agent.sessionMode.isActive).toBe(true);
     expect(ctx.llmCalls).toHaveLength(2);
-    expect(toolResultText(ctx.llmCalls[1]!.history)).toContain('Plan mode is now active');
+    // The EnterPlanMode tool runs mid-turn, so the context switch is deferred to
+    // step end: its call + entry-message result stay WHOLE in the normal partition
+    // and must not orphan into the freshly-entered plan partition (an orphaned
+    // tool_call_id would make the next plan-mode request fail with a 400).
+    expect(toolResultText(ctx.agent.contexts.normal.history)).toContain('Plan mode is now active');
+    expect(ctx.agent.contexts.plan.history.some((message) => message.role === 'tool')).toBe(false);
+    // The next (plan-mode) step is reminded that plan mode is active.
+    expect(lastUserText(ctx.llmCalls[1]!.history)).toContain('Plan mode is active');
     await ctx.expectResumeMatches();
   });
 });

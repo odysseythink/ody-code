@@ -793,26 +793,96 @@ describe('ContextMemory.resetRuntimeState', () => {
     expect(ctx.agent.context.hasOpenSteps()).toBe(false);
   });
 
-  it('setContextMode cancels deferred switch and clears old partition runtime state', () => {
+  it('defers a mode switch made while a step is open until the step ends', () => {
     const ctx = testAgent();
     ctx.configure();
 
-    // Open a step in normal partition
+    // Open a step in the active (normal) partition — we are mid tool-exchange.
     ctx.dispatch({
       type: 'context.append_loop_event',
       event: { type: 'step.begin', uuid: 'step-1', turnId: '', step: 1 },
     });
     expect(ctx.agent.contexts.normal.hasOpenSteps()).toBe(true);
 
-    // Switching to 'normal' while step is open should defer
+    // A handoff-style exit()+enter('plan') pair while the step is open. Both
+    // calls defer; the second just updates the deferred target to 'plan'.
     ctx.agent.setContextMode('normal');
-    // Still pointing to normal (was already normal), deferred is set
-    // Now switch to 'plan' — should cancel the pending switch and clear normal's runtime state
     ctx.agent.setContextMode('plan');
 
-    // normal partition's openSteps cleared
-    expect(ctx.agent.contexts.normal.hasOpenSteps()).toBe(false);
-    // active partition is now plan
+    // The switch has NOT applied yet: still on normal, step still open, so the
+    // in-flight tool's result will land in normal alongside its call.
+    expect(ctx.agent.context).toBe(ctx.agent.contexts.normal);
+    expect(ctx.agent.contexts.normal.hasOpenSteps()).toBe(true);
+
+    // The deferred switch (to the final target, plan) applies at step end.
+    ctx.agent.flushDeferredContextSwitch();
+    expect(ctx.agent.context).toBe(ctx.agent.contexts.plan);
+  });
+
+  // Regression: a design→plan handoff (ExitDesignMode → handoffTo('plan'), which
+  // calls exit() then enter('plan')) used to switch the active partition to plan
+  // mid tool-exchange, so the ExitDesignMode tool RESULT landed in the plan
+  // partition while its tool CALL stayed in design — an orphaned tool_call_id that
+  // made the next plan-mode request fail with "400 tool_call_id is not found".
+  it('keeps the ExitDesignMode tool exchange whole across a design→plan handoff', () => {
+    const ctx = testAgent();
+    ctx.configure();
+
+    // Enter design via a slash command (no open step) → immediate, clean switch.
+    ctx.agent.setContextMode('design');
+    expect(ctx.agent.context).toBe(ctx.agent.contexts.design);
+
+    const stepUuid = 'exit-design-step';
+    const callId = 'call_exit_design';
+
+    ctx.dispatch({
+      type: 'context.append_loop_event',
+      event: { type: 'step.begin', uuid: stepUuid, turnId: '0', step: 1 },
+    });
+    ctx.dispatch({
+      type: 'context.append_loop_event',
+      event: {
+        type: 'tool.call',
+        uuid: callId,
+        turnId: '0',
+        step: 1,
+        stepUuid,
+        toolCallId: callId,
+        name: 'ExitDesignMode',
+        args: {},
+      },
+    });
+
+    // ExitDesignMode.execute() runs handoffTo('plan'): exit() then enter('plan').
+    // Both defer because the design partition still has an open step.
+    ctx.agent.setContextMode('normal');
+    ctx.agent.setContextMode('plan');
+
+    // The tool result is emitted while still in design — it lands beside its call.
+    ctx.dispatch({
+      type: 'context.append_loop_event',
+      event: {
+        type: 'tool.result',
+        parentUuid: callId,
+        toolCallId: callId,
+        result: { output: 'Exited design mode.' },
+      },
+    });
+
+    // Step ends → the deferred switch to plan applies.
+    ctx.dispatch({
+      type: 'context.append_loop_event',
+      event: { type: 'step.end', uuid: stepUuid, turnId: '0', step: 1, finishReason: 'tool_use' },
+    });
+
+    // The design partition holds a COMPLETE assistant(tool call) + tool(result) pair.
+    const designRoles = ctx.agent.contexts.design.history.map((m) => m.role);
+    expect(designRoles).toEqual(['assistant', 'tool']);
+    expect(ctx.agent.contexts.design.history[0]?.toolCalls.map((tc) => tc.id)).toEqual([callId]);
+    expect(ctx.agent.contexts.design.history[1]?.toolCallId).toBe(callId);
+
+    // The plan partition is clean — no orphaned tool result at its head.
+    expect(ctx.agent.contexts.plan.history).toEqual([]);
     expect(ctx.agent.context).toBe(ctx.agent.contexts.plan);
   });
 });

@@ -236,25 +236,26 @@ export class Agent {
   }
 
   /** Switch the active context partition. Called by SessionMode on enter/exit/cancel.
-   * When switching back to normal while the current partition has an open step
-   * (mid tool-exchange on an exit), the switch is deferred until step.end so all
-   * events in the exchange route to the same partition. Entering a new mode
-   * (plan/design) is always applied immediately. */
+   * When the active partition has an open step we are mid tool-exchange (an
+   * Enter/Exit mode tool is executing). Defer the switch until step.end so the tool's
+   * assistant message, its tool call, AND its tool result all land in the SAME
+   * (current) partition — otherwise the result orphans from its call and the
+   * provider rejects the next request with "tool_call_id is not found".
+   *
+   * This applies to EVERY target mode, not just normal: a design→plan handoff
+   * (ExitDesignMode → handoffTo('plan') → exit() then enter('plan')) must defer
+   * exactly like a plan→normal exit. handoffTo's two setContextMode calls simply
+   * update the deferred target; the actual switch happens once at step.end. Entry
+   * via a /plan or /design slash command runs outside any tool exchange (no open
+   * step) and so still switches immediately. */
   setContextMode(mode: ModeKey): void {
-    if (mode === 'normal' && this._contexts[this._activeMode].hasOpenSteps()) {
+    if (this._contexts[this._activeMode].hasOpenSteps()) {
       this._pendingContextSwitch = mode;
-    } else {
-      if (this._pendingContextSwitch !== null) {
-        // A pending return-to-normal is being cancelled by entering a new mode.
-        // The old partition's open-step / tool-exchange tracking is now orphaned
-        // (those events will route to the new partition). Clear it so the old
-        // partition starts clean if re-entered later in the same live session.
-        this._contexts[this._activeMode].resetRuntimeState();
-      }
-      this._activeMode = mode;
-      this.replayBuilder.setMode(mode);
-      this._pendingContextSwitch = null;
+      return;
     }
+    this._activeMode = mode;
+    this.replayBuilder.setMode(mode);
+    this._pendingContextSwitch = null;
   }
 
   /** Apply any pending context partition switch. Called from step.end and as a
