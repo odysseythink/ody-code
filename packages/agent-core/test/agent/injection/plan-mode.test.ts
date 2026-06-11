@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import type { Agent } from '../../../src/agent';
 import { PlanModeInjector } from '../../../src/agent/injection/plan-mode';
 import {
+  countManifestRows,
   parseManifestFiles,
   parsePartsManifest,
   planModeEntryMessage,
@@ -391,6 +392,32 @@ describe('parseManifestFiles', () => {
       ].join('\n'),
     );
     expect(files).toEqual(['plan-core.md', 'plan-api.md']);
+  });
+});
+
+describe('countManifestRows', () => {
+  it('returns null when there is no manifest table', () => {
+    expect(countManifestRows('# A plan\n\njust prose, no table')).toBeNull();
+  });
+
+  it('counts done and pending rows, ignoring header/separator rows', () => {
+    const counts = countManifestRows(
+      [
+        '| # | File | Scope | Status |',
+        '|---|---|---|---|',
+        '| 1 | dir/plan-core.md | models | done |',
+        '| 2 | dir/plan-api.md | endpoints | done |',
+        '| 3 | dir/plan-ui.md | ui | pending |',
+      ].join('\n'),
+    );
+    expect(counts).toEqual({ done: 2, pending: 1 });
+  });
+
+  it('reports zero pending when every row is done', () => {
+    const counts = countManifestRows(
+      ['| 1 | plan-core.md | x | done |', '| 2 | plan-api.md | y | done |'].join('\n'),
+    );
+    expect(counts).toEqual({ done: 2, pending: 0 });
   });
 });
 

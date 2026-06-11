@@ -460,6 +460,40 @@ describe('FullCompaction', () => {
     });
   });
 
+  it('compactCheckpoint performs a blocking compaction of the prefix', async () => {
+    const ctx = testAgent();
+    ctx.configure({
+      provider: CATALOGUED_PROVIDER,
+      modelCapabilities: CATALOGUED_MODEL_CAPABILITIES,
+    });
+    ctx.appendExchange(1, 'old user one', 'old assistant one', 20);
+    ctx.appendExchange(2, 'old user two', 'old assistant two', 40);
+    ctx.appendExchange(3, 'recent user three', 'recent assistant three', 120);
+    const compacted = ctx.once('context.apply_compaction');
+
+    ctx.mockNextResponse({ type: 'text', text: 'Compacted summary.' });
+    await ctx.agent.fullCompaction.compactCheckpoint(new AbortController().signal);
+    await compacted;
+
+    expect(ctx.agent.fullCompaction.isCompacting).toBe(false);
+    expect(ctx.agent.fullCompaction.compactedHistory.length).toBe(1);
+  });
+
+  it('compactCheckpoint is a no-op (no throw) when nothing is compactable', async () => {
+    const ctx = testAgent();
+    ctx.configure({
+      provider: CATALOGUED_PROVIDER,
+      modelCapabilities: CATALOGUED_MODEL_CAPABILITIES,
+    });
+    // No appended exchanges → empty history → computeCompactCount is 0, which makes
+    // begin() throw COMPACTION_UNABLE. The checkpoint must swallow it, not abort.
+    await expect(
+      ctx.agent.fullCompaction.compactCheckpoint(new AbortController().signal),
+    ).resolves.toBeUndefined();
+    expect(ctx.agent.fullCompaction.isCompacting).toBe(false);
+    expect(ctx.agent.fullCompaction.compactedHistory.length).toBe(0);
+  });
+
   it('cancels while waiting for a PreCompact hook', async () => {
     let preCompactSignal: AbortSignal | undefined;
     const trigger = vi.fn(async (_event: string, args?: HookEngineTriggerArgs) => {

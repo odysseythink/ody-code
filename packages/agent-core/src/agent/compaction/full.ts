@@ -180,6 +180,35 @@ export class FullCompaction {
     }
   }
 
+  /**
+   * Block-compact now at a safe checkpoint (e.g. a split-plan part boundary). The
+   * caller decides the threshold; this only starts a compaction and waits for it.
+   * Reuses {@link beginAutoCompaction} so the per-turn compaction budget and
+   * partition wiring match global auto-compaction.
+   *
+   * Best-effort: a no-op when nothing is compactable, or when the per-turn budget
+   * (`maxCompactionPerTurn`) is exhausted. Note the budget is cumulative across a
+   * turn, so during a continuous multi-part auto-continue (one turn for all parts)
+   * later boundaries may no-op once the cap is reached — the global blocking
+   * compaction remains the overflow backstop.
+   */
+  async compactCheckpoint(signal: AbortSignal): Promise<void> {
+    if (this.compacting) {
+      await this.block(signal);
+      return;
+    }
+    let started: boolean;
+    try {
+      started = this.beginAutoCompaction(false);
+    } catch (error) {
+      // "Nothing compactable yet" must never abort the turn — this checkpoint fires
+      // below the global threshold, so it is the first caller that can hit this.
+      if (isKimiError(error) && error.code === ErrorCodes.COMPACTION_UNABLE) return;
+      throw error;
+    }
+    if (started) await this.block(signal);
+  }
+
   async afterStep(): Promise<void> {
     if (this.strategy.checkAfterStep) {
       this.checkAutoCompaction(false);

@@ -587,6 +587,7 @@ export class TurnFlow {
               this.flushSteerBuffer();
               this.agent.microCompaction.detect();
               await this.agent.fullCompaction.beforeStep(stepSignal);
+              await this.agent.splitPlanCheckpoint.beforeStep(stepSignal);
               await this.agent.injection.inject();
               deduper.beginStep();
               return;

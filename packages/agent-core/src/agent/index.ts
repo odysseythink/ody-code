@@ -31,6 +31,7 @@ import { BackgroundManager, BackgroundTaskPersistence } from './background';
 import {
   FullCompaction,
   MicroCompaction,
+  SplitPlanCheckpoint,
   type CompactionStrategy,
   type MicroCompactionConfig,
 } from './compaction';
@@ -126,6 +127,10 @@ export class Agent {
   private readonly _contexts: Record<ModeKey, ContextMemory>;
   private readonly _fullCompactions: Record<ModeKey, FullCompaction>;
   private readonly _microCompactions: Record<ModeKey, MicroCompaction>;
+  /** Detects split-plan/design part boundaries and compacts there when context is
+   * over the configured ratio. Current-mode-aware via its agent getters, so one
+   * instance serves all partitions. */
+  readonly splitPlanCheckpoint: SplitPlanCheckpoint;
   private _activeMode: ModeKey = 'normal';
   // When setContextMode is called while the current partition has an open step
   // (mid tool-exchange), we defer the switch so the tool.call / tool.result
@@ -193,6 +198,7 @@ export class Agent {
       plan: new MicroCompaction(this, options.microCompaction),
       design: new MicroCompaction(this, options.microCompaction),
     };
+    this.splitPlanCheckpoint = new SplitPlanCheckpoint(this);
     this.config = new ConfigState(this);
     this.turn = new TurnFlow(this);
     this.injection = new InjectionManager(this);
@@ -484,6 +490,7 @@ export class Agent {
       },
       clearContext: () => {
         this.context.clear();
+        this.splitPlanCheckpoint.reset();
       },
       activateSkill: (payload) => {
         if (this.skills === null) {

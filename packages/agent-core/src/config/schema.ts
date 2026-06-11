@@ -92,6 +92,7 @@ export const LoopControlSchema = z.object({
   maxRalphIterations: z.number().int().min(-1).optional(),
   reservedContextSize: z.number().int().min(0).optional(),
   compactionTriggerRatio: z.number().min(0.5).max(0.99).optional(),
+  splitPlanCompactionRatio: z.number().min(0).max(0.95).optional(),
 });
 
 export type LoopControl = z.infer<typeof LoopControlSchema>;

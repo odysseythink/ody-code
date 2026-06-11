@@ -170,8 +170,10 @@ export function planModeEntryMessage(sessionModeFilePath: SessionModeFilePath): 
 // the same module. Re-exported here so existing plan-mode import sites
 // (PlanModeInjector, tests, review gathering) keep their import path unchanged.
 export {
+  type ManifestCounts,
   type ManifestPart,
   type PartsManifest,
+  countManifestRows,
   parseManifestFiles,
   parsePartsManifest,
 } from './parts-manifest';
