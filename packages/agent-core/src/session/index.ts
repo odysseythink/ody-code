@@ -39,6 +39,7 @@ import {
 } from '../skill';
 import { noopTelemetryClient, type TelemetryClient } from '../telemetry';
 import { SessionSubagentHost } from './subagent-host';
+import { verifyAndRestoreResumedSession } from './checkpoint/resume';
 import type { ToolServices } from '../tools/support/services';
 
 export interface SessionOptions {
@@ -207,8 +208,15 @@ export class Session {
     if (main !== undefined && profile !== undefined && main.config.systemPrompt === '') {
       await this.bootstrapAgentProfile(main, profile);
     }
+
+    // Run checkpoint integrity verification after the wire log has been replayed.
+    const checkpointResult = await verifyAndRestoreResumedSession(this, { logger: this.log });
+    if (checkpointResult.warning !== undefined && resumeWarning === undefined) {
+      warning = checkpointResult.warning;
+    }
+
     await this.triggerSessionStart('resume');
-    return { warning: resumeWarning };
+    return { warning };
   }
 
   async close(): Promise<void> {
