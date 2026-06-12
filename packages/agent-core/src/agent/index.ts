@@ -44,6 +44,7 @@ import { HookEngine } from '../session/hooks';
 import { parseManifestFiles } from './injection/plan-mode-contract';
 import { AdvancedSessionReviewer, shouldEscalate } from './session-mode/reviewer';
 import { InjectionManager } from './injection/manager';
+import type { CheckpointCoordinator } from '../session/checkpoint/coordinator';
 import { PermissionManager, type PermissionManagerOptions } from './permission';
 import { SessionMode } from './session-mode';
 import {
@@ -151,6 +152,7 @@ export class Agent {
   readonly background: BackgroundManager;
   readonly cron: CronManager | null;
   readonly replayBuilder: ReplayBuilder;
+  checkpointCoordinator?: CheckpointCoordinator;
 
   private lastLlmConfigLogSignature?: string;
 

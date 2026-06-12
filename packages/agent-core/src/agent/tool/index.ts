@@ -437,6 +437,7 @@ export class ToolManager {
           new b.UpdateGoalTool(this.agent),
         this.agent.rpc?.requestQuestion && new b.AskUserQuestionTool(this.agent),
         new b.TodoListTool(this.toolStore),
+        this.agent.type === 'main' && new b.CheckpointTool(this.agent),
         new b.TaskListTool(background),
         new b.TaskOutputTool(background),
         new b.TaskStopTool(background),

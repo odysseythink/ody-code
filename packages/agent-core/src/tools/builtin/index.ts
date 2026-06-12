@@ -22,6 +22,7 @@ export * from './planning/enter-plan-mode';
 export * from './planning/exit-design-mode';
 export * from './planning/exit-plan-mode';
 export * from './shell/bash';
+export * from './state/checkpoint';
 export * from './state/todo-list';
 export * from './visual/show-design-mockup';
 export * from './web/fetch-url';

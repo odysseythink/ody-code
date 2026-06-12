@@ -40,6 +40,10 @@ import {
 import { noopTelemetryClient, type TelemetryClient } from '../telemetry';
 import { SessionSubagentHost } from './subagent-host';
 import { verifyAndRestoreResumedSession } from './checkpoint/resume';
+import { CheckpointCoordinator } from './checkpoint/coordinator';
+import { SessionCheckpoint } from './checkpoint/checkpoint';
+import { CheckpointIndex } from './checkpoint/checkpoint-index';
+import { SessionMarkdownExport } from './export/markdown-export';
 import type { ToolServices } from '../tools/support/services';
 
 export interface SessionOptions {
@@ -172,10 +176,28 @@ export class Session {
 
   async createMain() {
     const { agent } = await this.createAgent({ type: 'main' }, DEFAULT_AGENT_PROFILES['agent']);
+    this.attachCheckpointCoordinator(agent);
     // The main-agent audit sink now exists; flush any goal records queued before it.
     this.goals.flushPendingRecords();
     await this.triggerSessionStart('startup');
     return agent;
+  }
+
+  private attachCheckpointCoordinator(agent: Agent): void {
+    if (this.options.id === undefined) return;
+
+    const stateDir = join(this.options.homedir, '.ody-code', 'session-state');
+    const coordinator = new CheckpointCoordinator({
+      session: this,
+      checkpoint: new SessionCheckpoint({ checkpointPath: join(stateDir, 'session.json') }),
+      index: new CheckpointIndex({ indexPath: join(stateDir, 'checkpoints.json') }),
+      markdownExport: new SessionMarkdownExport({
+        filePath: join(this.options.homedir, '.ody-code', 'session-exports', `${this.options.id}.md`),
+      }),
+      logger: this.log,
+    });
+    coordinator.attachAgent(agent);
+    agent.checkpointCoordinator = coordinator;
   }
 
   async resume(): Promise<{ warning?: string }> {
@@ -207,6 +229,11 @@ export class Session {
     const profile = DEFAULT_AGENT_PROFILES['agent'];
     if (main !== undefined && profile !== undefined && main.config.systemPrompt === '') {
       await this.bootstrapAgentProfile(main, profile);
+    }
+
+    // Re-attach the checkpoint coordinator so the manual /checkpoint tool works.
+    if (main !== undefined) {
+      this.attachCheckpointCoordinator(main);
     }
 
     // Run checkpoint integrity verification after the wire log has been replayed.
