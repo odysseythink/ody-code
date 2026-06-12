@@ -41,7 +41,7 @@ export class DesignModeInjector extends DynamicInjector {
       this.injectedAt = null;
       const handoff = this.agent.sessionMode.consumePendingHandoffForPlan();
       if (handoff !== null) {
-        return designToPlanHandoffReminder(handoff.content, handoff.path);
+        return designToPlanHandoffReminder(handoff.path, handoff.filename, handoff.selectedLabel);
       }
       return exitReminder();
     }
@@ -120,9 +120,17 @@ function exitReminder(): string {
   return `Design mode was cancelled — no design was approved or handed off. Continue with normal operation.`;
 }
 
-function designToPlanHandoffReminder(content: string, path: string): string {
+function designToPlanHandoffReminder(
+  path: string,
+  filename: string,
+  selectedLabel?: string,
+): string {
   const savedTo = path ? `Design saved to: ${path}\n\n` : '';
-  return `Design mode completed. The approved design has been handed off — you are now in plan mode.\n\n${savedTo}## Approved Design\n\n${content}\n\nCreate a concrete, step-by-step implementation plan based on the approved design above. Do not implement anything yet.`;
+  const selectedLabelPrefix =
+    selectedLabel !== undefined && selectedLabel.length > 0
+      ? `Selected approach: ${selectedLabel}. Execute ONLY the selected approach; do not execute any unselected alternatives.\n\n`
+      : '';
+  return `Design mode completed. The approved design has been handed off — you are now in plan mode.\n\n${savedTo}${selectedLabelPrefix}Create a concrete, step-by-step implementation plan based on the approved design in \`${filename}\`. Do not implement anything yet.`;
 }
 
 function appendSkillsReminder(body: string, reminder: string): string {

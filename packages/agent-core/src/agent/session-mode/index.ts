@@ -35,7 +35,11 @@ export class SessionMode {
   protected _kind: SessionModeKind = 'plan';
   private _preModeModelAlias: { value: string | undefined } | null = null;
   private _lastCompletedDesignFilePath: string | null = null;
-  private _pendingHandoffForPlan: { content: string; path: string } | null = null;
+  private _pendingHandoffForPlan: {
+    path: string;
+    filename: string;
+    selectedLabel?: string;
+  } | null = null;
   private _pendingHandoffForNormal: {
     content: string;
     path: string;
@@ -249,7 +253,11 @@ export class SessionMode {
   }
 
   /** Consume and return the pending design→plan handoff artifact (if any). */
-  consumePendingHandoffForPlan(): { content: string; path: string } | null {
+  consumePendingHandoffForPlan(): {
+    path: string;
+    filename: string;
+    selectedLabel?: string;
+  } | null {
     const p = this._pendingHandoffForPlan;
     this._pendingHandoffForPlan = null;
     return p;
@@ -280,21 +288,29 @@ export class SessionMode {
     opts?: { selectedLabel?: string },
   ): Promise<void> {
     const data = await this.data();
-    const artifact =
-      data !== null && data.content.trim().length > 0
-        ? { content: data.content, path: data.path }
-        : null;
 
     if (target === 'plan') {
+      const artifact =
+        data !== null && data.path.length > 0
+          ? {
+              path: data.path,
+              filename: basename(data.path),
+              selectedLabel: opts?.selectedLabel,
+            }
+          : null;
       this._pendingHandoffForPlan = artifact;
       this.exit();
       try {
         await this.enter(this.createSessionModeId(), false, true, 'plan');
       } catch (error) {
-        this._pendingHandoffForPlan = null;  // prevent ghost injection on next turn
+        this._pendingHandoffForPlan = null; // prevent ghost injection on next turn
         throw error;
       }
     } else {
+      const artifact =
+        data !== null && data.content.trim().length > 0
+          ? { content: data.content, path: data.path }
+          : null;
       // The plan→normal tool result stays in the plan partition (deferred context
       // switch), so the selected approach is carried into normal via the injection.
       const selectedLabel = opts?.selectedLabel;
