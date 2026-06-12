@@ -45,6 +45,29 @@ describe('Agent context', () => {
     const ctx = testAgent();
     ctx.configure();
 
+    // A real exchange: an assistant step that issues both tool calls, then their
+    // results. The calls must exist for the results to survive projection (the
+    // orphan-tool-result guard drops results whose call is absent).
+    const stepUuid = 'render-step';
+    ctx.dispatch({
+      type: 'context.append_loop_event',
+      event: { type: 'step.begin', uuid: stepUuid, turnId: '0', step: 1 },
+    });
+    for (const callId of ['call_error', 'call_empty']) {
+      ctx.dispatch({
+        type: 'context.append_loop_event',
+        event: {
+          type: 'tool.call',
+          uuid: callId,
+          turnId: '0',
+          step: 1,
+          stepUuid,
+          toolCallId: callId,
+          name: 'SomeTool',
+          args: {},
+        },
+      });
+    }
     ctx.dispatch({
       type: 'context.append_loop_event',
       event: {
@@ -64,7 +87,11 @@ describe('Agent context', () => {
       },
     });
 
-    expect(ctx.agent.context.messages).toMatchObject([
+    // The assistant message (with both calls) leads, then the two results — the
+    // orphan guard keeps the exchange whole and in order.
+    expect(ctx.agent.context.messages.map((m) => m.role)).toEqual(['assistant', 'tool', 'tool']);
+    const toolMessages = ctx.agent.context.messages.filter((m) => m.role === 'tool');
+    expect(toolMessages).toMatchObject([
       {
         role: 'tool',
         content: [

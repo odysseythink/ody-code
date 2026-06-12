@@ -5,7 +5,7 @@ import { ErrorCodes, KimiError } from '../../errors';
 import type { ExecutableToolResult, LoopRecordedEvent } from '../../loop';
 import { estimateTokensForMessages } from '../../utils/tokens';
 import type { CompactionResult } from '../compaction';
-import { project } from './projector';
+import { dropOrphanToolResults, project } from './projector';
 import {
   USER_PROMPT_ORIGIN,
   type AgentContextData,
@@ -172,7 +172,12 @@ export class ContextMemory {
   }
 
   get messages(): Message[] {
-    return this.project(this.history);
+    // dropOrphanToolResults runs ONLY here, on the full projected history — the
+    // actual send boundary — never inside project() (which is also used on
+    // sub-slices). This heals histories where a tool result lost its call to a
+    // partition-routing bug, which the provider would reject with
+    // "400 tool_call_id is not found".
+    return dropOrphanToolResults(this.project(this.history));
   }
 
   appendLoopEvent(event: LoopRecordedEvent): void {
