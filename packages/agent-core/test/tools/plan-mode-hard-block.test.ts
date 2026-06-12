@@ -17,10 +17,11 @@ const signal = new AbortController().signal;
 async function activePlanAgent(): Promise<{ agent: Agent; sessionMode: SessionMode }> {
   const agent = {
     homedir: '/tmp/kimi-plan-test',
-    config: { cwd: '/tmp/kimi-plan-test' },
+    config: { cwd: '/tmp/kimi-plan-test', update: vi.fn() },
     emitStatusUpdated: vi.fn(),
     records: { logRecord: vi.fn() },
     replayBuilder: { push: vi.fn() },
+    setContextMode: vi.fn(),
     kaos: {
       mkdir: vi.fn().mockResolvedValue(undefined),
     },

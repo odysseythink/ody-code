@@ -128,7 +128,7 @@ describe('WebSearchTool', () => {
     expect(toolContentString(result)).toContain('No search results found');
   });
 
-  it('truncates oversized result content through the shared builder', async () => {
+  it('returns oversized result content without line-length truncation', async () => {
     const tool = new WebSearchTool(
       fakeProvider([
         {
@@ -149,10 +149,8 @@ describe('WebSearchTool', () => {
 
     const content = toolContentString(result);
     expect(result.isError).toBe(false);
-    expect(content).toContain('[...truncated]');
-    expect(content).toContain('Output is truncated');
-    expect(content.length).toBeLessThan(60_000);
-    expect((result as { message?: string }).message).toContain('Output is truncated');
+    expect(content).toContain('x'.repeat(60_000));
+    expect(content.length).toBeGreaterThanOrEqual(60_000);
   });
 
   it('returns error when provider throws', async () => {

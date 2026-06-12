@@ -51,6 +51,9 @@ function makeAgent(
       exit: () => {
         emit({ type: 'session_mode.exit' });
       },
+      handoffTo: vi.fn(async () => {
+        emit({ type: 'session_mode.exit' });
+      }),
     },
     rpc: { requestApproval },
     telemetry: { track: vi.fn() },

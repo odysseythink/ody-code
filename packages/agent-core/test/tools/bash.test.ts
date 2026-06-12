@@ -232,7 +232,7 @@ describe('BashTool', () => {
       const result = await running;
 
       expect(proc.kill).toHaveBeenCalled();
-      expect(result.output).toContain('Command killed by timeout (2s)');
+      expect(result.message).toContain('Killed by timeout (2s)');
     } finally {
       vi.useRealTimers();
     }
@@ -320,11 +320,9 @@ describe('BashTool', () => {
 
     expect(result).toMatchObject({
       isError: true,
-      message: 'Command failed with exit code: 2.',
-      brief: 'Failed with exit code: 2',
+      message: 'Failed with exit code: 2',
     });
     expect(result.output).toContain('boom\n');
-    expect(result.output).toContain('Command failed with exit code: 2.');
   });
 
   it('returns both stdout and stderr when a command succeeds', async () => {
@@ -366,11 +364,9 @@ describe('BashTool', () => {
 
     expect(result).toMatchObject({
       isError: true,
-      message: 'Command failed with exit code: 2.',
-      brief: 'Failed with exit code: 2',
+      message: 'Failed with exit code: 2',
     });
     expect(result.output).toContain('partial\nboom\n');
-    expect(result.output).toContain('Command failed with exit code: 2.');
   });
 
   it('preserves foreground stdout and stderr arrival order', async () => {
@@ -439,7 +435,7 @@ describe('BashTool', () => {
 
     expect(proc.kill).toHaveBeenCalledWith('SIGTERM');
     expect(result).toMatchObject({ isError: true });
-    expect(result.output).toContain('Interrupted by user');
+    expect(result.message).toContain('Interrupted by user');
   });
 
   it('requires a background manager and description for background commands', async () => {
@@ -673,7 +669,7 @@ describe('BashTool', () => {
     }
   });
 
-  it('adds a truncation note when stdout exceeds the cap', async () => {
+  it('truncates a single long stdout line to the configured line length', async () => {
     const huge = Buffer.alloc(10 * 1024 * 1024 + 1, 'x');
     const tool = new BashTool(
       createFakeKaos({
@@ -685,12 +681,13 @@ describe('BashTool', () => {
 
     const result = await executeTool(tool, context({ command: 'yes', timeout: 60 }));
 
-    expect(result.output).toContain('[...truncated]');
-    expect(result.output).toContain('Output is truncated');
-    expect((result as { message?: string }).message).toContain('Output is truncated');
+    expect(typeof result.output).toBe('string');
+    expect(result.output).toContain('x'.repeat(20));
+    expect(result.output).toContain('…');
+    expect(result.output.length).toBeLessThan(1000);
   });
 
-  it('marks the truncated output buffer with a "[...truncated]" sentinel at the cut point', async () => {
+  it('marks a truncated long stdout line with an ellipsis', async () => {
     const huge = Buffer.alloc(10 * 1024 * 1024 + 1, 'x');
     const tool = new BashTool(
       createFakeKaos({
@@ -704,10 +701,11 @@ describe('BashTool', () => {
 
     expect(typeof result.output).toBe('string');
     const output = result.output as string;
-    expect(output).toContain('[...truncated]');
+    expect(output).toContain('…');
+    expect(output.length).toBeLessThan(1000);
   });
 
-  it('truncates output with the sentinel even when the command fails', async () => {
+  it('truncates a long stdout line even when the command fails', async () => {
     const huge = Buffer.alloc(10 * 1024 * 1024 + 1, 'E');
     const tool = new BashTool(
       createFakeKaos({
@@ -724,8 +722,9 @@ describe('BashTool', () => {
     expect(result).toMatchObject({ isError: true });
     expect(typeof result.output).toBe('string');
     const output = result.output as string;
-    expect(output).toContain('[...truncated]');
-    expect(output).toContain('Output is truncated');
+    expect(output).toContain('E'.repeat(20));
+    expect(output).toContain('…');
+    expect(output.length).toBeLessThan(1000);
   });
 
   it('reports a timed-out command with both message and brief lines', async () => {
@@ -752,9 +751,8 @@ describe('BashTool', () => {
 
       expect(result).toMatchObject({
         isError: true,
-        brief: 'Killed by timeout (1s)',
+        message: 'Killed by timeout (1s)',
       });
-      expect(result.output).toContain('Command killed by timeout (1s)');
     } finally {
       vi.useRealTimers();
     }

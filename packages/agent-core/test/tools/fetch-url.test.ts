@@ -102,7 +102,7 @@ describe('FetchURLTool', () => {
     expect(toolContentString(result)).toContain('empty');
   });
 
-  it('truncates oversized fetched content through the shared builder', async () => {
+  it('returns oversized fetched content without line-length truncation', async () => {
     const tool = new FetchURLTool(fakeFetcher('x'.repeat(60_000)));
     const result = await executeTool(tool, {
       turnId: 't1',
@@ -113,10 +113,8 @@ describe('FetchURLTool', () => {
 
     const content = toolContentString(result);
     expect(result.isError).toBe(false);
-    expect(content).toContain('[...truncated]');
-    expect(content).toContain('Output is truncated');
-    expect(content.length).toBeLessThan(60_000);
-    expect((result as { message?: string }).message).toContain('Output is truncated');
+    expect(content).toContain('x'.repeat(60_000));
+    expect(content.length).toBeGreaterThanOrEqual(60_000);
   });
 
   it('returns error when fetcher throws', async () => {

@@ -1496,9 +1496,9 @@ describe('GrepTool', () => {
     expect(summary).toContain('Results truncated to 3 lines');
   });
 
-  it('truncates extremely long rg output with a byte-level safety cap message', async () => {
-    // py applies a DEFAULT_MAX_CHARS truncation in addition to head_limit;
-    // checks the message contains "Output is truncated".
+  it('returns extremely long rg output without a byte-level cap', async () => {
+    // The result builder no longer applies a byte-level cap; only per-line
+    // truncation is performed. Verify the full stdout is returned.
     const longLine = '/workspace/big.txt:1:' + 'x'.repeat(100);
     const stdout = `${Array.from({ length: 5000 }, () => longLine).join('\n')}\n`;
     const exec = vi.fn().mockResolvedValue(processWithOutput(stdout));
@@ -1508,9 +1508,10 @@ describe('GrepTool', () => {
       context({ pattern: 'match', output_mode: 'content', head_limit: 0 }),
     );
 
-    const message = (result as { message?: unknown }).message;
-    expect(typeof message).toBe('string');
-    expect(message).toContain('Output is truncated');
+    const output = toolContentString(result);
+    expect(output).not.toContain('[stdout truncated at');
+    expect(output).not.toContain('Output is truncated');
+    expect(output.split('\n').filter((line) => line.trim() !== '')).toHaveLength(5000);
   });
 
   it('matches a pattern spanning a newline when multiline is set', async () => {

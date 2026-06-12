@@ -51,6 +51,6 @@ describe('BashTool cancellation contract', () => {
 
     expect(kill).toHaveBeenCalledWith('SIGTERM');
     expect(result).toMatchObject({ isError: true });
-    expect(result.output).toContain('Interrupted by user');
+    expect(result.message).toContain('Interrupted by user');
   });
 });
