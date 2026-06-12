@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { basename, dirname, join, normalize } from 'pathe';
 
 import type { Agent } from '..';
+import type { DesignSessionCheckpoint } from '../../session/checkpoint/checkpoint';
 import {
   extractFirstHeading,
   extractTopicFromMessage,
@@ -45,6 +46,7 @@ export class SessionMode {
     path: string;
     selectedLabel?: string;
   } | null = null;
+  private _designSessions: DesignSessionCheckpoint[] = [];
 
   constructor(protected readonly agent: Agent) {}
 
@@ -70,6 +72,10 @@ export class SessionMode {
     this._sessionModeId = id;
     this._kind = kind;
     this._sessionModeFilePath = null;
+
+    if (kind === 'design') {
+      this.startDesignSession(id);
+    }
 
     const modeModel = this.agent.kimiConfig?.modeModels?.[kind];
     if (modeModel !== undefined) {
@@ -157,6 +163,9 @@ export class SessionMode {
       this.agent.config.update({ modelAlias: this._preModeModelAlias.value });
       this._preModeModelAlias = null;
     }
+    if (this._kind === 'design') {
+      this.closeCurrentDesignSession();
+    }
     this.agent.records.logRecord({ type: 'session_mode.cancel', id });
     // Return to the normal context partition AFTER the WAL record so replay
     // routes subsequent context records correctly.
@@ -190,6 +199,9 @@ export class SessionMode {
     if (this._preModeModelAlias !== null) {
       this.agent.config.update({ modelAlias: this._preModeModelAlias.value });
       this._preModeModelAlias = null;
+    }
+    if (this._kind === 'design') {
+      this.closeCurrentDesignSession(this._sessionModeFilePath ?? undefined);
     }
     this.agent.records.logRecord({ type: 'session_mode.exit', id });
     // Return to the normal context partition AFTER the WAL record so replay
@@ -336,6 +348,35 @@ export class SessionMode {
 
   get sessionModeFilePath(): SessionModeFilePath {
     return this._sessionModeFilePath;
+  }
+
+  get designSessions(): readonly DesignSessionCheckpoint[] {
+    return this._designSessions;
+  }
+
+  /** Replace the tracked design sessions, used during resume from a checkpoint. */
+  restoreDesignSessions(sessions: readonly DesignSessionCheckpoint[]): void {
+    this._designSessions = sessions.slice();
+  }
+
+  private startDesignSession(id: string): void {
+    this._designSessions.push({
+      designSessionID: id,
+      startedAtMsg: this.currentMessageCount(),
+    });
+  }
+
+  private closeCurrentDesignSession(approvedPath?: string): void {
+    const session = this._designSessions[this._designSessions.length - 1];
+    if (session === undefined || session.exitedAtMsg !== undefined) return;
+    session.exitedAtMsg = this.currentMessageCount();
+    if (approvedPath !== undefined && approvedPath.length > 0) {
+      session.approvedPath = approvedPath;
+    }
+  }
+
+  private currentMessageCount(): number {
+    return this.agent.context?.history?.length ?? 0;
   }
 
   /**

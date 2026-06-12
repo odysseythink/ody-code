@@ -391,4 +391,59 @@ describe('SessionMode', () => {
       expect(sm.consumePendingHandoffForPlan()).toBeNull();
     });
   });
+
+  describe('design session tracking', () => {
+    it('records a design session on enter and closes it on exit', async () => {
+      const agent = makeAgent();
+      agent.context = { history: [{}, {}, {}] } as unknown as typeof agent.context;
+      const sm = new SessionMode(agent);
+      await sm.enter('design-id', undefined, false, 'design');
+
+      expect(sm.designSessions).toHaveLength(1);
+      expect(sm.designSessions[0]!.designSessionID).toBe('design-id');
+      expect(sm.designSessions[0]!.startedAtMsg).toBe(3);
+
+      await sm.resolveFilePathFromModelRequest('.ody-code/designs/foo.md', '# Design');
+      sm.exit();
+
+      expect(sm.designSessions[0]!.exitedAtMsg).toBe(3);
+      expect(sm.designSessions[0]!.approvedPath).toMatch(/foo\.md$/);
+    });
+
+    it('records a cancelled design session without an approved path', async () => {
+      const agent = makeAgent();
+      agent.context = { history: [{}, {}] } as unknown as typeof agent.context;
+      const sm = new SessionMode(agent);
+      await sm.enter('design-id', undefined, false, 'design');
+      sm.cancel();
+
+      expect(sm.designSessions[0]!.exitedAtMsg).toBe(2);
+      expect(sm.designSessions[0]!.approvedPath).toBeUndefined();
+    });
+
+    it('restores design sessions from a checkpoint', async () => {
+      const agent = makeAgent();
+      const sm = new SessionMode(agent);
+      sm.restoreDesignSessions([
+        {
+          designSessionID: 'd1',
+          startedAtMsg: 0,
+          exitedAtMsg: 5,
+          approvedPath: '/design.md',
+        },
+      ]);
+
+      expect(sm.designSessions).toHaveLength(1);
+      expect(sm.designSessions[0]!.designSessionID).toBe('d1');
+    });
+
+    it('does not track sessions for plan mode', async () => {
+      const agent = makeAgent();
+      const sm = new SessionMode(agent);
+      await sm.enter('plan-id', undefined, false, 'plan');
+      sm.exit();
+
+      expect(sm.designSessions).toHaveLength(0);
+    });
+  });
 });
