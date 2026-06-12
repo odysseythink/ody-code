@@ -95,6 +95,36 @@ export function findMissingDesignSections(content: string): string[] {
     missing.push('Architecture or Design section');
   }
 
+  // C3: Data Models
+  const dataModelsPattern = /^#{1,3}\s+(data\s*models?|数据模型|models?|data\s+&?\s*state)/im;
+  if (!dataModelsPattern.test(trimmed)) {
+    missing.push('Data Models section');
+  }
+
+  // C4: Algorithms
+  const algorithmsPattern = /^#{1,3}\s+(algorithms?|算法|pseudocode|implementation\s+notes?)/im;
+  if (!algorithmsPattern.test(trimmed)) {
+    missing.push('Algorithms section');
+  }
+
+  // C5: Error Handling
+  const errorHandlingPattern = /^#{1,3}\s+(error\s*handling|错误处理|errors?|degradation|failure\s+scenarios?)/im;
+  if (!errorHandlingPattern.test(trimmed)) {
+    missing.push('Error Handling section');
+  }
+
+  // C6: Self-Review
+  const selfReviewPattern = /^#{1,3}\s+(self[- ]?review|自检|review|audit)/im;
+  if (!selfReviewPattern.test(trimmed)) {
+    missing.push('Self-Review section');
+  }
+
+  // C7: User Final Approval
+  const userApprovalPattern = /^#{1,3}\s+(user\s+(final\s+)?approval|用户批准|批准状态|approved?)/im;
+  if (!userApprovalPattern.test(trimmed)) {
+    missing.push('User Approval');
+  }
+
   return missing;
 }
 

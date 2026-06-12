@@ -23,7 +23,19 @@ Content here is sufficient. This is the scope definition section that describes 
 More content here describing the architecture. We need to have sufficient content to meet the 300 character minimum requirement.
 
 ## Data Models
-Additional content to reach 300 chars minimum. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.`;
+Additional content to reach 300 chars minimum. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+
+## Algorithms
+Algorithm pseudocode with sufficient content to exceed the minimum length requirement.
+
+## Error Handling
+Error handling strategies and fallback paths with enough detail text.
+
+## Self-Review
+Security: checked X. Test: checked Y. Ops: verified Z.
+
+## User Final Approval
+Approved by user [C:USER].`;
     expect(findMissingDesignSections(design)).toEqual([]);
   });
 
@@ -75,8 +87,20 @@ Content. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod
 ## Design
 Alternative architecture heading. Sed do eiusmod tempor incididunt ut labore et dolore.
 
-## Implementation
-More content for 300 char minimum. Ut enim ad minim veniam, quis nostrud exercitation.`;
+## Data Models
+Data model definitions with enough text for the minimum length requirement.
+
+## Algorithms
+Algorithm pseudocode with sufficient content to exceed the minimum.
+
+## Error Handling
+Error handling strategies and fallback paths with enough detail text.
+
+## Self-Review
+Security: checked X. Test: checked Y. Ops: verified Z.
+
+## User Final Approval
+Approved by user [C:USER].`;
     expect(findMissingDesignSections(design)).toEqual([]);
   });
 
@@ -87,8 +111,20 @@ Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor i
 ## Approach
 Alternative heading works. Ut labore et dolore magna aliqua. Ut enim ad minim veniam.
 
-## Details
-More content for length. Quis nostrud exercitation ullamco laboris nisi ut aliquip.`;
+## Data Models
+Data model definitions with enough text for the minimum length requirement.
+
+## Algorithms
+Algorithm pseudocode with sufficient content to exceed the minimum.
+
+## Error Handling
+Error handling strategies and fallback paths with enough detail text.
+
+## Self-Review
+Security: checked X. Test: checked Y. Ops: verified Z.
+
+## User Final Approval
+Approved by user [C:USER].`;
     expect(findMissingDesignSections(design)).toEqual([]);
   });
 
@@ -100,7 +136,138 @@ More content for length. Quis nostrud exercitation ullamco laboris nisi ut aliqu
 设计架构部分。Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation.
 
 ## 数据模型
-更多内容以满足最小长度要求。Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.`;
+更多内容以满足最小长度要求。Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+
+## Algorithms
+Algorithm pseudocode with sufficient content to exceed the minimum.
+
+## Error Handling
+Error handling strategies and fallback paths with enough detail text.
+
+## Self-Review
+Security: checked X. Test: checked Y. Ops: verified Z.
+
+## User Final Approval
+Approved by user [C:USER].`;
+    expect(findMissingDesignSections(design)).toEqual([]);
+  });
+
+  // C3: missing Data Models section
+  it('detects missing Data Models section', () => {
+    const design = `## Scope In/Out
+Content. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt.
+
+## Architecture
+Architecture content here. Ut labore et dolore magna aliqua. Ut enim ad minim veniam.
+
+## Algorithms
+Algorithm details with enough content to exceed three hundred characters minimum.
+
+## Error Handling
+Error handling content.`;
+    const result = findMissingDesignSections(design);
+    expect(result).toContain('Data Models section');
+  });
+
+  // C4: missing Algorithms section
+  it('detects missing Algorithms section', () => {
+    const design = `## Scope In/Out
+Content. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt.
+
+## Architecture
+Architecture content here. Ut labore et dolore magna aliqua. Ut enim ad minim veniam.
+
+## Data Models
+Data model definitions with enough text for the minimum length requirement.
+
+## Error Handling
+Error handling strategies and fallback paths.`;
+    const result = findMissingDesignSections(design);
+    expect(result).toContain('Algorithms section');
+  });
+
+  // C5: missing Error Handling section
+  it('detects missing Error Handling section', () => {
+    const design = `## Scope In/Out
+Content. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt.
+
+## Architecture
+Architecture content here. Ut labore et dolore magna aliqua. Ut enim ad minim veniam.
+
+## Data Models
+Data model definitions with enough text for the minimum length requirement.
+
+## Algorithms
+Algorithm pseudocode and control flow details with sufficient content.`;
+    const result = findMissingDesignSections(design);
+    expect(result).toContain('Error Handling section');
+  });
+
+  // C6: missing Self-Review section
+  it('detects missing Self-Review section', () => {
+    const design = `## Scope In/Out
+Content. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt.
+
+## Architecture
+Architecture content here. Ut labore et dolore magna aliqua. Ut enim ad minim veniam.
+
+## Data Models
+Data model definitions with enough text for the minimum length requirement.
+
+## Algorithms
+Algorithm pseudocode with sufficient content to exceed the minimum.
+
+## Error Handling
+Error handling strategies and fallback paths with enough detail.`;
+    const result = findMissingDesignSections(design);
+    expect(result).toContain('Self-Review section');
+  });
+
+  // C7: missing User Approval marker
+  it('detects missing User Approval', () => {
+    const design = `## Scope In/Out
+Content. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt.
+
+## Architecture
+Architecture content here. Ut labore et dolore magna aliqua. Ut enim ad minim veniam.
+
+## Data Models
+Data model definitions with enough text for the minimum length requirement.
+
+## Algorithms
+Algorithm pseudocode with sufficient content to exceed the minimum.
+
+## Error Handling
+Error handling strategies and fallback paths.
+
+## Self-Review
+Security: checked X. Test: checked Y.`;
+    const result = findMissingDesignSections(design);
+    expect(result).toContain('User Approval');
+  });
+
+  // All 7 pass
+  it('returns empty for a design with all 7 criteria met', () => {
+    const design = `## Scope In/Out
+Content. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor.
+
+## Architecture
+Architecture content here. Ut labore et dolore magna aliqua. Ut enim ad minim veniam.
+
+## Data Models
+Data model definitions with enough text for the minimum length requirement.
+
+## Algorithms
+Algorithm pseudocode with sufficient content to exceed the minimum.
+
+## Error Handling
+Error handling strategies and fallback paths with enough detail text.
+
+## Self-Review
+Security: checked X. Test: checked Y. Ops: verified Z.
+
+## User Final Approval
+Approved by user [C:USER].`;
     expect(findMissingDesignSections(design)).toEqual([]);
   });
 
@@ -130,17 +297,25 @@ The system uses X to accomplish Y. Call site: \`src/foo.ts:42\`.
 interface Foo { id: string; }
 \`\`\`
 
+## Algorithms
+
+1. Parse input
+2. Validate against schema
+3. Transform and return
+
 ## Error Handling
 
 | Error | Strategy |
 |-------|----------|
 | ENOENT | return null |
 
-## Assumptions & Unverified Items
+## Self-Review
 
-| # | Assumption | Confidence |
-|---|-----------|-----------|
-| 1 | X exists   | High      |
+Security: verified no secrets in paths. Test: all assertions traceable.
+
+## User Final Approval
+
+Approved by user [C:USER].
 `.trim();
 
 function makeAgent(
