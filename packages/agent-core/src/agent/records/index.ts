@@ -117,6 +117,7 @@ export interface RestoringContext {
 export class AgentRecords {
   private _restoring: RestoringContext | null = null;
   private metadataInitialized = false;
+  private subscribers = new Set<(record: AgentRecord) => void>();
 
   constructor(
     private readonly agent: Agent,
@@ -125,6 +126,22 @@ export class AgentRecords {
 
   get restoring() {
     return this._restoring;
+  }
+
+  /**
+   * Subscribe to every record that is logged while not restoring.
+   *
+   * Callbacks run synchronously after the record is appended to
+   * persistence. Errors from individual subscribers are caught and logged
+   * so one misbehaving subscriber cannot break the hot path.
+   *
+   * Returns an unsubscribe function.
+   */
+  subscribe(handler: (record: AgentRecord) => void): () => void {
+    this.subscribers.add(handler);
+    return () => {
+      this.subscribers.delete(handler);
+    };
   }
 
   logRecord(record: AgentRecord): void {
@@ -148,6 +165,17 @@ export class AgentRecords {
       this.metadataInitialized = true;
     }
     this.persistence?.append(stamped);
+    this.notifySubscribers(stamped);
+  }
+
+  private notifySubscribers(record: AgentRecord): void {
+    for (const handler of this.subscribers) {
+      try {
+        handler(record);
+      } catch (error) {
+        this.agent.log.error('AgentRecords subscriber threw', error);
+      }
+    }
   }
 
   restore(record: AgentRecord): void {
