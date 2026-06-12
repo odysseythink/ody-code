@@ -34,7 +34,7 @@ describe('CheckpointCoordinator', () => {
     };
 
     const context = {
-      history: [{ role: 'user', content: [{ type: 'text', text: 'hi' }] }],
+      history: [{ role: 'user', content: [{ type: 'text', text: 'hi' }], toolCalls: [] }],
     };
 
     const persistence = new InMemoryAgentRecordPersistence();
@@ -81,7 +81,7 @@ describe('CheckpointCoordinator', () => {
 
     agent.records.logRecord({
       type: 'context.append_message',
-      message: { role: 'assistant', content: [{ type: 'text', text: 'hello' }] },
+      message: { role: 'assistant', content: [{ type: 'text', text: 'hello' }], toolCalls: [] },
     });
 
     // Give the async append a chance to run.
@@ -153,6 +153,25 @@ describe('CheckpointCoordinator', () => {
     // Each manual call saves a version; the three calls executed serially.
     expect(data.versions).toHaveLength(3);
     expect(data.latest).toBeDefined();
+  });
+
+  it('marks the index entry invalid when integrity checks fail', async () => {
+    const { coordinator, agent, index } = makeFixture();
+    coordinator.attachAgent(agent);
+
+    // Inject a dangling tool result without a matching assistant call.
+    (agent.context.history as unknown[]).push({
+      role: 'tool',
+      content: [{ type: 'text', text: 'result' }],
+      toolCallId: 'orphan-call',
+      toolCalls: [],
+    });
+
+    await coordinator.checkpointNow();
+
+    const data = await index.load();
+    expect(data.versions).toHaveLength(1);
+    expect(data.versions[0]!.valid).toBe(false);
   });
 
   it('does not break when there is no main agent', async () => {

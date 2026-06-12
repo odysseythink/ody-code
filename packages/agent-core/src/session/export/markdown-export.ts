@@ -10,6 +10,8 @@
 import { appendFile, mkdir } from 'node:fs/promises';
 import { dirname } from 'pathe';
 
+import type { ContentPart } from '@odysseythink/kosong';
+
 import type { AgentRecordOf } from '#/agent/records';
 import { withFileLock } from '#/utils/file-lock';
 import type { ContextMessage } from '../../agent/context';
@@ -25,7 +27,7 @@ export interface SessionMarkdownExportOptions {
  * Append-only Markdown transcript writer.
  */
 export class SessionMarkdownExport {
-  private errorCount = 0;
+  private _errorCount = 0;
 
   constructor(private readonly options: SessionMarkdownExportOptions) {}
 
@@ -35,7 +37,7 @@ export class SessionMarkdownExport {
 
   /** Number of append attempts that failed since construction. */
   get errorCount(): number {
-    return this.errorCount;
+    return this._errorCount;
   }
 
   /**
@@ -52,7 +54,7 @@ export class SessionMarkdownExport {
         await appendFile(this.options.filePath, `${block}\n\n`, 'utf8');
       });
     } catch (error) {
-      this.errorCount += 1;
+      this._errorCount += 1;
       this.options.onError?.(error);
     }
   }
@@ -72,14 +74,14 @@ function renderMessage(message: ContextMessage, time?: number): string {
   return headerLines.join('\n');
 }
 
-function renderContent(content: readonly { readonly type: string; readonly [key: string]: unknown }[]): string {
+function renderContent(content: readonly ContentPart[]): string {
   const textParts: string[] = [];
   const nonTextParts: unknown[] = [];
 
   for (const part of content) {
-    if (part.type === 'text' && typeof part.text === 'string') {
+    if (part.type === 'text') {
       textParts.push(part.text);
-    } else if (part.type === 'think' && typeof part.think === 'string') {
+    } else if (part.type === 'think') {
       textParts.push(`<think>\n${part.think}\n</think>`);
     } else {
       nonTextParts.push(part);

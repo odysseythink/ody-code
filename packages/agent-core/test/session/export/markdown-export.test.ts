@@ -3,6 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'pathe';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import type { AgentRecordOf } from '../../../src/agent/records';
 import { SessionMarkdownExport } from '../../../src/session/export/markdown-export';
 
 describe('SessionMarkdownExport', () => {
@@ -16,13 +17,14 @@ describe('SessionMarkdownExport', () => {
     await rm(workDir, { recursive: true, force: true });
   });
 
-  function messageRecord(role: string, text: string, time?: number) {
+  function messageRecord(role: string, text: string, time?: number): AgentRecordOf<'context.append_message'> {
     return {
-      type: 'context.append_message' as const,
+      type: 'context.append_message',
       time,
       message: {
-        role,
-        content: [{ type: 'text' as const, text }],
+        role: role as 'user',
+        content: [{ type: 'text', text }],
+        toolCalls: [],
       },
     };
   }
@@ -94,8 +96,9 @@ describe('SessionMarkdownExport', () => {
         role: 'assistant',
         content: [
           { type: 'text', text: 'look at this' },
-          { type: 'image', url: 'data:image/png;base64,ABC' },
+          { type: 'image_url', imageUrl: { url: 'data:image/png;base64,ABC' } },
         ],
+        toolCalls: [],
       },
     });
 

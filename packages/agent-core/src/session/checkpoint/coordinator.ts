@@ -13,6 +13,8 @@
  * interleave writes. Failures are logged but never thrown back into the turn.
  */
 
+import type { Message } from '@odysseythink/kosong';
+
 import type { Agent } from '#/agent';
 import type { AgentRecord } from '#/agent/records';
 import type { Logger } from '#/logging/types';
@@ -20,6 +22,7 @@ import type { Session } from '..';
 import type { SessionMarkdownExport } from '../export/markdown-export';
 import { CheckpointIndex } from './checkpoint-index';
 import { SessionCheckpoint, type SessionCheckpointPayload } from './checkpoint';
+import { verifyCheckpointIntegrity } from './integrity';
 
 export interface CheckpointCoordinatorOptions {
   readonly session: Session;
@@ -97,6 +100,18 @@ export class CheckpointCoordinator {
     }
 
     const payload = buildCheckpointPayload(this.options.session, main);
+
+    const integrity = verifyCheckpointIntegrity(payload, {
+      expectedMessageCount: main.context.history.length,
+      expectedSessionID: this.options.session.options.id ?? undefined,
+    });
+    if (!integrity.valid) {
+      this.options.logger?.warn('Checkpoint integrity check failed', {
+        trigger,
+        errors: integrity.errors,
+      });
+    }
+
     await this.options.checkpoint.save(payload);
 
     const indexData = await this.options.index.load();
@@ -107,7 +122,7 @@ export class CheckpointCoordinator {
       path: this.options.checkpoint.path,
       timestamp: payload.lastUpdatedAt,
       messageCount: payload.messages.length,
-      valid: true,
+      valid: integrity.valid,
       lastValidParent,
     });
   }
@@ -125,17 +140,26 @@ function shouldTriggerCheckpoint(record: AgentRecord): boolean {
 
 function buildCheckpointPayload(session: Session, main: Agent): SessionCheckpointPayload {
   const kind = main.sessionMode.isActive ? main.sessionMode.kind : 'normal';
+  const messages = main.context.history.slice() as Message[];
   return {
     sessionID: session.options.id ?? 'unknown',
     createdAt: session.metadata.createdAt,
     lastUpdatedAt: new Date().toISOString(),
     currentMode: kind,
-    messages: main.context.history.slice(),
+    messages,
     designModeContext: {
       sessions: main.sessionMode.designSessions.slice(),
     },
-    toolCallIndex: {
-      callIdToResult: {},
-    },
+    toolCallIndex: buildToolCallIndex(messages),
   };
+}
+
+function buildToolCallIndex(messages: Message[]): SessionCheckpointPayload['toolCallIndex'] {
+  const callIdToResult: Record<string, true> = {};
+  for (const message of messages) {
+    if (message.role === 'tool' && typeof message.toolCallId === 'string' && message.toolCallId.length > 0) {
+      callIdToResult[message.toolCallId] = true;
+    }
+  }
+  return { callIdToResult };
 }
