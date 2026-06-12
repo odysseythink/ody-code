@@ -109,8 +109,20 @@ First name the 1-3 decisions where being wrong is most expensive (a filter, rege
   - Deep — confirm each numbered section's key claim PLUS list every assumption.
 You MUST NOT call ExitDesignMode until every assumption the recorded level requires has been signed off — never write-then-stop. This gate confirms ASSUMPTIONS, not final approval. If the user corrects anything, update the file, re-tag the source, and re-run this self-review. Final design approval is ExitDesignMode's job only.`;
 
+const DESIGN_EXIT_CHECKLIST = `ExitDesignMode completeness checklist (C1-C7) — the design file MUST contain all of the following before you call ExitDesignMode:
+  - C1. Scope In/Out — what is in scope and explicitly deferred.
+  - C2. Architecture / Design — components, data flow, typed interfaces.
+  - C3. Data Models — new data structures, persistence, lifecycle.
+  - C4. Algorithms — language-agnostic pseudocode for each non-trivial piece of logic.
+  - C5. Error Handling — failure scenarios, fallback, retry, degradation path.
+  - C6. Self-Review — the four-lens findings written to a \`## Self-Review\` section.
+  - C7. User Final Approval — a \`## User Final Approval\` section recording the approval state.
+If any item is missing, return to the corresponding Step and add it before calling ExitDesignMode.`;
+
 const STEP_5_EXIT = `## Step 5 — Exit for approval
-Call ExitDesignMode. If the design offers a real choice between approaches, pass them as the \`options\` parameter so the user can select one at approval time. After approval, design mode turns OFF and your ONLY next move is to recommend the user run /plan — do NOT begin implementing.`;
+${DESIGN_EXIT_CHECKLIST}
+
+If the design offers a real choice between approaches, pass them as the \`options\` parameter so the user can select one at approval time. After approval, design mode turns OFF and your ONLY next move is to recommend the user run /plan — do NOT begin implementing.`;
 
 /**
  * Visual-companion guidance. The host tells us at injection time whether the
@@ -135,7 +147,7 @@ const TURN_DISCIPLINE = `## Turn discipline
 AskUserQuestion is for the audit gate, clarifying assumptions, and per-section approval — one question per turn. Never ask about final design approval via text or AskUserQuestion; that is ExitDesignMode's job. Do NOT reference "the design" in AskUserQuestion — the user cannot see it until you call ExitDesignMode. Your turn must end with either AskUserQuestion or ExitDesignMode (tool calls such as ShowDesignMockup happen *within* a turn and do not count as ending it). Do NOT end your turn any other way (no silent investigation-only turns once the audit gate has been asked).`;
 
 /** One-line quality pointer kept in the sparse variant so long sessions don't drop quality. */
-const SPARSE_QUALITY_POINTER = `Reminder: the design file must follow the fidelity rubric (Scope In/Out, data-flow arrows, typed interfaces, per-algorithm language-agnostic pseudocode (not production code), call-sites with file path + line range, an error/degradation table, test assertions, and a risk register), and you MUST run the self-review + post-write audit gate (scaled to the recorded audit level) before ExitDesignMode — that gate lists each [C:INFERRED] assumption verbatim for per-item sign-off and blocks ExitDesignMode until done, and a user-named target (a specific binary/path) must not be silently retargeted.`;
+const SPARSE_QUALITY_POINTER = `Reminder: the design file must follow the fidelity rubric (Scope In/Out, data-flow arrows, typed interfaces, per-algorithm language-agnostic pseudocode (not production code), call-sites with file path + line range, an error/degradation table, test assertions, and a risk register), and you MUST run the self-review + post-write audit gate (scaled to the recorded audit level) before ExitDesignMode — that gate lists each [C:INFERRED] assumption verbatim for per-item sign-off and blocks ExitDesignMode until done, and a user-named target (a specific binary/path) must not be silently retargeted. Before ExitDesignMode, verify the C1-C7 completeness checklist is satisfied: C1. Scope In/Out, C2. Architecture, C3. Data Models, C4. Algorithms, C5. Error Handling, C6. Self-Review, and C7. User Final Approval.`;
 
 /** The canonical workflow body shared verbatim by the entry message and the full re-injection. */
 function contractBody(mockupAvailable: boolean): string {

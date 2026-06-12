@@ -128,6 +128,34 @@ describe('DesignModeInjector content', () => {
     expect(entry).toContain('Design mode is now active');
   });
 
+  it('carries the C1-C7 exit checklist in the entry message, full reminder, and sparse reminder', async () => {
+    const agent = designAgent({ isActive: true, sessionModeFilePath: '/tmp/design.md' });
+    const injector = new DesignModeInjector(agent);
+    await injector.inject();
+    const full = lastReminder(agent);
+    const entry = designModeEntryMessage('/tmp/design.md', false);
+
+    // Push enough assistant turns to trigger the sparse reminder.
+    const messages = history(agent);
+    messages.push({ role: 'assistant' }, { role: 'assistant' });
+    await injector.inject();
+    const sparse = lastReminder(agent);
+
+    for (const text of [full, entry, sparse]) {
+      for (const marker of [
+        'C1. Scope In/Out',
+        'C2. Architecture',
+        'C3. Data Models',
+        'C4. Algorithms',
+        'C5. Error Handling',
+        'C6. Self-Review',
+        'C7. User Final Approval',
+      ]) {
+        expect(text).toContain(marker);
+      }
+    }
+  });
+
   // Regression guard for the anti-self-deception "blades" (see design-mode-contract.ts).
   // These are the safeguards that catch the class of bug where a design bakes in a
   // too-broad filter / a test that contradicts its own constants. This test does NOT
