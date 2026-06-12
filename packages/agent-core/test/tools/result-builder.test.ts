@@ -3,59 +3,43 @@ import { describe, expect, it } from 'vitest';
 import { ToolResultBuilder } from '../../src/tools/support/result-builder';
 
 describe('ToolResultBuilder', () => {
-  it('returns concatenated output and a confirmation message under the limit', () => {
-    const builder = new ToolResultBuilder({ maxChars: 50 });
+  it('returns concatenated output and a confirmation message', () => {
+    const builder = new ToolResultBuilder();
 
-    expect(builder.write('Hello')).toBe(5);
-    expect(builder.write(' world')).toBe(6);
+    builder.write('Hello');
+    builder.write(' world');
 
     const result = builder.ok('Operation completed');
     expect(result.output).toBe('Hello world');
-    expect(result.message).toBe('Operation completed.');
+    expect(result.message).toBe('Operation completed');
+    expect(result.isError).toBe(false);
     expect(builder.nChars).toBe(11);
   });
 
-  it('truncates with marker at the cut point and appends the message after', () => {
-    const builder = new ToolResultBuilder({ maxChars: 10 });
+  it('truncates long lines when maxLineLength is set', () => {
+    const builder = new ToolResultBuilder({ maxLineLength: 20 });
 
-    expect(builder.write('Hello')).toBe(5);
-    expect(builder.write(' world!')).toBe(14);
-    expect(builder.nChars).toBeGreaterThanOrEqual(10);
-
-    const result = builder.ok('Operation completed');
-    expect(result.output).toContain('Hello[...truncated]');
-    expect(result.output).toContain('Output is truncated');
-    expect(result.output.endsWith('Output is truncated to fit in the message.')).toBe(true);
-    expect(result.message).toContain('Operation completed.');
-    expect(result.message).toContain('Output is truncated');
-    expect(result.truncated).toBe(true);
-  });
-
-  it('truncates lines that exceed maxLineLength', () => {
-    const builder = new ToolResultBuilder({ maxChars: 100, maxLineLength: 20 });
-
-    expect(builder.write('This is a very long line that should be truncated\n')).toBe(20);
+    builder.write('This is a very long line that should be truncated\n');
 
     const result = builder.ok();
-    expect(result.output).toContain('[...truncated]');
-    expect(result.message).toContain('Output is truncated');
+    expect(result.output).toContain('This is a very long …');
   });
 
-  it('respects both per-line and per-buffer limits at once', () => {
-    const builder = new ToolResultBuilder({ maxChars: 40, maxLineLength: 20 });
+  it('respects maxLineLength for multiple lines', () => {
+    const builder = new ToolResultBuilder({ maxLineLength: 20 });
 
-    expect(builder.write('Line 1\n')).toBe(7);
-    expect(builder.write('This is a very long line that exceeds limit\n')).toBe(20);
-    expect(builder.write('This would exceed char limit')).toBe(14);
-    expect(builder.write('ignored')).toBe(0);
+    builder.write('Line 1\n');
+    builder.write('This is a very long line that exceeds limit\n');
+    builder.write('More text');
 
     const result = builder.ok();
-    expect(result.output).toContain('[...truncated]');
-    expect(result.message).toContain('Output is truncated');
+    expect(result.output).toContain('Line 1\n');
+    expect(result.output).toContain('This is a very long …');
+    expect(result.output).toContain('More text');
   });
 
   it('tracks nChars as the buffer grows', () => {
-    const builder = new ToolResultBuilder({ maxChars: 20, maxLineLength: 30 });
+    const builder = new ToolResultBuilder({ maxLineLength: 30 });
 
     expect(builder.nChars).toBe(0);
 
@@ -66,92 +50,48 @@ describe('ToolResultBuilder', () => {
     expect(builder.nChars).toBe(10);
 
     builder.write('More text that exceeds');
-    expect(builder.nChars).toBeGreaterThanOrEqual(20);
-  });
-
-  it('marks truncation when non-empty text arrives after the buffer is full', () => {
-    const builder = new ToolResultBuilder({ maxChars: 5 });
-
-    expect(builder.write('Hello')).toBe(5);
-    expect(builder.write(' world')).toBe(0);
-
-    const result = builder.ok();
-    expect(result.output).toContain('Hello[...truncated]');
-    expect(result.output).toContain('Output is truncated');
-    expect(result.truncated).toBe(true);
-  });
-
-  it('marks truncation when a multi-line write leaves unprocessed lines', () => {
-    const builder = new ToolResultBuilder({ maxChars: 6 });
-
-    expect(builder.write('Hello\nworld')).toBe(6);
-
-    const result = builder.ok();
-    expect(result.output).toContain('Hello\n[...truncated]');
-    expect(result.message).toContain('Output is truncated');
-  });
-
-  it('keeps unterminated trailing text in output', () => {
-    const builder = new ToolResultBuilder({ maxChars: 100 });
-
-    expect(builder.write('Line 1\nLine 2\nLine 3')).toBe(20);
-
-    const result = builder.ok();
-    expect(result.output).toBe('Line 1\nLine 2\nLine 3');
+    expect(builder.nChars).toBe(32);
   });
 
   it('treats an empty write as a no-op', () => {
-    const builder = new ToolResultBuilder({ maxChars: 50 });
+    const builder = new ToolResultBuilder();
 
-    expect(builder.write('')).toBe(0);
+    builder.write('');
     expect(builder.nChars).toBe(0);
   });
 
   it('returns the accumulated output with the supplied message and brief', () => {
-    const builder = new ToolResultBuilder({ maxChars: 20 });
+    const builder = new ToolResultBuilder();
 
     builder.write('Some output');
     const result = builder.error('Something went wrong', { brief: 'Error occurred' });
 
     expect(result.output).toContain('Some output');
-    expect(result.output).toContain('Something went wrong');
-    expect(result.message).toBe('Something went wrong');
-    expect(result.brief).toBe('Error occurred');
+    expect(result.message).toBe('Error occurred');
+    expect(result.isError).toBe(true);
   });
 
   it('preserves an explicitly empty brief', () => {
-    const builder = new ToolResultBuilder({ maxChars: 20 });
+    const builder = new ToolResultBuilder();
 
     const result = builder.ok('Done', { brief: '' });
 
-    expect(result.brief).toBe('');
+    expect(result.message).toBe('');
   });
 
-  it('preserves the truncation hint and brief together on error', () => {
-    const builder = new ToolResultBuilder({ maxChars: 10 });
+  it('preserves the message and brief together on error', () => {
+    const builder = new ToolResultBuilder();
 
     builder.write('Very long output that exceeds limit');
     const result = builder.error('Command failed', { brief: 'Failed' });
 
-    expect(result.output).toContain('[...truncated]');
-    expect(result.message).toContain('Command failed');
-    expect(result.message).toContain('Output is truncated');
-    expect(result.brief).toBe('Failed');
-  });
-
-  it('returns executable output with critical messages included', () => {
-    const builder = new ToolResultBuilder({ maxChars: 10 });
-
-    builder.write('Very long output that exceeds limit');
-    const result = builder.ok('Operation completed');
-
-    expect(result.output).toContain('[...truncated]');
-    expect(result.output).toContain('Output is truncated');
-    expect(result.message).toContain('Output is truncated');
+    expect(result.output).toContain('Very long output that exceeds limit');
+    expect(result.message).toBe('Failed');
+    expect(result.isError).toBe(true);
   });
 
   it('keeps normal success messages out of non-empty output', () => {
-    const builder = new ToolResultBuilder({ maxChars: 100 });
+    const builder = new ToolResultBuilder();
 
     builder.write('ok\n');
     const result = builder.ok('Command executed successfully.');

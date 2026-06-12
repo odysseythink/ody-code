@@ -15,7 +15,8 @@ describe('CheckpointTool', () => {
     const tool = new CheckpointTool(makeAgent({ checkpointNow }));
     const execution = tool.resolveExecution({ reason: 'before risky op' });
 
-    const result = await execution.execute();
+    if (!('execute' in execution)) throw new Error('expected a runnable execution');
+    const result = await execution.execute({} as never);
 
     expect(checkpointNow).toHaveBeenCalled();
     expect(result.isError).toBe(false);
@@ -26,7 +27,8 @@ describe('CheckpointTool', () => {
     const tool = new CheckpointTool(makeAgent(undefined));
     const execution = tool.resolveExecution({});
 
-    const result = await execution.execute();
+    if (!('execute' in execution)) throw new Error('expected a runnable execution');
+    const result = await execution.execute({} as never);
 
     expect(result.isError).toBe(true);
     expect(result.output).toContain('not enabled');

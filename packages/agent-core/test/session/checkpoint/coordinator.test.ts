@@ -12,6 +12,16 @@ import { SessionCheckpoint } from '../../../src/session/checkpoint/checkpoint';
 import { CheckpointCoordinator } from '../../../src/session/checkpoint/coordinator';
 import { SessionMarkdownExport } from '../../../src/session/export/markdown-export';
 
+async function waitUntil(predicate: () => Promise<boolean>, timeoutMs = 2000): Promise<void> {
+  const start = Date.now();
+  while (!(await predicate())) {
+    if (Date.now() - start > timeoutMs) {
+      throw new Error('waitUntil timeout');
+    }
+    await new Promise((resolve) => setTimeout(resolve, 50));
+  }
+}
+
 describe('CheckpointCoordinator', () => {
   let workDir: string;
 
@@ -88,12 +98,14 @@ describe('CheckpointCoordinator', () => {
       message: { role: 'assistant', content: [{ type: 'text', text: 'hello' }], toolCalls: [] },
     });
 
-    // Give the async append a chance to run.
-    await new Promise((resolve) => setTimeout(resolve, 50));
-
-    const content = await readFile(markdownPath, 'utf8');
-    expect(content).toContain('role: assistant');
-    expect(content).toContain('hello');
+    await waitUntil(async () => {
+      try {
+        const content = await readFile(markdownPath, 'utf8');
+        return content.includes('role: assistant') && content.includes('hello');
+      } catch {
+        return false;
+      }
+    });
   });
 
   it('saves a checkpoint on session_mode.exit', async () => {
@@ -101,7 +113,11 @@ describe('CheckpointCoordinator', () => {
     coordinator.attachAgent(agent);
 
     agent.records.logRecord({ type: 'session_mode.exit', id: 'd1' });
-    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    await waitUntil(async () => {
+      const data = await index.load();
+      return data.versions.length > 0;
+    });
 
     const payload = await checkpoint.load();
     expect(payload).not.toBeNull();
@@ -126,10 +142,8 @@ describe('CheckpointCoordinator', () => {
         step: 1,
       },
     });
-    await new Promise((resolve) => setTimeout(resolve, 50));
 
-    const payload = await checkpoint.load();
-    expect(payload).not.toBeNull();
+    await waitUntil(async () => checkpoint.load().then((p) => p !== null));
   });
 
   it('saves a checkpoint on manual checkpointNow()', async () => {

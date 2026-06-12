@@ -207,7 +207,7 @@ describe('fetchProviderModels (glm overrides)', () => {
       supportsToolUse: true,
       supportsReasoning: false,
     });
-    expect(models[0].maxOutputSize).toBeUndefined();
+    expect(models[0]?.maxOutputSize).toBeUndefined();
   });
 });
 
@@ -284,9 +284,9 @@ describe('applyProviderLoginConfig', () => {
       thinking: false,
     });
 
-    expect(config.models?.['glm_1/glm-5']?.maxOutputSize).toBe(128_000);
-    expect(config.models?.['glm_1/glm-4.5']?.maxOutputSize).toBe(96_000);
-    expect(config.models?.['glm_1/other']?.maxOutputSize).toBe(8192);
+    expect(config.models?.['glm_1/glm-5']?.['maxOutputSize']).toBe(128_000);
+    expect(config.models?.['glm_1/glm-4.5']?.['maxOutputSize']).toBe(96_000);
+    expect(config.models?.['glm_1/other']?.['maxOutputSize']).toBe(8192);
   });
 });
 

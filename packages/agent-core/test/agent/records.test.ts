@@ -29,7 +29,7 @@ describe('AgentRecords.subscribe', () => {
     });
 
     records.logRecord({ type: 'turn.prompt', input: [], origin: { kind: 'user' } });
-    records.logRecord({ type: 'context.append_message', message: { role: 'user', content: [] } });
+    records.logRecord({ type: 'context.append_message', message: { role: 'user', content: [], toolCalls: [] } });
 
     expect(received).toHaveLength(2);
     expect(received[0]!.type).toBe('turn.prompt');

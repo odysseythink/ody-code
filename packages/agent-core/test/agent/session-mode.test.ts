@@ -394,8 +394,7 @@ describe('SessionMode', () => {
 
   describe('design session tracking', () => {
     it('records a design session on enter and closes it on exit', async () => {
-      const agent = makeAgent();
-      agent.context = { history: [{}, {}, {}] } as unknown as typeof agent.context;
+      const agent = { ...makeAgent(), context: { history: [{}, {}, {}] } } as unknown as Agent;
       const sm = new SessionMode(agent);
       await sm.enter('design-id', undefined, false, 'design');
 
@@ -411,8 +410,7 @@ describe('SessionMode', () => {
     });
 
     it('records a cancelled design session without an approved path', async () => {
-      const agent = makeAgent();
-      agent.context = { history: [{}, {}] } as unknown as typeof agent.context;
+      const agent = { ...makeAgent(), context: { history: [{}, {}] } } as unknown as Agent;
       const sm = new SessionMode(agent);
       await sm.enter('design-id', undefined, false, 'design');
       sm.cancel();
