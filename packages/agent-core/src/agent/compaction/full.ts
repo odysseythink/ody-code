@@ -30,6 +30,7 @@ import {
   resolveCompletionBudget,
 } from '../../utils/completion-budget';
 import compactionInstructionTemplate from './compaction-instruction.md';
+import { dropOrphanToolResults } from '../context/projector';
 import { renderMessagesToText } from './render-messages';
 import { renderTodoList, type TodoItem } from '../../tools/builtin/state/todo-list';
 import type { CompactionBeginData, CompactionResult } from './types';
@@ -284,7 +285,7 @@ export class FullCompaction {
       while (true) {
         const messagesToCompact = originalHistory.slice(0, compactedCount);
         const messages = [
-          ...this.agent.context.project(messagesToCompact),
+          ...dropOrphanToolResults(this.agent.context.project(messagesToCompact)),
           {
             role: 'user',
             content: [

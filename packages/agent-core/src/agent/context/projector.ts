@@ -29,12 +29,15 @@ export function project(history: readonly ContextMessage[]): Message[] {
  * (the send boundary) so legacy sessions resume cleanly and any future routing
  * regression is contained.
  *
- * IMPORTANT: only call this on a COMPLETE history, never on a sub-slice — a
- * windowed view (e.g. full-compaction's slice or token accounting of pending
- * messages) can legitimately hold a result whose call sits outside the window,
- * and dropping it there would corrupt valid exchanges. `project()` has already
- * run by the time this is called, so partial/placeholder assistant messages are
- * never seen here.
+ * IMPORTANT: only call this on a COMPLETE history or on a PREFIX sub-slice that
+ * starts at index 0. A windowed view that begins mid-history (e.g. a suffix used
+ * for token accounting of pending messages) can legitimately hold a result whose
+ * call sits outside the window, and dropping it there would corrupt valid
+ * exchanges. Full compaction passes a prefix slice (`history.slice(0, N)`), so
+ * any tool result inside it must have its call inside the same prefix; orphans
+ * there are real and must be dropped before the summarization request.
+ * `project()` has already run by the time this is called, so
+ * partial/placeholder assistant messages are never seen here.
  *
  * A tool-shaped message with NO toolCallId is left untouched: it is not a
  * provider tool result keyed by id, and existing flows rely on it surviving.

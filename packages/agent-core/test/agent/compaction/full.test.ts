@@ -311,6 +311,47 @@ describe('FullCompaction', () => {
     ).toBe(false);
   });
 
+  it('drops orphaned tool results from the compacted prefix before sending the summary request', async () => {
+    const ctx = testAgent({ compactionStrategy: alwaysCompactOnce });
+    ctx.configure({
+      provider: CATALOGUED_PROVIDER,
+      modelCapabilities: CATALOGUED_MODEL_CAPABILITIES,
+    });
+
+    // Simulate a legacy session where a tool result lost its matching call
+    // (e.g. a pre-fix design→plan handoff routed the result into a different
+    // partition). The orphan sits at the head of the history.
+    ctx.agent.context.appendMessage({
+      role: 'tool',
+      content: [{ type: 'text', text: 'Orphaned tool result.' }],
+      toolCalls: [],
+      toolCallId: 'orphan_call_at_head',
+    });
+    ctx.appendExchange(1, 'old user one', 'old assistant one', 20);
+    ctx.appendExchange(2, 'old user two', 'old assistant two', 40);
+
+    const compacted = ctx.once('context.apply_compaction');
+    ctx.mockNextResponse({ type: 'text', text: 'Compacted summary.' });
+    await ctx.rpc.beginCompaction({ instruction: 'Keep the important test facts.' });
+    await compacted;
+
+    const [compactionCall] = ctx.llmCalls;
+    expect(
+      compactionCall?.history.some(
+        (message) => message.role === 'tool' && message.toolCallId === 'orphan_call_at_head',
+      ),
+    ).toBe(false);
+    expect(compactionCall?.history.map((message) => message.role)).toEqual([
+      'user',
+      'assistant',
+      'user',
+      'assistant',
+      'user',
+    ]);
+    expect(ctx.compactHistory()).toEqual([{ role: 'assistant', text: 'Compacted summary.' }]);
+    await ctx.expectResumeMatches();
+  });
+
   it('micro-compacts old tool results before sending the summary request', async () => {
     vi.useFakeTimers();
     enableMicroCompactionFlag();
