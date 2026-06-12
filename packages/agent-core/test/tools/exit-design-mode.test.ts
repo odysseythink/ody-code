@@ -21,12 +21,15 @@ function makeAgent(
     readonly sessionModeFilePath?: string | null | undefined;
     readonly emit?: ((event: unknown) => void) | undefined;
   } = {},
-): { agent: Agent; requestApproval: ReturnType<typeof vi.fn>; emit: ReturnType<typeof vi.fn> } {
+): { agent: Agent; requestApproval: ReturnType<typeof vi.fn>; emit: ReturnType<typeof vi.fn>; handoffTo: ReturnType<typeof vi.fn> } {
   let active = input.active ?? true;
   const requestApproval = vi.fn(async () => ({ decision: 'approved' }));
   const emit = vi.fn((event: unknown) => {
     input.emit?.(event);
     if ((event as { type?: string }).type === 'session_mode.exit') active = false;
+  });
+  const handoffTo = vi.fn(async () => {
+    emit({ type: 'session_mode.exit' });
   });
   const agent = {
     sessionMode: {
@@ -44,6 +47,7 @@ function makeAgent(
         };
       }),
       finalizeFileName: vi.fn().mockResolvedValue(null),
+      handoffTo,
       exit: () => {
         emit({ type: 'session_mode.exit' });
       },
@@ -52,7 +56,7 @@ function makeAgent(
     telemetry: { track: vi.fn() },
     emit,
   } as unknown as Agent;
-  return { agent, requestApproval, emit };
+  return { agent, requestApproval, emit, handoffTo };
 }
 
 describe('ExitDesignModeTool', () => {
@@ -88,7 +92,7 @@ describe('ExitDesignModeTool', () => {
   });
 
   it('exits with the current design without consulting permission approval', async () => {
-    const { agent, requestApproval, emit } = makeAgent({
+    const { agent, requestApproval, emit, handoffTo } = makeAgent({
       design: '# File Design',
       path: '/tmp/kimi-design.md',
     });
@@ -104,7 +108,28 @@ describe('ExitDesignModeTool', () => {
     expect(requestApproval).not.toHaveBeenCalled();
     expect(emit).toHaveBeenCalledWith({ type: 'session_mode.exit' });
     expect(result.output).toContain('Design saved to: /tmp/kimi-design.md');
-    expect(result.output).toContain('# File Design');
+    expect(result.output).toContain('Design mode deactivated');
+    expect(result.output).not.toContain('# File Design');
+    expect(handoffTo).toHaveBeenCalledWith('plan', { selectedLabel: undefined });
+  });
+
+  it('passes the declared selected label to handoffTo', async () => {
+    const { agent, handoffTo } = makeAgent({
+      design: '# File Design',
+      path: '/tmp/kimi-design.md',
+    });
+
+    const result = await executeTool(new ExitDesignModeTool(agent), {
+      turnId: '0',
+      toolCallId: 'call_label',
+      args: { options: [{ label: 'Approach A', description: 'Do A' }] },
+      signal,
+      metadata: { selectedLabel: 'Approach A' },
+    });
+
+    expect(result.isError).toBe(false);
+    expect(result.output).toContain('Selected approach: Approach A');
+    expect(handoffTo).toHaveBeenCalledWith('plan', { selectedLabel: 'Approach A' });
   });
 
   it('does not use inline design fallback when no design file exists', async () => {
@@ -122,8 +147,8 @@ describe('ExitDesignModeTool', () => {
     expect(result.output).toContain('No design file found');
   });
 
-  it('returns an error when no design content is available', async () => {
-    const { agent, emit } = makeAgent({
+  it('allows empty design content when a valid path exists', async () => {
+    const { agent, emit, handoffTo } = makeAgent({
       design: '',
       path: '/tmp/kimi-design.md',
     });
@@ -135,17 +160,14 @@ describe('ExitDesignModeTool', () => {
       signal,
     });
 
-    expect(result).toMatchObject({ isError: true });
-    expect(result.output).toContain('Write your design to /tmp/kimi-design.md first');
-    expect(emit).not.toHaveBeenCalled();
+    expect(result.isError).toBe(false);
+    expect(result.output).toContain('Design saved to: /tmp/kimi-design.md');
+    expect(handoffTo).toHaveBeenCalledWith('plan', { selectedLabel: undefined });
   });
 
   it('surfaces errors from design exit as a tool error', async () => {
-    const { agent } = makeAgent({
-      emit: () => {
-        throw new Error('journal write failed');
-      },
-    });
+    const { agent, handoffTo } = makeAgent();
+    handoffTo.mockRejectedValue(new Error('journal write failed'));
 
     const result = await executeTool(new ExitDesignModeTool(agent), {
       turnId: '0',

@@ -290,12 +290,14 @@ export class SessionMode {
     const data = await this.data();
 
     if (target === 'plan') {
+      const selectedLabel = opts?.selectedLabel;
       const artifact =
         data !== null && data.path.length > 0
           ? {
               path: data.path,
               filename: basename(data.path),
-              selectedLabel: opts?.selectedLabel,
+              selectedLabel:
+                selectedLabel !== undefined && selectedLabel.length > 0 ? selectedLabel : undefined,
             }
           : null;
       this._pendingHandoffForPlan = artifact;

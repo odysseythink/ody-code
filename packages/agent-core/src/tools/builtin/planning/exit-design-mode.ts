@@ -66,7 +66,6 @@ export const ExitDesignModeInputSchema: z.ZodType<ExitDesignModeInput> = z
 
 interface ResolveDesignResult {
   ok: boolean;
-  design?: string;
   path?: string | undefined;
   error?: ExecutableToolResult;
 }
@@ -123,22 +122,20 @@ export class ExitDesignModeTool implements BuiltinTool<ExitDesignModeInput> {
     const resolved = await this.resolveDesign();
     if (!resolved.ok) return resolved.error as ExecutableToolResult;
 
-    const failed = await this.handoffToPlan();
-    if (failed !== undefined) return failed;
-
-    // Only surface the chosen approach when it is one of the declared options, so a
-    // plain approval ("Approve") never prints "Selected approach: Approve".
     const optionLabel = declaredOptionLabel(args.options, selectedLabelOf(metadata));
+
+    const failed = await this.handoffToPlan(optionLabel);
+    if (failed !== undefined) return failed;
 
     return {
       isError: false,
-      output: `Exited design mode. ${formatDesignHandoffOutput(resolved.design ?? '', resolved.path, optionLabel)}`,
+      output: formatDesignHandoffOutput(resolved.path, optionLabel),
     };
   }
 
-  private async handoffToPlan(): Promise<ExecutableToolResult | undefined> {
+  private async handoffToPlan(selectedLabel?: string): Promise<ExecutableToolResult | undefined> {
     try {
-      await this.agent.sessionMode.handoffTo('plan');
+      await this.agent.sessionMode.handoffTo('plan', { selectedLabel });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to hand off to plan mode.';
       return {
@@ -160,8 +157,8 @@ export class ExitDesignModeTool implements BuiltinTool<ExitDesignModeInput> {
       };
     }
 
-    if (data !== null && data.content.trim().length > 0) {
-      return { ok: true, design: data.content, path: data.path };
+    if (data !== null && data.path.length > 0) {
+      return { ok: true, path: data.path };
     }
 
     const path = data?.path ?? this.agent.sessionMode.sessionModeFilePath;
@@ -197,11 +194,10 @@ function normalizeOptionLabel(label: string): string {
 }
 
 function formatDesignHandoffOutput(
-  design: string,
   path: string | undefined,
   selectedLabel: string | undefined,
 ): string {
   const optionPrefix = selectedApproachPrefix(selectedLabel);
   const savedTo = path !== undefined ? `Design saved to: ${path}\n\n` : '';
-  return `${optionPrefix}Design mode deactivated. Now in plan mode.\n${savedTo}## Approved Design:\n${design}\n\nYou are now in plan mode. Create a concrete, step-by-step implementation plan based on the approved design above.`;
+  return `${optionPrefix}Design mode deactivated. Now in plan mode.\n\n${savedTo}Create a concrete, step-by-step implementation plan based on the approved design document.`;
 }
