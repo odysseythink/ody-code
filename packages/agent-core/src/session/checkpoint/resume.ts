@@ -7,13 +7,15 @@
  * checkpoint and the replayed state disagree.
  */
 
-import { join } from 'pathe';
+import { dirname, join } from 'pathe';
 
 import type { Agent } from '#/agent';
 import type { Logger } from '#/logging/types';
 import type { Session } from '..';
+import { CheckpointBackupStore } from './backup-store';
 import { CheckpointIndex } from './checkpoint-index';
 import { SessionCheckpoint } from './checkpoint';
+import { findFallbackCheckpoint } from './recovery';
 import { verifyCheckpointIntegrity } from './integrity';
 
 export interface CheckpointResumeOptions {
@@ -51,25 +53,43 @@ export async function verifyAndRestoreResumedSession(
 
   const checkpointPath = options.checkpointPath ?? defaultCheckpointPath(session);
   const indexPath = options.indexPath ?? defaultIndexPath(session);
+  const backupDir = join(dirname(indexPath), 'backups');
 
   const checkpoint = new SessionCheckpoint({ checkpointPath });
   const index = new CheckpointIndex({ indexPath });
+  const backupStore =
+    session.options.id === undefined
+      ? undefined
+      : new CheckpointBackupStore({ backupDir, sessionID: session.options.id });
 
-  const indexData = await loadIndexSafe(index, options.logger);
+  let indexData = await loadIndexSafe(index, options.logger);
+
+  // If the index is missing but backups exist, rebuild the index from disk.
+  if ((indexData === null || indexData.versions.length === 0) && backupStore !== undefined) {
+    const backups = await backupStore.list();
+    if (backups.length > 0) {
+      await index.rebuildFromBackups(backupStore);
+      indexData = await loadIndexSafe(index, options.logger);
+    }
+  }
+
   if (indexData === null || indexData.versions.length === 0) {
     // No checkpoint has been written yet; this is normal for new sessions.
     return { verified: false };
   }
 
-  const version = findVersionToRestore(indexData.versions);
-  if (version === undefined) {
-    return { verified: false };
+  const recovered = await findFallbackCheckpoint({
+    index: indexData,
+    backupStore,
+    fallbackCheckpoint: checkpoint,
+    logger: options.logger,
+  });
+
+  if (recovered === null) {
+    return { warning: 'No checkpoint could be loaded; recovery failed.' };
   }
 
-  const payload = await loadPayloadSafe(version.path, checkpoint, options.logger);
-  if (payload === null) {
-    return { warning: `Checkpoint ${version.path} could not be loaded.` };
-  }
+  const { payload } = recovered;
 
   const integrity = verifyCheckpointIntegrity(payload, {
     expectedSessionID: session.options.id ?? undefined,
@@ -112,35 +132,6 @@ async function loadIndexSafe(
     logger?.warn('Failed to load checkpoint index during resume', { error });
     return null;
   }
-}
-
-async function loadPayloadSafe(
-  path: string,
-  fallbackCheckpoint: SessionCheckpoint,
-  logger?: Logger,
-): Promise<import('./checkpoint').SessionCheckpointPayload | null> {
-  const target = new SessionCheckpoint({ checkpointPath: path });
-  try {
-    return await target.load();
-  } catch (error) {
-    logger?.warn('Failed to load checkpoint version', { path, error });
-  }
-
-  try {
-    return await fallbackCheckpoint.load();
-  } catch (error) {
-    logger?.warn('Failed to load fallback checkpoint', { error });
-  }
-
-  return null;
-}
-
-function findVersionToRestore(
-  versions: ReadonlyArray<import('./checkpoint-index').CheckpointVersion>,
-): import('./checkpoint-index').CheckpointVersion | undefined {
-  // Prefer the newest valid version; fall back to the newest version overall
-  // so a corrupted latest checkpoint can still be diagnosed/repaired.
-  return versions.find((v) => v.valid) ?? versions[0];
 }
 
 function restoreDesignSessions(

@@ -14,6 +14,8 @@ import { dirname } from 'pathe';
 import { ErrorCodes, KimiError } from '#/errors';
 import { atomicWrite } from '#/utils/fs';
 import { withFileLock } from '#/utils/file-lock';
+import { CheckpointBackupStore } from './backup-store';
+import { SessionCheckpoint } from './checkpoint';
 
 export interface CheckpointVersion {
   /** Path to the checkpoint file for this version. */
@@ -94,6 +96,46 @@ export class CheckpointIndex {
    */
   async load(): Promise<CheckpointIndexData> {
     return this.loadSafe();
+  }
+
+  /**
+   * Rebuild the index by scanning backup files.
+   *
+   * Loads each backup to extract its timestamp and message count, then writes
+   * a fresh index with the newest backups first. This handles the case where
+   * the index file is lost or corrupted (error E4).
+   */
+  async rebuildFromBackups(backupStore: CheckpointBackupStore): Promise<void> {
+    const paths = await backupStore.list();
+    const versions: CheckpointVersion[] = [];
+
+    for (const path of paths) {
+      const checkpoint = new SessionCheckpoint({ checkpointPath: path });
+      try {
+        const payload = await checkpoint.load();
+        if (payload === null) continue;
+        versions.push({
+          path,
+          timestamp: payload.lastUpdatedAt,
+          messageCount: payload.messages.length,
+          valid: false,
+          lastValidParent: null,
+        });
+      } catch {
+        // Ignore unreadable backups; they will be skipped during recovery.
+      }
+    }
+
+    const next: CheckpointIndexData = {
+      latest: versions[0]?.path,
+      versions,
+    };
+    const text = `${JSON.stringify(next, null, 2)}\n`;
+
+    await withFileLock(this.path, async () => {
+      await mkdir(dirname(this.path), { recursive: true });
+      await atomicWrite(this.path, text);
+    });
   }
 
   private async loadSafe(): Promise<CheckpointIndexData> {
