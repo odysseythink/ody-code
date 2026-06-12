@@ -25,6 +25,7 @@ import { CheckpointBackupStore } from './backup-store';
 import { CheckpointIndex } from './checkpoint-index';
 import { SessionCheckpoint, type SessionCheckpointPayload } from './checkpoint';
 import { verifyCheckpointIntegrity } from './integrity';
+import { withCheckpointSaveRetry } from './save-retry';
 
 export interface CheckpointCoordinatorOptions {
   readonly session: Session;
@@ -125,11 +126,23 @@ export class CheckpointCoordinator {
       });
     }
 
-    await this.options.checkpoint.save(payload);
+    await withCheckpointSaveRetry(
+      () => this.options.checkpoint.save(payload),
+      (async () => {
+        if (this.backupStore !== undefined) {
+          await this.backupStore.freeOldest(1);
+        }
+      }) as () => Promise<void>,
+      { logger: this.options.logger },
+    );
 
     let versionPath = this.options.checkpoint.path;
     if (this.backupStore !== undefined) {
-      versionPath = await this.backupStore.save(payload);
+      versionPath = await withCheckpointSaveRetry(
+        () => this.backupStore!.save(payload),
+        () => this.backupStore!.freeOldest(1).then(() => {}),
+        { logger: this.options.logger },
+      );
     }
 
     const indexData = await this.options.index.load();

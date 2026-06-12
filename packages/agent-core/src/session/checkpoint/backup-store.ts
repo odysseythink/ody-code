@@ -64,6 +64,28 @@ export class CheckpointBackupStore {
     return withFileLock(this.lockFilePath(), async () => this.listLocked());
   }
 
+  /**
+   * Remove the oldest `count` backups to free disk space. Returns the number
+   * of files actually removed.
+   */
+  async freeOldest(count: number): Promise<number> {
+    await mkdir(this.options.backupDir, { recursive: true });
+    return withFileLock(this.lockFilePath(), async () => {
+      const paths = await this.listLocked();
+      const toRemove = paths.slice(-Math.max(0, count));
+      let removed = 0;
+      for (const path of toRemove) {
+        try {
+          await unlink(path);
+          removed += 1;
+        } catch {
+          // Ignore errors; the next save will try again.
+        }
+      }
+      return removed;
+    });
+  }
+
   private nextBackupPath(timestamp: string): string {
     this.counter += 1;
     const safeTimestamp = timestamp.replace(/[:.]/g, '-');
