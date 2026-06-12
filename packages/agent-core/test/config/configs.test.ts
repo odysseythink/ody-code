@@ -212,6 +212,19 @@ describe('harness config TOML loader', () => {
     expect(roundTripped.loopControl?.splitPlanCompactionRatio).toBe(0.5);
   });
 
+  it('parses and round-trips normal_task_compaction_ratio under loop_control', async () => {
+    const dir = makeTempDir();
+    const configPath = join(dir, 'normal-task-ratio.toml');
+    const config = parseConfigString('[loop_control]\nnormal_task_compaction_ratio = 0.4\n', configPath);
+    expect(config.loopControl?.normalTaskCompactionRatio).toBe(0.4);
+
+    await writeConfigFile(configPath, config);
+    const text = await readFile(configPath, 'utf-8');
+    expect(text).toContain('normal_task_compaction_ratio = 0.4');
+    const roundTripped = parseConfigString(text, configPath);
+    expect(roundTripped.loopControl?.normalTaskCompactionRatio).toBe(0.4);
+  });
+
   it('round-trips a custom registry source field on a provider', async () => {
     const dir = makeTempDir();
     const configPath = join(dir, 'round-trip.toml');

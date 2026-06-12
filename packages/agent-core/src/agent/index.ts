@@ -31,6 +31,7 @@ import { BackgroundManager, BackgroundTaskPersistence } from './background';
 import {
   FullCompaction,
   MicroCompaction,
+  NormalModeTaskCheckpoint,
   SplitPlanCheckpoint,
   type CompactionStrategy,
   type MicroCompactionConfig,
@@ -131,6 +132,9 @@ export class Agent {
    * over the configured ratio. Current-mode-aware via its agent getters, so one
    * instance serves all partitions. */
   readonly splitPlanCheckpoint: SplitPlanCheckpoint;
+  /** Detects TodoList task completion boundaries in normal mode and compacts when
+   * context exceeds the configured ratio. Only active when sessionMode is inactive. */
+  readonly normalModeTaskCheckpoint: NormalModeTaskCheckpoint;
   private _activeMode: ModeKey = 'normal';
   // When setContextMode is called while the current partition has an open step
   // (mid tool-exchange), we defer the switch so the tool.call / tool.result
@@ -199,6 +203,7 @@ export class Agent {
       design: new MicroCompaction(this, options.microCompaction),
     };
     this.splitPlanCheckpoint = new SplitPlanCheckpoint(this);
+    this.normalModeTaskCheckpoint = new NormalModeTaskCheckpoint(this);
     this.config = new ConfigState(this);
     this.turn = new TurnFlow(this);
     this.injection = new InjectionManager(this);
@@ -492,6 +497,7 @@ export class Agent {
       clearContext: () => {
         this.context.clear();
         this.splitPlanCheckpoint.reset();
+        this.normalModeTaskCheckpoint.reset();
       },
       activateSkill: (payload) => {
         if (this.skills === null) {
