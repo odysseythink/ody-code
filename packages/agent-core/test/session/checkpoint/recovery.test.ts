@@ -56,7 +56,27 @@ describe('findFallbackCheckpoint', () => {
     expect(result!.path).toBe(main.path);
   });
 
-  it('falls back to an index version even when it is marked invalid', async () => {
+  it('skips an invalid newest index version and uses the next valid one', async () => {
+    const older = new SessionCheckpoint({ checkpointPath: join(workDir, 'older.json') });
+    await older.save(makePayload('2026-06-12T10:00:00.000Z'));
+
+    const result = await findFallbackCheckpoint({
+      index: {
+        latest: '/missing.json',
+        versions: [
+          { path: '/missing.json', timestamp: '2026-06-12T10:00:02.000Z', messageCount: 0, valid: false, lastValidParent: null },
+          { path: older.path, timestamp: '2026-06-12T10:00:01.000Z', messageCount: 0, valid: true, lastValidParent: null },
+        ],
+      },
+      fallbackCheckpoint: older,
+    });
+
+    expect(result).not.toBeNull();
+    expect(result!.source).toBe('index');
+    expect(result!.path).toBe(older.path);
+  });
+
+  it('skips index versions marked invalid and falls back to the main checkpoint', async () => {
     const main = new SessionCheckpoint({ checkpointPath: join(workDir, 'session.json') });
     await main.save(makePayload('2026-06-12T10:00:00.000Z'));
 
@@ -68,7 +88,7 @@ describe('findFallbackCheckpoint', () => {
     });
 
     expect(result).not.toBeNull();
-    expect(result!.source).toBe('index');
+    expect(result!.source).toBe('main');
   });
 
   it('falls back to backups when the index versions are unreadable', async () => {

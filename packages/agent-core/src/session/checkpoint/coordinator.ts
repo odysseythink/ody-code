@@ -128,11 +128,11 @@ export class CheckpointCoordinator {
 
     await withCheckpointSaveRetry(
       () => this.options.checkpoint.save(payload),
-      (async () => {
+      async () => {
         if (this.backupStore !== undefined) {
           await this.backupStore.freeOldest(1);
         }
-      }) as () => Promise<void>,
+      },
       { logger: this.options.logger },
     );
 

@@ -91,10 +91,17 @@ export async function verifyAndRestoreResumedSession(
 
   const { payload } = recovered;
 
-  const integrity = verifyCheckpointIntegrity(payload, {
-    expectedSessionID: session.options.id ?? undefined,
-    expectedMessageCount: main.context.history.length,
-  });
+  let integrity: ReturnType<typeof verifyCheckpointIntegrity>;
+  try {
+    integrity = verifyCheckpointIntegrity(payload, {
+      expectedSessionID: session.options.id ?? undefined,
+      expectedMessageCount: main.context.history.length,
+    });
+  } catch (error) {
+    const warning = `Checkpoint integrity verification threw after replay: ${error instanceof Error ? error.message : String(error)}`;
+    options.logger?.warn(warning, { error });
+    return { warning, verified: false };
+  }
 
   if (!integrity.valid) {
     const warning = `Checkpoint integrity failed after replay: ${integrity.errors.join('; ')}`;

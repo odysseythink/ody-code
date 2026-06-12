@@ -50,6 +50,7 @@ async function findInIndex(
   options: CheckpointRecoveryOptions,
 ): Promise<CheckpointRecoveryResult | null> {
   for (const version of options.index.versions) {
+    if (!version.valid) continue;
     const payload = await loadPayload(version.path, options.logger);
     if (payload !== null) {
       return { payload, source: 'index', path: version.path };

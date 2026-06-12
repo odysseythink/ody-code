@@ -70,19 +70,19 @@ export class CheckpointIndex {
    * to its path, and the tail is truncated to `maxVersions`.
    */
   async update(version: CheckpointVersion): Promise<void> {
-    const data = await this.loadSafe();
-    const versions = [version, ...data.versions];
-    if (versions.length > this.options.maxVersions) {
-      versions.length = this.options.maxVersions;
-    }
-
-    const next: CheckpointIndexData = {
-      latest: version.path,
-      versions,
-    };
-    const text = `${JSON.stringify(next, null, 2)}\n`;
-
     await withFileLock(this.path, async () => {
+      const data = await this.loadSafe();
+      const versions = [version, ...data.versions];
+      if (versions.length > this.options.maxVersions) {
+        versions.length = this.options.maxVersions;
+      }
+
+      const next: CheckpointIndexData = {
+        latest: version.path,
+        versions,
+      };
+      const text = `${JSON.stringify(next, null, 2)}\n`;
+
       await mkdir(dirname(this.path), { recursive: true });
       await atomicWrite(this.path, text);
     });
