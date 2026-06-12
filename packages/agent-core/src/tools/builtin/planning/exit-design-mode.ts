@@ -12,7 +12,7 @@ import type { SessionModeData } from '#/agent/session-mode';
 import { z } from 'zod';
 
 import type { BuiltinTool } from '../../../agent/tool';
-import type { ExecutableToolResult, ToolExecution } from '../../../loop/types';
+import type { ExecutableToolErrorResult, ExecutableToolResult, ToolExecution } from '../../../loop/types';
 import type { ToolInputDisplay } from '../../display';
 import { toInputJsonSchema } from '../../support/input-schema';
 import { declaredOptionLabel, selectedApproachPrefix, selectedLabelOf } from './exit-mode-output';
@@ -72,6 +72,32 @@ interface ResolveDesignResult {
 
 // ── Implementation ───────────────────────────────────────────────────
 
+export function findMissingDesignSections(content: string): string[] {
+  const missing: string[] = [];
+  const trimmed = content.trim();
+
+  if (trimmed.length < 300) {
+    missing.push('sufficient content (design appears incomplete or empty)');
+  }
+
+  const headingCount = (trimmed.match(/^## /gm) ?? []).length;
+  if (headingCount < 3) {
+    missing.push(`at least 3 design sections (found ${headingCount})`);
+  }
+
+  const scopePattern = /^#{1,3}\s+(scope|in\/out|范围|scope\s+in)/im;
+  if (!scopePattern.test(trimmed)) {
+    missing.push('Scope or Scope In/Out section');
+  }
+
+  const archPattern = /^#{1,3}\s+(architecture|design|approach|overview|架构|设计方案)/im;
+  if (!archPattern.test(trimmed)) {
+    missing.push('Architecture or Design section');
+  }
+
+  return missing;
+}
+
 export class ExitDesignModeTool implements BuiltinTool<ExitDesignModeInput> {
   readonly name = 'ExitDesignMode' as const;
   readonly description: string = DESCRIPTION;
@@ -80,11 +106,36 @@ export class ExitDesignModeTool implements BuiltinTool<ExitDesignModeInput> {
   constructor(private readonly agent: Agent) {}
 
   async resolveExecution(args: ExitDesignModeInput): Promise<ToolExecution> {
+    const incomplete = await this.checkDesignCompleteness();
+    if (incomplete !== null) return incomplete;
+
     return {
       description: 'Presenting design and exiting design mode',
       display: await this.resolveDesignReviewDisplay(args),
       approvalRule: this.name,
       execute: (ctx) => this.execution(args, ctx.metadata),
+    };
+  }
+
+  private async checkDesignCompleteness(): Promise<ExecutableToolErrorResult | null> {
+    if (!this.agent.sessionMode.isActive) return null;
+
+    let data: SessionModeData;
+    try {
+      data = await this.agent.sessionMode.data();
+    } catch {
+      return null;
+    }
+
+    if (data === null) return null;
+
+    const missing = findMissingDesignSections(data.content);
+    if (missing.length === 0) return null;
+
+    const list = missing.map((item) => `- ${item}`).join('\n');
+    return {
+      isError: true,
+      output: `Design is incomplete. Missing:\n${list}\n\nPlease add the missing sections to the design file, then call ExitDesignMode again.`,
     };
   }
 

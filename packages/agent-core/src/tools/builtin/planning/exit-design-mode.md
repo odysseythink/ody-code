@@ -9,6 +9,13 @@ Use this tool when you are in design mode and have finished writing your design 
 - Clarify first: if auto permission mode is not active and you still have unresolved assumptions that materially change the design, use AskUserQuestion before writing the final design — one focused question at a time.
 - Make sure the design document tags decisions with [C:USER] / [C:INFERRED] and includes an ## Assumptions section for anything still unverified.
 
+## Required sections (must be present in the design file before calling)
+- **Scope** — a `## Scope`, `### Scope In/Out`, or equivalent heading with in/out lists
+- **Architecture / Design** — an `## Architecture`, `## Design`, `## Approach`, or equivalent
+- At least **3 total `##` sections** and **300 characters** of substantive content
+
+If any of these are missing, ExitDesignMode will reject the call and list what's absent. Complete the missing sections and call again.
+
 ## Multiple Approaches
 If your design presents multiple alternative directions:
 - Pass them via the `options` parameter so the user can choose which one to pursue.
