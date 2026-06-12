@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Agent } from '../../../src/agent';
 import { AgentRecords, InMemoryAgentRecordPersistence } from '../../../src/agent/records';
 import type { Session } from '../../../src/session';
+import { CheckpointBackupStore } from '../../../src/session/checkpoint/backup-store';
 import { CheckpointIndex } from '../../../src/session/checkpoint/checkpoint-index';
 import { SessionCheckpoint } from '../../../src/session/checkpoint/checkpoint';
 import { CheckpointCoordinator } from '../../../src/session/checkpoint/coordinator';
@@ -26,6 +27,7 @@ describe('CheckpointCoordinator', () => {
     const checkpointPath = join(workDir, 'session.json');
     const indexPath = join(workDir, 'checkpoints.json');
     const markdownPath = join(workDir, 'session.md');
+    const backupDir = join(workDir, 'backups');
 
     const sessionMode = {
       isActive: false,
@@ -64,15 +66,17 @@ describe('CheckpointCoordinator', () => {
     const checkpoint = new SessionCheckpoint({ checkpointPath });
     const index = new CheckpointIndex({ indexPath });
     const markdownExport = new SessionMarkdownExport({ filePath: markdownPath });
+    const backupStore = new CheckpointBackupStore({ backupDir, sessionID: 's1' });
 
     const coordinator = new CheckpointCoordinator({
       session,
       checkpoint,
       index,
+      backupStore,
       markdownExport,
     });
 
-    return { coordinator, agent, session, checkpoint, index, markdownPath };
+    return { coordinator, agent, session, checkpoint, index, markdownPath, backupStore };
   }
 
   it('appends messages to the markdown export', async () => {
@@ -93,7 +97,7 @@ describe('CheckpointCoordinator', () => {
   });
 
   it('saves a checkpoint on session_mode.exit', async () => {
-    const { coordinator, agent, checkpoint, index } = makeFixture();
+    const { coordinator, agent, checkpoint, index, backupStore } = makeFixture();
     coordinator.attachAgent(agent);
 
     agent.records.logRecord({ type: 'session_mode.exit', id: 'd1' });
@@ -105,7 +109,7 @@ describe('CheckpointCoordinator', () => {
     expect(payload!.messages).toHaveLength(1);
 
     const data = await index.load();
-    expect(data.latest).toBe(checkpoint.path);
+    expect(data.latest?.startsWith(backupStore.dir)).toBe(true);
     expect(data.versions).toHaveLength(1);
   });
 

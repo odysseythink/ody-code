@@ -14,12 +14,14 @@
  */
 
 import type { Message } from '@odysseythink/kosong';
+import { join } from 'pathe';
 
 import type { Agent } from '#/agent';
 import type { AgentRecord } from '#/agent/records';
 import type { Logger } from '#/logging/types';
 import type { Session } from '..';
 import type { SessionMarkdownExport } from '../export/markdown-export';
+import { CheckpointBackupStore } from './backup-store';
 import { CheckpointIndex } from './checkpoint-index';
 import { SessionCheckpoint, type SessionCheckpointPayload } from './checkpoint';
 import { verifyCheckpointIntegrity } from './integrity';
@@ -28,6 +30,7 @@ export interface CheckpointCoordinatorOptions {
   readonly session: Session;
   readonly checkpoint: SessionCheckpoint;
   readonly index: CheckpointIndex;
+  readonly backupStore?: CheckpointBackupStore | undefined;
   readonly markdownExport?: SessionMarkdownExport | undefined;
   readonly logger?: Logger | undefined;
 }
@@ -36,8 +39,18 @@ export class CheckpointCoordinator {
   private unsubscribe?: () => void;
   private saveChain = Promise.resolve();
   private saving = false;
+  private readonly backupStore?: CheckpointBackupStore;
 
-  constructor(private readonly options: CheckpointCoordinatorOptions) {}
+  constructor(private readonly options: CheckpointCoordinatorOptions) {
+    this.backupStore =
+      options.backupStore ??
+      (options.session.options.id === undefined
+        ? undefined
+        : new CheckpointBackupStore({
+            backupDir: join(options.session.options.homedir, '.ody-code', 'session-state', 'backups'),
+            sessionID: options.session.options.id,
+          }));
+  }
 
   get isSaving(): boolean {
     return this.saving;
@@ -114,12 +127,17 @@ export class CheckpointCoordinator {
 
     await this.options.checkpoint.save(payload);
 
+    let versionPath = this.options.checkpoint.path;
+    if (this.backupStore !== undefined) {
+      versionPath = await this.backupStore.save(payload);
+    }
+
     const indexData = await this.options.index.load();
     const lastValidParent =
       indexData.versions.find((v) => v.valid)?.path ?? null;
 
     await this.options.index.update({
-      path: this.options.checkpoint.path,
+      path: versionPath,
       timestamp: payload.lastUpdatedAt,
       messageCount: payload.messages.length,
       valid: integrity.valid,
