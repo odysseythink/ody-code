@@ -128,9 +128,89 @@ export const MoonshotServiceConfigSchema = z.object({
 
 export type MoonshotServiceConfig = z.infer<typeof MoonshotServiceConfigSchema>;
 
+export const WebSearchProviderNameSchema = z.enum([
+  'duckduckgo',
+  'serpapi',
+  'searchapi',
+  'serper',
+  'bing',
+  'baidu',
+  'serply',
+  'searxng',
+  'tavily',
+  'exa',
+  'perplexity',
+  'moonshot',
+]);
+export type WebSearchProviderName = z.infer<typeof WebSearchProviderNameSchema>;
+
+export const DuckDuckGoOptionsSchema = z.object({
+  proxyUrl: z.string().url().optional(),
+});
+
+export const SerpApiOptionsSchema = z.object({
+  engine: z.string().optional(),
+});
+
+export const SearchApiOptionsSchema = z.object({
+  engine: z.string().optional(),
+});
+
+export const SerperOptionsSchema = z.object({});
+
+export const BingOptionsSchema = z.object({
+  market: z.string().optional(),
+});
+
+export const BaiduOptionsSchema = z.object({
+  topK: z.number().int().min(1).max(50).optional(),
+});
+
+export const SerplyOptionsSchema = z.object({
+  language: z.string().optional(),
+  hl: z.string().optional(),
+  gl: z.string().optional(),
+  device: z.enum(['desktop', 'mobile']).optional(),
+});
+
+export const SearXNGOptionsSchema = z.object({
+  baseUrl: z.string().url(),
+});
+
+export const TavilyOptionsSchema = z.object({
+  searchDepth: z.enum(['basic', 'advanced']).optional(),
+});
+
+export const ExaOptionsSchema = z.object({
+  type: z.enum(['auto', 'fast', 'deep']).optional(),
+  livecrawl: z.enum(['fallback', 'preferred']).optional(),
+});
+
+export const PerplexityOptionsSchema = z.object({
+  maxResults: z.number().int().min(1).max(20).optional(),
+  maxTokensPerPage: z.number().int().optional(),
+});
+
+export const MoonshotOptionsSchema = z.object({});
+
+export const WebSearchProviderConfigSchema = z.object({
+  provider: WebSearchProviderNameSchema,
+  apiKey: z.string().optional(),
+  timeoutMs: z.number().int().min(1000).max(120000).optional(),
+  options: z.record(z.unknown()).optional(),
+});
+export type WebSearchProviderConfig = z.infer<typeof WebSearchProviderConfigSchema>;
+
+export const WebSearchConfigSchema = z.object({
+  primary: WebSearchProviderConfigSchema,
+  secondary: WebSearchProviderConfigSchema.optional(),
+});
+export type WebSearchConfig = z.infer<typeof WebSearchConfigSchema>;
+
 export const ServicesConfigSchema = z.object({
   moonshotSearch: MoonshotServiceConfigSchema.optional(),
   moonshotFetch: MoonshotServiceConfigSchema.optional(),
+  webSearch: WebSearchConfigSchema.optional(),
 });
 
 export type ServicesConfig = z.infer<typeof ServicesConfigSchema>;
@@ -246,9 +326,15 @@ const PermissionConfigPatchSchema = PermissionConfigSchema.partial();
 const LoopControlPatchSchema = LoopControlSchema.partial();
 const BackgroundConfigPatchSchema = BackgroundConfigSchema.partial();
 const MoonshotServiceConfigPatchSchema = MoonshotServiceConfigSchema.partial();
+const WebSearchProviderConfigPatchSchema = WebSearchProviderConfigSchema.partial();
+const WebSearchConfigPatchSchema = z.object({
+  primary: WebSearchProviderConfigPatchSchema.optional(),
+  secondary: WebSearchProviderConfigPatchSchema.optional(),
+});
 const ServicesConfigPatchSchema = z.object({
   moonshotSearch: MoonshotServiceConfigPatchSchema.optional(),
   moonshotFetch: MoonshotServiceConfigPatchSchema.optional(),
+  webSearch: WebSearchConfigPatchSchema.optional(),
 });
 
 export const KimiConfigPatchSchema = z
