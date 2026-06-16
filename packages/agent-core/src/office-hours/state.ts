@@ -174,9 +174,10 @@ export function selectResources(
   // Mix categories: never 3 of same type. Pick up to 3 with category diversity.
   const result: Resource[] = [];
   const usedCategories = new Set<string>();
+  const availableCategories = new Set(available.map((r) => r.category));
   for (const r of available) {
     if (result.length >= 3) break;
-    if (usedCategories.has(r.category) && usedCategories.size < available.length) continue;
+    if (usedCategories.has(r.category) && usedCategories.size < availableCategories.size) continue;
     result.push(r);
     usedCategories.add(r.category);
   }

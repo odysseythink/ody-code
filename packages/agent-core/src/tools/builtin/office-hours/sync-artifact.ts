@@ -1,5 +1,5 @@
-import { execSync } from 'node:child_process';
-import { join } from 'node:path';
+import { execFileSync } from 'node:child_process';
+import { join } from 'pathe';
 
 import type { Agent } from '#/agent';
 import { z } from 'zod';
@@ -76,9 +76,12 @@ export class SyncOfficeHoursArtifactTool implements BuiltinTool<SyncOfficeHoursA
 
           // 4. Fall back to shell-based gbrain CLI
           try {
-            const sourceFlag = gbrainSource ? ` --source "${gbrainSource}"` : '';
-            const cmd = `gbrain artifact add${sourceFlag} "${args.designFilePath}"`;
-            execSync(cmd, { cwd: projectRoot, timeout: 30_000 });
+            const cliArgs = ['artifact', 'add'];
+            if (gbrainSource !== undefined && gbrainSource.length > 0) {
+              cliArgs.push('--source', gbrainSource);
+            }
+            cliArgs.push(args.designFilePath);
+            execFileSync('gbrain', cliArgs, { cwd: projectRoot, timeout: 30_000 });
             return {
               output: [
                 'Design artifact synced via gbrain CLI.',

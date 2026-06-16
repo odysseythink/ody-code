@@ -30,11 +30,11 @@ export class PlanModeInjector extends DynamicInjector {
 
   override onContextClear(): void {
     super.onContextClear();
-    this.wasActive = this.agent.sessionMode.isActive && this.agent.sessionMode.kind !== 'design';
+    this.wasActive = this.agent.sessionMode.isActive && this.agent.sessionMode.kind === 'plan';
   }
 
   override async getInjection(): Promise<string | undefined> {
-    const isPlanActive = this.agent.sessionMode.isActive && this.agent.sessionMode.kind !== 'design';
+    const isPlanActive = this.agent.sessionMode.isActive && this.agent.sessionMode.kind === 'plan';
     const { sessionModeFilePath } = this.agent.sessionMode;
     if (!isPlanActive) {
       if (!this.wasActive) {

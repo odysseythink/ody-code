@@ -12,7 +12,7 @@ import { Agent, type AgentOptions, type AgentType } from '../agent';
 import { SessionGoalStore, type SessionGoalState } from './goal';
 import { HookEngine, type HookDef } from './hooks';
 import type { PermissionManagerOptions, PermissionRule } from '../agent/permission';
-import { parseBooleanEnv, resolveConfigValue, type BackgroundConfig } from '../config';
+import { parseBooleanEnv, resolveConfigValue, resolveOdyHome, type BackgroundConfig } from '../config';
 import { makeErrorPayload } from '../errors';
 import {
   McpConnectionManager,
@@ -45,6 +45,10 @@ import { SessionCheckpoint } from './checkpoint/checkpoint';
 import { CheckpointIndex } from './checkpoint/checkpoint-index';
 import { SessionMarkdownExport } from './export/markdown-export';
 import type { ToolServices } from '../tools/support/services';
+import {
+  FileSystemOfficeHoursStateStore,
+  type OfficeHoursStateStore,
+} from '#/office-hours/state';
 
 export interface SessionOptions {
   readonly kaos: Kaos;
@@ -104,6 +108,7 @@ export class Session {
   private readonly logHandle: SessionLogHandle | undefined;
   readonly hookEngine: HookEngine;
   readonly goals: SessionGoalStore;
+  readonly officeHoursStateStore: OfficeHoursStateStore;
   private agentIdCounter = 0;
   private readonly skillsReady: Promise<void>;
   metadata: SessionMeta = {
@@ -154,6 +159,10 @@ export class Session {
       },
       telemetry: this.telemetry,
     });
+    this.officeHoursStateStore = new FileSystemOfficeHoursStateStore(
+      options.kaos,
+      resolveOdyHome(options.kimiHomeDir),
+    );
     this.skills = new SkillRegistry({ sessionId: options.id });
     this.mcp = new McpConnectionManager({
       oauthService: new McpOAuthService({ kimiHomeDir: options.kimiHomeDir }),
@@ -496,6 +505,7 @@ export class Session {
       log: this.log.createChild({ agentId: id }),
       pluginSessionStarts: type === 'main' ? this.options.pluginSessionStarts : undefined,
       appVersion: this.options.appVersion,
+      officeHoursStateStore: this.officeHoursStateStore,
     });
   }
 

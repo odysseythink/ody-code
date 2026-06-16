@@ -76,7 +76,7 @@ describe('ExitOfficeHoursModeTool', () => {
     const result = await executeTool(tool, {
       turnId: '0',
       toolCallId: 'tc_3',
-      args: { approved: true },
+      args: {},
       signal,
     });
     expect(result.isError).toBeFalsy();
@@ -89,7 +89,7 @@ describe('ExitOfficeHoursModeTool', () => {
     const result = await executeTool(tool, {
       turnId: '0',
       toolCallId: 'tc_4',
-      args: { approved: true },
+      args: {},
       signal,
     });
     expect(result.isError).toBe(true);

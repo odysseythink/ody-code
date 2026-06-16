@@ -1,4 +1,4 @@
-import { join } from 'node:path';
+import { join } from 'pathe';
 
 import type { Agent } from '#/agent';
 import { z } from 'zod';

@@ -35,18 +35,21 @@ export class OfficeHoursInjector extends DynamicInjector {
     if (!this.wasActive) {
       this.injectedAt = null;
       this.wasActive = true;
+      const content = await this.currentOfficeHoursContent();
+      if (content.trim().length > 0) {
+        return officeHoursReentryReminder(sessionModeFilePath);
+      }
       return officeHoursEntryReminder(sessionModeFilePath);
     }
 
     const variant = this.getVariant();
     if (variant === null) return undefined;
-    if (variant === 'reentry') return officeHoursReentryReminder(sessionModeFilePath);
     return variant === 'full'
       ? officeHoursFullReminder(sessionModeFilePath)
       : officeHoursSparseReminder(sessionModeFilePath);
   }
 
-  protected getVariant(): 'full' | 'sparse' | 'reentry' | null {
+  protected getVariant(): 'full' | 'sparse' | null {
     if (this.injectedAt === null) return 'full';
     const history = this.agent.context.history;
     let assistantTurnsSince = 0;
@@ -62,5 +65,14 @@ export class OfficeHoursInjector extends DynamicInjector {
     if (assistantTurnsSince >= OFFICE_HOURS_FULL_REFRESH_TURNS) return 'full';
     if (assistantTurnsSince >= OFFICE_HOURS_DEDUP_MIN_TURNS) return 'sparse';
     return null;
+  }
+
+  private async currentOfficeHoursContent(): Promise<string> {
+    try {
+      const data = await this.agent.sessionMode.data();
+      return data?.content ?? '';
+    } catch {
+      return '';
+    }
   }
 }

@@ -12,8 +12,8 @@ export const AppendBuilderProfileInputSchema = z.object({
   projectSlug: z.string().describe('Project slug derived from the project name or working directory.'),
   signalCount: z.number().int().nonnegative().describe('Number of founder signals observed during Phase 4.5 synthesis.'),
   signals: z.array(z.string()).describe('List of founder signal names observed (e.g. named_users, demand_evidence, pushback).'),
-  designDoc: z.string().describe('Path to the design document produced during Phase 5.'),
-  assignment: z.string().describe('The assignment text from the design document.'),
+  designDoc: z.string().optional().describe('Path to the design document produced during Phase 5. Defaults to the current office-hours design file path if omitted.'),
+  assignment: z.string().optional().describe('The assignment text from the design document. Defaults to empty if omitted.'),
   resourcesShown: z.array(z.string()).describe('URLs of resources shown to the user during this session.'),
   topics: z.array(z.string()).describe('Topics or categories covered in the session.'),
 }).strict();
@@ -39,14 +39,15 @@ export class AppendBuilderProfileTool implements BuiltinTool<AppendBuilderProfil
         }
 
         try {
+          const designDoc = args.designDoc ?? this.agent.sessionMode.sessionModeFilePath ?? '';
           const entry: BuilderProfileEntry = {
             date: new Date().toISOString(),
             mode: args.mode,
             projectSlug: args.projectSlug,
             signalCount: args.signalCount,
             signals: args.signals,
-            designDoc: args.designDoc,
-            assignment: args.assignment,
+            designDoc,
+            assignment: args.assignment ?? '',
             resourcesShown: args.resourcesShown,
             topics: args.topics,
           };

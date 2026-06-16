@@ -47,7 +47,7 @@ export function validateOptions(opts: CLIOptions): ValidatedOptions {
     throw new OptionConflictError('Cannot combine --prompt with --auto.');
   }
   if (!['normal', 'plan', 'design', 'office-hours'].includes(opts.sessionMode)) {
-    throw new OptionConflictError(`Invalid --session-mode: ${opts.sessionMode}. Must be normal, plan, or design.`);
+    throw new OptionConflictError(`Invalid --session-mode: ${opts.sessionMode}. Must be normal, plan, design, or office-hours.`);
   }
   if (promptMode && opts.sessionMode !== 'normal') {
     throw new OptionConflictError('Cannot combine --prompt with --session-mode.');

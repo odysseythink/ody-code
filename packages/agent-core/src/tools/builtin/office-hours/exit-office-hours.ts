@@ -6,9 +6,7 @@ import type { ToolExecution } from '../../../loop/types';
 import { toInputJsonSchema } from '../../support/input-schema';
 import DESCRIPTION from './exit-office-hours.md';
 
-export const ExitOfficeHoursModeInputSchema = z.object({
-  approved: z.boolean().describe('Whether the design document has been approved.'),
-}).strict();
+export const ExitOfficeHoursModeInputSchema = z.object({}).strict();
 export type ExitOfficeHoursModeInput = z.infer<typeof ExitOfficeHoursModeInputSchema>;
 
 export class ExitOfficeHoursModeTool implements BuiltinTool<ExitOfficeHoursModeInput> {
