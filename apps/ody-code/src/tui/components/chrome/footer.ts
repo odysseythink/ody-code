@@ -22,6 +22,7 @@ import {
   type GitStatusCache,
 } from '#/utils/git/git-status';
 import { safeUsageRatio } from '#/utils/usage/usage-format';
+import { t } from '@odysseythink/ody-code-sdk';
 
 const MAX_CWD_SEGMENTS = 3;
 const GOAL_TIMER_INTERVAL_MS = 1_000;
@@ -49,6 +50,7 @@ function renderModeBadge(
   mode: 'normal' | 'plan' | 'design' | 'office-hours',
   colors: ColorPalette,
   fileName?: string,
+  userLanguage?: 'en' | 'zh' | undefined,
 ): string {
   const emoji = EMOJIS[mode] ?? '';
   const bgColor =
@@ -67,7 +69,12 @@ function renderModeBadge(
     textColor = '#ffffff';
   }
 
-  const label = fileName ? `${emoji} ${mode} · ${fileName}` : `${emoji} ${mode}`;
+  const displayLabel = mode === 'office-hours'
+    ? t('tui.footer.officeHours', userLanguage)
+    : mode;
+  const label = fileName
+    ? `${emoji} ${displayLabel} · ${fileName}`
+    : `${emoji} ${displayLabel}`;
   const padded = ` ${label} `;
 
   return chalk.bgHex(bgColor).hex(textColor)(`【${padded}】`);
@@ -403,7 +410,7 @@ export class FooterComponent implements Component {
     // ── Line 2: inverted mode badge (left) + transient hint + context (right) ──
     const mode = state.sessionMode;
     const fileName = mode === 'normal' ? planFileName(state.sessionModeFilePath) : null;
-    let badge = renderModeBadge(mode, colors, fileName ?? undefined);
+    let badge = renderModeBadge(mode, colors, fileName ?? undefined, state.userLanguage);
     let badgeWidth = visibleWidth(badge);
     const maxBadgeWidth = Math.floor(width / 2);
     if (badgeWidth > maxBadgeWidth) {

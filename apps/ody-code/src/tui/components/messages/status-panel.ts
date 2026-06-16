@@ -6,6 +6,7 @@
  */
 
 import type { ModelAlias, PermissionMode, SessionStatus } from '@odysseythink/ody-code-sdk';
+import { t } from '@odysseythink/ody-code-sdk';
 import chalk from 'chalk';
 
 import { PRODUCT_NAME } from '#/constant/app';
@@ -98,6 +99,7 @@ export function buildStatusReportLines(options: StatusReportOptions): string[] {
     sev === 'danger' ? colors.error : sev === 'warn' ? colors.warning : colors.success;
 
   const permission = options.status?.permission ?? options.permissionMode;
+  const lang = options.status?.userLanguage;
   const sessionMode = options.status?.sessionMode ?? options.sessionMode;
   const sessionId = options.sessionId.trim().length > 0 ? options.sessionId : 'none';
   const rows: FieldRow[] = [
@@ -106,7 +108,7 @@ export function buildStatusReportLines(options: StatusReportOptions): string[] {
     { label: 'Permissions', value: permission },
     { label: 'Plan mode', value: sessionMode === 'plan' ? 'on' : 'off' },
     { label: 'Design mode', value: sessionMode === 'design' ? 'on' : 'off' },
-    { label: 'Office Hours', value: sessionMode === 'office-hours' ? 'on' : 'off' },
+    { label: t('tui.statusPanel.officeHours', lang), value: sessionMode === 'office-hours' ? t('tui.statusPanel.on', lang) : t('tui.statusPanel.off', lang) },
     { label: 'Session', value: sessionId },
   ];
   const title = options.sessionTitle?.trim();

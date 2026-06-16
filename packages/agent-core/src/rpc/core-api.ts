@@ -8,6 +8,7 @@ import type { ToolInfo } from '#/agent/tool';
 import type { KimiConfig, KimiConfigPatch } from '#/config';
 import type { ExperimentalFlagMap } from '#/flags';
 import type { ResumeSessionResult } from '#/rpc/resumed';
+import type { SupportedLanguage } from '#/i18n';
 import type { SessionMeta } from '#/session';
 import type {
   CreateGoalInput,
@@ -372,6 +373,7 @@ export interface AgentAPI {
   getUsage: (payload: EmptyPayload) => UsageStatus;
   getTools: (payload: EmptyPayload) => readonly ToolInfo[];
   getBackground: (payload: GetBackgroundPayload) => readonly BackgroundTaskInfo[];
+  getUserLanguage: (payload: EmptyPayload) => SupportedLanguage | undefined;
 }
 
 type AgentAPIWithId = WithAgentId<AgentAPI>;

@@ -1,6 +1,7 @@
 import type { Agent } from '#/agent';
 import { z } from 'zod';
 
+import { t } from '../../../i18n';
 import type { BuiltinTool } from '../../../agent/tool';
 import type { ToolExecution } from '../../../loop/types';
 import { toInputJsonSchema } from '../../support/input-schema';
@@ -21,22 +22,27 @@ export class ExitOfficeHoursModeTool implements BuiltinTool<ExitOfficeHoursModeI
       description: 'Requesting to exit office hours mode',
       approvalRule: this.name,
       execute: async () => {
+        const lang = this.agent.userLanguage;
         if (!this.agent.sessionMode.isActive || this.agent.sessionMode.kind !== 'office-hours') {
           return {
             isError: true,
-            output: 'Office hours mode is not active.',
+            output: t('officeHours.modeNotActive', lang),
           };
         }
 
         const path = this.agent.sessionMode.sessionModeFilePath;
         this.agent.sessionMode.exit();
 
+        const parts = [
+          t('officeHours.sessionComplete', lang),
+        ];
+        if (path) {
+          parts.push(t('officeHours.designDocSaved', lang).replace('{path}', path));
+        }
+        parts.push(t('officeHours.appWillExit', lang));
+
         return {
-          output: [
-            'Office hours session complete.',
-            path ? `Design document saved to: ${path}` : '',
-            'The application will now exit.',
-          ].filter(Boolean).join('\n'),
+          output: parts.join('\n'),
         };
       },
     };

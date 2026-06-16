@@ -409,6 +409,10 @@ export class SDKRpcClient {
     const contextUsage = maxContextTokens > 0 ? contextTokens / maxContextTokens : 0;
     const hasUsage =
       usage.byModel !== undefined || usage.total !== undefined || usage.currentTurn !== undefined;
+    const userLanguage = await rpc.getUserLanguage({
+      sessionId: input.sessionId,
+      agentId,
+    });
     return {
       model: config.modelAlias ?? config.provider?.model,
       thinkingLevel: config.thinkingLevel,
@@ -419,6 +423,7 @@ export class SDKRpcClient {
       maxContextTokens,
       contextUsage,
       usage: hasUsage ? usage : undefined,
+      userLanguage,
     };
   }
 

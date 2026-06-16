@@ -1,4 +1,8 @@
 import { describe, expect, it } from 'vitest';
+
+function escapeRegex(text: string): string {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
 import {
   officeHoursEntryReminder,
   officeHoursFullReminder,
@@ -9,6 +13,28 @@ import {
 
 describe('office-hours-contract', () => {
   const path = '/project/.ody-code/office-hours/2026-06-16-my-startup.md';
+
+  const LANGUAGE_PREFIX = '**Language:** Respond in the same language the user writes in — Chinese if they write Chinese, English if they write English.';
+
+  it('entry reminder starts with Language instruction', () => {
+    const msg = officeHoursEntryReminder(path);
+    expect(msg).toMatch(new RegExp('^' + escapeRegex(LANGUAGE_PREFIX)));
+  });
+
+  it('full reminder starts with Language instruction', () => {
+    const msg = officeHoursFullReminder(path);
+    expect(msg).toMatch(new RegExp('^' + escapeRegex(LANGUAGE_PREFIX)));
+  });
+
+  it('sparse reminder starts with Language instruction', () => {
+    const msg = officeHoursSparseReminder(path);
+    expect(msg).toMatch(new RegExp('^' + escapeRegex(LANGUAGE_PREFIX)));
+  });
+
+  it('reentry reminder starts with Language instruction', () => {
+    const msg = officeHoursReentryReminder(path);
+    expect(msg).toMatch(new RegExp('^' + escapeRegex(LANGUAGE_PREFIX)));
+  });
 
   describe('officeHoursEntryReminder', () => {
     it('includes the design file path', () => {
@@ -46,6 +72,28 @@ describe('office-hours-contract', () => {
     it('includes design doc template section', () => {
       const msg = officeHoursFullReminder(path);
       expect(msg).toContain('Design Doc');
+    });
+
+    it('defines the demand-provenance tag vocabulary', () => {
+      const msg = officeHoursFullReminder(path);
+      expect(msg).toContain('[V:TRANSACTED]');
+      expect(msg).toContain('[V:OBSERVED]');
+      expect(msg).toContain('[V:STATED]');
+    });
+
+    it('splits demand signals by verification strength', () => {
+      const msg = officeHoursFullReminder(path);
+      expect(msg).toContain('demand_transacted');
+      expect(msg).toContain('demand_observed');
+      expect(msg).toContain('demand_stated');
+      // the old lumped signal must be gone
+      expect(msg).not.toContain('demand_evidence');
+    });
+
+    it('walks the demand dependency chain (pain before frequency before payment)', () => {
+      const msg = officeHoursFullReminder(path);
+      expect(msg).toContain('DEPENDENCY CHAIN');
+      expect(msg).toContain('Status Quo');
     });
   });
 

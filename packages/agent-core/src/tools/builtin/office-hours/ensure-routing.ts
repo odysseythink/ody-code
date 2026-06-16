@@ -1,6 +1,7 @@
 import { join } from 'pathe';
 
 import type { Agent } from '#/agent';
+import { t } from '../../../i18n';
 import { z } from 'zod';
 
 import type { BuiltinTool } from '../../../agent/tool';
@@ -28,17 +29,17 @@ export class EnsureClaudeMdRoutingTool implements BuiltinTool<EnsureClaudeMdRout
 
   resolveExecution(_args: EnsureClaudeMdRoutingInput): ToolExecution {
     return {
-      description: 'Ensuring CLAUDE.md has skill routing section for office hours',
+      description: 'Ensuring AGENTS.md has skill routing section for office hours',
       approvalRule: this.name,
       execute: async () => {
         if (!this.agent.sessionMode.isActive || this.agent.sessionMode.kind !== 'office-hours') {
           return {
             isError: true,
-            output: 'Office hours mode is not active. EnsureClaudeMdRouting is only available during office hours sessions.',
+            output: t('officeHours.modeNotActive', this.agent.userLanguage),
           };
         }
 
-        const claudeMdPath = join(this.agent.config.cwd, 'CLAUDE.md');
+        const claudeMdPath = join(this.agent.config.cwd, 'AGENTS.md');
 
         try {
           let content: string;
@@ -52,19 +53,19 @@ export class EnsureClaudeMdRoutingTool implements BuiltinTool<EnsureClaudeMdRout
 
           if (!fileExists) {
             await this.agent.kaos.writeText(claudeMdPath, ROUTING_SECTION.trimStart());
-            return { output: `CLAUDE.md created at ${claudeMdPath} with ## Skill routing section.` };
+            return { output: t('officeHours.agentsMdCreated', this.agent.userLanguage).replace('{path}', claudeMdPath) };
           }
 
           if (content!.includes('## Skill routing')) {
-            return { output: 'CLAUDE.md already has a ## Skill routing section — no changes needed.' };
+            return { output: t('officeHours.agentsMdAlreadyHasRouting', this.agent.userLanguage) };
           }
 
           const updated = content!.trimEnd() + '\n' + ROUTING_SECTION;
           await this.agent.kaos.writeText(claudeMdPath, updated);
-          return { output: `Appended ## Skill routing section to CLAUDE.md at ${claudeMdPath}.` };
+          return { output: t('officeHours.agentsMdUpdated', this.agent.userLanguage).replace('{path}', claudeMdPath) };
         } catch (error) {
-          const message = error instanceof Error ? error.message : 'Failed to ensure CLAUDE.md routing.';
-          return { isError: true, output: `Failed to ensure CLAUDE.md routing: ${message}` };
+          const message = error instanceof Error ? error.message : 'Failed to ensure AGENTS.md routing.';
+          return { isError: true, output: t('officeHours.failedToEnsureRouting', this.agent.userLanguage).replace('{message}', message) };
         }
       },
     };

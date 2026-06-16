@@ -171,6 +171,7 @@ export interface SessionStatus {
   readonly maxContextTokens: number;
   readonly contextUsage: number;
   readonly usage?: SessionUsage;
+  readonly userLanguage?: 'en' | 'zh' | undefined;
 }
 
 export interface SessionSummary {

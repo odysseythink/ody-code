@@ -2,6 +2,7 @@ import type { Agent } from '#/agent';
 import { z } from 'zod';
 
 import { officeHoursEntryReminder } from '#/agent/injection/office-hours-contract';
+import { t } from '../../../i18n';
 import type { BuiltinTool } from '../../../agent/tool';
 import type { ToolExecution } from '../../../loop/types';
 import { toInputJsonSchema } from '../../support/input-schema';
@@ -22,16 +23,17 @@ export class EnterOfficeHoursModeTool implements BuiltinTool<EnterOfficeHoursMod
       description: 'Requesting to enter office hours mode',
       approvalRule: this.name,
       execute: async () => {
+        const lang = this.agent.userLanguage;
         if (this.agent.sessionMode.isActive) {
           if (this.agent.sessionMode.kind === 'office-hours') {
             return {
               isError: true,
-              output: 'Office hours mode is already active. Use ExitOfficeHoursMode when the session is complete.',
+              output: t('officeHours.alreadyActive', lang),
             };
           }
           return {
             isError: true,
-            output: 'Another session mode is already active. Exit it first before entering office hours mode.',
+            output: t('officeHours.anotherModeActive', lang),
           };
         }
 
@@ -39,7 +41,10 @@ export class EnterOfficeHoursModeTool implements BuiltinTool<EnterOfficeHoursMod
           await this.agent.sessionMode.enter(undefined, undefined, undefined, 'office-hours');
         } catch (error) {
           const message = error instanceof Error ? error.message : 'Failed to enter office hours mode.';
-          return { isError: true, output: `Failed to enter office hours mode: ${message}` };
+          return {
+            isError: true,
+            output: t('officeHours.failedToEnter', lang).replace('{message}', message),
+          };
         }
 
         return {

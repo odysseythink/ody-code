@@ -6,6 +6,7 @@ export * from './config';
 export * from './flags';
 export * from './session/export';
 export * from './telemetry';
+export * from './i18n';
 export * from './errors';
 export * from './plugin';
 export {

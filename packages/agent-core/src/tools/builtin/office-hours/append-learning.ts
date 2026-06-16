@@ -2,6 +2,7 @@ import type { Agent } from '#/agent';
 import type { LearningEntry } from '#/office-hours/state';
 import { z } from 'zod';
 
+import { t } from '../../../i18n';
 import type { BuiltinTool } from '../../../agent/tool';
 import type { ToolExecution } from '../../../loop/types';
 import { toInputJsonSchema } from '../../support/input-schema';
@@ -31,7 +32,7 @@ export class AppendLearningTool implements BuiltinTool<AppendLearningInput> {
         if (!this.agent.sessionMode.isActive || this.agent.sessionMode.kind !== 'office-hours') {
           return {
             isError: true,
-            output: 'Office hours mode is not active. AppendLearning is only available during office hours sessions.',
+            output: t('officeHours.modeNotActive', this.agent.userLanguage),
           };
         }
 
@@ -48,7 +49,8 @@ export class AppendLearningTool implements BuiltinTool<AppendLearningInput> {
           };
           await this.agent.officeHoursStateStore.appendLearning(entry);
           return {
-            output: `Learning "${args.key}" recorded successfully.`,
+            output: t('officeHours.learningRecorded', this.agent.userLanguage)
+              .replace('{key}', args.key),
           };
         } catch (error) {
           const message = error instanceof Error ? error.message : 'Failed to append learning.';

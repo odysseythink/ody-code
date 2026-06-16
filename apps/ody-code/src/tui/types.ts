@@ -38,6 +38,8 @@ export interface AppState {
   /** Current goal snapshot for the footer badge; null/undefined when no active goal. */
   goal?: GoalSnapshot | null;
   mcpServersSummary: string | null;
+  /** User language detected in office-hours mode. */
+  userLanguage?: 'en' | 'zh' | undefined;
 }
 
 export interface ToolCallBlockData {

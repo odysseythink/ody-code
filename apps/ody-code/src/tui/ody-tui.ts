@@ -177,6 +177,7 @@ function createInitialAppState(input: KimiTUIStartupInput): AppState {
     sessionTitle: null,
     goal: null,
     mcpServersSummary: null,
+    userLanguage: undefined,
   };
 }
 
@@ -1042,6 +1043,7 @@ export class KimiTUI {
       contextUsage: status.contextUsage,
       sessionTitle: session.summary?.title ?? null,
       goal: goalResult.goal,
+      userLanguage: status.userLanguage,
     });
   }
 

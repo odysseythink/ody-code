@@ -575,6 +575,10 @@ export class KimiCore implements PromisableMethods<CoreAPI> {
     return this.sessionApi(sessionId).getBackground(payload);
   }
 
+  getUserLanguage({ sessionId, ...payload }: SessionAgentPayload<EmptyPayload>) {
+    return this.sessionApi(sessionId).getUserLanguage(payload);
+  }
+
   updateSessionMetadata({ sessionId, ...payload }: UpdateSessionMetadataRequest): Promise<void> {
     return this.sessionApi(sessionId).updateSessionMetadata(payload);
   }

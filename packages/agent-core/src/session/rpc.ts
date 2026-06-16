@@ -274,6 +274,10 @@ export class SessionAPIImpl implements PromisableMethods<SessionAPI> {
     return this.getAgent(agentId).getBackground(payload);
   }
 
+  getUserLanguage({ agentId, ...payload }: AgentScopedPayload<EmptyPayload>) {
+    return this.getAgent(agentId).getUserLanguage(payload);
+  }
+
   private getAgent(agentId: string): PromisableMethods<AgentAPI> {
     const agent = this.session.agents.get(agentId);
     if (agent === undefined) {

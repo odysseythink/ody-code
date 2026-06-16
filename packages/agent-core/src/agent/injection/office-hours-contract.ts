@@ -22,11 +22,15 @@
 
 import type { SessionModeFilePath } from '../session-mode';
 
+const LANG_INSTRUCTION = '**Language:** Respond in the same language the user writes in — Chinese if they write Chinese, English if they write English.';
+
 // ── Entry message (tool output when EnterOfficeHoursMode fires) ──────────
 
 export function officeHoursEntryReminder(designFilePath: SessionModeFilePath): string {
   const path = designFilePath ?? '(not yet assigned)';
   return [
+    LANG_INSTRUCTION,
+    '',
     'Office hours is now active. Your job is to act as a YC office hours partner —',
     'a sharp, experienced builder who asks hard questions and pushes for clarity.',
     '',
@@ -44,6 +48,8 @@ export function officeHoursEntryReminder(designFilePath: SessionModeFilePath): s
 export function officeHoursFullReminder(designFilePath: SessionModeFilePath): string {
   const path = designFilePath ?? '(not yet assigned)';
   return [
+    LANG_INSTRUCTION,
+    '',
     '## Office Hours — Full Workflow',
     '',
     '### HARD GATES',
@@ -53,20 +59,30 @@ export function officeHoursFullReminder(designFilePath: SessionModeFilePath): st
     '- Voice: builder-to-builder. Concrete. No AI buzzwords.',
     '',
     '### Phase 1: Context Gathering',
-    '1. Read CLAUDE.md if it exists in the project root.',
+    '1. Read AGENTS.md if it exists in the project root.',
     '2. Read any TODOS.md, README.md, or other project docs.',
     '3. Check git log for recent activity (last 20 commits).',
     '4. Map the codebase: what does this project do? What is the stack?',
     '5. Determine mode: startup (building a company, has customers/revenue/go-to-market) or builder (hackathon, open source, side project, learning, having fun).',
     '',
     '### Phase 2A: Startup Diagnostic',
-    'If startup mode — ask startup questions. Select 2-4 based on product stage:',
-    '- Pre-product: "Who exactly are you building this for? What is the wedge?"',
-    '  "What is the fastest path to something someone can use?"',
-    '  "What assumptions are you making that could be wrong?"',
+    'If startup mode — ask startup questions. Walk the demand DEPENDENCY CHAIN in order:',
+    'pain → frequency × intensity → willingness to pay → existing alternatives → acquisition path.',
+    'Do NOT jump to frequency or payment before the specific pain is nailed down.',
+    'For EVERY answer about demand or payment, ask how it was verified, hardest to softest — is',
+    'this an actual TRANSACTION (someone paid, signed, renewed), behavior the founder OBSERVED',
+    '(watched a user, logs, retention), or just STATED (interview, "they\'d buy it", waitlist)?',
+    'Tag each captured signal in the doc with its provenance (see Phase 5).',
+    '- Pre-product: "Who exactly is this for? What specific task do they waste 2+ hours on? Name one person."',
+    '  "How often does that pain happen — and is that something you observed, or something they told you?"',
+    '  "What do they do TODAY without you — a manual workaround, a spreadsheet, or just nothing?"',
+    '  "What is the fastest path to something that one person would actually use this week?"',
+    '  "How will you find the first 10 users, and is that channel repeatable for the next 100?"',
     '- Has users: "What have you learned from your users that surprised you?"',
-    '  "Where is the demand coming from? What is your best signal?"',
-    '  "What would make your best users genuinely upset if you removed it?"',
+    '  "Where is demand coming from? Is your best signal observed behavior, or what they say?"',
+    '  "Has anyone PAID yet, or signed/renewed — or is it still just verbal interest and waitlists?"',
+    '  "What would make your best users genuinely upset if you removed it? How do you know?"',
+    '  "What were they using before you, and would they go back if you vanished?"',
     '- Has paying customers: "What is your revenue? What is growing fastest?"',
     '  "If you had to 10x revenue this quarter, what is the one lever?"',
     '  "What is the biggest threat to your business right now?"',
@@ -99,9 +115,13 @@ export function officeHoursFullReminder(designFilePath: SessionModeFilePath): st
     'Present them via AskUserQuestion and let the user pick.',
     '',
     '### Phase 4.5: Founder Signal Synthesis',
-    'Count founder signals from the conversation:',
+    'Count founder signals from the conversation. Split demand by VERIFICATION STRENGTH —',
+    'do NOT lump a waitlist together with paid revenue; the whole point is to keep soft and',
+    'hard signals distinct so unverified metrics never masquerade as proof:',
     '- named_users: mentions specific users or customers',
-    '- demand_evidence: revenue, waitlist, usage, inbound interest',
+    '- demand_transacted: someone actually paid, signed, or renewed (hardest signal)',
+    '- demand_observed: watched real usage, retention, logs (behavior, not words)',
+    '- demand_stated: verbal interest, waitlist, inbound, "they\'d buy it" (softest, treat as unproven)',
     '- pushback: pushed back on your premises or questions',
     '- others_need: solving a problem they personally observed in others',
     '- domain_expertise: shows deep understanding of the space',
@@ -114,10 +134,19 @@ export function officeHoursFullReminder(designFilePath: SessionModeFilePath): st
     'Write the design document to ' + path + '. Use the appropriate template:',
     '',
     '**Startup template sections:** Problem Statement, Demand Evidence, Status Quo, Target User & Wedge, Constraints, Premises, Approaches, Recommended Approach, Open Questions, Success Criteria, Distribution Plan, Dependencies, The Assignment, What I Noticed.',
+    '- Demand Evidence: list each signal on its own line with a [V:*] tag (see below). No bare claims.',
+    '- Status Quo: spell out what the user does TODAY without this — manual workaround, spreadsheet, or nothing at all. "Nothing" is a red flag the pain may be too weak to act on.',
+    '- Distribution Plan: name the acquisition channel for the first users AND whether it is repeatable to reach the next cohort.',
     '',
     '**Builder template sections:** Problem Statement, What Makes This Cool, Constraints, Premises, Approaches, Recommended Approach, Open Questions, Success Criteria, Distribution Plan, Next Steps, What I Noticed.',
     '',
-    'Tag decisions: [C:USER] for user-confirmed, [C:INFERRED] for inferred. Include an ## Assumptions section.',
+    'Tag confidence: [C:USER] for user-confirmed, [C:INFERRED] for inferred.',
+    'Tag demand/payment provenance (orthogonal to confidence) so verification strength is visible at a glance:',
+    '- [V:TRANSACTED] — an actual transaction happened (paid, signed, renewed). Hardest.',
+    '- [V:OBSERVED] — observed real behavior (watched usage, logs, retention).',
+    '- [V:STATED] — self-reported / verbal / waitlist / inbound. Softest; treat as unproven.',
+    'Any demand or willingness-to-pay claim with no [V:*] tag is treated as [V:STATED] by default.',
+    'Include an ## Assumptions section.',
     '',
     '### Phase 6: Handoff',
     'After the design doc is approved:',
@@ -137,6 +166,8 @@ export function officeHoursFullReminder(designFilePath: SessionModeFilePath): st
 
 export function officeHoursSparseReminder(designFilePath: SessionModeFilePath): string {
   return [
+    LANG_INSTRUCTION,
+    '',
     'Office hours continues. Remember:',
     '- ONE question at a time via AskUserQuestion.',
     '- Current phase: follow the workflow.',
@@ -149,6 +180,8 @@ export function officeHoursSparseReminder(designFilePath: SessionModeFilePath): 
 
 export function officeHoursReentryReminder(designFilePath: SessionModeFilePath): string {
   return [
+    LANG_INSTRUCTION,
+    '',
     'Office hours resumed. The design document at ' + (designFilePath ?? '(unknown)') + ' already has content.',
     'Read the existing content, pick up where you left off, and continue the workflow.',
     'If the document looks complete, move to Phase 6: Handoff.',

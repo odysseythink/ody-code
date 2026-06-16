@@ -69,6 +69,7 @@ import type { Kaos } from '@odysseythink/kaos';
 import type { ToolServices } from '../tools/support/services';
 import type { OfficeHoursStateStore } from '#/office-hours/state';
 import { NoopOfficeHoursStateStore } from '#/office-hours/state';
+import type { SupportedLanguage } from '#/i18n';
 
 
 export type { AgentRecord, AgentRecordPersistence } from './records';
@@ -101,6 +102,10 @@ export interface AgentOptions {
   readonly pluginSessionStarts?: readonly EnabledPluginSessionStart[];
   readonly appVersion?: string;
   readonly officeHoursStateStore?: OfficeHoursStateStore;
+  /** User language restored from Session metadata on resume. */
+  readonly userLanguage?: SupportedLanguage | undefined;
+  /** Callback for Agent to persist a detected language change back to Session. */
+  readonly setUserLanguage?: ((lang: SupportedLanguage) => void) | undefined;
 }
 
 export class Agent {
@@ -156,6 +161,8 @@ export class Agent {
   readonly cron: CronManager | null;
   readonly replayBuilder: ReplayBuilder;
   readonly officeHoursStateStore!: OfficeHoursStateStore;
+  userLanguage?: SupportedLanguage;
+  private readonly _setUserLanguageCallback?: ((lang: SupportedLanguage) => void) | undefined;
   checkpointCoordinator?: CheckpointCoordinator;
 
   private lastLlmConfigLogSignature?: string;
@@ -228,6 +235,8 @@ export class Agent {
     this.cron = this.type === 'sub' ? null : new CronManager(this);
     this.replayBuilder = new ReplayBuilder(this);
     this.officeHoursStateStore = options.officeHoursStateStore ?? new NoopOfficeHoursStateStore();
+    this.userLanguage = options.userLanguage;
+    this._setUserLanguageCallback = options.setUserLanguage;
   }
 
   /** Active partition's conversation history — routes to the current mode. */
@@ -617,12 +626,24 @@ export class Agent {
       getUsage: () => this.usage.data(),
       getTools: () => this.tools.data(),
       getBackground: (payload) => this.background.list(payload.activeOnly ?? false, payload.limit),
+      getUserLanguage: () => this.userLanguage,
     };
   }
 
   emitEvent(event: AgentEvent): void {
     if (this.records.restoring) return;
     void this.rpc?.emitEvent?.(event);
+  }
+
+  setUserLanguage(lang: SupportedLanguage): void {
+    this.userLanguage = lang;
+    try {
+      this._setUserLanguageCallback?.(lang);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      this.log.warn('failed to persist user language', { error: message });
+    }
+    this.emitStatusUpdated();
   }
 
   emitStatusUpdated(): void {
@@ -648,6 +669,7 @@ export class Agent {
       sessionModeFilePath: this.sessionMode.sessionModeFilePath,
       permission: this.permission.mode,
       usage,
+      userLanguage: this.userLanguage,
     });
   }
 

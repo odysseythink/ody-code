@@ -1,4 +1,5 @@
 import type { Agent } from '#/agent';
+import { t } from '../../../i18n';
 import { z } from 'zod';
 
 import type { BuiltinTool } from '../../../agent/tool';
@@ -27,7 +28,7 @@ export class SearchLearningsTool implements BuiltinTool<SearchLearningsInput> {
         if (!this.agent.sessionMode.isActive || this.agent.sessionMode.kind !== 'office-hours') {
           return {
             isError: true,
-            output: 'Office hours mode is not active. SearchLearnings is only available during office hours sessions.',
+            output: t('officeHours.modeNotActive', this.agent.userLanguage),
           };
         }
 
@@ -39,16 +40,18 @@ export class SearchLearningsTool implements BuiltinTool<SearchLearningsInput> {
 
           if (learnings.length === 0) {
             return {
-              output: 'No past learnings found.',
+              output: t('officeHours.noLearnings', this.agent.userLanguage),
             };
           }
 
+          const lang = this.agent.userLanguage;
           const formatted = learnings.map((l, i) =>
-            `[${i + 1}] ${l.type.toUpperCase()}: ${l.key}\n    Insight: ${l.insight}\n    Confidence: ${l.confidence}\n    Date: ${l.ts}${l.branch ? `\n    Branch: ${l.branch}` : ''}`
+            `[${i + 1}] ${t('officeHours.learningTypeLabel', lang)}: ${l.type.toUpperCase()}: ${l.key}\n    ${t('officeHours.learningInsightLabel', lang)}: ${l.insight}\n    ${t('officeHours.learningConfidenceLabel', lang)}: ${l.confidence}\n    ${t('officeHours.learningDateLabel', lang)}: ${l.ts}${l.branch ? `\n    ${t('officeHours.learningBranchLabel', lang)}: ${l.branch}` : ''}`
           ).join('\n\n');
 
           return {
-            output: `Found ${learnings.length} learning(s):\n\n${formatted}`,
+            output: t('officeHours.learningsHeader', lang)
+              .replace('{count}', String(learnings.length)) + '\n\n' + formatted,
           };
         } catch (error) {
           const message = error instanceof Error ? error.message : 'Failed to search learnings.';

@@ -1,1 +1,1 @@
-Ensure CLAUDE.md exists in the project root with a ## Skill routing section for office hours mode. If the file is missing, create it with the section. If it exists without the section, append it. If it already has the section, do nothing. Only available while office hours mode is active.
+Ensure AGENTS.md exists in the project root with a ## Skill routing section for office hours mode. If the file is missing, create it with the section. If it exists without the section, append it. If it already has the section, do nothing. Only available while office hours mode is active.

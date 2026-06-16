@@ -52,7 +52,7 @@ describe('FileSystemOfficeHoursStateStore', () => {
       mode: 'startup',
       projectSlug: 'my-project',
       signalCount: 3,
-      signals: ['named_users', 'demand_evidence', 'agency'],
+      signals: ['named_users', 'demand_transacted', 'agency'],
       designDoc: '/proj/.ody-code/office-hours/2026-06-16-test.md',
       assignment: 'Build the MVP',
       resourcesShown: ['https://example.com/resource1'],

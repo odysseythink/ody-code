@@ -418,6 +418,7 @@ export class ToolManager {
           new b.ReadMediaFileTool(kaos, workspace, modelCapabilities, videoUploader),
         new b.EnterDesignModeTool(this.agent),
         new b.ExitDesignModeTool(this.agent),
+        new b.SetOfficeHoursLanguageTool(this.agent),
         new b.EnterOfficeHoursModeTool(this.agent),
         new b.ExitOfficeHoursModeTool(this.agent),
         new b.AppendBuilderProfileTool(this.agent),

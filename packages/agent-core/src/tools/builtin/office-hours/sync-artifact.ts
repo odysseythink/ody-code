@@ -2,6 +2,7 @@ import { execFileSync } from 'node:child_process';
 import { join } from 'pathe';
 
 import type { Agent } from '#/agent';
+import { t } from '../../../i18n';
 import { z } from 'zod';
 
 import type { BuiltinTool } from '../../../agent/tool';
@@ -29,7 +30,7 @@ export class SyncOfficeHoursArtifactTool implements BuiltinTool<SyncOfficeHoursA
         if (!this.agent.sessionMode.isActive || this.agent.sessionMode.kind !== 'office-hours') {
           return {
             isError: true,
-            output: 'Office hours mode is not active. SyncOfficeHoursArtifact is only available during office hours sessions.',
+            output: t('officeHours.modeNotActive', this.agent.userLanguage),
           };
         }
 
@@ -49,7 +50,7 @@ export class SyncOfficeHoursArtifactTool implements BuiltinTool<SyncOfficeHoursA
           try {
             await this.agent.kaos.stat(args.designFilePath);
           } catch {
-            return { isError: true, output: `Design file not found at ${args.designFilePath}.` };
+            return { isError: true, output: t('officeHours.designFileNotFound', this.agent.userLanguage).replace('{path}', args.designFilePath) };
           }
 
           // 3. Try MCP-based gbrain sync first
@@ -65,11 +66,14 @@ export class SyncOfficeHoursArtifactTool implements BuiltinTool<SyncOfficeHoursA
           if (mcpGbrainAvailable) {
             // The MCP handles the sync via tool calls — the model can call the
             // gbrain tool directly. We just confirm the server is available.
+            const lang = this.agent.userLanguage;
             return {
               output: [
-                'gbrain MCP server is connected.',
-                gbrainSource ? `Target source: ${gbrainSource}` : 'No .gbrain-source pin found.',
-                `Design artifact at ${args.designFilePath} is ready for sync via MCP.`,
+                t('officeHours.gbrainConnected', lang),
+                gbrainSource
+                  ? t('officeHours.gbrainTargetSource', lang).replace('{source}', gbrainSource)
+                  : t('officeHours.gbrainNoSourcePin', lang),
+                t('officeHours.gbrainReadyForSync', lang).replace('{path}', args.designFilePath),
               ].filter(Boolean).join('\n'),
             };
           }
@@ -82,23 +86,31 @@ export class SyncOfficeHoursArtifactTool implements BuiltinTool<SyncOfficeHoursA
             }
             cliArgs.push(args.designFilePath);
             execFileSync('gbrain', cliArgs, { cwd: projectRoot, timeout: 30_000 });
+            const lang = this.agent.userLanguage;
             return {
               output: [
-                'Design artifact synced via gbrain CLI.',
-                gbrainSource ? `Target source: ${gbrainSource}` : '',
-                `File: ${args.designFilePath}`,
+                t('officeHours.gbrainSynced', lang),
+                gbrainSource
+                  ? t('officeHours.gbrainTargetSource', lang).replace('{source}', gbrainSource)
+                  : '',
+                t('officeHours.gbrainFile', lang).replace('{path}', args.designFilePath),
               ].filter(Boolean).join('\n'),
             };
           } catch (cliError) {
             const message = cliError instanceof Error ? cliError.message : String(cliError);
+            const lang = this.agent.userLanguage;
             return {
               isError: true,
-              output: `gbrain CLI sync failed: ${message}. Ensure the gbrain CLI is installed and configured.`,
+              output: t('officeHours.gbrainCliFailed', lang).replace('{message}', message),
             };
           }
         } catch (error) {
           const message = error instanceof Error ? error.message : 'Failed to sync design artifact.';
-          return { isError: true, output: `Failed to sync design artifact: ${message}` };
+          const lang = this.agent.userLanguage;
+          return {
+            isError: true,
+            output: t('officeHours.failedToSyncArtifact', lang).replace('{message}', message),
+          };
         }
       },
     };

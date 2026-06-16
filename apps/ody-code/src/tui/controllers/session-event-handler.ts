@@ -553,6 +553,7 @@ export class SessionEventHandler {
       patch.permissionMode = event.permission;
     }
     if (event.model !== undefined) patch.model = event.model;
+    if (event.userLanguage !== undefined) patch.userLanguage = event.userLanguage;
     if (Object.keys(patch).length > 0) {
       this.host.setAppState(patch);
       if (event.sessionMode !== undefined) {

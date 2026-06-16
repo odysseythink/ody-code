@@ -68,3 +68,7 @@ export type {
 
 export * from '#/events';
 export type * from '#/types';
+
+// i18n for office-hours language adaptation
+export { t, isSupportedLanguage, normalizeLanguage } from '@odysseythink/agent-core';
+export type { SupportedLanguage, MessageKey } from '@odysseythink/agent-core';

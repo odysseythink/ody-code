@@ -94,4 +94,70 @@ describe('status panel report lines', () => {
     expect(output).toContain('Warning       No active session');
     expect(output).toContain('No context window data available.');
   });
+
+  it('localizes Office Hours row to Chinese when status has userLanguage zh', () => {
+    const lines = buildStatusReportLines({
+      colors: darkColors,
+      version: '1.2.3',
+      model: 'k2',
+      workDir: '/tmp/project',
+      sessionId: 'ses-1',
+      sessionTitle: null,
+      thinking: true,
+      permissionMode: 'manual',
+      sessionMode: 'office-hours',
+      contextUsage: 0.25,
+      contextTokens: 2500,
+      maxContextTokens: 10000,
+      availableModels: {
+        k2: { provider: 'managed:ody-code', model: 'kimi-k2', maxContextSize: 10000, displayName: 'Kimi K2' },
+      },
+      status: {
+        model: 'k2',
+        thinkingLevel: 'high',
+        permission: 'auto',
+        sessionMode: 'office-hours',
+        contextTokens: 2500,
+        maxContextTokens: 10000,
+        contextUsage: 0.25,
+        userLanguage: 'zh',
+      },
+    }).map(strip);
+
+    const output = lines.join('\n');
+    expect(output).toContain('办公时间');
+    expect(output).toContain('开启');
+  });
+
+  it('shows English Office Hours label when userLanguage is undefined', () => {
+    const lines = buildStatusReportLines({
+      colors: darkColors,
+      version: '1.2.3',
+      model: 'k2',
+      workDir: '/tmp/project',
+      sessionId: 'ses-1',
+      sessionTitle: null,
+      thinking: true,
+      permissionMode: 'manual',
+      sessionMode: 'office-hours',
+      contextUsage: 0.25,
+      contextTokens: 2500,
+      maxContextTokens: 10000,
+      availableModels: {
+        k2: { provider: 'managed:ody-code', model: 'kimi-k2', maxContextSize: 10000, displayName: 'Kimi K2' },
+      },
+      status: {
+        model: 'k2',
+        thinkingLevel: 'high',
+        permission: 'auto',
+        sessionMode: 'office-hours',
+        contextTokens: 2500,
+        maxContextTokens: 10000,
+        contextUsage: 0.25,
+      },
+    }).map(strip);
+
+    const output = lines.join('\n');
+    expect(output).toMatch(/Office Hours\s+on/);
+  });
 });

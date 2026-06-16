@@ -506,6 +506,14 @@ export class Session {
       pluginSessionStarts: type === 'main' ? this.options.pluginSessionStarts : undefined,
       appVersion: this.options.appVersion,
       officeHoursStateStore: this.officeHoursStateStore,
+      userLanguage: this.metadata.custom?.['userLanguage'],
+      setUserLanguage: (lang) => {
+        this.metadata.custom ??= {};
+        this.metadata.custom['userLanguage'] = lang;
+        void this.writeMetadata().catch((error: unknown) => {
+          this.log.warn('failed to persist user language metadata', error);
+        });
+      },
     });
   }
 

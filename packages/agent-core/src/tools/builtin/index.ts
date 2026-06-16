@@ -32,6 +32,7 @@ export * from './office-hours/append-profile';
 export * from './office-hours/append-learning';
 export * from './office-hours/search-learnings';
 export * from './office-hours/ensure-routing';
+export * from './office-hours/set-language';
 export * from './office-hours/sync-artifact';
 export * from './web/fetch-url';
 export * from './web/web-search';

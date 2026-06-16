@@ -151,8 +151,21 @@ describe('FooterComponent mode badge', () => {
     const lines = footer.render(120);
     const line2 = stripAnsi(lines[1]!);
     expect(line2).toContain('🏢');
-    expect(line2).toContain('office-hours');
+    expect(line2).toContain('Office Hours');
     expect(line2).not.toContain('·');
+  });
+
+  it('renders localized Chinese office-hours badge when userLanguage is zh', () => {
+    const state: AppState = {
+      ...baseAppState,
+      sessionMode: 'office-hours',
+      userLanguage: 'zh',
+    };
+    const footer = new FooterComponent(state, darkColors);
+    const lines = footer.render(120);
+    const line2 = stripAnsi(lines[1]!);
+    expect(line2).toContain('办公时间');
+    expect(line2).not.toContain('office-hours');
   });
 
   it('renders normal badge without filename when no sessionModeFilePath is set', () => {
