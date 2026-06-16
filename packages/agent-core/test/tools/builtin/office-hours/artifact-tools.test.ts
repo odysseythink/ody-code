@@ -1,9 +1,27 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { Agent } from '../../../../src/agent';
+import type { ExecutableToolResult, RunnableToolExecution, ToolExecution } from '../../../../src/loop/types';
 import { EnsureClaudeMdRoutingTool } from '../../../../src/tools/builtin/office-hours/ensure-routing';
 import { SyncOfficeHoursArtifactTool } from '../../../../src/tools/builtin/office-hours/sync-artifact';
 
-function mockAgent(userLanguage?: string, mcp?: { name: string; status: string }[]) {
+function runnable(
+  exec: ToolExecution,
+): Omit<RunnableToolExecution, 'execute'> & { execute(): Promise<ExecutableToolResult> } {
+  if ('execute' in exec) {
+    return {
+      ...exec,
+      execute: () =>
+        exec.execute({
+          turnId: 'test',
+          toolCallId: 'test',
+          signal: new AbortController().signal,
+        }),
+    };
+  }
+  throw new Error(exec.message ?? String(exec.output));
+}
+
+function mockAgent(userLanguage?: string, mcp?: Array<{ name: string; status: string; transport?: string; toolCount?: number }>) {
   const agent = {
     sessionMode: { isActive: true, kind: 'office-hours' },
     userLanguage,
@@ -24,7 +42,7 @@ describe('EnsureClaudeMdRoutingTool localized', () => {
   it('returns Chinese created message (zh)', async () => {
     const agent = mockAgent('zh');
     const tool = new EnsureClaudeMdRoutingTool(agent);
-    const result = await tool.resolveExecution({}).execute();
+    const result = await runnable(tool.resolveExecution({})).execute();
     expect(result.output).toContain('创建');
   });
 
@@ -38,7 +56,7 @@ describe('EnsureClaudeMdRoutingTool localized', () => {
       },
     } as unknown as Agent;
     const tool = new EnsureClaudeMdRoutingTool(agent);
-    const result = await tool.resolveExecution({}).execute();
+    const result = await runnable(tool.resolveExecution({})).execute();
     expect(result.output).toContain('包含');
   });
 });
@@ -53,7 +71,7 @@ describe('SyncOfficeHoursArtifactTool localized', () => {
       },
     } as unknown as Agent;
     const tool = new SyncOfficeHoursArtifactTool(agent);
-    const result = await tool.resolveExecution({ designFilePath: '/tmp/missing.md' }).execute();
+    const result = await runnable(tool.resolveExecution({ designFilePath: '/tmp/missing.md' })).execute();
     expect(result.isError).toBe(true);
     expect(result.output).toContain('在');
     expect(result.output).toContain('未找到设计文件');
@@ -62,7 +80,7 @@ describe('SyncOfficeHoursArtifactTool localized', () => {
   it('returns Chinese MCP connected message (zh)', async () => {
     const agent = mockAgent('zh', [{ name: 'gbrain-server', status: 'connected', transport: 'stdio', toolCount: 1 }]);
     const tool = new SyncOfficeHoursArtifactTool(agent);
-    const result = await tool.resolveExecution({ designFilePath: '/tmp/test.md' }).execute();
+    const result = await runnable(tool.resolveExecution({ designFilePath: '/tmp/test.md' })).execute();
     expect(result.output).toContain('gbrain MCP');
     expect(result.output).toContain('连接');
   });
