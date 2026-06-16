@@ -30,8 +30,8 @@ import type {
   TurnStepInterruptedEvent,
   TurnStepStartedEvent,
   WarningEvent,
-} from '@odysseythink/kimi-code-sdk';
-import { buildGoalCompletionMessage } from '@odysseythink/kimi-code-sdk';
+} from '@odysseythink/ody-code-sdk';
+import { buildGoalCompletionMessage } from '@odysseythink/ody-code-sdk';
 
 import { MoonLoader } from '../components/chrome/moon-loader';
 import { buildGoalMarker } from '../components/messages/goal-markers';

@@ -6,7 +6,7 @@ import type {
   PromptOrigin,
   ResumedAgentState,
   ToolCall,
-} from '@odysseythink/kimi-code-sdk';
+} from '@odysseythink/ody-code-sdk';
 
 import type {
   AppState,

@@ -4,7 +4,7 @@ import {
   shutdownTelemetry,
   track,
   withTelemetryContext,
-} from '@odysseythink/kimi-telemetry';
+} from '@odysseythink/ody-telemetry';
 import chalk from 'chalk';
 import {
   KimiHarness,
@@ -15,7 +15,7 @@ import {
   type Session,
   type SessionStatus,
   type TelemetryClient,
-} from '@odysseythink/kimi-code-sdk';
+} from '@odysseythink/ody-code-sdk';
 
 import { CLI_SHUTDOWN_TIMEOUT_MS } from '#/constant/app';
 

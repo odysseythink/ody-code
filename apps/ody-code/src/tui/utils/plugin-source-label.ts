@@ -1,4 +1,4 @@
-import type { PluginSummary } from '@odysseythink/kimi-code-sdk';
+import type { PluginSummary } from '@odysseythink/ody-code-sdk';
 
 export const OFFICIAL_BADGE = 'official';
 export const CURATED_BADGE = 'curated';

@@ -1,4 +1,4 @@
-import { ErrorCodes, isKimiError, type PermissionMode } from '@odysseythink/kimi-code-sdk';
+import { ErrorCodes, isKimiError, type PermissionMode } from '@odysseythink/ody-code-sdk';
 
 import {
   GoalStartPermissionPromptComponent,

@@ -1,4 +1,4 @@
-import type { ApprovalHandler, ApprovalRequest, ApprovalResponse } from '@odysseythink/kimi-code-sdk';
+import type { ApprovalHandler, ApprovalRequest, ApprovalResponse } from '@odysseythink/ody-code-sdk';
 
 import { adaptApprovalRequest } from './adapter';
 import type { ApprovalController } from './controller';

@@ -5,7 +5,7 @@ import type {
   ProviderConfig,
   PromptPart,
   ToolInputDisplay,
-} from '@odysseythink/kimi-code-sdk';
+} from '@odysseythink/ody-code-sdk';
 
 import type { NotificationsConfig, UpgradePreferences } from './config';
 import type { PendingApproval, PendingQuestion } from './reverse-rpc/types';

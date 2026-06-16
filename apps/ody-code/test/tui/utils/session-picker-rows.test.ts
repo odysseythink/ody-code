@@ -1,4 +1,4 @@
-import type { SessionSummary } from '@odysseythink/kimi-code-sdk';
+import type { SessionSummary } from '@odysseythink/ody-code-sdk';
 import { describe, expect, it } from 'vitest';
 
 import { sessionRowsForPicker } from '#/tui/utils/session-picker-rows';

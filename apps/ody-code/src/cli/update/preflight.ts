@@ -1,7 +1,7 @@
 import { spawn } from 'node:child_process';
 
-import { log, type Logger } from '@odysseythink/kimi-code-sdk';
-import type { TelemetryProperties } from '@odysseythink/kimi-telemetry';
+import { log, type Logger } from '@odysseythink/ody-code-sdk';
+import type { TelemetryProperties } from '@odysseythink/ody-telemetry';
 
 import {
   NATIVE_INSTALL_COMMAND_UNIX,

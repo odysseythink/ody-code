@@ -1,5 +1,5 @@
 // One creator: meant to run twice as separate processes simultaneously.
-import { KimiHarness } from '@odysseythink/kimi-code-sdk';
+import { KimiHarness } from '@odysseythink/ody-code-sdk';
 
 const workDir = process.argv[2]!;
 const homeDir = process.argv[3]!;

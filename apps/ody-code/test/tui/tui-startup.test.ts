@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { log, type GoalSnapshot } from "@odysseythink/kimi-code-sdk";
+import { log, type GoalSnapshot } from "@odysseythink/ody-code-sdk";
 
 import { KimiTUI, type KimiTUIStartupInput, type TUIState } from "#/tui/ody-tui";
 import {

@@ -1,4 +1,4 @@
-import type { SessionSummary } from '@odysseythink/kimi-code-sdk';
+import type { SessionSummary } from '@odysseythink/ody-code-sdk';
 
 import type { SessionRow } from '#/tui/components/dialogs/session-picker';
 

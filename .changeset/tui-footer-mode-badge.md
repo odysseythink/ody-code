@@ -1,6 +1,6 @@
 ---
 "@odysseythink/agent-core": minor
-"@odysseythink/kimi-code-sdk": minor
+"@odysseythink/ody-code-sdk": minor
 "@odysseythink/kimi-code": minor
 ---
 

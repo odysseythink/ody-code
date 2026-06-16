@@ -18,7 +18,7 @@ import {
   SUPPORTED_PROVIDER_LOGINS,
   type ProviderLoginDefinition,
 } from '@odysseythink/kimi-code-oauth';
-import { log } from '@odysseythink/kimi-code-sdk';
+import { log } from '@odysseythink/ody-code-sdk';
 
 import type { ChoiceOption } from '../components/dialogs/choice-picker';
 import { DEFAULT_OAUTH_PROVIDER_NAME, PRODUCT_NAME } from '../constant/ody-tui';

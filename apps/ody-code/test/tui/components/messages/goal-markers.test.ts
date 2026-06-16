@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { buildGoalMarker, GoalMarkerComponent } from '#/tui/components/messages/goal-markers';
 import { darkColors } from '#/tui/theme/colors';
-import type { GoalChange } from '@odysseythink/kimi-code-sdk';
+import type { GoalChange } from '@odysseythink/ody-code-sdk';
 
 const ANSI_SGR = /\[[0-9;]*m/g;
 function strip(lines: string[]): string {

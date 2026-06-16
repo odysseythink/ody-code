@@ -1,5 +1,5 @@
 import type { Terminal } from '@earendil-works/pi-tui';
-import type { BackgroundTaskInfo, BackgroundTaskStatus } from '@odysseythink/kimi-code-sdk';
+import type { BackgroundTaskInfo, BackgroundTaskStatus } from '@odysseythink/ody-code-sdk';
 import { describe, expect, it, vi } from 'vitest';
 
 import {

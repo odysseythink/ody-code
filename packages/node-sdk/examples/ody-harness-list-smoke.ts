@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 
-import { KimiHarness } from '@odysseythink/kimi-code-sdk';
+import { KimiHarness } from '@odysseythink/ody-code-sdk';
 
 import { smokeIdentityFromEnv } from './runtime-smoke-helpers';
 

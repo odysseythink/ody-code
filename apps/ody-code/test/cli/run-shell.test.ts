@@ -62,8 +62,8 @@ const mocks = vi.hoisted(() => {
   };
 });
 
-vi.mock('@odysseythink/kimi-code-sdk', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@odysseythink/kimi-code-sdk')>();
+vi.mock('@odysseythink/ody-code-sdk', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@odysseythink/ody-code-sdk')>();
   return {
     ...actual,
     resolveOdyHome: mocks.resolveOdyHome,
@@ -100,7 +100,7 @@ vi.mock('@odysseythink/kimi-code-oauth', async () => {
   };
 });
 
-vi.mock('@odysseythink/kimi-telemetry', () => ({
+vi.mock('@odysseythink/ody-telemetry', () => ({
   initializeTelemetry: mocks.initializeTelemetry,
   setCrashPhase: mocks.setCrashPhase,
   shutdownTelemetry: mocks.shutdownTelemetry,

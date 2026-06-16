@@ -975,7 +975,7 @@ This task is UI-only (non-testable in unit-test form). It provides the reusable 
     providerName: string,
     models: import('@odysseythink/kimi-code-oauth').ProviderModelInfo[],
   ): Promise<{ model: import('@odysseythink/kimi-code-oauth').ProviderModelInfo; thinking: boolean } | undefined> {
-    const modelDict: Record<string, import('@odysseythink/kimi-code-sdk').ModelAlias> = {};
+    const modelDict: Record<string, import('@odysseythink/ody-code-sdk').ModelAlias> = {};
     for (const m of models) {
       modelDict[`${providerName}/${m.id}`] = {
         provider: providerName,

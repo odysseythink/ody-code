@@ -1,4 +1,4 @@
-import { ErrorCodes, KimiError } from '@odysseythink/kimi-code-sdk';
+import { ErrorCodes, KimiError } from '@odysseythink/ody-code-sdk';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {

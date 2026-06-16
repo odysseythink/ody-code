@@ -1,4 +1,4 @@
-# @odysseythink/kimi-code-sdk
+# @odysseythink/ody-code-sdk
 
 The TypeScript SDK for Ody Code
 

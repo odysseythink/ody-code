@@ -1,4 +1,4 @@
-import type { QuestionHandler, QuestionRequest, QuestionResult } from '@odysseythink/kimi-code-sdk';
+import type { QuestionHandler, QuestionRequest, QuestionResult } from '@odysseythink/ody-code-sdk';
 
 import type {
   QuestionPanelData,

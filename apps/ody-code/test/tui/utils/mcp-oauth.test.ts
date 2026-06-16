@@ -1,7 +1,7 @@
 import {
   MCP_OAUTH_AUTHORIZATION_URL_TOOL_UPDATE,
   type ToolUpdate,
-} from '@odysseythink/kimi-code-sdk';
+} from '@odysseythink/ody-code-sdk';
 import { describe, expect, it, vi } from 'vitest';
 
 import {

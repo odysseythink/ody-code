@@ -1,4 +1,4 @@
-import { KimiHarness } from '@odysseythink/kimi-code-sdk';
+import { KimiHarness } from '@odysseythink/ody-code-sdk';
 
 import {
   smokeIdentityFromEnv,

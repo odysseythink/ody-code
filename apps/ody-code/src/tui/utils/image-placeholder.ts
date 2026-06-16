@@ -15,7 +15,7 @@
  *     noise between two media parts.
  */
 
-import type { PromptPart } from '@odysseythink/kimi-code-sdk';
+import type { PromptPart } from '@odysseythink/ody-code-sdk';
 
 import type {
   ImageAttachment,

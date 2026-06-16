@@ -1,5 +1,5 @@
 import type { KimiHostIdentity } from '@odysseythink/kimi-code-oauth';
-import { type KimiHarness, type Session, type Event } from '@odysseythink/kimi-code-sdk';
+import { type KimiHarness, type Session, type Event } from '@odysseythink/ody-code-sdk';
 
 export function smokeIdentityFromEnv(): KimiHostIdentity {
   const version = process.env['ODY_CODE_SMOKE_VERSION'];

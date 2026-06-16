@@ -7,7 +7,7 @@ import {
   resetCapabilitiesCache,
   setCapabilities,
 } from '@earendil-works/pi-tui';
-import type { ApprovalRequest, ApprovalResponse, Event } from '@odysseythink/kimi-code-sdk';
+import type { ApprovalRequest, ApprovalResponse, Event } from '@odysseythink/ody-code-sdk';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { ApprovalPanelComponent } from '#/tui/components/dialogs/approval-panel';

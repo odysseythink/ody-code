@@ -29,7 +29,7 @@
  * `setOptions`.
  */
 
-import type { ProviderConfig } from '@odysseythink/kimi-code-sdk';
+import type { ProviderConfig } from '@odysseythink/ody-code-sdk';
 import {
   getOpenPlatformById,
   isOpenPlatformId,

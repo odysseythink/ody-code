@@ -12,7 +12,7 @@ import {
   shutdownTelemetry,
   track,
   withTelemetryContext,
-} from '@odysseythink/kimi-telemetry';
+} from '@odysseythink/ody-telemetry';
 import {
   KimiHarness,
   type ExportSessionInput,
@@ -20,7 +20,7 @@ import {
   type SessionSummary,
   type ShellEnvironment,
   type TelemetryClient,
-} from '@odysseythink/kimi-code-sdk';
+} from '@odysseythink/ody-code-sdk';
 import type { Command } from 'commander';
 
 import { CLI_SHUTDOWN_TIMEOUT_MS, CLI_UI_MODE } from '#/constant/app';

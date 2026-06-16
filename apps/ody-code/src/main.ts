@@ -12,14 +12,14 @@ import {
   resolveGlobalLogPath,
   resolveOdyHome,
   type TelemetryClient,
-} from '@odysseythink/kimi-code-sdk';
+} from '@odysseythink/ody-code-sdk';
 import {
   installCrashHandlers,
   setTelemetryContext,
   shutdownTelemetry,
   track,
   withTelemetryContext,
-} from '@odysseythink/kimi-telemetry';
+} from '@odysseythink/ody-telemetry';
 
 import { createProgram } from './cli/commands';
 import type { CLIOptions } from './cli/options';

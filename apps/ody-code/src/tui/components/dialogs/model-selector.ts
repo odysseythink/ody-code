@@ -1,4 +1,4 @@
-import type { ModelAlias } from '@odysseythink/kimi-code-sdk';
+import type { ModelAlias } from '@odysseythink/ody-code-sdk';
 import {
   Container,
   Key,

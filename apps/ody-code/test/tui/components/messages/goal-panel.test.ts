@@ -10,7 +10,7 @@ import {
 } from '#/tui/components/messages/goal-panel';
 import { STATUS_BULLET } from '#/tui/constant/symbols';
 import { darkColors } from '#/tui/theme/colors';
-import type { GoalSnapshot } from '@odysseythink/kimi-code-sdk';
+import type { GoalSnapshot } from '@odysseythink/ody-code-sdk';
 
 const previousChalkLevel = chalk.level;
 beforeAll(() => {

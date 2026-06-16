@@ -1,4 +1,4 @@
-import type { McpServerInfo } from '@odysseythink/kimi-code-sdk';
+import type { McpServerInfo } from '@odysseythink/ody-code-sdk';
 import chalk from 'chalk';
 
 import type { ColorPalette } from '#/tui/theme/colors';

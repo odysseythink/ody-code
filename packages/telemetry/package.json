@@ -1,5 +1,5 @@
 {
-  "name": "@odysseythink/kimi-telemetry",
+  "name": "@odysseythink/ody-telemetry",
   "version": "0.1.1",
   "private": true,
   "description": "Shared telemetry infrastructure for Ody Code",

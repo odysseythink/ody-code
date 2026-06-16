@@ -7,7 +7,7 @@ import type {
   Role,
   Session,
   ToolCall,
-} from '@odysseythink/kimi-code-sdk';
+} from '@odysseythink/ody-code-sdk';
 import { describe, expect, it, vi } from 'vitest';
 
 import { KimiTUI, type KimiTUIStartupInput, type TUIState } from '#/tui/ody-tui';

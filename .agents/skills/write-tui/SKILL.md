@@ -1,11 +1,11 @@
 ---
 name: write-tui
-description: Use when writing or modifying the kimi-code terminal UI in apps/kimi-code/src/tui — components, dialogs/selectors, slash commands, themes, streaming render, or the KimiTUI controllers. Covers the architecture, where new features go, test placement, the theme system mechanics, and the dialog interaction/visual spec (DESIGN.md).
+description: Use when writing or modifying the ody-code terminal UI in apps/ody-code/src/tui — components, dialogs/selectors, slash commands, themes, streaming render, or the KimiTUI controllers. Covers the architecture, where new features go, test placement, the theme system mechanics, and the dialog interaction/visual spec (DESIGN.md).
 ---
 
-# Write TUI (apps/kimi-code)
+# Write TUI (apps/ody-code)
 
-The terminal UI lives in `apps/kimi-code/src/tui`. Before writing TUI code, read `apps/kimi-code/AGENTS.md` for the always-on **map, module boundaries, and hard constraints** (printable-key decoding, no chalk named colors, etc.). This skill is the **how-to**: architecture orientation, feature routing, test placement, theme mechanics, and the dialog spec.
+The terminal UI lives in `apps/ody-code/src/tui`. Before writing TUI code, read `apps/ody-code/AGENTS.md` for the always-on **map, module boundaries, and hard constraints** (printable-key decoding, no chalk named colors, etc.). This skill is the **how-to**: architecture orientation, feature routing, test placement, theme mechanics, and the dialog spec.
 
 For any list dialog, selector, input box, or status/toggle list, the interaction and visual rules are normative — see **[DESIGN.md](./DESIGN.md)** in this folder and follow its self-check list before submitting.
 
@@ -35,7 +35,7 @@ When a controller or `KimiTUI` section keeps growing, split pure functions, stat
 The feature type decides the landing spot:
 
 - **CLI arguments** → `src/cli/commands.ts` / `src/cli/options.ts`, passed into the TUI via `src/cli/run-shell.ts`. The CLI never operates on the session directly.
-- **CLI subcommands** → `src/cli/sub/`, non-interactive only; reach core via `@moonshot-ai/kimi-code-sdk`.
+- **CLI subcommands** → `src/cli/sub/`, non-interactive only; reach core via `@moonshot-ai/ody-code-sdk`.
 - **Slash commands** → declare/parse/type under `src/tui/commands/`; add the execution entry in `KimiTUI`'s slash-command handler section; sink complex logic into `utils` or a focused component.
 - **Skill-derived commands** → hook into `buildSkillSlashCommands` / the skill command map; do not hard-code a single skill.
 - **Transcript message types** → define the shape in `src/tui/types.ts`, add/extend a `components/messages/` component, register the renderer in the transcript builder.
@@ -74,7 +74,7 @@ Apply / switch flow:
 - The real apply step is `KimiTUI.applyTheme`: it updates `state.theme`, `state.appState.theme`, and notifies components to refresh their palette.
 - Persist the choice through `saveTuiConfig` — a component must not write the config file itself.
 
-> The **hard color rules** (no chalk named colors, contrast ratios, no module-top-level cached styled functions, add a `ColorPalette` token before inventing a color) are normative and guard-enforced — they live in `apps/kimi-code/AGENTS.md`. This skill only covers the mechanics.
+> The **hard color rules** (no chalk named colors, contrast ratios, no module-top-level cached styled functions, add a `ColorPalette` token before inventing a color) are normative and guard-enforced — they live in `apps/ody-code/AGENTS.md`. This skill only covers the mechanics.
 
 ## Before you submit
 

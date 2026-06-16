@@ -1,4 +1,4 @@
-import type { HookResultEvent } from '@odysseythink/kimi-code-sdk';
+import type { HookResultEvent } from '@odysseythink/ody-code-sdk';
 
 export function formatHookResultMarkdown(event: HookResultEvent): string {
   return `*${formatHookResultTitle(event)}*\n\n${formatHookResultBody(event)}`;

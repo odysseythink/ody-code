@@ -1,4 +1,4 @@
-import type { QuestionRequest } from '@odysseythink/kimi-code-sdk';
+import type { QuestionRequest } from '@odysseythink/ody-code-sdk';
 import { describe, expect, it, vi } from 'vitest';
 
 import { QuestionController } from '#/tui/reverse-rpc/question/controller';

@@ -7,7 +7,7 @@ import type {
   ResumedAgentState,
   Session,
   ToolCall,
-} from '@odysseythink/kimi-code-sdk';
+} from '@odysseythink/ody-code-sdk';
 import { nextTranscriptId } from '../utils/transcript-id';
 
 import { ToolCallComponent } from '../components/messages/tool-call';

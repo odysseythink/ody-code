@@ -2,7 +2,7 @@ import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { KimiHarness } from '@odysseythink/kimi-code-sdk';
+import { KimiHarness } from '@odysseythink/ody-code-sdk';
 
 import { smokeIdentityFromEnv } from './runtime-smoke-helpers';
 

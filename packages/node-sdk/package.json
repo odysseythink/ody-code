@@ -1,5 +1,5 @@
 {
-  "name": "@odysseythink/kimi-code-sdk",
+  "name": "@odysseythink/ody-code-sdk",
   "version": "0.6.0",
   "private": true,
   "description": "TypeScript SDK for the Ody Code Agent",

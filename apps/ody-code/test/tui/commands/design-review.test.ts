@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { buildFollowupMessage, renderFinding } from '../../../src/tui/commands/design-review';
-import type { DesignReviewData } from '@odysseythink/kimi-code-sdk';
+import type { DesignReviewData } from '@odysseythink/ody-code-sdk';
 
 function makeResult(overrides: Partial<DesignReviewData> = {}): DesignReviewData {
   return {

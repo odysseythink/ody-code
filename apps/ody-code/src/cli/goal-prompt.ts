@@ -1,4 +1,4 @@
-import type { GoalSnapshot } from '@odysseythink/kimi-code-sdk';
+import type { GoalSnapshot } from '@odysseythink/ody-code-sdk';
 
 import { parseGoalCommand } from '#/tui/commands/index';
 

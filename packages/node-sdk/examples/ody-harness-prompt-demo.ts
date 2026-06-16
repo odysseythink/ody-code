@@ -1,4 +1,4 @@
-import { KimiHarness, type Session, type Event } from '@odysseythink/kimi-code-sdk';
+import { KimiHarness, type Session, type Event } from '@odysseythink/ody-code-sdk';
 
 import { smokeIdentityFromEnv } from './runtime-smoke-helpers';
 

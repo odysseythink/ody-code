@@ -4,7 +4,7 @@ import {
   type Catalog,
   type CatalogModel,
   type ModelAlias,
-} from '@odysseythink/kimi-code-sdk';
+} from '@odysseythink/ody-code-sdk';
 import { capabilitiesForModel } from '@odysseythink/kimi-code-oauth';
 import type {
   ManagedKimiCodeModelInfo,
@@ -243,7 +243,7 @@ export async function promptModelSelectionForProviderLogin(
   providerName: string,
   models: import('@odysseythink/kimi-code-oauth').ProviderModelInfo[],
 ): Promise<{ model: import('@odysseythink/kimi-code-oauth').ProviderModelInfo; thinking: boolean } | undefined> {
-  const modelDict: Record<string, import('@odysseythink/kimi-code-sdk').ModelAlias> = {};
+  const modelDict: Record<string, import('@odysseythink/ody-code-sdk').ModelAlias> = {};
   for (const m of models) {
     modelDict[`${providerName}/${m.id}`] = {
       provider: providerName,

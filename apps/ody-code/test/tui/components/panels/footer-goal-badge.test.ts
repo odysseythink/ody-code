@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { FooterComponent } from '#/tui/components/chrome/footer';
 import { darkColors } from '#/tui/theme/colors';
-import type { GoalSnapshot } from '@odysseythink/kimi-code-sdk';
+import type { GoalSnapshot } from '@odysseythink/ody-code-sdk';
 import type { AppState } from '#/tui/types';
 
 const ANSI_SGR = /\[[0-9;]*m/g;

@@ -1,5 +1,5 @@
-import { log, type Logger } from '@odysseythink/kimi-code-sdk';
-import { track as trackTelemetry, type TelemetryProperties } from '@odysseythink/kimi-telemetry';
+import { log, type Logger } from '@odysseythink/ody-code-sdk';
+import { track as trackTelemetry, type TelemetryProperties } from '@odysseythink/ody-telemetry';
 
 import { refreshUpdateCache } from '#/cli/update/refresh';
 import { selectUpdateTarget } from '#/cli/update/select';

@@ -22,7 +22,7 @@ import {
   visibleWidth,
   type Focusable,
 } from '@earendil-works/pi-tui';
-import type { BackgroundTaskInfo, BackgroundTaskStatus } from '@odysseythink/kimi-code-sdk';
+import type { BackgroundTaskInfo, BackgroundTaskStatus } from '@odysseythink/ody-code-sdk';
 import chalk from 'chalk';
 
 import type { ColorPalette } from '@/tui/theme/colors';

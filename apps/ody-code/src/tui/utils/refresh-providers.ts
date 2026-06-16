@@ -15,7 +15,7 @@ import {
   type CustomRegistrySource,
   type ManagedKimiConfigShape,
 } from '@odysseythink/kimi-code-oauth';
-import type { KimiConfig, KimiConfigPatch, OAuthRef, ProviderConfig } from '@odysseythink/kimi-code-sdk';
+import type { KimiConfig, KimiConfigPatch, OAuthRef, ProviderConfig } from '@odysseythink/ody-code-sdk';
 
 export interface RefreshProviderHost {
   getConfig(): Promise<KimiConfig>;

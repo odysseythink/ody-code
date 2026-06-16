@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ErrorCodes, KimiError } from '@odysseythink/kimi-code-sdk';
+import { ErrorCodes, KimiError } from '@odysseythink/ody-code-sdk';
 
 import { validateOptions } from '#/cli/options';
 import type { CLIOptions } from '#/cli/options';
@@ -49,7 +49,7 @@ const mocks = vi.hoisted(() => {
   };
 });
 
-vi.mock('@odysseythink/kimi-telemetry', () => ({
+vi.mock('@odysseythink/ody-telemetry', () => ({
   installCrashHandlers: mocks.installCrashHandlers,
   track: mocks.track,
   setTelemetryContext: mocks.setTelemetryContext,
@@ -57,9 +57,9 @@ vi.mock('@odysseythink/kimi-telemetry', () => ({
   shutdownTelemetry: mocks.shutdownTelemetry,
 }));
 
-vi.mock('@odysseythink/kimi-code-sdk', async () => {
-  const actual = await vi.importActual<typeof import('@odysseythink/kimi-code-sdk')>(
-    '@odysseythink/kimi-code-sdk',
+vi.mock('@odysseythink/ody-code-sdk', async () => {
+  const actual = await vi.importActual<typeof import('@odysseythink/ody-code-sdk')>(
+    '@odysseythink/ody-code-sdk',
   );
   class MockKimiHarness {
     readonly homeDir = mocks.harness.homeDir;

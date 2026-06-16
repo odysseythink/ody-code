@@ -5,7 +5,7 @@ import {
   type SessionEventHost,
 } from '#/tui/controllers/session-event-handler';
 import type { AppState } from '#/tui/types';
-import type { Event } from '@odysseythink/kimi-code-sdk';
+import type { Event } from '@odysseythink/ody-code-sdk';
 
 function makeHost(): SessionEventHost {
   return {

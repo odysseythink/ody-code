@@ -6,8 +6,8 @@ import {
   shutdownTelemetry,
   track,
   withTelemetryContext,
-} from '@odysseythink/kimi-telemetry';
-import { KimiHarness, log, type TelemetryClient } from '@odysseythink/kimi-code-sdk';
+} from '@odysseythink/ody-telemetry';
+import { KimiHarness, log, type TelemetryClient } from '@odysseythink/ody-code-sdk';
 
 import { CLI_SHUTDOWN_TIMEOUT_MS, CLI_UI_MODE } from '#/constant/app';
 import type { TuiConfig } from '#/tui/config';

@@ -6,7 +6,7 @@
  * core payloads into these shapes for panel components.
  */
 
-import type { QuestionAnswerMethod } from '@odysseythink/kimi-code-sdk';
+import type { QuestionAnswerMethod } from '@odysseythink/ody-code-sdk';
 
 // ── Display blocks (approval panel) ──────────────────────────────────
 

@@ -11,13 +11,13 @@ Current publishable packages:
 | Package | Directory | Description |
 | --- | --- | --- |
 | `@odysseythink/kimi-code` | `apps/kimi-code` | CLI / TUI application — provides the `kimi` command after install |
-| `@odysseythink/kimi-code-sdk` | `packages/node-sdk` | Public TypeScript SDK |
+| `@odysseythink/ody-code-sdk` | `packages/node-sdk` | Public TypeScript SDK |
 
 All other workspace packages are private internal packages, are not published to npm, and are excluded via `ignore` in `.changeset/config.json`:
 
 - `@odysseythink/agent-core`
 - `@odysseythink/kimi-code-oauth`
-- `@odysseythink/kimi-telemetry`
+- `@odysseythink/ody-telemetry`
 - `@odysseythink/kaos`
 - `@odysseythink/kosong`
 - `@odysseythink/vis`
@@ -35,9 +35,9 @@ Example scenarios:
 | Only modifies TUI behavior in `@odysseythink/kimi-code` | Add `patch` / `minor` / `major` to `@odysseythink/kimi-code` |
 | Only modifies internal packages, no user-visible change in SDK / CLI | Usually no changeset needed |
 | Internal package fix changes the CLI user experience | Add a changeset to `@odysseythink/kimi-code` describing the user-visible fix |
-| Internal package adds a new capability exposed by the SDK | Add a changeset to `@odysseythink/kimi-code-sdk` |
-| SDK behavior change affects CLI user experience | Add changesets to both `@odysseythink/kimi-code-sdk` and `@odysseythink/kimi-code` |
-| Provider abstraction change affects SDK / CLI | Add changesets to the affected `@odysseythink/kimi-code-sdk` and/or `@odysseythink/kimi-code` |
+| Internal package adds a new capability exposed by the SDK | Add a changeset to `@odysseythink/ody-code-sdk` |
+| SDK behavior change affects CLI user experience | Add changesets to both `@odysseythink/ody-code-sdk` and `@odysseythink/kimi-code` |
+| Provider abstraction change affects SDK / CLI | Add changesets to the affected `@odysseythink/ody-code-sdk` and/or `@odysseythink/kimi-code` |
 | Test-only, internal refactor, docs, or private debug tooling changes | Usually no changeset needed |
 
 ## Prerequisite: NPM Trusted Publishing (OIDC)
@@ -140,7 +140,7 @@ The root-level `pnpm run publish` first runs typecheck, lint, sherif, test, buil
 - Every PR that affects publishable-package behavior or public API should include a corresponding changeset.
 - Changeset files must be committed to the repository — release PRs are only triggered after they're merged.
 - Release PRs require human review and merge; they will not publish automatically.
-- Do not add release changesets for private internal packages; only select `@odysseythink/kimi-code` and `@odysseythink/kimi-code-sdk`.
+- Do not add release changesets for private internal packages; only select `@odysseythink/kimi-code` and `@odysseythink/ody-code-sdk`.
 - If a change in an underlying internal package alters user-visible behavior or public API of a publishable package, add a changeset to the affected publishable package. For example, when a bug fixed in `@odysseythink/agent-core` resolves an issue CLI users encounter, add a changeset to `@odysseythink/kimi-code` describing the user-visible fix.
 - `@odysseythink/kimi-code` is the official CLI package name; after a global install it provides the `kimi` command.
 - Make sure each publishable package on npm has a Trusted Publisher configured.

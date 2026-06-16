@@ -1,5 +1,5 @@
 import type { AutocompleteItem, SlashCommand } from '@earendil-works/pi-tui';
-import type { FlagId } from '@odysseythink/kimi-code-sdk';
+import type { FlagId } from '@odysseythink/ody-code-sdk';
 
 export type SessionMode = 'normal' | 'plan' | 'design';
 

@@ -47,7 +47,7 @@ Desktop.ini
 # Internal / ephemeral
 .claude
 .conductor
-.kimi-stash-dir
+.ody-stash-dir
 plugins/cdn/
 superpowers
 ody-export-session_*.md

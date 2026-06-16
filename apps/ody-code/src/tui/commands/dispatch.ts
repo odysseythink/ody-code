@@ -1,6 +1,6 @@
 import type { Component, Focusable } from '@earendil-works/pi-tui';
 import type { DeviceAuthorization } from '@odysseythink/kimi-code-oauth';
-import type { KimiHarness, Session } from '@odysseythink/kimi-code-sdk';
+import type { KimiHarness, Session } from '@odysseythink/ody-code-sdk';
 
 import type { Theme } from '../theme';
 import type { ResolvedTheme } from '../theme/colors';

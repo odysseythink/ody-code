@@ -1,4 +1,4 @@
-import type { KimiHarness, Session } from '@odysseythink/kimi-code-sdk';
+import type { KimiHarness, Session } from '@odysseythink/ody-code-sdk';
 import type { SkillListSession } from '../commands';
 
 import { OAUTH_LOGIN_REQUIRED_STARTUP_NOTICE } from '../constant/ody-tui';

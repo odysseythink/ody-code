@@ -13,7 +13,7 @@
  * document kind, mode guard, and wording differ.
  */
 
-import type { DesignReviewData, ReviewFindingData } from '@odysseythink/kimi-code-sdk';
+import type { DesignReviewData, ReviewFindingData } from '@odysseythink/ody-code-sdk';
 
 import { NO_ACTIVE_SESSION_MESSAGE } from '../constant/ody-tui';
 import type { SlashCommandHost } from './dispatch';

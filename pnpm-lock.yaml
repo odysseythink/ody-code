@@ -103,10 +103,10 @@ importers:
       '@odysseythink/kimi-code-oauth':
         specifier: workspace:^
         version: link:../../packages/oauth
-      '@odysseythink/kimi-code-sdk':
+      '@odysseythink/ody-code-sdk':
         specifier: workspace:^
         version: link:../../packages/node-sdk
-      '@odysseythink/kimi-telemetry':
+      '@odysseythink/ody-telemetry':
         specifier: workspace:^
         version: link:../../packages/telemetry
       '@types/semver':

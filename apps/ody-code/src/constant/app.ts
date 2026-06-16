@@ -1,4 +1,4 @@
-import { ErrorCodes } from '@odysseythink/kimi-code-sdk';
+import { ErrorCodes } from '@odysseythink/ody-code-sdk';
 
 export const PRODUCT_NAME = 'Ody Code';
 export const CLI_COMMAND_NAME = 'ody';

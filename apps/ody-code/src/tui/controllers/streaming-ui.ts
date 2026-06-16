@@ -1,4 +1,4 @@
-import type { Session } from '@odysseythink/kimi-code-sdk';
+import type { Session } from '@odysseythink/ody-code-sdk';
 
 import { AgentGroupComponent } from '../components/messages/agent-group';
 import { AssistantMessageComponent } from '../components/messages/assistant-message';

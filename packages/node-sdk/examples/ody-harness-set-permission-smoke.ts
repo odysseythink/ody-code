@@ -1,4 +1,4 @@
-import { KimiHarness, type PermissionMode } from '@odysseythink/kimi-code-sdk';
+import { KimiHarness, type PermissionMode } from '@odysseythink/ody-code-sdk';
 
 import {
   smokeIdentityFromEnv,

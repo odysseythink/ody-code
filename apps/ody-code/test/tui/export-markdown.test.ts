@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import type { ContentPart, ToolCall } from '@odysseythink/kimi-code-sdk';
-import type { ContextMessage, PromptOrigin } from '@odysseythink/kimi-code-sdk';
+import type { ContentPart, ToolCall } from '@odysseythink/ody-code-sdk';
+import type { ContextMessage, PromptOrigin } from '@odysseythink/ody-code-sdk';
 
 import {
   buildExportMarkdown,

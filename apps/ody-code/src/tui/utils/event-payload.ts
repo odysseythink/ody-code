@@ -1,4 +1,4 @@
-import { isKimiError } from '@odysseythink/kimi-code-sdk';
+import { isKimiError } from '@odysseythink/ody-code-sdk';
 
 import {
   STREAMING_ARGS_FIELD_RE,

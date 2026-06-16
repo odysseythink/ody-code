@@ -1,6 +1,6 @@
 import { createKimiDeviceId, ODY_CODE_PROVIDER_NAME } from '@odysseythink/kimi-code-oauth';
-import { initializeTelemetry } from '@odysseythink/kimi-telemetry';
-import { resolveOdyHome, type KimiConfig, type KimiHarness } from '@odysseythink/kimi-code-sdk';
+import { initializeTelemetry } from '@odysseythink/ody-telemetry';
+import { resolveOdyHome, type KimiConfig, type KimiHarness } from '@odysseythink/ody-code-sdk';
 
 import { CLI_USER_AGENT_PRODUCT } from '#/constant/app';
 

@@ -1,4 +1,4 @@
-import type { BackgroundTaskInfo, BackgroundTaskStatus } from '@odysseythink/kimi-code-sdk';
+import type { BackgroundTaskInfo, BackgroundTaskStatus } from '@odysseythink/ody-code-sdk';
 import { describe, expect, it } from 'vitest';
 
 import { formatBackgroundTaskTranscript } from '@/tui/utils/background-task-status';

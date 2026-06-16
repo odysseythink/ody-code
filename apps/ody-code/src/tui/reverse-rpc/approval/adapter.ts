@@ -1,4 +1,4 @@
-import type { ApprovalRequest, ApprovalResponse, ToolInputDisplay } from '@odysseythink/kimi-code-sdk';
+import type { ApprovalRequest, ApprovalResponse, ToolInputDisplay } from '@odysseythink/ody-code-sdk';
 
 import type { ApprovalPanelResponse } from '#/tui/components/dialogs/approval-panel';
 import type { ApprovalPanelChoice, ApprovalPanelData, DisplayBlock } from '#/tui/reverse-rpc/types';

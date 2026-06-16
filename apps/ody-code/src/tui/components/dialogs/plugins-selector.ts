@@ -6,7 +6,7 @@ import {
   visibleWidth,
   type Focusable,
 } from '@earendil-works/pi-tui';
-import type { PluginInfo, PluginMcpServerInfo, PluginSummary } from '@odysseythink/kimi-code-sdk';
+import type { PluginInfo, PluginMcpServerInfo, PluginSummary } from '@odysseythink/ody-code-sdk';
 import chalk from 'chalk';
 
 import type { ColorPalette } from '#/tui/theme/colors';

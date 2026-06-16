@@ -1,4 +1,4 @@
-import type { ContentPart, ContextMessage, PromptOrigin, ToolCall } from '@odysseythink/kimi-code-sdk';
+import type { ContentPart, ContextMessage, PromptOrigin, ToolCall } from '@odysseythink/ody-code-sdk';
 
 const HINT_KEYS = ['path', 'file_path', 'command', 'query', 'url', 'name', 'pattern'] as const;
 

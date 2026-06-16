@@ -6,14 +6,14 @@ This file only contains rules local to `apps/ody-code`. For cross-repo rules, se
 
 `apps/ody-code` is the terminal UI / CLI app. The entry chain is:
 
-`src/main.ts` -> `src/cli/commands.ts` -> `src/cli/run-shell.ts` -> SDK `KimiHarness` -> `src/tui/kimi-tui.ts`
+`src/main.ts` -> `src/cli/commands.ts` -> `src/cli/run-shell.ts` -> SDK `KimiHarness` -> `src/tui/ody-tui.ts`
 
 Main directories:
 
 - `src/constant/`: non-copy constants shared by CLI/TUI — product, protocol, paths, terminal control, updates, and so on.
 - `src/cli/`: command-line arguments, subcommands, and CLI startup.
 - `src/tui/`: the interactive terminal UI.
-- `src/tui/kimi-tui.ts`: the TUI master assembler, responsible for wiring state, layout, editor, session, SDK events, and dialogs together.
+- `src/tui/ody-tui.ts`: the TUI master assembler, responsible for wiring state, layout, editor, session, SDK events, and dialogs together.
 - `src/tui/commands/`: slash command definitions, parsing, ordering, and dynamic skill command generation.
 - `src/tui/components/`: pi-tui components, organized by UI type.
 - `src/tui/constant/`: non-copy constants reused across TUI modules — symbols, terminal sequences, render sizing, streaming-arg match rules, and so on.
@@ -42,7 +42,7 @@ Main directories:
 
 ## KimiTUI Internal Sections
 
-`src/tui/kimi-tui.ts` is large. When you modify it, place code into the existing responsibility section — do not just drop it where it happens to be convenient.
+`src/tui/ody-tui.ts` is large. When you modify it, place code into the existing responsibility section — do not just drop it where it happens to be convenient.
 
 - Types and state creation: `KimiTUIStartupInput`, `TUIState`, `createInitialAppState`, `createTUIState`. Before adding new global UI state, decide whether it really belongs in `TUIState`.
 - Startup helpers: slash commands, autocomplete, skill commands, input history.

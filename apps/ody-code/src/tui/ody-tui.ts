@@ -19,7 +19,7 @@ import type {
   PermissionMode,
   PromptPart,
   Session,
-} from '@odysseythink/kimi-code-sdk';
+} from '@odysseythink/ody-code-sdk';
 import chalk from 'chalk';
 
 import type { CLIOptions } from '#/cli/options';

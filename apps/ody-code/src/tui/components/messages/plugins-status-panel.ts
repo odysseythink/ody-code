@@ -1,4 +1,4 @@
-import type { PluginInfo, PluginSummary } from '@odysseythink/kimi-code-sdk';
+import type { PluginInfo, PluginSummary } from '@odysseythink/ody-code-sdk';
 import chalk from 'chalk';
 
 import type { ColorPalette } from '../../theme/colors';

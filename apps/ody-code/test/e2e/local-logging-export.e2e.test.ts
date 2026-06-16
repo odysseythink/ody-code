@@ -8,7 +8,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { registerExportCommand } from '#/cli/sub/export';
 import { createKimiCodeHostIdentity } from '#/cli/version';
-import { KimiHarness, log } from '@odysseythink/kimi-code-sdk';
+import { KimiHarness, log } from '@odysseythink/ody-code-sdk';
 import { __resetRootLoggerForTest } from '@odysseythink/agent-core';
 
 const SESSION_LOG = 'logs/ody-code.log';

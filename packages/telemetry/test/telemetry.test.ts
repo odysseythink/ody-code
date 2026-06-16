@@ -37,7 +37,7 @@ afterEach(() => {
 });
 
 async function tempHome(): Promise<string> {
-  const dir = await mkdtemp(join(tmpdir(), 'kimi-telemetry-'));
+  const dir = await mkdtemp(join(tmpdir(), 'ody-telemetry-'));
   tempDirs.push(dir);
   return dir;
 }

@@ -30,7 +30,7 @@ import {
   type Catalog,
   type CatalogProviderEntry,
   type KimiConfig,
-} from '@odysseythink/kimi-code-sdk';
+} from '@odysseythink/ody-code-sdk';
 import type { Command } from 'commander';
 
 import { createKimiCodeHostIdentity } from '#/cli/version';

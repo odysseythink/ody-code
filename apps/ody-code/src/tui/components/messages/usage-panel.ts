@@ -6,7 +6,7 @@
 
 import type { Component } from '@earendil-works/pi-tui';
 import { truncateToWidth, visibleWidth } from '@earendil-works/pi-tui';
-import type { SessionUsage, TokenUsage } from '@odysseythink/kimi-code-sdk';
+import type { SessionUsage, TokenUsage } from '@odysseythink/ody-code-sdk';
 import chalk from 'chalk';
 
 import {

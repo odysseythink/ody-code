@@ -15,7 +15,7 @@
 
 import type { Component } from '@earendil-works/pi-tui';
 import { Text, visibleWidth } from '@earendil-works/pi-tui';
-import type { GoalSnapshot, GoalStatus } from '@odysseythink/kimi-code-sdk';
+import type { GoalSnapshot, GoalStatus } from '@odysseythink/ody-code-sdk';
 import chalk from 'chalk';
 
 import { MESSAGE_INDENT } from '#/tui/constant/rendering';

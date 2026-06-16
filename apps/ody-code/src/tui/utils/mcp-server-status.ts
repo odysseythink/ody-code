@@ -1,4 +1,4 @@
-import type { McpServerInfo, McpServerStatusEvent } from '@odysseythink/kimi-code-sdk';
+import type { McpServerInfo, McpServerStatusEvent } from '@odysseythink/ody-code-sdk';
 
 export type McpServerStatusSnapshot = McpServerInfo | McpServerStatusEvent['server'];
 

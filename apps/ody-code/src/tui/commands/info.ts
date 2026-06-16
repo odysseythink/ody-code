@@ -1,6 +1,6 @@
 import { release as osRelease, type as osType } from 'node:os';
 
-import type { McpServerInfo, SessionStatus, SessionUsage } from '@odysseythink/kimi-code-sdk';
+import type { McpServerInfo, SessionStatus, SessionUsage } from '@odysseythink/ody-code-sdk';
 
 import { buildMcpStatusReportLines } from '../components/messages/mcp-status-panel';
 import { buildStatusReportLines } from '../components/messages/status-panel';

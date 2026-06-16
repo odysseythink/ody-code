@@ -20,7 +20,7 @@ import type {
   ExportSessionManifest,
   ExportSessionResult,
   SessionSummary,
-} from '@odysseythink/kimi-code-sdk';
+} from '@odysseythink/ody-code-sdk';
 
 let tmp: string;
 
@@ -47,8 +47,8 @@ const mocks = vi.hoisted(() => ({
   harnessCreatesDeviceIdOnConstruction: false,
 }));
 
-vi.mock('@odysseythink/kimi-code-sdk', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@odysseythink/kimi-code-sdk')>();
+vi.mock('@odysseythink/ody-code-sdk', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@odysseythink/ody-code-sdk')>();
   return {
     ...actual,
     resolveOdyHome: mocks.resolveOdyHome,
@@ -85,7 +85,7 @@ vi.mock('@odysseythink/kimi-code-oauth', async () => {
   };
 });
 
-vi.mock('@odysseythink/kimi-telemetry', () => ({
+vi.mock('@odysseythink/ody-telemetry', () => ({
   initializeTelemetry: mocks.initializeTelemetry,
   shutdownTelemetry: mocks.shutdownTelemetry,
   track: mocks.telemetryTrack,

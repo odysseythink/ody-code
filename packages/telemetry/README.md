@@ -1,4 +1,4 @@
-# @odysseythink/kimi-telemetry
+# @odysseythink/ody-telemetry
 
 Shared telemetry infrastructure for Ody Code.
 

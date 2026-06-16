@@ -1,4 +1,4 @@
-import type { ShellEnvironment } from '@odysseythink/kimi-code-sdk';
+import type { ShellEnvironment } from '@odysseythink/ody-code-sdk';
 
 function detectMultiplexer(): string | undefined {
   if (process.env['TMUX']) return 'tmux';

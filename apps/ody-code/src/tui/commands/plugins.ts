@@ -1,7 +1,7 @@
 import { homedir as osHomedir } from 'node:os';
 import { isAbsolute, join, resolve } from 'node:path';
 
-import type { PluginInfo, PluginSummary } from '@odysseythink/kimi-code-sdk';
+import type { PluginInfo, PluginSummary } from '@odysseythink/ody-code-sdk';
 
 import {
   PluginMcpSelectorComponent,

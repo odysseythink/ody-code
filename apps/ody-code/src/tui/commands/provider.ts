@@ -13,7 +13,7 @@ import {
   fetchCatalog,
   inferWireType,
   type Catalog,
-} from '@odysseythink/kimi-code-sdk';
+} from '@odysseythink/ody-code-sdk';
 
 import { ChoicePickerComponent } from '../components/dialogs/choice-picker';
 import {

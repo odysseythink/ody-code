@@ -1,4 +1,4 @@
-import type { PermissionMode } from '@odysseythink/kimi-code-sdk';
+import type { PermissionMode } from '@odysseythink/ody-code-sdk';
 
 import { ChoicePickerComponent, type ChoiceOption } from './choice-picker';
 

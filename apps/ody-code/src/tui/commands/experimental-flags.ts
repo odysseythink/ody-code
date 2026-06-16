@@ -1,4 +1,4 @@
-import type { ExperimentalFlagMap } from '@odysseythink/kimi-code-sdk';
+import type { ExperimentalFlagMap } from '@odysseythink/ody-code-sdk';
 
 // Resolved experimental flags, fetched once from the core over RPC at startup and then read
 // synchronously by the command palette and dispatch. App-local cache, not a source of truth.

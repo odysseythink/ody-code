@@ -401,7 +401,7 @@ function mergeCtx(
  * Root logger. Import and use directly for events that don't belong to any
  * session (CLI startup, harness construction, etc.):
  *
- *   import { log } from 'kimi-code-sdk';
+ *   import { log } from 'ody-code-sdk';
  *   log.info('kimi-code starting', { version });
  *
  * For events scoped to a session or agent, use the parent's `log` field:

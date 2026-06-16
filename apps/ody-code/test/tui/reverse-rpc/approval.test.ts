@@ -1,4 +1,4 @@
-import type { ApprovalRequest } from '@odysseythink/kimi-code-sdk';
+import type { ApprovalRequest } from '@odysseythink/ody-code-sdk';
 import { describe, expect, it, vi } from 'vitest';
 
 import { ApprovalController } from '#/tui/reverse-rpc/approval/controller';

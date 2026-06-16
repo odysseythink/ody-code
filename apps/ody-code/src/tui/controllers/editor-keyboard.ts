@@ -1,4 +1,4 @@
-import type { Session } from '@odysseythink/kimi-code-sdk';
+import type { Session } from '@odysseythink/ody-code-sdk';
 
 import { ClipboardMediaError, readClipboardMedia } from '#/utils/clipboard/clipboard-image';
 import { parseImageMeta } from '#/utils/image/image-mime';

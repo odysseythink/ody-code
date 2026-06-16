@@ -1,5 +1,5 @@
-import type { PermissionMode, Session } from '@odysseythink/kimi-code-sdk';
-import { log } from '@odysseythink/kimi-code-sdk';
+import type { PermissionMode, Session } from '@odysseythink/ody-code-sdk';
+import { log } from '@odysseythink/ody-code-sdk';
 
 import { EditorSelectorComponent } from '../components/dialogs/editor-selector';
 import { TabbedModelSelectorComponent } from '../components/dialogs/tabbed-model-selector';

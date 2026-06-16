@@ -8,7 +8,7 @@ import {
   log,
   resolveGlobalLogPath,
   resolveOdyHome,
-} from '@odysseythink/kimi-code-sdk';
+} from '@odysseythink/ody-code-sdk';
 
 type MarkerLevel = 'error' | 'warn';
 

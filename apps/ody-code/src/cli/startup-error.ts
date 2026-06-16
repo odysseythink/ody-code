@@ -1,4 +1,4 @@
-import { ODY_ERROR_INFO, isKimiError } from '@odysseythink/kimi-code-sdk';
+import { ODY_ERROR_INFO, isKimiError } from '@odysseythink/ody-code-sdk';
 import { chalkStderr } from 'chalk';
 
 import { STARTUP_ERROR_COLOR } from '#/constant/startup-error';

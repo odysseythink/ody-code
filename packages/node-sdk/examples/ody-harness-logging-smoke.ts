@@ -2,7 +2,7 @@ import { mkdir, readFile, readdir, rm, stat, writeFile } from 'node:fs/promises'
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 
-import { KimiHarness, log } from '@odysseythink/kimi-code-sdk';
+import { KimiHarness, log } from '@odysseythink/ody-code-sdk';
 
 const SESSION_LOG = 'logs/ody-code.log';
 const GLOBAL_LOG = 'logs/global/ody-code.log';

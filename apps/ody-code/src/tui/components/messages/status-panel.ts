@@ -5,7 +5,7 @@
  * separate from the TUI orchestration layer.
  */
 
-import type { ModelAlias, PermissionMode, SessionStatus } from '@odysseythink/kimi-code-sdk';
+import type { ModelAlias, PermissionMode, SessionStatus } from '@odysseythink/ody-code-sdk';
 import chalk from 'chalk';
 
 import { PRODUCT_NAME } from '#/constant/app';

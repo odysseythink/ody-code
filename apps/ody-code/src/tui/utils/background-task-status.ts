@@ -9,7 +9,7 @@
  * — into the dim detail line so the user still sees it.
  */
 
-import type { BackgroundTaskInfo, BackgroundTaskStatus } from '@odysseythink/kimi-code-sdk';
+import type { BackgroundTaskInfo, BackgroundTaskStatus } from '@odysseythink/ody-code-sdk';
 
 import type { BackgroundAgentStatusData, BackgroundAgentStatusPhase } from '@/tui/types';
 
