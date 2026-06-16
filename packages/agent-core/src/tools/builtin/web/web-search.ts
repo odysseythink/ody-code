@@ -28,6 +28,7 @@ export interface WebSearchResult {
 }
 
 export interface WebSearchProvider {
+  readonly name?: string;
   search(
     query: string,
     options?: { limit?: number; includeContent?: boolean; toolCallId?: string },
