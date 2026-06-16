@@ -121,6 +121,16 @@ custom_headers = { "X-Search" = "1" }
 base_url = "https://api.kimi.com/coding/v1/fetch"
 api_key = "sk-fetch"
 
+[services.web_search]
+[services.web_search.primary]
+provider = "tavily"
+api_key = "sk-tavily"
+timeout_ms = 15000
+[services.web_search.primary.options]
+search_depth = "advanced"
+[services.web_search.secondary]
+provider = "duckduckgo"
+
 [browser]
 enabled = false
 chrome_port = 9223
@@ -192,6 +202,11 @@ describe('harness config TOML loader', () => {
     ]);
     expect(config.services?.moonshotSearch?.customHeaders).toEqual({ 'X-Search': '1' });
     expect(config.services?.moonshotFetch?.apiKey).toBe('sk-fetch');
+    expect(config.services?.webSearch?.primary.provider).toBe('tavily');
+    expect(config.services?.webSearch?.primary.apiKey).toBe('sk-tavily');
+    expect(config.services?.webSearch?.primary.timeoutMs).toBe(15000);
+    expect(config.services?.webSearch?.primary.options).toEqual({ searchDepth: 'advanced' });
+    expect(config.services?.webSearch?.secondary?.provider).toBe('duckduckgo');
     expect(config.browser).toEqual({ enabled: false, chromePort: 9223 });
 
     expect('theme' in config).toBe(false);
@@ -223,6 +238,34 @@ describe('harness config TOML loader', () => {
     expect(text).toContain('normal_task_compaction_ratio = 0.4');
     const roundTripped = parseConfigString(text, configPath);
     expect(roundTripped.loopControl?.normalTaskCompactionRatio).toBe(0.4);
+  });
+
+  it('round-trips services.web_search with provider-specific options', async () => {
+    const dir = makeTempDir();
+    const configPath = join(dir, 'web-search.toml');
+    const toml = `
+[services.web_search.primary]
+provider = "tavily"
+api_key = "sk-tavily"
+timeout_ms = 15000
+[services.web_search.primary.options]
+search_depth = "advanced"
+[services.web_search.secondary]
+provider = "duckduckgo"
+`;
+    const config = parseConfigString(toml, configPath);
+    expect(config.services?.webSearch?.primary.provider).toBe('tavily');
+    expect(config.services?.webSearch?.primary.options).toEqual({ searchDepth: 'advanced' });
+
+    await writeConfigFile(configPath, config);
+    const text = await readFile(configPath, 'utf-8');
+    expect(text).toContain('[services.web_search.primary]');
+    expect(text).toContain('provider = "tavily"');
+    expect(text).toContain('search_depth = "advanced"');
+
+    const roundTripped = parseConfigString(text, configPath);
+    expect(roundTripped.services?.webSearch?.primary.provider).toBe('tavily');
+    expect(roundTripped.services?.webSearch?.primary.options).toEqual({ searchDepth: 'advanced' });
   });
 
   it('round-trips a custom registry source field on a provider', async () => {

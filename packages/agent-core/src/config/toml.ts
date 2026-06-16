@@ -20,6 +20,8 @@ import {
   type ProviderConfig,
   type ServicesConfig,
   type ThinkingConfig,
+  type WebSearchConfig,
+  type WebSearchProviderConfig,
   validateConfig,
 } from '#/config/schema';
 import { atomicWrite } from '#/utils/fs';
@@ -242,6 +244,10 @@ function transformPermissionRule(value: unknown, decision?: 'allow' | 'deny' | '
 }
 
 function transformServiceData(data: Record<string, unknown>): Record<string, unknown> {
+  // Detect webSearch structure: an object with "primary" or "secondary" keys
+  if (isPlainObject(data) && ('primary' in data || 'secondary' in data)) {
+    return transformWebSearchData(data);
+  }
   const out: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(data)) {
     const targetKey = snakeToCamel(key);
@@ -249,6 +255,32 @@ function transformServiceData(data: Record<string, unknown>): Record<string, unk
       out[targetKey] = isPlainObject(value) ? transformPlainObject(value) : value;
     } else if (targetKey === 'customHeaders') {
       out[targetKey] = cloneObjectValue(value);
+    } else {
+      out[targetKey] = value;
+    }
+  }
+  return out;
+}
+
+function transformWebSearchData(data: Record<string, unknown>): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(data)) {
+    const targetKey = snakeToCamel(key);
+    if ((targetKey === 'primary' || targetKey === 'secondary') && isPlainObject(value)) {
+      out[targetKey] = transformWebSearchProviderData(value);
+    } else {
+      out[targetKey] = value;
+    }
+  }
+  return out;
+}
+
+function transformWebSearchProviderData(data: Record<string, unknown>): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(data)) {
+    const targetKey = snakeToCamel(key);
+    if (targetKey === 'options' && isPlainObject(value)) {
+      out[targetKey] = transformPlainObject(value);
     } else {
       out[targetKey] = value;
     }
@@ -433,6 +465,33 @@ function servicesToToml(services: ServicesConfig, rawServices: unknown): Record<
     out['moonshot_fetch'] = serviceToToml(services.moonshotFetch);
   } else {
     delete out['moonshot_fetch'];
+  }
+  if (services.webSearch !== undefined) {
+    out['web_search'] = webSearchToToml(services.webSearch);
+  } else {
+    delete out['web_search'];
+  }
+  return out;
+}
+
+function webSearchToToml(cfg: WebSearchConfig): Record<string, unknown> {
+  const out: Record<string, unknown> = {
+    primary: webSearchProviderToToml(cfg.primary),
+  };
+  if (cfg.secondary) {
+    out['secondary'] = webSearchProviderToToml(cfg.secondary);
+  }
+  return out;
+}
+
+function webSearchProviderToToml(provider: WebSearchProviderConfig): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(provider)) {
+    if (key === 'options' && isPlainObject(value)) {
+      out['options'] = transformRecord(value as Record<string, unknown>, (v) => v, camelToSnake);
+    } else {
+      setDefined(out, camelToSnake(key), value);
+    }
   }
   return out;
 }
