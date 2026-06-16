@@ -31,11 +31,11 @@ EXCEPTION — verification is not implementation: checking a pure predicate, reg
 </HARD-GATE>`;
 
 const STEP_0_AUDIT = `## Step 0 — Audit strategy gate (BLOCKING, ask ONCE, before anything else)
-Before exploring the codebase deeply, before any clarifying question, and before proposing any approach, you MUST ask the user ONE question via AskUserQuestion to choose how strictly your assumptions get checked. Present exactly these three options and WAIT for the answer:
+Before exploring the codebase deeply, before any clarifying question, and before proposing any approach, you MUST ask the user ONE question to choose how strictly your assumptions get checked. Ask it by INVOKING the AskUserQuestion tool — an actual structured tool call. NEVER render this question by writing the question, its options, or any \`<ask_user_question>\`/\`<question>\`/\`<option>\`/XML/markdown into your text reply: text is not a tool call, the user sees no prompt, and the turn is wasted. Present exactly these three options and WAIT for the answer:
   - Basic — Only high-stakes assumptions (architecture, security, data, ops) are flagged for confirmation. Fastest path.
   - Standard — Every [C:INFERRED] assumption is surfaced for your review before the design is finalised.
   - Deep — I confirm the key claim of every design section, plus every assumption.
-Do NOT infer or silently default the level. Only fall back to Basic if the user explicitly declines to choose. Record the choice; you will apply its threshold to the Assumptions chapter and the final audit gate. The user may upgrade ("upgrade to Standard/Deep") at any time.`;
+Do NOT infer or silently default the level. Only fall back to Basic if the user explicitly declines to choose. EXCEPTION — if auto permission mode is active, AskUserQuestion is disabled: do NOT ask; default the level to Basic, record that in the \`## Assumptions\` chapter, and proceed. Record the choice; you will apply its threshold to the Assumptions chapter and the final audit gate. The user may upgrade ("upgrade to Standard/Deep") at any time.`;
 
 const STEP_0_5_UPSTREAM = `## Step 0.5 — Upstream inventory / prior art search (conditional)
 
@@ -144,7 +144,7 @@ ShowDesignMockup is NOT available in this host; describe visuals in text (ASCII 
 }
 
 const TURN_DISCIPLINE = `## Turn discipline
-AskUserQuestion is for the audit gate, clarifying assumptions, and per-section approval — one question per turn. Never ask about final design approval via text or AskUserQuestion; that is ExitDesignMode's job. Do NOT reference "the design" in AskUserQuestion — the user cannot see it until you call ExitDesignMode. Your turn must end with either AskUserQuestion or ExitDesignMode (tool calls such as ShowDesignMockup happen *within* a turn and do not count as ending it). Do NOT end your turn any other way (no silent investigation-only turns once the audit gate has been asked).`;
+AskUserQuestion is for the audit gate, clarifying assumptions, and per-section approval — one question per turn. Whenever you ask, INVOKE the AskUserQuestion tool (a structured tool call); never emit the question or its options as text or as \`<ask_user_question>\`/XML markup — text is not a tool call and produces no prompt for the user. Never ask about final design approval via text or AskUserQuestion; that is ExitDesignMode's job. Do NOT reference "the design" in AskUserQuestion — the user cannot see it until you call ExitDesignMode. Your turn must end with either AskUserQuestion or ExitDesignMode (tool calls such as ShowDesignMockup happen *within* a turn and do not count as ending it). Do NOT end your turn any other way (no silent investigation-only turns once the audit gate has been asked).`;
 
 /** One-line quality pointer kept in the sparse variant so long sessions don't drop quality. */
 const SPARSE_QUALITY_POINTER = `Reminder: the design file must follow the fidelity rubric (Scope In/Out, data-flow arrows, typed interfaces, per-algorithm language-agnostic pseudocode (not production code), call-sites with file path + line range, an error/degradation table, test assertions, and a risk register), and you MUST run the self-review + post-write audit gate (scaled to the recorded audit level) before ExitDesignMode — that gate lists each [C:INFERRED] assumption verbatim for per-item sign-off and blocks ExitDesignMode until done, and a user-named target (a specific binary/path) must not be silently retargeted. Before ExitDesignMode, verify the C1-C7 completeness checklist is satisfied: C1. Scope In/Out, C2. Architecture, C3. Data Models, C4. Algorithms, C5. Error Handling, C6. Self-Review, and C7. User Final Approval.`;
@@ -236,7 +236,7 @@ export function designModeReentryReminder(
 ## Re-entering Design Mode
 A design file from a previous session already exists.
   1. Read the existing design file to understand what was previously designed.
-  2. Confirm (or re-ask) the audit level (Basic/Standard/Deep) before continuing.
+  2. Confirm (or re-ask) the audit level before continuing — ask by INVOKING the AskUserQuestion tool (a real structured tool call). NEVER write the question or its options as text or as \`<ask_user_question>\`/XML markup; text produces no prompt and wastes the turn. Present exactly these options: Basic (only high-stakes assumptions flagged — fastest), Standard (every [C:INFERRED] assumption surfaced), Deep (key claim of every section + every assumption). If auto permission mode is active, AskUserQuestion is disabled — do NOT ask; default to Basic and note it in \`## Assumptions\`.
   3. Evaluate the user's current request against that design. Same topic: update it. Different topic: replace it.
   4. If it is a split index, the Parts manifest is the source of truth — write the next \`pending\` part INSIDE the index's subdirectory as \`<index-stem>/<subsystem>.md\` (a directory named exactly after the index filename stem, alongside the index; a file written next to the index instead will be rejected by the write guard), flip its row to \`done\`; never re-write a \`done\` part.
   5. Clarify any newly-required decisions one question per turn (seven-dimension checklist); verify any data source / hook point the design relies on actually exists in code; if the request names a concrete target, design THERE — do not silently retarget.
