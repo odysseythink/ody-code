@@ -24,6 +24,7 @@ export interface WebSearchResult {
   snippet: string;
   date?: string | undefined;
   content?: string | undefined;
+  raw?: unknown;
 }
 
 export interface WebSearchProvider {
