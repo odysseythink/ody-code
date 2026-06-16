@@ -145,6 +145,16 @@ describe('FooterComponent mode badge', () => {
     expect(line2).not.toContain('·');
   });
 
+  it('renders inverted office-hours badge without filename on Line 2', () => {
+    const state: AppState = { ...baseAppState, sessionMode: 'office-hours' };
+    const footer = new FooterComponent(state, darkColors);
+    const lines = footer.render(120);
+    const line2 = stripAnsi(lines[1]!);
+    expect(line2).toContain('🏢');
+    expect(line2).toContain('office-hours');
+    expect(line2).not.toContain('·');
+  });
+
   it('renders normal badge without filename when no sessionModeFilePath is set', () => {
     const state: AppState = { ...baseAppState, sessionMode: 'normal' };
     const footer = new FooterComponent(state, darkColors);

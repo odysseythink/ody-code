@@ -3,13 +3,17 @@ import { describe, expect, it, vi } from 'vitest';
 import { runOfficeHours } from '#/cli/run-office-hours';
 import type { CLIOptions } from '#/cli/options';
 
+const mockWithTelemetryContext = vi.fn<(ctx: { sessionId?: string }) => { track: () => void }>(() => ({
+  track: vi.fn(),
+}));
+
 // Mock external modules used by runOfficeHours
 vi.mock('@odysseythink/ody-telemetry', () => ({
   setCrashPhase: vi.fn(),
   setTelemetryContext: vi.fn(),
   shutdownTelemetry: vi.fn(),
   track: vi.fn(),
-  withTelemetryContext: vi.fn(() => ({ track: vi.fn() })),
+  withTelemetryContext: (ctx: { sessionId?: string }) => mockWithTelemetryContext(ctx),
 }));
 
 vi.mock('@odysseythink/ody-code-sdk', async () => {
@@ -26,14 +30,18 @@ vi.mock('@odysseythink/ody-code-sdk', async () => {
   };
 });
 
+let lastTuiInstance: { onExit?: (exitCode?: number) => Promise<void>; getCurrentSessionId: () => string } | undefined;
+
 vi.mock('#/tui/index', () => ({
   KimiTUI: vi.fn().mockImplementation(function () {
-    return {
-      onExit: undefined as unknown,
+    const instance = {
+      onExit: undefined as unknown as ((exitCode?: number) => Promise<void>) | undefined,
       start: vi.fn().mockResolvedValue(undefined),
       stop: vi.fn().mockResolvedValue(undefined),
-      getCurrentSessionId: vi.fn().mockReturnValue(''),
+      getCurrentSessionId: vi.fn().mockReturnValue('ses-office-hours'),
     };
+    lastTuiInstance = instance;
+    return instance;
   }),
 }));
 
@@ -80,5 +88,36 @@ describe('runOfficeHours', () => {
 
     // Should not throw
     await expect(runOfficeHours(opts, '0.0.0-test')).resolves.toBeUndefined();
+  });
+
+  it('uses tui.getCurrentSessionId for office_hours_completed telemetry on exit', async () => {
+    const opts: CLIOptions = {
+      session: undefined,
+      continue: false,
+      yolo: false,
+      auto: false,
+      sessionMode: 'normal',
+      officeHours: true,
+      model: undefined,
+      outputFormat: undefined,
+      prompt: undefined,
+      skillsDirs: [],
+      loginProvider: undefined,
+      logoutProvider: undefined,
+    };
+
+    await runOfficeHours(opts, '0.0.0-test');
+    expect(lastTuiInstance).toBeDefined();
+    expect(lastTuiInstance?.onExit).toBeDefined();
+
+    mockWithTelemetryContext.mockClear();
+    const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => undefined as never);
+    try {
+      await lastTuiInstance!.onExit!(0);
+    } finally {
+      exitSpy.mockRestore();
+    }
+
+    expect(mockWithTelemetryContext).toHaveBeenCalledWith({ sessionId: 'ses-office-hours' });
   });
 });

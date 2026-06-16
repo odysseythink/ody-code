@@ -26,7 +26,7 @@ import { safeUsageRatio } from '#/utils/usage/usage-format';
 const MAX_CWD_SEGMENTS = 3;
 const GOAL_TIMER_INTERVAL_MS = 1_000;
 
-const EMOJIS: Record<string, string> = { normal: '⚒️', plan: '📝', design: '✏️' };
+const EMOJIS: Record<string, string> = { normal: '⚒️', plan: '📝', design: '✏️', 'office-hours': '🏢' };
 
 function planFileName(path: string | null | undefined): string | null {
   if (!path) return null;
@@ -52,7 +52,13 @@ function renderModeBadge(
 ): string {
   const emoji = EMOJIS[mode] ?? '';
   const bgColor =
-    mode === 'design' ? colors.accent : mode === 'plan' ? colors.primary : colors.textMuted;
+    mode === 'design'
+      ? colors.accent
+      : mode === 'plan'
+        ? colors.primary
+        : mode === 'office-hours'
+          ? colors.warning
+          : colors.textMuted;
 
   let textColor: string;
   try {

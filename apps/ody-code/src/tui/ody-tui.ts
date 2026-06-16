@@ -1029,13 +1029,14 @@ export class KimiTUI {
       }
     }
 
+    const isOfficeHours = this.state.appState.sessionMode === 'office-hours';
     this.setAppState({
       sessionId: session.id,
       model: status.model ?? '',
       thinking: status.thinkingLevel !== 'off',
       permissionMode: status.permission,
-      sessionMode: status.sessionMode ?? 'normal',
-      sessionModeFilePath: sessionModeFilePath ?? null,
+      sessionMode: isOfficeHours ? 'office-hours' : (status.sessionMode ?? 'normal'),
+      sessionModeFilePath: isOfficeHours ? null : (sessionModeFilePath ?? null),
       contextTokens: status.contextTokens,
       maxContextTokens: status.maxContextTokens,
       contextUsage: status.contextUsage,

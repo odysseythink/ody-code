@@ -79,8 +79,9 @@ export async function runOfficeHours(opts: CLIOptions, version: string): Promise
   track('office_hours_started', { project_slug: basename(workDir) });
 
   tui.onExit = async (exitCode = 0) => {
+    const sessionId = tui.getCurrentSessionId();
     setCrashPhase('shutdown');
-    withTelemetryContext({ sessionId: tui.session!.id }).track('office_hours_completed', {
+    withTelemetryContext({ sessionId }).track('office_hours_completed', {
       duration_s: (Date.now() - startedAt) / 1000,
       project_slug: basename(workDir),
       outcome: exitCode === 0 ? 'success' : 'abort',

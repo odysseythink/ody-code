@@ -55,15 +55,15 @@ function makeHarness(session = makeSession()) {
   };
 }
 
-function makeStartupInput(): KimiTUIStartupInput {
+function makeStartupInput(officeHours = false): KimiTUIStartupInput {
   return {
     cliOptions: {
       session: undefined,
       continue: false,
       yolo: false,
       auto: false,
-      sessionMode: 'normal',
-      officeHours: false,
+      sessionMode: officeHours ? 'office-hours' : 'normal',
+      officeHours,
       model: undefined,
       outputFormat: undefined,
       prompt: undefined,
@@ -80,7 +80,7 @@ function makeStartupInput(): KimiTUIStartupInput {
     version: '0.0.0-test',
     workDir: '/tmp/proj-a',
     resolvedTheme: 'dark',
-    officeHours: false,
+    officeHours,
   };
 }
 
@@ -110,6 +110,30 @@ describe('KimiTUI syncRuntimeState', () => {
 
     await driver.syncRuntimeState(session as never);
 
+    expect(driver.state.appState.sessionModeFilePath).toBeNull();
+  });
+
+  it('preserves office-hours mode when status reports normal', async () => {
+    const session = makeSession({
+      getStatus: vi.fn(async () => ({
+        model: 'k2',
+        thinkingLevel: 'off',
+        permission: 'manual',
+        sessionMode: 'normal',
+        sessionModeFilePath: null,
+        contextTokens: 10,
+        maxContextTokens: 100,
+        contextUsage: 0.1,
+      })),
+    });
+    const harness = makeHarness(session);
+    const driver = new KimiTUI(harness as never, makeStartupInput(true)) as unknown as SyncDriver;
+    vi.spyOn(driver.state.ui, 'requestRender').mockImplementation(() => {});
+    vi.spyOn(driver.state.terminal, 'setProgress').mockImplementation(() => {});
+
+    await driver.syncRuntimeState(session as never);
+
+    expect(driver.state.appState.sessionMode).toBe('office-hours');
     expect(driver.state.appState.sessionModeFilePath).toBeNull();
   });
 });
