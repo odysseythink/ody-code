@@ -191,7 +191,12 @@ export const PerplexityOptionsSchema = z.object({
   maxTokensPerPage: z.number().int().optional(),
 });
 
-export const MoonshotOptionsSchema = z.object({});
+export const MoonshotOptionsSchema = z.object({
+  baseUrl: z.string().optional(),
+  apiKey: z.string().optional(),
+  oauth: OAuthRefSchema.optional(),
+  customHeaders: StringRecordSchema.optional(),
+});
 
 export const WebSearchProviderConfigSchema = z.object({
   provider: WebSearchProviderNameSchema,

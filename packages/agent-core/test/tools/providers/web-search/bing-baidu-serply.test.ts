@@ -58,7 +58,7 @@ describe('SerplyProvider', () => {
     const results = await provider.search('hello');
     expect(results).toHaveLength(1);
     const url = fetchImpl.mock.calls[0]?.[0] as string;
-    expect(url).toContain('hl=us');
+    expect(url).toContain('hl=en');
     expect(url).toContain('gl=US');
     const init = fetchImpl.mock.calls[0]?.[1] as RequestInit;
     expect(init.headers).toMatchObject({ 'X-API-KEY': 'key', 'X-User-Agent': 'desktop' });

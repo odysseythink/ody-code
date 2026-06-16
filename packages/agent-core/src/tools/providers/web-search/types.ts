@@ -3,6 +3,9 @@ import type { WebSearchProvider, WebSearchResult } from '../../builtin/web/web-s
 export type { WebSearchProvider, WebSearchResult };
 
 export function normalizeResult(raw: unknown, _provider: string): WebSearchResult {
+  if (raw === null || typeof raw !== 'object') {
+    return { title: '', url: '', snippet: '', raw };
+  }
   const r = raw as Record<string, unknown>;
   const title = typeof r['title'] === 'string' ? r['title'].slice(0, 500) : typeof r['name'] === 'string' ? r['name'].slice(0, 500) : '';
   const url = typeof r['url'] === 'string' ? r['url'].slice(0, 2048) : typeof r['link'] === 'string' ? r['link'].slice(0, 2048) : typeof r['uri'] === 'string' ? r['uri'].slice(0, 2048) : '';

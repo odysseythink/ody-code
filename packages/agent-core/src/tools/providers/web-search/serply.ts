@@ -24,7 +24,7 @@ export class SerplyProvider implements WebSearchProvider {
     const url = buildUrl('https://api.serply.io/v1/search/', {
       q: query,
       language: this.options.language ?? 'en',
-      hl: this.options.hl ?? 'us',
+      hl: this.options.hl ?? 'en',
       gl,
     });
     const response = await getJson(url, {

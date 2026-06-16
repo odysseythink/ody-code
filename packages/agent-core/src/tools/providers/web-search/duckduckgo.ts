@@ -14,21 +14,35 @@ export class DuckDuckGoProvider implements WebSearchProvider {
     private readonly fetchImpl: typeof fetch = globalThis.fetch.bind(globalThis),
   ) {}
 
-  async search(query: string): Promise<WebSearchResult[]> {
+  async search(
+    query: string,
+    searchOptions?: { limit?: number; includeContent?: boolean; toolCallId?: string },
+  ): Promise<WebSearchResult[]> {
     const targetUrl = `https://html.duckduckgo.com/html?q=${encodeURIComponent(query)}`;
-    const response = await this.fetchThroughProxy(targetUrl);
-    if (!response.ok) {
-      throw new Error(`DuckDuckGo search failed: HTTP ${String(response.status)}`);
+    const controller = new AbortController();
+    const timer = setTimeout(() => {
+      controller.abort();
+    }, this.options.timeoutMs);
+    try {
+      const response = await this.fetchThroughProxy(targetUrl, controller.signal);
+      if (!response.ok) {
+        throw new Error(`DuckDuckGo search failed: HTTP ${String(response.status)}`);
+      }
+      const html = await response.text();
+      const rawResults = parseDuckDuckGoHtml(html);
+      const results = normalizeResults(rawResults, this.name);
+      const limit = searchOptions?.limit;
+      return limit !== undefined && limit > 0 ? results.slice(0, limit) : results;
+    } finally {
+      clearTimeout(timer);
     }
-    const html = await response.text();
-    const rawResults = parseDuckDuckGoHtml(html);
-    return normalizeResults(rawResults, this.name);
   }
 
-  private fetchThroughProxy(targetUrl: string): Promise<Response> {
+  private fetchThroughProxy(targetUrl: string, signal: AbortSignal): Promise<Response> {
     if (this.options.proxyUrl !== undefined) {
       return this.fetchImpl(this.options.proxyUrl, {
         method: 'GET',
+        signal,
         headers: {
           'X-Proxy-Url': targetUrl,
           'User-Agent': 'ody-code',
@@ -37,6 +51,7 @@ export class DuckDuckGoProvider implements WebSearchProvider {
     }
     return this.fetchImpl(targetUrl, {
       method: 'GET',
+      signal,
       headers: { 'User-Agent': 'ody-code' },
     });
   }
@@ -52,7 +67,7 @@ function parseDuckDuckGoHtml(html: string): Array<{ title: string; link: string;
     const hrefMatch = part.match(/<a[^>]*class="result__a"[^>]*href="([^"]*)"/);
     const link = hrefMatch ? extractDuckDuckGoRedirectUrl(hrefMatch[1] as string) : '';
     const snippetMatch = part.match(/<a[^>]*class="result__snippet"[^>]*>(.*?)<\/a>/);
-    const snippet = stripHtml((snippetMatch?.[1] ?? '').replace(/<\/?b>/g, '')).trim();
+    const snippet = stripHtml((snippetMatch?.[1] ?? '').replaceAll(/<\/?b>/g, '')).trim();
     if (title && link && snippet) {
       results.push({ title, link, snippet });
     }
@@ -75,5 +90,5 @@ function extractDuckDuckGoRedirectUrl(href: string): string {
 }
 
 function stripHtml(html: string): string {
-  return html.replace(/<[^>]+>/g, '');
+  return html.replaceAll(/<[^>]+>/g, '');
 }

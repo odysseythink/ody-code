@@ -1,5 +1,4 @@
-import type { KimiConfig } from './schema';
-import { type WebSearchConfig } from './schema';
+import type { KimiConfig, WebSearchConfig } from './schema';
 
 export function resolveWebSearchConfig(config: KimiConfig): WebSearchConfig | undefined {
   if (config.services?.webSearch !== undefined) {

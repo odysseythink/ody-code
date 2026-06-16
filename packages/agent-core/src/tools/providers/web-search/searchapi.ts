@@ -30,16 +30,38 @@ export class SearchApiProvider implements WebSearchProvider {
     });
     if (!response.ok) throw await httpError(response, this.name);
     const data = (await response.json()) as Record<string, unknown>;
-    const rawResults: unknown[] = [];
+    const rawResults: Array<Record<string, unknown>> = [];
     const kg = data['knowledge_graph'] as Record<string, unknown> | undefined;
-    if (kg?.['description']) {
-      rawResults.push(kg['description']);
+    if (kg !== undefined) {
+      const description = kg['description'];
+      if (description !== null && typeof description === 'object') {
+        rawResults.push(description as Record<string, unknown>);
+      } else if (typeof description === 'string' && description.length > 0) {
+        rawResults.push({
+          title: typeof kg['title'] === 'string' ? kg['title'] : typeof kg['name'] === 'string' ? kg['name'] : 'Knowledge Graph',
+          link: typeof kg['website'] === 'string' ? kg['website'] : '',
+          snippet: description,
+        });
+      }
     }
     const ab = data['answer_box'] as Record<string, unknown> | undefined;
-    if (ab?.['answer']) {
-      rawResults.push(ab['answer']);
+    if (ab !== undefined) {
+      const answer = ab['answer'];
+      if (answer !== null && typeof answer === 'object') {
+        rawResults.push(answer as Record<string, unknown>);
+      } else if (typeof answer === 'string' && answer.length > 0) {
+        rawResults.push({
+          title: typeof ab['title'] === 'string' ? ab['title'] : 'Answer Box',
+          link: typeof ab['link'] === 'string' ? ab['link'] : '',
+          snippet: answer,
+        });
+      }
     }
-    (data['organic_results'] as unknown[])?.forEach((r) => rawResults.push(r));
+    (data['organic_results'] as unknown[])?.forEach((r) => {
+      if (r !== null && typeof r === 'object') {
+        rawResults.push(r as Record<string, unknown>);
+      }
+    });
     return normalizeResults(rawResults, this.name);
   }
 }

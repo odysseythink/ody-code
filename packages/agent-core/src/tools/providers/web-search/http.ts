@@ -34,11 +34,6 @@ export function authHeaderForProvider(provider: string, apiKey: string): Record<
       return { 'Ocp-Apim-Subscription-Key': apiKey };
     case 'exa':
       return { 'x-api-key': apiKey };
-    case 'serpapi':
-    case 'searxng':
-    case 'tavily':
-    case 'duckduckgo':
-    case 'moonshot':
     default:
       return {};
   }

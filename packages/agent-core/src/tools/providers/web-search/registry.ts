@@ -1,13 +1,14 @@
 import type {
+  OAuthRef,
   WebSearchProviderConfig,
   WebSearchProviderName,
 } from '../../../config/schema';
-import type { OAuthRef } from '../../../config/schema';
 import {
   BaiduOptionsSchema,
   BingOptionsSchema,
   DuckDuckGoOptionsSchema,
   ExaOptionsSchema,
+  MoonshotOptionsSchema,
   PerplexityOptionsSchema,
   SearchApiOptionsSchema,
   SearXNGOptionsSchema,
@@ -40,6 +41,8 @@ export interface WebSearchProviderFactory {
   create(config: WebSearchProviderConfig, deps: ProviderFactoryDeps): WebSearchProvider;
 }
 
+const DEFAULT_WEB_SEARCH_TIMEOUT_MS = 25000;
+
 export class WebSearchProviderRegistry {
   private readonly factories = new Map<WebSearchProviderName, WebSearchProviderFactory>();
 
@@ -66,7 +69,7 @@ export function createDefaultRegistry(): WebSearchProviderRegistry {
     create(config, deps) {
       const options = DuckDuckGoOptionsSchema.parse(config.options ?? {});
       return new DuckDuckGoProvider(
-        { ...options, timeoutMs: config.timeoutMs ?? 25000 },
+        { ...options, timeoutMs: config.timeoutMs ?? DEFAULT_WEB_SEARCH_TIMEOUT_MS },
         deps.fetchImpl,
       );
     },
@@ -76,7 +79,7 @@ export function createDefaultRegistry(): WebSearchProviderRegistry {
       const options = SerpApiOptionsSchema.parse(config.options ?? {});
       return new SerpApiProvider(
         config.apiKey ?? '',
-        { ...options, timeoutMs: config.timeoutMs ?? 25000 },
+        { ...options, timeoutMs: config.timeoutMs ?? DEFAULT_WEB_SEARCH_TIMEOUT_MS },
         deps.fetchImpl,
       );
     },
@@ -86,7 +89,7 @@ export function createDefaultRegistry(): WebSearchProviderRegistry {
       const options = SearchApiOptionsSchema.parse(config.options ?? {});
       return new SearchApiProvider(
         config.apiKey ?? '',
-        { ...options, timeoutMs: config.timeoutMs ?? 25000 },
+        { ...options, timeoutMs: config.timeoutMs ?? DEFAULT_WEB_SEARCH_TIMEOUT_MS },
         deps.fetchImpl,
       );
     },
@@ -95,7 +98,7 @@ export function createDefaultRegistry(): WebSearchProviderRegistry {
     create(config, deps) {
       return new SerperProvider(
         config.apiKey ?? '',
-        { timeoutMs: config.timeoutMs ?? 25000 },
+        { timeoutMs: config.timeoutMs ?? DEFAULT_WEB_SEARCH_TIMEOUT_MS },
         deps.fetchImpl,
       );
     },
@@ -105,7 +108,7 @@ export function createDefaultRegistry(): WebSearchProviderRegistry {
       const options = BingOptionsSchema.parse(config.options ?? {});
       return new BingProvider(
         config.apiKey ?? '',
-        { ...options, timeoutMs: config.timeoutMs ?? 25000 },
+        { ...options, timeoutMs: config.timeoutMs ?? DEFAULT_WEB_SEARCH_TIMEOUT_MS },
         deps.fetchImpl,
       );
     },
@@ -115,7 +118,7 @@ export function createDefaultRegistry(): WebSearchProviderRegistry {
       const options = BaiduOptionsSchema.parse(config.options ?? {});
       return new BaiduProvider(
         config.apiKey ?? '',
-        { ...options, timeoutMs: config.timeoutMs ?? 25000 },
+        { ...options, timeoutMs: config.timeoutMs ?? DEFAULT_WEB_SEARCH_TIMEOUT_MS },
         deps.fetchImpl,
       );
     },
@@ -125,7 +128,7 @@ export function createDefaultRegistry(): WebSearchProviderRegistry {
       const options = SerplyOptionsSchema.parse(config.options ?? {});
       return new SerplyProvider(
         config.apiKey ?? '',
-        { ...options, timeoutMs: config.timeoutMs ?? 25000 },
+        { ...options, timeoutMs: config.timeoutMs ?? DEFAULT_WEB_SEARCH_TIMEOUT_MS },
         deps.fetchImpl,
       );
     },
@@ -134,7 +137,7 @@ export function createDefaultRegistry(): WebSearchProviderRegistry {
     create(config, deps) {
       const options = SearXNGOptionsSchema.parse(config.options ?? {});
       return new SearXNGProvider(
-        { ...options, timeoutMs: config.timeoutMs ?? 25000 },
+        { ...options, timeoutMs: config.timeoutMs ?? DEFAULT_WEB_SEARCH_TIMEOUT_MS },
         deps.fetchImpl,
       );
     },
@@ -144,7 +147,7 @@ export function createDefaultRegistry(): WebSearchProviderRegistry {
       const options = TavilyOptionsSchema.parse(config.options ?? {});
       return new TavilyProvider(
         config.apiKey ?? '',
-        { ...options, timeoutMs: config.timeoutMs ?? 25000 },
+        { ...options, timeoutMs: config.timeoutMs ?? DEFAULT_WEB_SEARCH_TIMEOUT_MS },
         deps.fetchImpl,
       );
     },
@@ -154,7 +157,7 @@ export function createDefaultRegistry(): WebSearchProviderRegistry {
       const options = ExaOptionsSchema.parse(config.options ?? {});
       return new ExaProvider(
         config.apiKey ?? '',
-        { ...options, timeoutMs: config.timeoutMs ?? 25000 },
+        { ...options, timeoutMs: config.timeoutMs ?? DEFAULT_WEB_SEARCH_TIMEOUT_MS },
         deps.fetchImpl,
       );
     },
@@ -164,14 +167,15 @@ export function createDefaultRegistry(): WebSearchProviderRegistry {
       const options = PerplexityOptionsSchema.parse(config.options ?? {});
       return new PerplexityProvider(
         config.apiKey ?? '',
-        { ...options, timeoutMs: config.timeoutMs ?? 25000 },
+        { ...options, timeoutMs: config.timeoutMs ?? DEFAULT_WEB_SEARCH_TIMEOUT_MS },
         deps.fetchImpl,
       );
     },
   });
   registry.register('moonshot', {
-    create(_config, deps) {
-      return createMoonshotProvider(deps);
+    create(config, deps) {
+      MoonshotOptionsSchema.parse(config.options ?? {});
+      return createMoonshotProvider(config, deps);
     },
   });
   return registry;

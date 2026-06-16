@@ -45,16 +45,18 @@ export class FallbackWebSearchProvider implements WebSearchProvider {
   }
 }
 
+const AUTH_PATTERN = /\b(401|403|unauthorized|authentication|auth)\b/;
+const RATE_LIMIT_PATTERN = /\b429\b/;
+const SERVER_ERROR_PATTERN = /\b5\d\d\b/;
+
 export function isRetryableError(error: unknown): boolean {
   const name = error instanceof Error ? error.name : '';
   if (name === 'AbortError') return false;
   if (name === 'TimeoutError') return true;
   const message = String(error instanceof Error ? error.message : error).toLowerCase();
-  if (message.includes('401') || message.includes('403') || message.includes('unauthorized') || message.includes('auth')) {
-    return false;
-  }
-  if (message.includes('429')) return true;
-  if (/\b5\d\d\b/.test(message) || message.includes('http 5')) return true;
+  if (AUTH_PATTERN.test(message)) return false;
+  if (RATE_LIMIT_PATTERN.test(message)) return true;
+  if (SERVER_ERROR_PATTERN.test(message) || message.includes('http 5')) return true;
   if (message.includes('network') || message.includes('fetch') || message.includes('timeout') || message.includes('timed out')) {
     return true;
   }
@@ -63,11 +65,9 @@ export function isRetryableError(error: unknown): boolean {
 
 function categorizeError(error: unknown): string {
   const message = String(error instanceof Error ? error.message : error).toLowerCase();
-  if (message.includes('401') || message.includes('403') || message.includes('unauthorized') || message.includes('auth')) {
-    return 'auth';
-  }
-  if (message.includes('429')) return 'rate-limit';
-  if (/\b5\d\d\b/.test(message) || message.includes('http 5')) return 'server';
+  if (AUTH_PATTERN.test(message)) return 'auth';
+  if (RATE_LIMIT_PATTERN.test(message)) return 'rate-limit';
+  if (SERVER_ERROR_PATTERN.test(message) || message.includes('http 5')) return 'server';
   if (message.includes('timeout') || message.includes('timed out')) return 'timeout';
   if (message.includes('network') || message.includes('fetch') || error instanceof TypeError) return 'network';
   return 'unknown';
