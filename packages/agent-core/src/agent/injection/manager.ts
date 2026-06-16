@@ -3,6 +3,7 @@ import { flags } from '../../flags';
 import { DesignModeInjector } from './design-mode';
 import { GoalInjector } from './goal';
 import type { DynamicInjector } from './injector';
+import { OfficeHoursInjector } from './office-hours';
 import { PermissionModeInjector } from './permission-mode';
 import { PluginSessionStartInjector } from './plugin-session-start';
 import { PlanModeInjector } from './plan-mode';
@@ -23,6 +24,7 @@ export class InjectionManager {
       new TodoListReminderInjector(agent),
       new PlanModeInjector(agent),
       new DesignModeInjector(agent),
+      new OfficeHoursInjector(agent),
       new PermissionModeInjector(agent),
     ];
     this.goalInjector =

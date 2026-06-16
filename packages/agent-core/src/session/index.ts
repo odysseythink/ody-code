@@ -380,7 +380,7 @@ export class Session {
     await Promise.all(Array.from(this.agents.values()).map((agent) => agent.records.flush()));
   }
 
-  async listSkills(options?: { sessionMode?: 'normal' | 'plan' | 'design' }): Promise<readonly SkillSummary[]> {
+  async listSkills(options?: { sessionMode?: 'normal' | 'plan' | 'design' | 'office-hours' }): Promise<readonly SkillSummary[]> {
     await this.skillsReady;
     if (options?.sessionMode !== undefined) {
       return this.skills.listInvocableSkills(options.sessionMode).map(summarizeSkill);

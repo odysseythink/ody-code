@@ -54,8 +54,8 @@ export interface SkippedSkill {
 export interface SkillCatalog {
   getSkill(name: string): SkillDefinition | undefined;
   listSkills(): readonly SkillDefinition[];
-  listInvocableSkills(sessionMode?: 'normal' | 'plan' | 'design'): readonly SkillDefinition[];
-  getModelSkillListing(sessionMode?: 'normal' | 'plan' | 'design'): string;
+  listInvocableSkills(sessionMode?: 'normal' | 'plan' | 'design' | 'office-hours'): readonly SkillDefinition[];
+  getModelSkillListing(sessionMode?: 'normal' | 'plan' | 'design' | 'office-hours'): string;
 }
 
 export function normalizeSkillName(name: string): string {

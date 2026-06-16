@@ -4,7 +4,7 @@ import type { SlashCommandHost } from '../../../src/tui/commands/dispatch';
 
 function createMockHost(
   config: { defaultModel?: string; defaultThinking?: boolean; modeModels?: { plan?: string; design?: string } },
-  sessionMode: 'normal' | 'plan' | 'design',
+  sessionMode: 'normal' | 'plan' | 'design' | 'office-hours',
   
 ) {
   return {

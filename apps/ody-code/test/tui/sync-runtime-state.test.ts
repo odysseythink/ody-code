@@ -63,6 +63,7 @@ function makeStartupInput(): KimiTUIStartupInput {
       yolo: false,
       auto: false,
       sessionMode: 'normal',
+      officeHours: false,
       model: undefined,
       outputFormat: undefined,
       prompt: undefined,
@@ -79,6 +80,7 @@ function makeStartupInput(): KimiTUIStartupInput {
     version: '0.0.0-test',
     workDir: '/tmp/proj-a',
     resolvedTheme: 'dark',
+    officeHours: false,
   };
 }
 

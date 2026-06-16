@@ -1,0 +1,1 @@
+Record a learning insight during office hours. Use this to persist operational observations or eureka moments for future sessions. Learnings are searchable across sessions for Phase 6 (Handoff) resource selection. Only available while office hours mode is active.

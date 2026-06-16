@@ -86,6 +86,7 @@ export async function runShell(
     startupNotice: configWarning,
     resolvedTheme,
     authIntent: runOptions.authIntent,
+    officeHours: false,
   });
 
   initializeCliTelemetry({

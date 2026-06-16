@@ -1,3 +1,4 @@
+import { CommanderError } from 'commander';
 import { describe, expect, it } from 'vitest';
 
 import { createProgram } from '#/cli/commands';
@@ -294,6 +295,45 @@ describe('CLI options parsing', () => {
         .filter((command) => !command.name().startsWith('__'))
         .map((command) => command.name());
       expect(commandNames).toEqual(['export', 'provider', 'upgrade']);
+    });
+  });
+
+  describe('--office-hours', () => {
+    it('defaults officeHours to false', () => {
+      expect(parse([]).officeHours).toBe(false);
+    });
+
+    it('--office-hours sets officeHours to true', () => {
+      expect(parse(['--office-hours']).officeHours).toBe(true);
+    });
+
+    it('--office-hours forces uiMode to shell', () => {
+      const opts = parse(['--office-hours']);
+      expect(validateOptions(opts).uiMode).toBe('shell');
+    });
+
+    it('rejects --office-hours combined with --prompt', () => {
+      expect(() => parse(['--office-hours', '--prompt', 'x'])).toThrow(CommanderError);
+    });
+
+    it('rejects --office-hours combined with --session', () => {
+      expect(() => parse(['--office-hours', '--session', 'abc'])).toThrow(CommanderError);
+    });
+
+    it('rejects --office-hours combined with --continue', () => {
+      expect(() => parse(['--office-hours', '--continue'])).toThrow(CommanderError);
+    });
+
+    it('rejects --office-hours combined with --session-mode', () => {
+      expect(() => parse(['--office-hours', '--session-mode', 'plan'])).toThrow(CommanderError);
+    });
+
+    it('rejects --office-hours combined with --yolo', () => {
+      expect(() => parse(['--office-hours', '--yolo'])).toThrow(CommanderError);
+    });
+
+    it('rejects --office-hours combined with --auto', () => {
+      expect(() => parse(['--office-hours', '--auto'])).toThrow(CommanderError);
     });
   });
 

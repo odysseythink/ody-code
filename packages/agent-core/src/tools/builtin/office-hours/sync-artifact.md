@@ -1,0 +1,1 @@
+Sync a design document artifact to the gbrain knowledge base during office hours handoff (Phase 6). Checks for a .gbrain-source pin in the project root to determine the target source, then attempts to sync via the gbrain MCP tool (if available) or falls back to the gbrain CLI. Only available while office hours mode is active.

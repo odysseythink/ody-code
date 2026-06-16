@@ -89,6 +89,7 @@ function makeStartupInput(): KimiTUIStartupInput {
       yolo: false,
       auto: false,
       sessionMode: 'normal',
+      officeHours: false,
       model: undefined,
       outputFormat: undefined,
       prompt: undefined,
@@ -105,6 +106,7 @@ function makeStartupInput(): KimiTUIStartupInput {
     version: '0.0.0-test',
     workDir: '/tmp/proj-a',
     resolvedTheme: 'dark',
+    officeHours: false,
   };
 }
 
@@ -1624,8 +1626,8 @@ describe('KimiTUI message flow', () => {
       expect(output).toContain('>_ Ody Code');
       expect(output).toContain('Model');
       expect(output).toContain('thinking on');
-      expect(output).toContain('Permissions  auto');
-      expect(output).toContain('Plan mode    on');
+      expect(output).toContain('Permissions   auto');
+      expect(output).toContain('Plan mode     on');
       expect(output).toContain('Context window');
       expect(output).toContain('25.0%');
     });

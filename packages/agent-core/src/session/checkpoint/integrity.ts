@@ -12,9 +12,9 @@ import type { Message, ToolCall } from '@odysseythink/kosong';
 
 import type { SessionCheckpointPayload } from './checkpoint';
 
-export type ModeKey = 'normal' | 'plan' | 'design';
+export type ModeKey = 'normal' | 'plan' | 'design' | 'office-hours';
 
-const VALID_MODES: readonly ModeKey[] = ['normal', 'plan', 'design'];
+const VALID_MODES: readonly ModeKey[] = ['normal', 'plan', 'design', 'office-hours'];
 
 export interface CheckpointIntegrityOptions {
   /** Expected number of messages in the source of truth (e.g. live memory). */

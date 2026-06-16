@@ -88,7 +88,7 @@ export class SessionAPIImpl implements PromisableMethods<SessionAPI> {
     return this.session.metadata;
   }
 
-  listSkills(payload: EmptyPayload & { sessionMode?: 'normal' | 'plan' | 'design' }): Promise<readonly SkillSummary[]> {
+  listSkills(payload: EmptyPayload & { sessionMode?: 'normal' | 'plan' | 'design' | 'office-hours' }): Promise<readonly SkillSummary[]> {
     if (payload.sessionMode !== undefined) {
       return this.session.listSkills({ sessionMode: payload.sessionMode });
     }

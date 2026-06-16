@@ -24,6 +24,7 @@ import {
 import { createProgram } from './cli/commands';
 import type { CLIOptions } from './cli/options';
 import { OptionConflictError, validateOptions } from './cli/options';
+import { runOfficeHours } from './cli/run-office-hours';
 import { runPrompt } from './cli/run-prompt';
 import { runShell } from './cli/run-shell';
 import { formatStartupError } from './cli/startup-error';
@@ -73,6 +74,11 @@ export async function handleMainCommand(opts: CLIOptions, version: string): Prom
 
   if (validated.uiMode === 'print') {
     await runPrompt(validated.options, version);
+    return;
+  }
+
+  if (validated.options.officeHours) {
+    await runOfficeHours(validated.options, version);
     return;
   }
 

@@ -19,7 +19,7 @@ import {
  * read-only-with-one-writable-file machinery; only the prompts, the output
  * directory and the surfacing labels differ.
  */
-export type SessionModeKind = 'plan' | 'design';
+export type SessionModeKind = 'plan' | 'design' | 'office-hours';
 
 export type SessionModeData = null | {
   id: string;
@@ -77,22 +77,24 @@ export class SessionMode {
       this.startDesignSession(id);
     }
 
-    const modeModel = this.agent.kimiConfig?.modeModels?.[kind];
-    if (modeModel !== undefined) {
-      try {
-        this.agent.modelProvider?.resolveProviderConfig(modeModel);
-        this._preModeModelAlias = { value: this.agent.config.modelAlias };
-        if (modeModel !== this.agent.config.modelAlias) {
-          this.agent.config.update({ modelAlias: modeModel });
+    if (kind === 'plan' || kind === 'design') {
+      const modeModel = this.agent.kimiConfig?.modeModels?.[kind];
+      if (modeModel !== undefined) {
+        try {
+          this.agent.modelProvider?.resolveProviderConfig(modeModel);
+          this._preModeModelAlias = { value: this.agent.config.modelAlias };
+          if (modeModel !== this.agent.config.modelAlias) {
+            this.agent.config.update({ modelAlias: modeModel });
+          }
+        } catch {
+          this.agent.log?.warn(`modeModels.${kind} "${modeModel}" not found, keeping current model`);
+          this._preModeModelAlias = null;
         }
-      } catch {
-        this.agent.log?.warn(`modeModels.${kind} "${modeModel}" not found, keeping current model`);
-        this._preModeModelAlias = null;
       }
     }
 
     try {
-      const { dir, isProjectScoped } = await this.resolveSessionModeDirectory(kind);
+      const { isProjectScoped } = await this.resolveSessionModeDirectory(kind);
       if (isProjectScoped) {
         try {
           await this.ensureGitignore(this.agent.config.cwd);
@@ -591,13 +593,14 @@ export class SessionMode {
   }
 
   private async resolveSessionModeDirectory(kind: SessionModeKind): Promise<{ dir: string; isProjectScoped: boolean }> {
-    const projectDir = join(this.agent.config.cwd, '.ody-code', kind === 'design' ? 'designs' : 'plans');
+    const subdir = kind === 'office-hours' ? 'office-hours' : kind === 'design' ? 'designs' : 'plans';
+    const projectDir = join(this.agent.config.cwd, '.ody-code', subdir);
     try {
       await this.agent.kaos.mkdir(projectDir, { parents: true, existOk: true });
       return { dir: projectDir, isProjectScoped: true };
     } catch (error) {
       if (isPermissionError(error) && this.agent.homedir !== undefined) {
-        const sessionDir = join(this.agent.homedir, kind === 'design' ? 'designs' : 'plans');
+        const sessionDir = join(this.agent.homedir, subdir);
         await this.agent.kaos.mkdir(sessionDir, { parents: true, existOk: true });
         return { dir: sessionDir, isProjectScoped: false };
       }

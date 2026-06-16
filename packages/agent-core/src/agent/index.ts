@@ -67,6 +67,8 @@ import { UsageRecorder } from './usage';
 import { resolveCompletionBudget } from '../utils/completion-budget';
 import type { Kaos } from '@odysseythink/kaos';
 import type { ToolServices } from '../tools/support/services';
+import type { OfficeHoursStateStore } from '#/office-hours/state';
+import { NoopOfficeHoursStateStore } from '#/office-hours/state';
 
 
 export type { AgentRecord, AgentRecordPersistence } from './records';
@@ -74,7 +76,7 @@ export type { BuiltinTool, ToolInfo, ToolSource, UserToolRegistration } from './
 export { buildGoalCompletionMessage } from './goal/completion';
 
 export type AgentType = 'main' | 'sub' | 'independent';
-export type ModeKey = 'normal' | 'plan' | 'design';
+export type ModeKey = 'normal' | 'plan' | 'design' | 'office-hours';
 
 export interface AgentOptions {
   readonly kaos: Kaos;
@@ -98,6 +100,7 @@ export interface AgentOptions {
   readonly telemetry?: TelemetryClient | undefined;
   readonly pluginSessionStarts?: readonly EnabledPluginSessionStart[];
   readonly appVersion?: string;
+  readonly officeHoursStateStore?: OfficeHoursStateStore;
 }
 
 export class Agent {
@@ -152,6 +155,7 @@ export class Agent {
   readonly background: BackgroundManager;
   readonly cron: CronManager | null;
   readonly replayBuilder: ReplayBuilder;
+  readonly officeHoursStateStore!: OfficeHoursStateStore;
   checkpointCoordinator?: CheckpointCoordinator;
 
   private lastLlmConfigLogSignature?: string;
@@ -193,17 +197,20 @@ export class Agent {
       normal: new ContextMemory(this),
       plan: new ContextMemory(this),
       design: new ContextMemory(this),
-    };
+      'office-hours': new ContextMemory(this),
+    } as Record<ModeKey, ContextMemory>;
     this._fullCompactions = {
       normal: new FullCompaction(this, options.compactionStrategy),
       plan: new FullCompaction(this, options.compactionStrategy),
       design: new FullCompaction(this, options.compactionStrategy),
-    };
+      'office-hours': new FullCompaction(this, options.compactionStrategy),
+    } as Record<ModeKey, FullCompaction>;
     this._microCompactions = {
       normal: new MicroCompaction(this, options.microCompaction),
       plan: new MicroCompaction(this, options.microCompaction),
       design: new MicroCompaction(this, options.microCompaction),
-    };
+      'office-hours': new MicroCompaction(this, options.microCompaction),
+    } as Record<ModeKey, MicroCompaction>;
     this.splitPlanCheckpoint = new SplitPlanCheckpoint(this);
     this.normalModeTaskCheckpoint = new NormalModeTaskCheckpoint(this);
     this.config = new ConfigState(this);
@@ -220,6 +227,7 @@ export class Agent {
     );
     this.cron = this.type === 'sub' ? null : new CronManager(this);
     this.replayBuilder = new ReplayBuilder(this);
+    this.officeHoursStateStore = options.officeHoursStateStore ?? new NoopOfficeHoursStateStore();
   }
 
   /** Active partition's conversation history — routes to the current mode. */
@@ -537,7 +545,7 @@ export class Agent {
           }
           content = data.content;
           path = data.path;
-          kind = payload.kind ?? data.kind;
+          kind = payload.kind ?? (data.kind === 'office-hours' ? 'design' : data.kind);
         }
         if (content.trim().length === 0) {
           throw new KimiError(ErrorCodes.SESSION_PLAN_MODE_INVALID, `Document is empty: ${path}`);

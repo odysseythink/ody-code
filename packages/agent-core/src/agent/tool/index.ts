@@ -418,6 +418,13 @@ export class ToolManager {
           new b.ReadMediaFileTool(kaos, workspace, modelCapabilities, videoUploader),
         new b.EnterDesignModeTool(this.agent),
         new b.ExitDesignModeTool(this.agent),
+        new b.EnterOfficeHoursModeTool(this.agent),
+        new b.ExitOfficeHoursModeTool(this.agent),
+        new b.AppendBuilderProfileTool(this.agent),
+        new b.AppendLearningTool(this.agent),
+        new b.SearchLearningsTool(this.agent),
+        new b.EnsureClaudeMdRoutingTool(this.agent),
+        new b.SyncOfficeHoursArtifactTool(this.agent),
         new b.EnterPlanModeTool(this.agent),
         new b.ExitPlanModeTool(this.agent, kaos),
         // Visual companion for design mode — only when the host can open a browser.

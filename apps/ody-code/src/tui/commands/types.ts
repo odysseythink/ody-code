@@ -1,7 +1,7 @@
 import type { AutocompleteItem, SlashCommand } from '@earendil-works/pi-tui';
 import type { FlagId } from '@odysseythink/ody-code-sdk';
 
-export type SessionMode = 'normal' | 'plan' | 'design';
+export type SessionMode = 'normal' | 'plan' | 'design' | 'office-hours';
 
 export type SlashCommandAvailability = 'always' | 'idle-only';
 

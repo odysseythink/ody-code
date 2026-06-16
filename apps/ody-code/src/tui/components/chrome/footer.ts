@@ -46,7 +46,7 @@ function luminance(hex: string): number {
 }
 
 function renderModeBadge(
-  mode: 'normal' | 'plan' | 'design',
+  mode: 'normal' | 'plan' | 'design' | 'office-hours',
   colors: ColorPalette,
   fileName?: string,
 ): string {

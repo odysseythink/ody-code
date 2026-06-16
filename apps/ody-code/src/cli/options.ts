@@ -6,7 +6,8 @@ export interface CLIOptions {
   continue: boolean;
   yolo: boolean;
   auto: boolean;
-  sessionMode: 'normal' | 'plan' | 'design';
+  sessionMode: 'normal' | 'plan' | 'design' | 'office-hours';
+  officeHours: boolean;
   model: string | undefined;
   outputFormat: PromptOutputFormat | undefined;
   prompt: string | undefined;
@@ -45,7 +46,7 @@ export function validateOptions(opts: CLIOptions): ValidatedOptions {
   if (promptMode && opts.auto) {
     throw new OptionConflictError('Cannot combine --prompt with --auto.');
   }
-  if (!['normal', 'plan', 'design'].includes(opts.sessionMode)) {
+  if (!['normal', 'plan', 'design', 'office-hours'].includes(opts.sessionMode)) {
     throw new OptionConflictError(`Invalid --session-mode: ${opts.sessionMode}. Must be normal, plan, or design.`);
   }
   if (promptMode && opts.sessionMode !== 'normal') {
@@ -68,6 +69,24 @@ export function validateOptions(opts: CLIOptions): ValidatedOptions {
   }
   if (!promptMode && (opts.continue || opts.session !== undefined) && opts.sessionMode !== 'normal') {
     throw new OptionConflictError('Cannot combine --session-mode with --continue or --session.');
+  }
+  if (opts.officeHours) {
+    if (opts.prompt !== undefined) {
+      throw new OptionConflictError('Cannot combine --office-hours with --prompt.');
+    }
+    if (opts.session !== undefined) {
+      throw new OptionConflictError('Cannot combine --office-hours with --session.');
+    }
+    if (opts.continue) {
+      throw new OptionConflictError('Cannot combine --office-hours with --continue.');
+    }
+    if (opts.sessionMode !== 'normal') {
+      throw new OptionConflictError('Cannot combine --office-hours with --session-mode.');
+    }
+    if (opts.yolo || opts.auto) {
+      throw new OptionConflictError('Permission mode is fixed to manual in office-hours mode.');
+    }
+    return { options: opts, uiMode: 'shell' };
   }
   return { options: opts, uiMode: promptMode ? 'print' : 'shell' };
 }

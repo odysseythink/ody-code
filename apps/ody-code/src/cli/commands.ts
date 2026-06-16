@@ -73,6 +73,12 @@ export function createProgram(
     .option('--session-mode <mode>', 'Start in session mode: plan, design, or normal.', 'normal')
     .addOption(
       new Option(
+        '--office-hours',
+        'Start Ody Code in YC Office Hours mode. Exits after the design doc is written.',
+      ).conflicts(['prompt', 'session', 'continue', 'sessionMode', 'yolo', 'auto']),
+    )
+    .addOption(
+      new Option(
         '-L, --login <provider-type>',
         'Interactive login for a supported LLM provider (deepseek, openai, anthropic, kimi, openai_responses).',
       ),
@@ -115,7 +121,8 @@ export function createProgram(
       continue: raw['continue'] as boolean,
       yolo: yoloValue,
       auto: autoValue,
-      sessionMode: (raw['sessionMode'] as 'normal' | 'plan' | 'design') ?? 'normal',
+      sessionMode: (raw['sessionMode'] as 'normal' | 'plan' | 'design' | 'office-hours') ?? 'normal',
+      officeHours: (raw['officeHours'] as boolean) ?? false,
       model: raw['model'] as string | undefined,
       outputFormat: raw['outputFormat'] as CLIOptions['outputFormat'],
       prompt: raw['prompt'] as string | undefined,

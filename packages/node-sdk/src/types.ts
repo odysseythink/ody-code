@@ -89,7 +89,7 @@ export interface CreateSessionOptions {
   readonly model?: string | undefined;
   readonly thinking?: string | undefined;
   readonly permission?: PermissionMode | undefined;
-  readonly sessionMode?: 'plan' | 'design' | 'normal';
+  readonly sessionMode?: 'plan' | 'design' | 'office-hours' | 'normal';
   readonly metadata?: JsonObject | undefined;
 }
 
@@ -165,7 +165,7 @@ export interface SessionStatus {
   readonly model?: string;
   readonly thinkingLevel: string;
   readonly permission: PermissionMode;
-  readonly sessionMode: 'plan' | 'design' | 'normal';
+  readonly sessionMode: 'plan' | 'design' | 'office-hours' | 'normal';
   readonly sessionModeFilePath?: string | null;
   readonly contextTokens: number;
   readonly maxContextTokens: number;

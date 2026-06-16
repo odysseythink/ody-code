@@ -40,6 +40,7 @@ describe('createTUIState', () => {
         yolo: false,
         auto: false,
         sessionMode: 'normal',
+        officeHours: false,
       },
     };
     const state = createTUIState(opts);

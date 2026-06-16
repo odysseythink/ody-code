@@ -142,6 +142,7 @@ export interface KimiTUIStartupInput {
   readonly startupNotice?: string;
   readonly resolvedTheme?: ResolvedTheme;
   readonly authIntent?: { readonly kind: 'login' | 'logout'; readonly providerType: string };
+  readonly officeHours: boolean;
 }
 
 type EffectiveActivityPaneMode = ActivityPaneMode | 'idle' | 'session';
@@ -157,7 +158,7 @@ function createInitialAppState(input: KimiTUIStartupInput): AppState {
     workDir: input.workDir,
     sessionId: '',
     permissionMode: startupPermission,
-    sessionMode: input.cliOptions.sessionMode,
+    sessionMode: input.officeHours ? 'office-hours' : input.cliOptions.sessionMode,
     thinking: false,
     contextUsage: 0,
     contextTokens: 0,
@@ -251,6 +252,7 @@ export class KimiTUI {
         yolo: startupInput.cliOptions.yolo,
         auto: startupInput.cliOptions.auto,
         sessionMode: startupInput.cliOptions.sessionMode,
+        officeHours: startupInput.officeHours,
         model: startupInput.cliOptions.model,
         startupNotice: startupInput.startupNotice,
         authIntent: startupInput.authIntent,
@@ -465,7 +467,12 @@ export class KimiTUI {
       workDir,
       model: startup.model,
       permission: startup.auto ? 'auto' : startup.yolo ? 'yolo' : undefined,
-      sessionMode: startup.sessionMode === 'normal' ? undefined : startup.sessionMode,
+      sessionMode:
+        startup.officeHours
+          ? 'office-hours'
+          : startup.sessionMode === 'normal'
+            ? undefined
+            : startup.sessionMode,
     };
 
     try {
@@ -522,6 +529,10 @@ export class KimiTUI {
       if (!isOAuthLoginRequiredError(error)) throw error;
       this.authFlow.enterLoginRequiredStartupState();
       return false;
+    }
+
+    if (session !== undefined && startup.officeHours) {
+      await session.setSessionMode('office-hours');
     }
 
     if (session === undefined) {

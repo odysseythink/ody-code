@@ -145,7 +145,7 @@ export class Session {
     await this.rpc.setPermission({ sessionId: this.id, mode });
   }
 
-  async setSessionMode(mode: 'plan' | 'design' | 'normal'): Promise<void> {
+  async setSessionMode(mode: 'plan' | 'design' | 'office-hours' | 'normal'): Promise<void> {
     this.ensureOpen();
     if (mode === 'normal') {
       await this.rpc.setSessionMode({ sessionId: this.id, mode: 'normal' });
@@ -222,7 +222,7 @@ export class Session {
     return this.rpc.getStatus({ sessionId: this.id });
   }
 
-  async listSkills(options?: { sessionMode?: 'normal' | 'plan' | 'design' }): Promise<readonly SkillSummary[]> {
+  async listSkills(options?: { sessionMode?: 'normal' | 'plan' | 'design' | 'office-hours' }): Promise<readonly SkillSummary[]> {
     this.ensureOpen();
     return this.rpc.listSkills({ sessionId: this.id, sessionMode: options?.sessionMode });
   }

@@ -132,6 +132,7 @@ function opts(overrides: Partial<CLIOptions> = {}): CLIOptions {
     yolo: false,
     auto: false,
     sessionMode: 'normal',
+    officeHours: false,
     model: undefined,
     outputFormat: undefined,
     prompt: 'say hello',

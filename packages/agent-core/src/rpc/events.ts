@@ -47,7 +47,7 @@ export interface AgentStatusUpdatedEvent {
   readonly contextTokens?: number | undefined;
   readonly maxContextTokens?: number | undefined;
   readonly contextUsage?: number | undefined;
-  readonly sessionMode?: 'normal' | 'plan' | 'design' | undefined;
+  readonly sessionMode?: 'normal' | 'plan' | 'design' | 'office-hours' | undefined;
   readonly sessionModeFilePath?: string | null;
   readonly permission?: PermissionMode | undefined;
   readonly usage?: UsageStatus | undefined;
