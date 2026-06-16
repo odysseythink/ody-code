@@ -4,6 +4,7 @@ export interface HttpProviderContext {
   apiKey?: string;
   toolCallId?: string;
   provider: string;
+  extraHeaders?: Record<string, string>;
 }
 
 export function buildUrl(base: string, params: Record<string, string | number | undefined>): string {
@@ -52,6 +53,7 @@ export async function postJson(url: string, body: unknown, ctx: HttpProviderCont
         'Content-Type': 'application/json',
         ...(ctx.apiKey ? authHeaderForProvider(ctx.provider, ctx.apiKey) : {}),
         ...(ctx.toolCallId ? { 'X-Msh-Tool-Call-Id': ctx.toolCallId } : {}),
+        ...(ctx.extraHeaders ?? {}),
       },
       body: JSON.stringify(body),
     },
@@ -67,6 +69,7 @@ export async function getJson(url: string, ctx: HttpProviderContext): Promise<Re
       headers: {
         ...(ctx.apiKey ? authHeaderForProvider(ctx.provider, ctx.apiKey) : {}),
         ...(ctx.toolCallId ? { 'X-Msh-Tool-Call-Id': ctx.toolCallId } : {}),
+        ...(ctx.extraHeaders ?? {}),
       },
     },
     ctx,
