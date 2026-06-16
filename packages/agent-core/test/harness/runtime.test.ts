@@ -125,4 +125,73 @@ max_context_size = 100000
 
     expect(mainAgent?.config.modelAlias).toBe('default-mock');
   });
+
+  it('builds a FallbackWebSearchProvider from services.webSearch', async () => {
+    tmp = await mkdtemp(join(tmpdir(), 'kimi-core-runtime-'));
+    const homeDir = join(tmp, 'home');
+    const workDir = join(tmp, 'work');
+    await mkdir(homeDir, { recursive: true });
+    await mkdir(workDir, { recursive: true });
+    await writeFile(
+      join(homeDir, 'config.toml'),
+      `
+[services.web_search.primary]
+provider = "duckduckgo"
+`,
+    );
+
+    const [coreRpc, sdkRpc] = createRPC<CoreAPI, SDKAPI>();
+    const core = new KimiCore(coreRpc, { homeDir });
+    const rpc = await sdkRpc({
+      emitEvent: vi.fn(),
+      requestApproval: vi.fn(async (): Promise<ApprovalResponse> => ({ decision: 'rejected' })),
+      requestQuestion: vi.fn(async () => null),
+      openExternal: vi.fn(async () => ({ opened: false })),
+      toolCall: vi.fn(async () => ({ output: '' })),
+    });
+
+    const created = await rpc.createSession({ id: 'ses_runtime_web_search', workDir });
+    const session = core.sessions.get(created.id);
+
+    expect(session?.options.toolServices?.webSearcher).toBeDefined();
+    expect(session?.options.toolServices?.webSearcher?.name).toBe('fallback');
+  });
+
+  it('still builds a Moonshot provider from legacy services.moonshot_search', async () => {
+    tmp = await mkdtemp(join(tmpdir(), 'kimi-core-runtime-'));
+    const homeDir = join(tmp, 'home');
+    const workDir = join(tmp, 'work');
+    await mkdir(homeDir, { recursive: true });
+    await mkdir(workDir, { recursive: true });
+    await writeFile(
+      join(homeDir, 'config.toml'),
+      `
+[services.moonshot_search]
+base_url = "https://search.example/v1"
+api_key = "sk-legacy"
+`,
+    );
+
+    const fetchImpl = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(JSON.stringify({ search_results: [] }), { status: 200 }),
+    );
+    vi.stubGlobal('fetch', fetchImpl);
+
+    const [coreRpc, sdkRpc] = createRPC<CoreAPI, SDKAPI>();
+    const core = new KimiCore(coreRpc, { homeDir });
+    const rpc = await sdkRpc({
+      emitEvent: vi.fn(),
+      requestApproval: vi.fn(async (): Promise<ApprovalResponse> => ({ decision: 'rejected' })),
+      requestQuestion: vi.fn(async () => null),
+      openExternal: vi.fn(async () => ({ opened: false })),
+      toolCall: vi.fn(async () => ({ output: '' })),
+    });
+
+    const created = await rpc.createSession({ id: 'ses_runtime_legacy_search', workDir });
+    const session = core.sessions.get(created.id);
+
+    expect(session?.options.toolServices?.webSearcher).toBeDefined();
+    await session!.options.toolServices?.webSearcher!.search('kimi');
+    expect(fetchImpl).toHaveBeenCalled();
+  });
 });
