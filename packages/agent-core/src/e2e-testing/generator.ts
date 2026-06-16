@@ -17,26 +17,6 @@ function importPath(fromFile: string, toFile: string): string {
   return rel.replace(/\.ts$/, '');
 }
 
-const EXIT_PLAN_MODE_TEMPLATE = `import { describe, it, expect } from 'vitest';
-import { ExitPlanModeTool } from '{{toolImport}}';
-import { testAgent } from '{{harnessImport}}';
-
-describe('{{toolId}} E2E', () => {
-  it('constructs the tool and returns the correct name', () => {
-    const ctx = testAgent();
-    const tool = new ExitPlanModeTool(ctx.agent, ctx.agent.kaos);
-    expect(tool.name).toBe('ExitPlanMode');
-  });
-
-  it('returns an execution with approval rule', () => {
-    const ctx = testAgent();
-    const tool = new ExitPlanModeTool(ctx.agent, ctx.agent.kaos);
-    const execution = tool.resolveExecution({});
-    expect(execution).toHaveProperty('approvalRule');
-  });
-});
-`;
-
 const GENERIC_TOOL_TEMPLATE = `import { describe, it, expect } from 'vitest';
 
 describe('{{toolId}} E2E', () => {
@@ -84,10 +64,28 @@ export class TypeScriptVitestGenerator implements E2ETestGenerator {
     const relativePath = join(outputDir, 'exit-plan-mode.e2e.test.ts');
     const toolSrc = join(feature.projectRoot, 'src/tools/builtin/planning/exit-plan-mode.ts');
     const harnessSrc = join(feature.projectRoot, 'test/agent/harness/agent.ts');
-    return EXIT_PLAN_MODE_TEMPLATE
-      .replace(/\{\{toolId\}\}/g, feature.toolId)
-      .replace(/\{\{toolImport\}\}/g, importPath(relativePath, toolSrc))
-      .replace(/\{\{harnessImport\}\}/g, importPath(relativePath, harnessSrc));
+    const toolImportPath = importPath(relativePath, toolSrc);
+    const harnessImportPath = importPath(relativePath, harnessSrc);
+    return [
+      `import { describe, it, expect } from 'vitest';`,
+      `import { ExitPlanModeTool } from '${toolImportPath}';`,
+      `import { testAgent } from '${harnessImportPath}';`,
+      '',
+      `describe('${feature.toolId} E2E', () => {`,
+      `  it('constructs the tool and returns the correct name', () => {`,
+      `    const ctx = testAgent();`,
+      `    const tool = new ExitPlanModeTool(ctx.agent, ctx.agent.kaos);`,
+      `    expect(tool.name).toBe('ExitPlanMode');`,
+      `  });`,
+      '',
+      `  it('returns an execution with approval rule', () => {`,
+      `    const ctx = testAgent();`,
+      `    const tool = new ExitPlanModeTool(ctx.agent, ctx.agent.kaos);`,
+      `    const execution = tool.resolveExecution({});`,
+      `    expect(execution).toHaveProperty('approvalRule');`,
+      `  });`,
+      `});`,
+    ].join('\n');
   }
 
   private renderGenericTest(feature: Feature): string {

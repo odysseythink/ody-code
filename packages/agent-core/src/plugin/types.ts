@@ -60,7 +60,7 @@ export interface PluginMcpServerInfo {
   readonly headerKeys?: readonly string[];
 }
 
-export type PluginManifestKind = 'kimi-plugin-root' | 'kimi-plugin-dir';
+export type PluginManifestKind = 'ody-plugin-root' | 'ody-plugin-dir';
 export type PluginSource = 'local-path' | 'zip-url' | 'github';
 export type PluginState = 'ok' | 'error';
 

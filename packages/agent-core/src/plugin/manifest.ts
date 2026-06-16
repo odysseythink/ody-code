@@ -10,8 +10,8 @@ import {
   type PluginManifestKind,
 } from './types';
 
-const ODY_PLUGIN_ROOT_PATH = 'kimi.plugin.json';
-const KIMI_PLUGIN_DIR_PATH = '.kimi-plugin/plugin.json';
+const ODY_PLUGIN_ROOT_PATH = 'ody.plugin.json';
+const KIMI_PLUGIN_DIR_PATH = '.ody-plugin/plugin.json';
 
 // Fields that look like third-party runtime extensions (Claude / Codex / old
 // Kimi CLI). We do not run them; emit an info diagnostic so plugin authors and
@@ -53,7 +53,7 @@ export async function parseManifest(pluginRoot: string): Promise<ParsedManifestR
   }
 
   const manifestPath = rootJsonExists ? rootJsonPath : dirJsonPath;
-  const manifestKind: PluginManifestKind = rootJsonExists ? 'kimi-plugin-root' : 'kimi-plugin-dir';
+  const manifestKind: PluginManifestKind = rootJsonExists ? 'ody-plugin-root' : 'ody-plugin-dir';
   const shadowedManifestPath = rootJsonExists && dirJsonExists ? dirJsonPath : undefined;
 
   let raw: unknown;

@@ -10,7 +10,7 @@ async function makePlugin(
   files: Record<string, string>,
   options: { dirs?: readonly string[] } = {},
 ): Promise<string> {
-  const root = await mkdtemp(path.join(tmpdir(), 'kimi-plugin-test-'));
+  const root = await mkdtemp(path.join(tmpdir(), 'ody-plugin-test-'));
   for (const dir of options.dirs ?? []) {
     await mkdir(path.join(root, dir), { recursive: true });
   }
@@ -22,32 +22,32 @@ async function makePlugin(
 }
 
 describe('parseManifest', () => {
-  it('reads a minimal kimi.plugin.json at the plugin root', async () => {
+  it('reads a minimal ody.plugin.json at the plugin root', async () => {
     const root = await makePlugin({
-      'kimi.plugin.json': JSON.stringify({ name: 'demo', version: '1.0.0' }),
+      'ody.plugin.json': JSON.stringify({ name: 'demo', version: '1.0.0' }),
     });
     const result = await parseManifest(root);
     expect(result.manifest?.name).toBe('demo');
     expect(result.manifest?.version).toBe('1.0.0');
-    expect(result.manifestKind).toBe('kimi-plugin-root');
+    expect(result.manifestKind).toBe('ody-plugin-root');
     expect(result.diagnostics).toEqual([]);
   });
 
-  it('prefers root kimi.plugin.json when .kimi-plugin/plugin.json also exists', async () => {
+  it('prefers root ody.plugin.json when .ody-plugin/plugin.json also exists', async () => {
     const root = await makePlugin({
-      'kimi.plugin.json': JSON.stringify({ name: 'root-version', version: '1.0.0' }),
-      '.kimi-plugin/plugin.json': JSON.stringify({ name: 'dir-version' }),
+      'ody.plugin.json': JSON.stringify({ name: 'root-version', version: '1.0.0' }),
+      '.ody-plugin/plugin.json': JSON.stringify({ name: 'dir-version' }),
     });
     const result = await parseManifest(root);
-    expect(result.manifestKind).toBe('kimi-plugin-root');
+    expect(result.manifestKind).toBe('ody-plugin-root');
     expect(result.manifest?.name).toBe('root-version');
-    expect(result.shadowedManifestPath).toBe(path.join(root, '.kimi-plugin/plugin.json'));
+    expect(result.shadowedManifestPath).toBe(path.join(root, '.ody-plugin/plugin.json'));
   });
 
-  it('falls back to .kimi-plugin/plugin.json when kimi.plugin.json is absent', async () => {
+  it('falls back to .ody-plugin/plugin.json when ody.plugin.json is absent', async () => {
     const root = await makePlugin(
       {
-        '.kimi-plugin/plugin.json': JSON.stringify({
+        '.ody-plugin/plugin.json': JSON.stringify({
           name: 'demo',
           version: '1.0.0',
           keywords: ['workflow'],
@@ -60,8 +60,8 @@ describe('parseManifest', () => {
       { dirs: ['skills'] },
     );
     const result = await parseManifest(root);
-    expect(result.manifestKind).toBe('kimi-plugin-dir');
-    expect(result.manifestPath).toBe(path.join(root, '.kimi-plugin/plugin.json'));
+    expect(result.manifestKind).toBe('ody-plugin-dir');
+    expect(result.manifestPath).toBe(path.join(root, '.ody-plugin/plugin.json'));
     expect(result.manifest?.name).toBe('demo');
     expect(result.manifest?.version).toBe('1.0.0');
     expect(result.manifest?.keywords).toEqual(['workflow']);
@@ -71,26 +71,26 @@ describe('parseManifest', () => {
     expect(result.manifest?.skillInstructions).toBe('Use Kimi tools.');
   });
 
-  it('does NOT fall back to .kimi-plugin/plugin.json when kimi.plugin.json is invalid JSON', async () => {
+  it('does NOT fall back to .ody-plugin/plugin.json when ody.plugin.json is invalid JSON', async () => {
     const root = await makePlugin({
-      'kimi.plugin.json': '{ not json',
-      '.kimi-plugin/plugin.json': JSON.stringify({ name: 'dir-version' }),
+      'ody.plugin.json': '{ not json',
+      '.ody-plugin/plugin.json': JSON.stringify({ name: 'dir-version' }),
     });
     const result = await parseManifest(root);
     expect(result.manifest).toBeUndefined();
-    expect(result.manifestKind).toBe('kimi-plugin-root');
+    expect(result.manifestKind).toBe('ody-plugin-root');
     expect(result.diagnostics).toContainEqual(
       expect.objectContaining({
         severity: 'error',
         message: expect.stringContaining('Failed to parse'),
       }),
     );
-    expect(result.shadowedManifestPath).toBe(path.join(root, '.kimi-plugin/plugin.json'));
+    expect(result.shadowedManifestPath).toBe(path.join(root, '.ody-plugin/plugin.json'));
   });
 
   it('rejects names that violate the regex', async () => {
     const root = await makePlugin({
-      'kimi.plugin.json': JSON.stringify({ name: 'Bad Name!' }),
+      'ody.plugin.json': JSON.stringify({ name: 'Bad Name!' }),
     });
     const result = await parseManifest(root);
     expect(result.manifest).toBeUndefined();
@@ -115,7 +115,7 @@ describe('parseManifest', () => {
 
   it('resolves a single skills path', async () => {
     const root = await makePlugin(
-      { 'kimi.plugin.json': JSON.stringify({ name: 'demo', skills: './skills/' }) },
+      { 'ody.plugin.json': JSON.stringify({ name: 'demo', skills: './skills/' }) },
       { dirs: ['skills'] },
     );
     const result = await parseManifest(root);
@@ -125,7 +125,7 @@ describe('parseManifest', () => {
   it('resolves an array of skills paths', async () => {
     const root = await makePlugin(
       {
-        'kimi.plugin.json': JSON.stringify({
+        'ody.plugin.json': JSON.stringify({
           name: 'demo',
           skills: ['./a/', './b/'],
         }),
@@ -138,7 +138,7 @@ describe('parseManifest', () => {
 
   it('rejects a skills path not prefixed with ./', async () => {
     const root = await makePlugin({
-      'kimi.plugin.json': JSON.stringify({ name: 'demo', skills: 'skills/' }),
+      'ody.plugin.json': JSON.stringify({ name: 'demo', skills: 'skills/' }),
     });
     const result = await parseManifest(root);
     expect(result.diagnostics).toContainEqual(
@@ -152,7 +152,7 @@ describe('parseManifest', () => {
 
   it('rejects a skills path that escapes plugin_root', async () => {
     const root = await makePlugin({
-      'kimi.plugin.json': JSON.stringify({ name: 'demo', skills: './../escape' }),
+      'ody.plugin.json': JSON.stringify({ name: 'demo', skills: './../escape' }),
     });
     const result = await parseManifest(root);
     expect(result.diagnostics).toContainEqual(
@@ -165,9 +165,9 @@ describe('parseManifest', () => {
 
   it('rejects a skills path that escapes via a symlink', async () => {
     const root = await makePlugin({
-      'kimi.plugin.json': JSON.stringify({ name: 'demo', skills: './sym' }),
+      'ody.plugin.json': JSON.stringify({ name: 'demo', skills: './sym' }),
     });
-    const outside = await mkdtemp(path.join(tmpdir(), 'kimi-plugin-outside-'));
+    const outside = await mkdtemp(path.join(tmpdir(), 'ody-plugin-outside-'));
     await symlink(outside, path.join(root, 'sym'));
     const result = await parseManifest(root);
     expect(result.diagnostics).toContainEqual(
@@ -180,7 +180,7 @@ describe('parseManifest', () => {
 
   it('warns when skills resolves to a non-directory', async () => {
     const root = await makePlugin({
-      'kimi.plugin.json': JSON.stringify({ name: 'demo', skills: './notes.md' }),
+      'ody.plugin.json': JSON.stringify({ name: 'demo', skills: './notes.md' }),
       'notes.md': 'hi',
     });
     const result = await parseManifest(root);
@@ -194,7 +194,7 @@ describe('parseManifest', () => {
 
   it('falls back to root SKILL.md when skills field is absent', async () => {
     const root = await makePlugin({
-      'kimi.plugin.json': JSON.stringify({ name: 'demo' }),
+      'ody.plugin.json': JSON.stringify({ name: 'demo' }),
       'SKILL.md': '---\nname: root-skill\n---\nbody',
     });
     const result = await parseManifest(root);
@@ -204,7 +204,7 @@ describe('parseManifest', () => {
   it('does not fall back to root SKILL.md when skills field is present', async () => {
     const root = await makePlugin(
       {
-        'kimi.plugin.json': JSON.stringify({ name: 'demo', skills: './skills/' }),
+        'ody.plugin.json': JSON.stringify({ name: 'demo', skills: './skills/' }),
         'SKILL.md': '---\nname: root-skill\n---\nbody',
       },
       { dirs: ['skills'] },
@@ -215,7 +215,7 @@ describe('parseManifest', () => {
 
   it('emits info diagnostics for unsupported runtime extension fields', async () => {
     const root = await makePlugin({
-      'kimi.plugin.json': JSON.stringify({
+      'ody.plugin.json': JSON.stringify({
         name: 'demo',
         tools: { foo: { description: 'x' } },
         commands: ['x'],
@@ -250,7 +250,7 @@ describe('parseManifest', () => {
 
   it('parses skillInstructions', async () => {
     const root = await makePlugin({
-      'kimi.plugin.json': JSON.stringify({ name: 'demo', skillInstructions: 'Do this.' }),
+      'ody.plugin.json': JSON.stringify({ name: 'demo', skillInstructions: 'Do this.' }),
     });
     const result = await parseManifest(root);
     expect(result.manifest?.skillInstructions).toBe('Do this.');
@@ -258,7 +258,7 @@ describe('parseManifest', () => {
 
   it('parses keywords metadata', async () => {
     const root = await makePlugin({
-      'kimi.plugin.json': JSON.stringify({ name: 'demo', keywords: ['finance', 'workflow'] }),
+      'ody.plugin.json': JSON.stringify({ name: 'demo', keywords: ['finance', 'workflow'] }),
     });
     const result = await parseManifest(root);
     expect(result.manifest?.keywords).toEqual(['finance', 'workflow']);
@@ -266,7 +266,7 @@ describe('parseManifest', () => {
 
   it('reads sessionStart', async () => {
     const root = await makePlugin({
-      'kimi.plugin.json': JSON.stringify({
+      'ody.plugin.json': JSON.stringify({
         name: 'demo',
         sessionStart: { skill: 'using-demo' },
       }),
@@ -292,7 +292,7 @@ describe('parseManifest', () => {
   it('parses plugin mcpServers', async () => {
     const root = await makePlugin(
       {
-        'kimi.plugin.json': JSON.stringify({
+        'ody.plugin.json': JSON.stringify({
           name: 'demo',
           mcpServers: {
             finance: {
@@ -328,7 +328,7 @@ describe('parseManifest', () => {
 
   it('warns and skips invalid plugin mcpServers entries', async () => {
     const root = await makePlugin({
-      'kimi.plugin.json': JSON.stringify({
+      'ody.plugin.json': JSON.stringify({
         name: 'demo',
         mcpServers: {
           bad: { command: '/tmp/unsafe' },
@@ -347,7 +347,7 @@ describe('parseManifest', () => {
 
   it('captures interface.displayName and shortDescription', async () => {
     const root = await makePlugin({
-      'kimi.plugin.json': JSON.stringify({
+      'ody.plugin.json': JSON.stringify({
         name: 'demo',
         interface: { displayName: 'Demo', shortDescription: 'A demo.' },
       }),

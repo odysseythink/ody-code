@@ -163,9 +163,9 @@ describe('SkillTool execution', () => {
 
     expect(methods.recordSystemReminder.mock.calls[0]?.[0]).toContain(
       '<kimi-skill-loaded name="brainstorming" args="">\n' +
-        '<kimi-plugin-instructions plugin="superpowers">\n' +
+        '<ody-plugin-instructions plugin="superpowers">\n' +
         'Use AskUserQuestion for clarifying questions.\n' +
-        '</kimi-plugin-instructions>\n\nbrainstorm body\n' +
+        '</ody-plugin-instructions>\n\nbrainstorm body\n' +
         '</kimi-skill-loaded>',
     );
   });

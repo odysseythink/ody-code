@@ -50,7 +50,7 @@ async function makePlugin(
     manifest['mcpServers'] = options.mcpServers;
   }
   await writeFile(
-    path.join(root, 'kimi.plugin.json'),
+    path.join(root, 'ody.plugin.json'),
     JSON.stringify(manifest),
     'utf8',
   );
@@ -78,13 +78,13 @@ describe('PluginManager', () => {
     expect(manager.get('demo')?.originalSource).toBe(pluginRoot);
   });
 
-  it('install() accepts a .kimi-plugin manifest', async () => {
+  it('install() accepts a .ody-plugin manifest', async () => {
     const home = await makeKimiHome();
-    const root = await mkdtemp(path.join(tmpdir(), 'kimi-plugin-'));
-    await mkdir(path.join(root, '.kimi-plugin'), { recursive: true });
+    const root = await mkdtemp(path.join(tmpdir(), 'ody-plugin-'));
+    await mkdir(path.join(root, '.ody-plugin'), { recursive: true });
     await mkdir(path.join(root, 'skills'), { recursive: true });
     await writeFile(
-      path.join(root, '.kimi-plugin', 'plugin.json'),
+      path.join(root, '.ody-plugin', 'plugin.json'),
       JSON.stringify({
         name: 'superpowers',
         skills: './skills/',
@@ -99,7 +99,7 @@ describe('PluginManager', () => {
     const managedRoot = await managedPluginRoot(home, 'superpowers');
 
     expect(record.id).toBe('superpowers');
-    expect(record.manifestKind).toBe('kimi-plugin-dir');
+    expect(record.manifestKind).toBe('ody-plugin-dir');
     expect(record.root).toBe(managedRoot);
     expect(record.originalSource).toBe(root);
     expect(record.manifest?.skills).toEqual([path.join(managedRoot, 'skills')]);
@@ -215,7 +215,7 @@ describe('PluginManager', () => {
     const managedRoot = await managedPluginRoot(home, 'demo');
 
     await writeFile(
-      path.join(managedRoot, 'kimi.plugin.json'),
+      path.join(managedRoot, 'ody.plugin.json'),
       JSON.stringify({ name: 'demo', version: '2.0.0' }),
       'utf8',
     );
@@ -232,7 +232,7 @@ describe('PluginManager', () => {
     await manager.install(root);
 
     await writeFile(
-      path.join(root, 'kimi.plugin.json'),
+      path.join(root, 'ody.plugin.json'),
       JSON.stringify({ name: 'demo', version: 'source-edit' }),
       'utf8',
     );
@@ -285,7 +285,7 @@ describe('PluginManager', () => {
     await manager.load();
     await manager.install(root);
     await writeFile(
-      path.join(await managedPluginRoot(home, 'demo'), 'kimi.plugin.json'),
+      path.join(await managedPluginRoot(home, 'demo'), 'ody.plugin.json'),
       '{ not json',
       'utf8',
     );
@@ -322,7 +322,7 @@ describe('PluginManager', () => {
     const home = await makeKimiHome();
     const root = await mkdtemp(path.join(tmpdir(), 'plugin-instructions-'));
     await writeFile(
-      path.join(root, 'kimi.plugin.json'),
+      path.join(root, 'ody.plugin.json'),
       JSON.stringify({
         name: 'demo',
         skillInstructions: 'Always be helpful.',
@@ -567,7 +567,7 @@ describe('PluginManager', () => {
     const home = await makeKimiHome();
     const zipBuffer = await createZipBuffer([
       {
-        name: 'plugin/kimi.plugin.json',
+        name: 'plugin/ody.plugin.json',
         data: JSON.stringify({ name: 'zip-demo', skills: './skills/' }),
       },
       {
@@ -597,7 +597,7 @@ describe('PluginManager', () => {
   it('install() from zip-url overwrites existing zip-url plugin', async () => {
     const home = await makeKimiHome();
     const zipBuffer1 = await createZipBuffer([
-      { name: 'plugin/kimi.plugin.json', data: JSON.stringify({ name: 'zip-demo', version: '1.0.0' }) },
+      { name: 'plugin/ody.plugin.json', data: JSON.stringify({ name: 'zip-demo', version: '1.0.0' }) },
     ]);
     const url1 = await serveOnce(zipBuffer1);
 
@@ -606,7 +606,7 @@ describe('PluginManager', () => {
     await manager.install(url1);
 
     const zipBuffer2 = await createZipBuffer([
-      { name: 'plugin/kimi.plugin.json', data: JSON.stringify({ name: 'zip-demo', version: '2.0.0' }) },
+      { name: 'plugin/ody.plugin.json', data: JSON.stringify({ name: 'zip-demo', version: '2.0.0' }) },
     ]);
     const url2 = await serveOnce(zipBuffer2);
 
@@ -625,7 +625,7 @@ describe('PluginManager', () => {
     await manager.setEnabled('zip-demo', false);
 
     const zipBuffer = await createZipBuffer([
-      { name: 'plugin/kimi.plugin.json', data: JSON.stringify({ name: 'zip-demo', version: '2.0.0' }) },
+      { name: 'plugin/ody.plugin.json', data: JSON.stringify({ name: 'zip-demo', version: '2.0.0' }) },
     ]);
     const url = await serveOnce(zipBuffer);
 
@@ -656,7 +656,7 @@ describe('PluginManager', () => {
     const home = await makeKimiHome();
     const zipBuffer = await createZipBuffer([
       {
-        name: 'wbxl2000-superpowers-abc/kimi.plugin.json',
+        name: 'wbxl2000-superpowers-abc/ody.plugin.json',
         data: JSON.stringify({ name: 'gh-demo', version: '1.0.0' }),
       },
     ]);
@@ -692,7 +692,7 @@ describe('PluginManager', () => {
     const home = await makeKimiHome();
     const zipBuffer = await createZipBuffer([
       {
-        name: 'obra-superpowers-v5.1.0/kimi.plugin.json',
+        name: 'obra-superpowers-v5.1.0/ody.plugin.json',
         data: JSON.stringify({ name: 'pin-tag-demo', version: '5.1.0' }),
       },
     ]);
@@ -730,7 +730,7 @@ describe('PluginManager', () => {
     const home = await makeKimiHome();
     const zipBuffer = await createZipBuffer([
       {
-        name: 'obra-superpowers-v5.1.0/kimi.plugin.json',
+        name: 'obra-superpowers-v5.1.0/ody.plugin.json',
         data: JSON.stringify({ name: 'pin-tag-demo', version: '5.1.0' }),
       },
     ]);
@@ -770,7 +770,7 @@ describe('PluginManager', () => {
     const home = await makeKimiHome();
     const zipBuffer = await createZipBuffer([
       {
-        name: 'wbxl2000-superpowers-main/kimi.plugin.json',
+        name: 'wbxl2000-superpowers-main/ody.plugin.json',
         data: JSON.stringify({ name: 'gh-demo', version: '5.1.0' }),
       },
     ]);
@@ -812,7 +812,7 @@ describe('PluginManager', () => {
 
     // Original CDN install.
     const cdnZip = await createZipBuffer([
-      { name: 'pkg/kimi.plugin.json', data: JSON.stringify({ name: 'superpowers', version: '5.0.0' }) },
+      { name: 'pkg/ody.plugin.json', data: JSON.stringify({ name: 'superpowers', version: '5.0.0' }) },
     ]);
     const cdnUrl = await serveOnce(cdnZip);
 
@@ -824,7 +824,7 @@ describe('PluginManager', () => {
 
     // Now migrate via GitHub URL.
     const ghZip = await createZipBuffer([
-      { name: 'pkg/kimi.plugin.json', data: JSON.stringify({ name: 'superpowers', version: '5.1.0' }) },
+      { name: 'pkg/ody.plugin.json', data: JSON.stringify({ name: 'superpowers', version: '5.1.0' }) },
     ]);
     using _ = mockGithubFetch({
       releaseTag: 'v5.1.0',

@@ -96,7 +96,7 @@ export class PluginManager {
         sourceType = 'zip-url';
       }
       const buffer = await downloadZip(zipUrl);
-      const tmpDir = await mkdtemp(path.join(tmpdir(), 'kimi-plugin-zip-'));
+      const tmpDir = await mkdtemp(path.join(tmpdir(), 'ody-plugin-zip-'));
       try {
         const detectedRoot = await extractZip(buffer, tmpDir);
         parsed = await parseManifest(detectedRoot);

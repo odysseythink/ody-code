@@ -11,7 +11,7 @@ describe('KimiCore plugin RPCs', () => {
     const home = await mkdtemp(path.join(tmpdir(), 'kimi-home-'));
     const pluginRoot = await mkdtemp(path.join(tmpdir(), 'plugin-'));
     await writeFile(
-      path.join(pluginRoot, 'kimi.plugin.json'),
+      path.join(pluginRoot, 'ody.plugin.json'),
       JSON.stringify({ name: 'demo', version: '1.0.0' }),
       'utf8',
     );
@@ -38,7 +38,7 @@ describe('KimiCore plugin RPCs', () => {
     const home = await mkdtemp(path.join(tmpdir(), 'kimi-home-'));
     const pluginRoot = await mkdtemp(path.join(tmpdir(), 'plugin-'));
     await writeFile(
-      path.join(pluginRoot, 'kimi.plugin.json'),
+      path.join(pluginRoot, 'ody.plugin.json'),
       JSON.stringify({ name: 'demo', version: '1.0.0' }),
       'utf8',
     );
@@ -58,7 +58,7 @@ describe('KimiCore plugin RPCs', () => {
     const home = await mkdtemp(path.join(tmpdir(), 'kimi-home-'));
     const pluginRoot = await mkdtemp(path.join(tmpdir(), 'plugin-'));
     await writeFile(
-      path.join(pluginRoot, 'kimi.plugin.json'),
+      path.join(pluginRoot, 'ody.plugin.json'),
       JSON.stringify({
         name: 'demo',
         mcpServers: {
@@ -120,7 +120,7 @@ describe('KimiCore plugin RPCs', () => {
     const home = await mkdtemp(path.join(tmpdir(), 'kimi-home-'));
     const pluginRoot = await mkdtemp(path.join(tmpdir(), 'plugin-'));
     await writeFile(
-      path.join(pluginRoot, 'kimi.plugin.json'),
+      path.join(pluginRoot, 'ody.plugin.json'),
       JSON.stringify({ name: 'demo' }),
       'utf8',
     );

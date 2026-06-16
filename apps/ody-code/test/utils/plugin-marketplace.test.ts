@@ -12,7 +12,7 @@ const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), '../../../..');
 
 describe('loadPluginMarketplace', () => {
   it('loads a local marketplace file and resolves relative plugin sources', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'kimi-plugin-marketplace-'));
+    const dir = await mkdtemp(join(tmpdir(), 'ody-plugin-marketplace-'));
     const file = join(dir, 'marketplace.json');
     await writeFile(
       file,
@@ -155,7 +155,7 @@ describe('loadPluginMarketplace', () => {
   });
 
   it('rejects malformed marketplace entries', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'kimi-plugin-marketplace-'));
+    const dir = await mkdtemp(join(tmpdir(), 'ody-plugin-marketplace-'));
     const file = join(dir, 'marketplace.json');
     await writeFile(file, JSON.stringify({ plugins: [{ displayName: 'Missing id' }] }), 'utf8');
 
@@ -165,7 +165,7 @@ describe('loadPluginMarketplace', () => {
   });
 
   it('rejects unknown marketplace tier values', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'kimi-plugin-marketplace-'));
+    const dir = await mkdtemp(join(tmpdir(), 'ody-plugin-marketplace-'));
     const file = join(dir, 'marketplace.json');
     await writeFile(
       file,
