@@ -52,6 +52,29 @@ export class NormalModeTaskCheckpoint {
 
     const crossedBoundary = this.lastDoneCount !== null && doneCount > this.lastDoneCount;
     this.lastDoneCount = doneCount; // always re-sync to the live state
+
+    // E2E auto-trigger: when a completed todo explicitly asks for E2E tests,
+    // inject a reminder. Runs before the `hasWork` guard so it fires even on the
+    // final (all-done) step. Only active when the user has enabled E2E testing.
+    if (crossedBoundary) {
+      const e2eConfig = this.agent.kimiConfig?.e2e;
+      const e2eEnabled = e2eConfig !== undefined && e2eConfig.enabled === true;
+      const anyE2eDone = e2eEnabled && todos.some(t => {
+        if (t.status !== 'done') return false;
+        return t.title.toLowerCase().includes('e2e');
+      });
+      if (anyE2eDone) {
+        try {
+          this.agent.context.appendSystemReminder(
+            'The E2E task is complete. Call RunE2ETests to validate your changes.',
+            { kind: 'system_trigger', name: 'e2e_reminder' },
+          );
+        } catch {
+          // best-effort
+        }
+      }
+    }
+
     // First observation only initializes; a boundary with no remaining work means
     // all tasks are done (final step before plan completion).
     if (!crossedBoundary || !hasWork) return;

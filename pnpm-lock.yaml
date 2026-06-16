@@ -109,9 +109,6 @@ importers:
       '@odysseythink/kimi-telemetry':
         specifier: workspace:^
         version: link:../../packages/telemetry
-      '@odysseythink/migration-legacy':
-        specifier: workspace:^
-        version: link:../../packages/migration-legacy
       '@types/semver':
         specifier: ^7.7.0
         version: 7.7.1
@@ -343,22 +340,6 @@ importers:
       ajv-formats:
         specifier: ^3.0.1
         version: 3.0.1(ajv@8.18.0)
-
-  packages/migration-legacy:
-    dependencies:
-      '@odysseythink/agent-core':
-        specifier: workspace:^
-        version: link:../agent-core
-      smol-toml:
-        specifier: ^1.6.1
-        version: 1.6.1
-      zod:
-        specifier: 'catalog:'
-        version: 4.3.6
-    devDependencies:
-      '@odysseythink/kaos':
-        specifier: workspace:^
-        version: link:../kaos
 
   packages/node-sdk:
     dependencies:

@@ -7,13 +7,18 @@
  */
 
 import type { Agent } from '#/agent';
+import type { KimiConfig } from '#/config/schema';
 import type { SessionModeData } from '#/agent/session-mode';
+import type { Kaos } from '@odysseythink/kaos';
 import { z } from 'zod';
 
 import type { BuiltinTool } from '../../../agent/tool';
 import type { ExecutableToolResult, ToolExecution } from '../../../loop/types';
 import type { ToolInputDisplay } from '../../display';
 import { toInputJsonSchema } from '../../support/input-schema';
+import { E2EPlanEnricher } from '#/e2e-testing/plan-enricher';
+import { E2EConfigResolver } from '#/e2e-testing/config';
+import { ImpactAnalyzer } from '#/e2e-testing/impact-analyzer';
 import {
   declaredOptionLabel,
   isViaApproval,
@@ -90,7 +95,7 @@ export class ExitPlanModeTool implements BuiltinTool<ExitPlanModeInput> {
   readonly description: string = DESCRIPTION;
   readonly parameters: Record<string, unknown> = toInputJsonSchema(ExitPlanModeInputSchema);
 
-  constructor(private readonly agent: Agent) {}
+  constructor(private readonly agent: Agent, private readonly kaos: Kaos) {}
 
   async resolveExecution(args: ExitPlanModeInput): Promise<ToolExecution> {
     return {
@@ -99,6 +104,29 @@ export class ExitPlanModeTool implements BuiltinTool<ExitPlanModeInput> {
       approvalRule: this.name,
       execute: (ctx) => this.execution(args, ctx.metadata),
     };
+  }
+
+  private async maybeEnrichPlanForE2E(): Promise<void> {
+    try {
+      const e2eConfig = E2EConfigResolver.resolve(this.agent.kimiConfig ?? ({} as KimiConfig));
+      if (!e2eConfig.enabled) return;
+
+      const modeData = await this.agent.sessionMode.data();
+      if (modeData === null || modeData.kind !== 'plan') return;
+      if (modeData.content.trim().length === 0 || modeData.path.length === 0) return;
+
+      const enricher = new E2EPlanEnricher(this.kaos, e2eConfig, ImpactAnalyzer);
+      const enriched = await enricher.enrich(
+        modeData.path,
+        modeData.content,
+        this.kaos.getcwd(),
+      );
+      if (enriched !== null) {
+        await this.kaos.writeText(modeData.path, enriched);
+      }
+    } catch {
+      // Enrichment is best-effort; failures should not block plan exit.
+    }
   }
 
   private async resolvePlanReviewDisplay(
@@ -134,6 +162,11 @@ export class ExitPlanModeTool implements BuiltinTool<ExitPlanModeInput> {
           'ExitPlanMode can only be called while plan mode is active. Use EnterPlanMode (or /plan) first.',
       };
     }
+
+    // E2E enrichment: analyze changes and append E2E task after approval but
+    // before the plan is handed off, so the file is only modified when the user
+    // actually approves the plan.
+    await this.maybeEnrichPlanForE2E();
 
     const resolvedPlan = await this.resolvePlan();
     if (!resolvedPlan.ok) return resolvedPlan.error;

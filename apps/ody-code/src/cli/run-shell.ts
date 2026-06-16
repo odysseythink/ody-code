@@ -1,6 +1,4 @@
 import { execSync } from 'node:child_process';
-import { homedir } from 'node:os';
-import { join } from 'node:path';
 
 import {
   setCrashPhase,
@@ -12,7 +10,6 @@ import {
 import { KimiHarness, log, type TelemetryClient } from '@odysseythink/kimi-code-sdk';
 
 import { CLI_SHUTDOWN_TIMEOUT_MS, CLI_UI_MODE } from '#/constant/app';
-import { detectPendingMigration } from '#/migration/index';
 import type { TuiConfig } from '#/tui/config';
 import { loadTuiConfig, TuiConfigParseError } from '#/tui/config';
 import { CHROME_GUTTER } from '#/tui/constant/rendering';
@@ -31,7 +28,7 @@ export interface AuthIntent {
 export async function runShell(
   opts: CLIOptions,
   version: string,
-  runOptions: { readonly migrateOnly?: boolean; readonly authIntent?: AuthIntent } = {},
+  runOptions: { readonly authIntent?: AuthIntent } = {},
 ): Promise<void> {
   const startedAt = Date.now();
   const configStartedAt = startedAt;
@@ -79,16 +76,6 @@ export async function runShell(
     workDir,
   });
   await harness.ensureConfigFile();
-  const migrationPlan = await detectPendingMigration({
-    sourceHome: join(homedir(), '.kimi'),
-    targetHome: harness.homeDir,
-    ignoreMarker: runOptions.migrateOnly,
-  });
-  if (runOptions.migrateOnly === true && migrationPlan === null) {
-    process.stdout.write('  Nothing to migrate from ~/.kimi/.\n');
-    await harness.close();
-    return;
-  }
   const config = await harness.getConfig();
   const configMs = Date.now() - configStartedAt;
   const tui = new KimiTUI(harness, {
@@ -98,8 +85,6 @@ export async function runShell(
     workDir,
     startupNotice: configWarning,
     resolvedTheme,
-    migrationPlan,
-    migrateOnly: runOptions.migrateOnly,
     authIntent: runOptions.authIntent,
   });
 

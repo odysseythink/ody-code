@@ -65,7 +65,6 @@
         ./packages/agent-core
         ./packages/kaos
         ./packages/kosong
-        ./packages/migration-legacy
         ./packages/node-sdk
         ./packages/oauth
         ./packages/telemetry
@@ -80,7 +79,6 @@
         "@odysseythink/agent-core"
         "@odysseythink/kaos"
         "@odysseythink/kosong"
-        "@odysseythink/migration-legacy"
         "@odysseythink/kimi-code-sdk"
         "@odysseythink/kimi-code-oauth"
         "@odysseythink/kimi-telemetry"

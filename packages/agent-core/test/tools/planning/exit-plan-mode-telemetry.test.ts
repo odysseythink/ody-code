@@ -77,7 +77,7 @@ async function execute(agent: Agent, args: ExitPlanModeInput = {}) {
   if (permissionResult?.syntheticResult !== undefined) {
     return permissionResult.syntheticResult;
   }
-  return executeTool(new ExitPlanModeTool(agent), {
+  return executeTool(new ExitPlanModeTool(agent, agent.kaos), {
     turnId: '7',
     toolCallId: 'call_exit_plan',
     args,

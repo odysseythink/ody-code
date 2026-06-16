@@ -25,5 +25,6 @@ export * from './shell/bash';
 export * from './state/checkpoint';
 export * from './state/todo-list';
 export * from './visual/show-design-mockup';
+export * from './e2e/run-e2e-tests';
 export * from './web/fetch-url';
 export * from './web/web-search';

@@ -79,11 +79,6 @@ export async function handleMainCommand(opts: CLIOptions, version: string): Prom
   await runShell(validated.options, version);
 }
 
-/** `ody migrate`: launch the migration screen only, then exit. */
-async function handleMigrateCommand(version: string): Promise<void> {
-  await runShell(MIGRATE_CLI_OPTIONS, version, { migrateOnly: true });
-}
-
 export async function handleUpgradeCommand(version: string): Promise<void> {
   const telemetryBootstrap = createCliTelemetryBootstrap();
   const telemetryClient: TelemetryClient = {
@@ -115,21 +110,6 @@ export async function handleUpgradeCommand(version: string): Promise<void> {
   process.exit(exitCode);
 }
 
-/** A neutral CLIOptions value — `ody migrate` never opens a chat session. */
-const MIGRATE_CLI_OPTIONS: CLIOptions = {
-  session: undefined,
-  continue: false,
-  yolo: false,
-  auto: false,
-  sessionMode: 'normal',
-  model: undefined,
-  outputFormat: undefined,
-  prompt: undefined,
-  skillsDirs: [],
-  loginProvider: undefined,
-  logoutProvider: undefined,
-};
-
 export function main(): void {
   initProcessName();
   installCrashHandlers();
@@ -158,14 +138,6 @@ export function main(): void {
             operation,
           }),
         );
-        process.stderr.write(`See log: ${resolveGlobalLogPath(resolveOdyHome())}\n`);
-        process.exit(1);
-      });
-    },
-    () => {
-      void handleMigrateCommand(version).catch(async (error: unknown) => {
-        await logStartupFailure('run migration', error);
-        process.stderr.write(formatStartupError(error, { operation: 'run migration' }));
         process.stderr.write(`See log: ${resolveGlobalLogPath(resolveOdyHome())}\n`);
         process.exit(1);
       });

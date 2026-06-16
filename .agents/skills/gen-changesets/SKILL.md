@@ -9,7 +9,7 @@ description: Use when generating changesets in the kimi-code repository, includi
 
 - `@odysseythink/kimi-code`: the CLI
 
-All other `@odysseythink/*` packages are treated as internal packages, including `@odysseythink/kimi-code-sdk`, `agent-core`, `kosong`, `kaos`, `kimi-code-oauth`, `kimi-telemetry`, and `migration-legacy`.
+All other `@odysseythink/*` packages are treated as internal packages, including `@odysseythink/kimi-code-sdk`, `agent-core`, `kosong`, `kaos`, `kimi-code-oauth`, and `kimi-telemetry`.
 
 ## Core Rules
 

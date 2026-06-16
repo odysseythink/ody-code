@@ -419,7 +419,7 @@ export class ToolManager {
         new b.EnterDesignModeTool(this.agent),
         new b.ExitDesignModeTool(this.agent),
         new b.EnterPlanModeTool(this.agent),
-        new b.ExitPlanModeTool(this.agent),
+        new b.ExitPlanModeTool(this.agent, kaos),
         // Visual companion for design mode — only when the host can open a browser.
         this.agent.rpc?.openExternal && new b.ShowDesignMockupTool(this.agent),
         // Goal tools are main-agent-only and gated by the goal-command flag.
@@ -457,6 +457,7 @@ export class ToolManager {
           ),
         toolServices?.webSearcher && new b.WebSearchTool(toolServices.webSearcher),
         toolServices?.urlFetcher && new b.FetchURLTool(toolServices.urlFetcher),
+        new b.RunE2ETestsTool(kaos, this.agent),
 
       ]
         .filter((tool) => !!tool)

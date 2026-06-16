@@ -81,7 +81,6 @@
     "@odysseythink/kimi-code-oauth": "workspace:^",
     "@odysseythink/kimi-code-sdk": "workspace:^",
     "@odysseythink/kimi-telemetry": "workspace:^",
-    "@odysseythink/migration-legacy": "workspace:^",
     "@types/semver": "^7.7.0",
     "@types/yazl": "^2.4.6",
     "postject": "1.0.0-alpha.6",

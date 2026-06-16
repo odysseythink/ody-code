@@ -19,16 +19,27 @@ interface MockOptions {
   tokenCountWithPending?: number;
   /** Whether data() or storeData() throws. */
   dataThrows?: boolean;
+  /** E2E config override. */
+  e2e?: { enabled: boolean };
 }
 
-function makeAgent(opts: MockOptions): { agent: Agent; compactCheckpoint: ReturnType<typeof vi.fn> } {
+function makeAgent(opts: MockOptions): {
+  agent: Agent;
+  compactCheckpoint: ReturnType<typeof vi.fn>;
+  appendSystemReminder: ReturnType<typeof vi.fn>;
+} {
   const compactCheckpoint = vi.fn(async () => {});
+  const appendSystemReminder = vi.fn();
+  const kimiConfig: Record<string, unknown> =
+    opts.ratio === undefined ? {} : { loopControl: { normalTaskCompactionRatio: opts.ratio } };
+  if (opts.e2e !== undefined) {
+    kimiConfig['e2e'] = opts.e2e;
+  }
   const agent = {
-    kimiConfig:
-      opts.ratio === undefined ? {} : { loopControl: { normalTaskCompactionRatio: opts.ratio } },
+    kimiConfig,
     sessionMode: { isActive: opts.sessionModeActive ?? false },
     config: { modelCapabilities: { max_context_tokens: opts.maxContextTokens ?? 1000 } },
-    context: { tokenCountWithPending: opts.tokenCountWithPending ?? 0 },
+    context: { tokenCountWithPending: opts.tokenCountWithPending ?? 0, appendSystemReminder },
     tools: {
       storeData: vi.fn(() =>
         opts.dataThrows ? { __error: 'read failed' } : { todo: opts.todos ?? [] },
@@ -36,7 +47,7 @@ function makeAgent(opts: MockOptions): { agent: Agent; compactCheckpoint: Return
     },
     fullCompaction: { compactCheckpoint },
   } as unknown as Agent;
-  return { agent, compactCheckpoint };
+  return { agent, compactCheckpoint, appendSystemReminder };
 }
 
 describe('NormalModeTaskCheckpoint', () => {
@@ -229,5 +240,75 @@ describe('NormalModeTaskCheckpoint', () => {
     // so this is treated as a first observation and must not compact.
     await checkpoint.beforeStep(SIGNAL);
     expect(compactCheckpoint).not.toHaveBeenCalled();
+  });
+
+  describe('E2E reminder hook', () => {
+    it('injects reminder when an E2E todo is completed and E2E is enabled', async () => {
+      const { agent, appendSystemReminder } = makeAgent({
+        todos: [{ title: 'Run E2E tests', status: 'done' }],
+        e2e: { enabled: true },
+      });
+      const checkpoint = new NormalModeTaskCheckpoint(agent);
+      await checkpoint.beforeStep(SIGNAL); // observe 1 done
+      expect(appendSystemReminder).not.toHaveBeenCalled();
+      (agent.tools.storeData as ReturnType<typeof vi.fn>).mockReturnValue({
+        todo: [
+          { title: 'Run E2E tests', status: 'done' },
+          { title: 'Task 2', status: 'done' },
+        ],
+      });
+      await checkpoint.beforeStep(SIGNAL);
+      expect(appendSystemReminder).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not inject reminder when E2E is disabled', async () => {
+      const { agent, appendSystemReminder } = makeAgent({
+        todos: [{ title: 'Run E2E tests', status: 'done' }],
+        e2e: { enabled: false },
+      });
+      const checkpoint = new NormalModeTaskCheckpoint(agent);
+      await checkpoint.beforeStep(SIGNAL);
+      (agent.tools.storeData as ReturnType<typeof vi.fn>).mockReturnValue({
+        todo: [
+          { title: 'Run E2E tests', status: 'done' },
+          { title: 'Task 2', status: 'done' },
+        ],
+      });
+      await checkpoint.beforeStep(SIGNAL);
+      expect(appendSystemReminder).not.toHaveBeenCalled();
+    });
+
+    it('does not inject reminder for generic "test" todos', async () => {
+      const { agent, appendSystemReminder } = makeAgent({
+        todos: [{ title: 'Write unit tests', status: 'done' }],
+        e2e: { enabled: true },
+      });
+      const checkpoint = new NormalModeTaskCheckpoint(agent);
+      await checkpoint.beforeStep(SIGNAL);
+      (agent.tools.storeData as ReturnType<typeof vi.fn>).mockReturnValue({
+        todo: [
+          { title: 'Write unit tests', status: 'done' },
+          { title: 'Task 2', status: 'done' },
+        ],
+      });
+      await checkpoint.beforeStep(SIGNAL);
+      expect(appendSystemReminder).not.toHaveBeenCalled();
+    });
+
+    it('does not inject reminder when E2E config is absent', async () => {
+      const { agent, appendSystemReminder } = makeAgent({
+        todos: [{ title: 'Run E2E tests', status: 'done' }],
+      });
+      const checkpoint = new NormalModeTaskCheckpoint(agent);
+      await checkpoint.beforeStep(SIGNAL);
+      (agent.tools.storeData as ReturnType<typeof vi.fn>).mockReturnValue({
+        todo: [
+          { title: 'Run E2E tests', status: 'done' },
+          { title: 'Task 2', status: 'done' },
+        ],
+      });
+      await checkpoint.beforeStep(SIGNAL);
+      expect(appendSystemReminder).not.toHaveBeenCalled();
+    });
   });
 });

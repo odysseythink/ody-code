@@ -195,6 +195,19 @@ export const BrowserConfigSchema = z.object({
 
 export type BrowserConfig = z.infer<typeof BrowserConfigSchema>;
 
+export const E2EConfigSchema = z.object({
+  enabled: z.boolean().default(true),
+  strategy: z.enum(['always', 'smart', 'critical-only']).default('smart'),
+  criticalTools: z.array(z.string()).default(['ExitPlanModeTool']),
+  failurePolicy: z.enum(['block', 'warn', 'ignore']).default('warn'),
+  maxConcurrency: z.number().int().min(1).default(4),
+  testTimeout: z.number().int().min(1000).default(30000),
+  reportDir: z.string().default('.ody-code/test-reports'),
+  generatedTestDir: z.string().default('.ody-code/test-generated/e2e'),
+});
+
+export type E2EConfig = z.infer<typeof E2EConfigSchema>;
+
 export const KimiConfigSchema = z.object({
   providers: z.record(z.string(), ProviderConfigSchema).default({}),
   defaultProvider: z.string().optional(),
@@ -220,6 +233,7 @@ export const KimiConfigSchema = z.object({
     review: z.string().optional(),
   }).optional(),
   browser: BrowserConfigSchema.optional(),
+  e2e: E2EConfigSchema.optional(),
   raw: z.record(z.string(), z.unknown()).optional(),
 });
 

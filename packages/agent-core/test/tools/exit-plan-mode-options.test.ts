@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import type { Kaos } from '@odysseythink/kaos';
 
 import type { Agent } from '../../src/agent';
 import {
@@ -8,7 +9,7 @@ import {
 } from '../../src/tools/builtin/planning/exit-plan-mode';
 import DESCRIPTION from '../../src/tools/builtin/planning/exit-plan-mode.md';
 import { executeTool } from './fixtures/execute-tool';
-import { toolContentString } from './fixtures/fake-kaos';
+import { createFakeKaos, toolContentString } from './fixtures/fake-kaos';
 
 const signal = new AbortController().signal;
 
@@ -33,6 +34,7 @@ function makeAgent(
     if ((event as { type?: string }).type === 'session_mode.exit') active = false;
   });
   const agent = {
+    kaos: createFakeKaos({}),
     sessionMode: {
       get isActive() {
         return active;
@@ -157,7 +159,7 @@ describe('ExitPlanMode option output', () => {
       plan: 'single option plan',
     });
 
-    const result = await execute(new ExitPlanModeTool(agent), {
+    const result = await execute(new ExitPlanModeTool(agent, agent.kaos), {
       options: [{ label: 'Approach A', description: 'Only path' }],
     });
 
@@ -171,7 +173,7 @@ describe('ExitPlanMode option output', () => {
       plan: null,
     });
 
-    const result = await execute(new ExitPlanModeTool(agent), {
+    const result = await execute(new ExitPlanModeTool(agent, agent.kaos), {
       options,
     });
 
@@ -184,7 +186,7 @@ describe('ExitPlanMode option output', () => {
   it('returns success without a "User feedback:" prefix when revise has no feedback', async () => {
     const { agent } = makeAgent({ plan: 'draft plan' });
 
-    const result = await execute(new ExitPlanModeTool(agent), { options });
+    const result = await execute(new ExitPlanModeTool(agent, agent.kaos), { options });
 
     expect(result.isError).toBeFalsy();
     expect(toolContentString(result)).not.toContain('User feedback:');
@@ -240,7 +242,7 @@ describe('ExitPlanMode reserved-label validation', () => {
 
 describe('ExitPlanMode options documentation consistency', () => {
   function optionsParamDescription(): string {
-    const tool = new ExitPlanModeTool({} as Agent);
+    const tool = new ExitPlanModeTool({} as Agent, {} as Kaos);
     const parameters = tool.parameters as {
       properties?: { options?: { description?: string } };
     };

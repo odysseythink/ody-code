@@ -2,21 +2,17 @@ import { Command, Option } from 'commander';
 
 import { CLI_COMMAND_NAME } from '#/constant/app';
 
-import { registerMigrateCommand } from '#/migration/index';
-
 import type { CLIOptions } from './options';
 import { registerExportCommand } from './sub/export';
 import { registerProviderCommand } from './sub/provider';
 
 export type MainCommandHandler = (opts: CLIOptions) => void;
-export type MigrateCommandHandler = () => void;
 export type PluginNodeRunnerHandler = (entry: string, args: readonly string[]) => void;
 export type UpgradeCommandHandler = () => void | Promise<void>;
 
 export function createProgram(
   version: string,
   onMain: MainCommandHandler,
-  onMigrate: MigrateCommandHandler,
   onPluginNodeRunner: PluginNodeRunnerHandler = () => {},
   onUpgrade: UpgradeCommandHandler = () => {},
 ): Command {
@@ -90,7 +86,6 @@ export function createProgram(
 
   registerExportCommand(program);
   registerProviderCommand(program);
-  registerMigrateCommand(program, onMigrate);
   program
     .command('upgrade')
     .description('Upgrade Ody Code to the latest version.')

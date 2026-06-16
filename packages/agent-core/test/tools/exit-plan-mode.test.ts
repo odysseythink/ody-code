@@ -10,6 +10,7 @@ import {
   ExitPlanModeTool,
 } from '../../src/tools/builtin/planning/exit-plan-mode';
 import { executeTool } from './fixtures/execute-tool';
+import { createFakeKaos } from './fixtures/fake-kaos';
 
 const signal = new AbortController().signal;
 
@@ -29,6 +30,7 @@ function makeAgent(
     if ((event as { type?: string }).type === 'session_mode.exit') active = false;
   });
   const agent = {
+    kaos: createFakeKaos({}),
     sessionMode: {
       get isActive() {
         return active;
@@ -61,7 +63,7 @@ function makeAgent(
 describe('ExitPlanModeTool', () => {
   it('has name, description, and parameters from the current schema', () => {
     const { agent } = makeAgent();
-    const tool = new ExitPlanModeTool(agent);
+    const tool = new ExitPlanModeTool(agent, agent.kaos);
 
     expect(tool.name).toBe('ExitPlanMode');
     expect(tool.description.length).toBeGreaterThan(0);
@@ -96,7 +98,7 @@ describe('ExitPlanModeTool', () => {
   it('refuses to exit when plan mode is inactive', async () => {
     const { agent, emit } = makeAgent({ active: false });
 
-    const result = await executeTool(new ExitPlanModeTool(agent), {
+    const result = await executeTool(new ExitPlanModeTool(agent, agent.kaos), {
       turnId: '0',
       toolCallId: 'call_1',
       args: {},
@@ -114,7 +116,7 @@ describe('ExitPlanModeTool', () => {
       path: '/tmp/kimi-plan.md',
     });
 
-    const result = await executeTool(new ExitPlanModeTool(agent), {
+    const result = await executeTool(new ExitPlanModeTool(agent, agent.kaos), {
       turnId: '0',
       toolCallId: 'call_1',
       args: {},
@@ -131,7 +133,7 @@ describe('ExitPlanModeTool', () => {
   it('does not use inline plan fallback when no plan file exists', async () => {
     const { agent, emit } = makeAgent({ plan: null });
 
-    const result = await executeTool(new ExitPlanModeTool(agent), {
+    const result = await executeTool(new ExitPlanModeTool(agent, agent.kaos), {
       turnId: '0',
       toolCallId: 'call_inline',
       args: {},
@@ -149,7 +151,7 @@ describe('ExitPlanModeTool', () => {
       path: '/tmp/kimi-plan.md',
     });
 
-    const result = await executeTool(new ExitPlanModeTool(agent), {
+    const result = await executeTool(new ExitPlanModeTool(agent, agent.kaos), {
       turnId: '0',
       toolCallId: 'call_empty',
       args: {},
@@ -168,7 +170,7 @@ describe('ExitPlanModeTool', () => {
       },
     });
 
-    const result = await executeTool(new ExitPlanModeTool(agent), {
+    const result = await executeTool(new ExitPlanModeTool(agent, agent.kaos), {
       turnId: '0',
       toolCallId: 'call_fail',
       args: {},
@@ -183,7 +185,7 @@ describe('ExitPlanModeTool', () => {
 describe('ExitPlanMode option description optionality', () => {
   it('exposes options[].description as optional with a default of empty string', () => {
     const { agent } = makeAgent();
-    const tool = new ExitPlanModeTool(agent);
+    const tool = new ExitPlanModeTool(agent, agent.kaos);
 
     const optionItems = (
       (tool.parameters['properties'] as Record<string, unknown>)['options'] as {
