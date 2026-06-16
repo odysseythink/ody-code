@@ -31,10 +31,10 @@ export class BaiduProvider implements WebSearchProvider {
     );
     if (!response.ok) throw await httpError(response, this.name);
     const data = (await response.json()) as Record<string, unknown>;
-    if (data.code || (data.message && !data.references)) {
-      throw new Error(`Baidu search error: ${String(data.message ?? data.code)}`);
+    if (data['code'] || (data['message'] && !data['references'])) {
+      throw new Error(`Baidu search error: ${String(data['message'] ?? data['code'])}`);
     }
-    const refs = (data.references ?? []) as unknown[];
+    const refs = (data['references'] ?? []) as unknown[];
     return normalizeBaiduReferences(refs);
   }
 }
@@ -44,11 +44,11 @@ function normalizeBaiduReferences(refs: unknown[]): WebSearchResult[] {
   const out: WebSearchResult[] = [];
   for (const ref of refs) {
     const r = ref as Record<string, unknown>;
-    const type = String(r.type ?? r.resource_type ?? 'web').toLowerCase();
+    const type = (typeof r['type'] === 'string' ? r['type'] : typeof r['resource_type'] === 'string' ? r['resource_type'] : 'web').toLowerCase();
     if (type !== 'web') continue;
-    const title = String(r.title ?? r.web_anchor ?? '').trim();
-    const url = String(r.url ?? '').trim();
-    const snippet = String(r.snippet ?? r.content ?? '').trim();
+    const title = typeof r['title'] === 'string' ? r['title'].trim() : typeof r['web_anchor'] === 'string' ? r['web_anchor'].trim() : '';
+    const url = typeof r['url'] === 'string' ? r['url'].trim() : '';
+    const snippet = typeof r['snippet'] === 'string' ? r['snippet'].trim() : typeof r['content'] === 'string' ? r['content'].trim() : '';
     if (!title || !url || seen.has(url)) continue;
     seen.add(url);
     out.push({ title, url, snippet, raw: r });

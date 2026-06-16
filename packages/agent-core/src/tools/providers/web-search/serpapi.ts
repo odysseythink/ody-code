@@ -36,14 +36,14 @@ export class SerpApiProvider implements WebSearchProvider {
 function selectSerpApiResults(data: Record<string, unknown>, engine: string): unknown[] {
   const out: unknown[] = [];
   if (engine === 'google') {
-    if (data.knowledge_graph) out.push(data.knowledge_graph);
-    if (data.answer_box) out.push(data.answer_box);
-    (data.organic_results as unknown[])?.forEach((r) => out.push(r));
+    if (data['knowledge_graph']) out.push(data['knowledge_graph']);
+    if (data['answer_box']) out.push(data['answer_box']);
+    (data['organic_results'] as unknown[])?.forEach((r) => out.push(r));
   } else if (engine === 'baidu') {
-    if (data.answer_box) out.push(data.answer_box);
-    (data.organic_results as unknown[])?.forEach((r) => out.push(r));
+    if (data['answer_box']) out.push(data['answer_box']);
+    (data['organic_results'] as unknown[])?.forEach((r) => out.push(r));
   } else {
-    (data.organic_results as unknown[])?.forEach((r) => out.push(r));
+    (data['organic_results'] as unknown[])?.forEach((r) => out.push(r));
   }
   return out;
 }

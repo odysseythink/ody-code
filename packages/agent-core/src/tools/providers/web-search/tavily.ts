@@ -32,6 +32,6 @@ export class TavilyProvider implements WebSearchProvider {
     );
     if (!response.ok) throw await httpError(response, this.name);
     const data = (await response.json()) as Record<string, unknown>;
-    return normalizeResults((data.results ?? []) as unknown[], this.name);
+    return normalizeResults((data['results'] ?? []) as unknown[], this.name);
   }
 }

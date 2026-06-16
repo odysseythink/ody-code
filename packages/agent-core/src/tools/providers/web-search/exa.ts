@@ -37,7 +37,7 @@ export class ExaProvider implements WebSearchProvider {
     if (!response.ok) throw await httpError(response, this.name);
     const data = (await response.json()) as Record<string, unknown>;
     const rawResults = (
-      (data.results ?? []) as Array<{ title?: string; url: string; text?: string; publishedDate?: string }>
+      (data['results'] ?? []) as Array<{ title?: string; url: string; text?: string; publishedDate?: string }>
     ).map((r) => ({ title: r.title ?? '', link: r.url, snippet: r.text ?? '', date: r.publishedDate }));
     return normalizeResults(rawResults, this.name);
   }

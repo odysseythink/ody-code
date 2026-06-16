@@ -29,8 +29,8 @@ export class SerperProvider implements WebSearchProvider {
     if (!response.ok) throw await httpError(response, this.name);
     const data = (await response.json()) as Record<string, unknown>;
     const rawResults: unknown[] = [];
-    if (data.knowledgeGraph) rawResults.push(data.knowledgeGraph);
-    (data.organic as unknown[])?.forEach((r) => rawResults.push(r));
+    if (data['knowledgeGraph']) rawResults.push(data['knowledgeGraph']);
+    (data['organic'] as unknown[])?.forEach((r) => rawResults.push(r));
     return normalizeResults(rawResults, this.name);
   }
 }

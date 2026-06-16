@@ -38,7 +38,7 @@ export class SerplyProvider implements WebSearchProvider {
     });
     if (!response.ok) throw await httpError(response, this.name);
     const data = (await response.json()) as Record<string, unknown>;
-    if (data.message === 'Unauthorized') throw new Error('Serply authentication failed');
-    return normalizeResults((data.results ?? []) as unknown[], this.name);
+    if (data['message'] === 'Unauthorized') throw new Error('Serply authentication failed');
+    return normalizeResults((data['results'] ?? []) as unknown[], this.name);
   }
 }

@@ -53,7 +53,7 @@ export async function postJson(url: string, body: unknown, ctx: HttpProviderCont
         'Content-Type': 'application/json',
         ...(ctx.apiKey ? authHeaderForProvider(ctx.provider, ctx.apiKey) : {}),
         ...(ctx.toolCallId ? { 'X-Msh-Tool-Call-Id': ctx.toolCallId } : {}),
-        ...(ctx.extraHeaders ?? {}),
+        ...ctx.extraHeaders,
       },
       body: JSON.stringify(body),
     },
@@ -69,7 +69,7 @@ export async function getJson(url: string, ctx: HttpProviderContext): Promise<Re
       headers: {
         ...(ctx.apiKey ? authHeaderForProvider(ctx.provider, ctx.apiKey) : {}),
         ...(ctx.toolCallId ? { 'X-Msh-Tool-Call-Id': ctx.toolCallId } : {}),
-        ...(ctx.extraHeaders ?? {}),
+        ...ctx.extraHeaders,
       },
     },
     ctx,
@@ -78,7 +78,7 @@ export async function getJson(url: string, ctx: HttpProviderContext): Promise<Re
 
 async function fetchWithTimeout(url: string, init: RequestInit, ctx: HttpProviderContext): Promise<Response> {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), ctx.timeoutMs);
+  const timer = setTimeout(() => { controller.abort(); }, ctx.timeoutMs);
   try {
     return await ctx.fetchImpl(url, { ...init, signal: controller.signal });
   } finally {

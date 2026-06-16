@@ -46,11 +46,11 @@ function parseDuckDuckGoHtml(html: string): Array<{ title: string; link: string;
   const results: Array<{ title: string; link: string; snippet: string }> = [];
   const parts = html.split('<div class="result results_links');
   for (let i = 1; i < parts.length; i++) {
-    const part = parts[i];
+    const part = parts[i] as string;
     const titleMatch = part.match(/<a[^>]*class="result__a"[^>]*>(.*?)<\/a>/);
     const title = stripHtml(titleMatch?.[1] ?? '').trim();
     const hrefMatch = part.match(/<a[^>]*class="result__a"[^>]*href="([^"]*)"/);
-    const link = hrefMatch ? extractDuckDuckGoRedirectUrl(hrefMatch[1]) : '';
+    const link = hrefMatch ? extractDuckDuckGoRedirectUrl(hrefMatch[1] as string) : '';
     const snippetMatch = part.match(/<a[^>]*class="result__snippet"[^>]*>(.*?)<\/a>/);
     const snippet = stripHtml((snippetMatch?.[1] ?? '').replace(/<\/?b>/g, '')).trim();
     if (title && link && snippet) {

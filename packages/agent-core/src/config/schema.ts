@@ -197,7 +197,7 @@ export const WebSearchProviderConfigSchema = z.object({
   provider: WebSearchProviderNameSchema,
   apiKey: z.string().optional(),
   timeoutMs: z.number().int().min(1000).max(120000).optional(),
-  options: z.record(z.unknown()).optional(),
+  options: z.record(z.string(), z.unknown()).optional(),
 });
 export type WebSearchProviderConfig = z.infer<typeof WebSearchProviderConfigSchema>;
 

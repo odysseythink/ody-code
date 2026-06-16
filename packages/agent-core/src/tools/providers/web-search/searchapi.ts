@@ -31,13 +31,15 @@ export class SearchApiProvider implements WebSearchProvider {
     if (!response.ok) throw await httpError(response, this.name);
     const data = (await response.json()) as Record<string, unknown>;
     const rawResults: unknown[] = [];
-    if ((data.knowledge_graph as Record<string, unknown> | undefined)?.description) {
-      rawResults.push((data.knowledge_graph as Record<string, unknown>).description);
+    const kg = data['knowledge_graph'] as Record<string, unknown> | undefined;
+    if (kg?.['description']) {
+      rawResults.push(kg['description']);
     }
-    if ((data.answer_box as Record<string, unknown> | undefined)?.answer) {
-      rawResults.push((data.answer_box as Record<string, unknown>).answer);
+    const ab = data['answer_box'] as Record<string, unknown> | undefined;
+    if (ab?.['answer']) {
+      rawResults.push(ab['answer']);
     }
-    (data.organic_results as unknown[])?.forEach((r) => rawResults.push(r));
+    (data['organic_results'] as unknown[])?.forEach((r) => rawResults.push(r));
     return normalizeResults(rawResults, this.name);
   }
 }

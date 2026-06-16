@@ -1,9 +1,8 @@
-import { z } from 'zod';
-
 import type {
   WebSearchProviderConfig,
   WebSearchProviderName,
 } from '../../../config/schema';
+import type { OAuthRef } from '../../../config/schema';
 import {
   BaiduOptionsSchema,
   BingOptionsSchema,
@@ -13,7 +12,6 @@ import {
   SearchApiOptionsSchema,
   SearXNGOptionsSchema,
   SerpApiOptionsSchema,
-  SerperOptionsSchema,
   SerplyOptionsSchema,
   TavilyOptionsSchema,
 } from '../../../config/schema';
@@ -21,7 +19,7 @@ import { BaiduProvider } from './baidu';
 import { BingProvider } from './bing';
 import { DuckDuckGoProvider } from './duckduckgo';
 import { ExaProvider } from './exa';
-import { createMoonshotProvider, type MoonshotProviderDeps } from './moonshot';
+import { createMoonshotProvider } from './moonshot';
 import { PerplexityProvider } from './perplexity';
 import { SearchApiProvider } from './searchapi';
 import { SearXNGProvider } from './searxng';
@@ -34,8 +32,8 @@ import type { WebSearchProvider } from './types';
 export interface ProviderFactoryDeps {
   fetchImpl?: typeof fetch;
   kimiRequestHeaders?: Record<string, string>;
-  resolveOAuthTokenProvider?: (provider: string, oauth: { storage: string; key: string }) => { getAccessToken(): Promise<string> };
-  moonshotServiceConfig?: { baseUrl?: string; apiKey?: string; oauth?: { storage: string; key: string }; customHeaders?: Record<string, string> };
+  resolveOAuthTokenProvider?: (provider: string, oauth?: OAuthRef) => { getAccessToken(): Promise<string> } | undefined;
+  moonshotServiceConfig?: { baseUrl?: string; apiKey?: string; oauth?: OAuthRef; customHeaders?: Record<string, string> };
 }
 
 export interface WebSearchProviderFactory {

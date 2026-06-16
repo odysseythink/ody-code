@@ -1,11 +1,12 @@
 import { MoonshotWebSearchProvider } from '../moonshot-web-search';
 import type { WebSearchProvider } from './types';
+import type { OAuthRef } from '../../../config/schema';
 
 export interface MoonshotProviderDeps {
   fetchImpl?: typeof fetch;
   kimiRequestHeaders?: Record<string, string>;
-  resolveOAuthTokenProvider?: (provider: string, oauth: { storage: string; key: string }) => { getAccessToken(): Promise<string> };
-  moonshotServiceConfig?: { baseUrl?: string; apiKey?: string; oauth?: { storage: string; key: string }; customHeaders?: Record<string, string> };
+  resolveOAuthTokenProvider?: (provider: string, oauth?: OAuthRef) => { getAccessToken(): Promise<string> } | undefined;
+  moonshotServiceConfig?: { baseUrl?: string; apiKey?: string; oauth?: OAuthRef; customHeaders?: Record<string, string> };
 }
 
 export function createMoonshotProvider(deps: MoonshotProviderDeps): WebSearchProvider {
@@ -14,7 +15,7 @@ export function createMoonshotProvider(deps: MoonshotProviderDeps): WebSearchPro
     throw new Error('Moonshot web search provider requires services.moonshotSearch.baseUrl');
   }
   const tokenProvider = config.oauth
-    ? deps.resolveOAuthTokenProvider?.('managed:ody-code', config.oauth as { storage: string; key: string })
+    ? deps.resolveOAuthTokenProvider?.('managed:ody-code', config.oauth)
     : undefined;
   const inner = new MoonshotWebSearchProvider({
     baseUrl: config.baseUrl,

@@ -26,7 +26,8 @@ export class BingProvider implements WebSearchProvider {
     });
     if (!response.ok) throw await httpError(response, this.name);
     const data = (await response.json()) as Record<string, unknown>;
-    const pages = ((data.webPages as Record<string, unknown> | undefined)?.value ?? []) as Array<{
+    const webPages = data['webPages'] as Record<string, unknown> | undefined;
+    const pages = (webPages?.['value'] ?? []) as Array<{
       name: string;
       url: string;
       snippet: string;
