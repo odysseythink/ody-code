@@ -77,6 +77,13 @@ export class SessionMode {
       this.exit();
     }
 
+    // The model to restore when leaving modes entirely. Read AFTER the exit()
+    // above: a direct plan↔design switch restores the normal model there, so the
+    // entry-time alias (captured before exit) would be the PREVIOUS mode's model
+    // and would leak back into normal on the final exit. See regression test
+    // "restores the normal model after a direct plan→design→normal switch".
+    const restoreTargetAlias = this.agent.config.modelAlias;
+
     this._isActive = true;
     this._sessionModeId = id;
     this._kind = kind;
@@ -99,11 +106,11 @@ export class SessionMode {
           this._preModeModelAlias = null;
         }
         if (usable) {
-          this._preModeModelAlias = { value: enterModelAlias };
+          this._preModeModelAlias = { value: restoreTargetAlias };
           if (modeModel !== this.agent.config.modelAlias) {
             this.agent.log?.debug('sessionMode.enter switching model', {
               kind,
-              fromModelAlias: enterModelAlias,
+              fromModelAlias: restoreTargetAlias,
               toModelAlias: modeModel,
             });
             this.agent.config.update({ modelAlias: modeModel });

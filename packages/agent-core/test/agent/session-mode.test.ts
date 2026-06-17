@@ -143,6 +143,45 @@ describe('SessionMode', () => {
       expect(agent.refreshLlm).toHaveBeenCalled();
     });
 
+    it('restores the normal model after a direct plan→design→normal switch (not the stale mode model)', async () => {
+      // Reproduces the shift+tab cycle normal→plan→design→normal. The mock's
+      // config.update MUST actually mutate modelAlias so the second enter() reads
+      // the post-switch value — that is the condition that exposed the bug where
+      // enterModelAlias was captured BEFORE the internal exit() and the previous
+      // mode's model leaked back into normal.
+      let modelAlias = 'normal-model';
+      const agent = makeAgent({
+        kimiConfig: { defaultModel: 'normal-model', modeModels: { plan: 'plan-model', design: 'design-model' } },
+        modelProvider: {
+          resolveProviderConfig: vi.fn().mockReturnValue({
+            providerName: 'test-p',
+            provider: { type: 'openai', apiKey: 'sk-test' },
+            modelCapabilities: {},
+          }),
+        },
+      });
+      Object.defineProperty(agent, 'config', {
+        value: {
+          cwd: CWD,
+          provider: 'test',
+          get modelAlias() {
+            return modelAlias;
+          },
+          update: vi.fn((c: { modelAlias?: string }) => {
+            if (c.modelAlias !== undefined) modelAlias = c.modelAlias;
+          }),
+        },
+      });
+
+      const sm = new SessionMode(agent);
+      await sm.enter('p', undefined, false, 'plan'); // normal → plan
+      expect(modelAlias).toBe('plan-model');
+      await sm.enter('d', undefined, false, 'design'); // plan → design (direct switch)
+      expect(modelAlias).toBe('design-model');
+      sm.exit(); // design → normal
+      expect(modelAlias).toBe('normal-model');
+    });
+
     it('does not invalidate the cached LLM when the modeModels model equals the current model', async () => {
       const agent = makeAgent({
         modelAlias: 'same-model',
