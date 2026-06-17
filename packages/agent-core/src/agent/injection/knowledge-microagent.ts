@@ -1,5 +1,8 @@
 import type { ContextMessage } from '../context';
 import type { SkillDefinition } from '../../skill';
+import { DynamicInjector } from './injector';
+import type { Agent } from '..';
+import { flags } from '../../flags';
 
 // ── Types ──────────────────────────────────────────────────────────────
 
@@ -110,4 +113,67 @@ export function matchKnowledgeMicroagents(
   }
 
   return matches;
+}
+
+// ── Injector ───────────────────────────────────────────────────────────
+
+export const KNOWLEDGE_MICROAGENT_VARIANT = 'knowledge_microagent';
+
+export class KnowledgeMicroagentInjector extends DynamicInjector {
+  protected override readonly injectionVariant = KNOWLEDGE_MICROAGENT_VARIANT;
+  private readonly injectedNames = new Set<string>();
+
+  override onContextClear(): void {
+    super.onContextClear();
+    this.injectedNames.clear();
+  }
+
+  override onContextCompacted(compactedCount: number): void {
+    super.onContextCompacted(compactedCount);
+    this.injectedNames.clear();
+  }
+
+  protected override getInjection(): string | undefined {
+    if (!flags.enabled('repo-knowledge')) return undefined;
+    if (this.agent.sessionMode.isActive) return undefined;
+    if (this.agent.skills === null) return undefined;
+
+    const text = extractLatestUserText(this.agent.context.history);
+    if (text === undefined || text.trim().length === 0) return undefined;
+
+    const microagents = this.agent.skills.registry.listKnowledgeMicroagents();
+    if (microagents.length === 0) return undefined;
+
+    const matches = matchKnowledgeMicroagents({
+      messageText: text,
+      microagents,
+      alreadyInjected: this.injectedNames,
+    });
+    if (matches.length === 0) return undefined;
+
+    const bodies: string[] = [];
+    for (const match of matches) {
+      const body = match.skill.content.trim();
+      if (body.length === 0) {
+        this.agent.log.warn(`Microagent ${match.skill.name} has empty body; skipping`);
+        continue;
+      }
+      this.injectedNames.add(match.skill.name);
+      this.agent.telemetry.track('microagent_injected', {
+        skill_name: match.skill.name,
+        trigger: match.trigger,
+        skill_source: match.skill.source,
+      });
+      bodies.push(`## ${match.skill.name}\n\n${body}`);
+    }
+
+    if (bodies.length === 0) return undefined;
+
+    return [
+      "The following repo-specific conventions are relevant to your current task.",
+      "Apply them without mentioning them to the user unless asked.",
+      "",
+      bodies.join("\n\n---\n\n"),
+    ].join("\n");
+  }
 }

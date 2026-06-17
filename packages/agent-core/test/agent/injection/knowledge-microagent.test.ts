@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { beforeAll, afterAll, describe, expect, it, vi } from 'vitest';
 
 import type { ContextMessage } from '../../../src/agent/context';
 import {
@@ -6,7 +6,8 @@ import {
   matchKnowledgeMicroagents,
   triggerMatches,
 } from '../../../src/agent/injection/knowledge-microagent';
-import type { SkillDefinition } from '../../../src/skill';
+import type { SkillDefinition, SkillRegistry } from '../../../src/skill';
+import type { Agent } from '../../../src/agent';
 
 function microagent(
   name: string,
@@ -204,5 +205,290 @@ describe('matchKnowledgeMicroagents', () => {
       alreadyInjected: new Set(),
     });
     expect(result).toHaveLength(0);
+  });
+});
+
+// ===== Injector tests =====
+
+import {
+  KnowledgeMicroagentInjector,
+} from '../../../src/agent/injection/knowledge-microagent';
+
+// ── Agent stub helpers ─────────────────────────────────────────────
+
+interface MicroagentAgentStub {
+  history: ContextMessage[];
+  enabledFlags: Set<string>;
+  sessionActive: boolean;
+  microagents: SkillDefinition[] | null;
+  telemetryCalls: Array<{ event: string; properties: Record<string, unknown> }>;
+}
+
+function microagentAgent(stub: MicroagentAgentStub): Agent {
+  const fakeRegistry = {
+    listKnowledgeMicroagents: () => stub.microagents ?? [],
+  } as unknown as SkillRegistry;
+
+  return {
+    type: 'main',
+    context: {
+      get history() {
+        return stub.history;
+      },
+      appendSystemReminder: (content: string, origin: ContextMessage['origin']) => {
+        stub.history.push({
+          role: 'user',
+          content: [{ type: 'text', text: `<system-reminder>\n${content}\n</system-reminder>` }],
+          toolCalls: [],
+          origin,
+        });
+      },
+    } as unknown as Agent['context'],
+    sessionMode: {
+      get isActive() {
+        return stub.sessionActive;
+      },
+      kind: 'plan' as const,
+    } as Agent['sessionMode'],
+    skills: {
+      registry: fakeRegistry,
+    } as Agent['skills'],
+    telemetry: {
+      track: (event: string, properties: Record<string, unknown>) => {
+        stub.telemetryCalls.push({ event, properties });
+      },
+    } as unknown as Agent['telemetry'],
+    log: {
+      warn: () => {},
+      error: () => {},
+      info: () => {},
+      debug: () => {},
+    } as unknown as Agent['log'],
+  } as unknown as Agent;
+}
+
+function reminderText(history: readonly ContextMessage[]): string | undefined {
+  const message = history.findLast(
+    (entry) =>
+      entry.origin?.kind === 'injection' &&
+      entry.origin.variant === 'knowledge_microagent',
+  );
+  return message?.content
+    .map((part) => (part.type === 'text' ? part.text : ''))
+    .join('');
+}
+
+describe('KnowledgeMicroagentInjector', () => {
+  beforeAll(() => {
+    vi.stubEnv('ODY_CODE_EXPERIMENTAL_REPO_KNOWLEDGE', '1');
+  });
+
+  afterAll(() => {
+    vi.unstubAllEnvs();
+  });
+
+  const reuse = microagent('reuse', ['component'], '# Reuse conventions\n\nAlways use existing code.');
+
+  it('I1: injects on first matching user message', async () => {
+    const history: ContextMessage[] = [userMessage('add a component')];
+    const telemetryCalls: MicroagentAgentStub['telemetryCalls'] = [];
+    const agent = microagentAgent({
+      history,
+      enabledFlags: new Set(['repo-knowledge']),
+      sessionActive: false,
+      microagents: [reuse],
+      telemetryCalls,
+    });
+    const injector = new KnowledgeMicroagentInjector(agent);
+
+    await injector.inject();
+
+    const text = reminderText(history);
+    expect(text).toBeDefined();
+    expect(text).toContain('repo-specific conventions');
+    expect(text).toContain('Reuse conventions');
+    expect(text).toContain('## reuse');
+  });
+
+  it('I2: does not re-inject same microagent on next turn', async () => {
+    const history: ContextMessage[] = [userMessage('add a component')];
+    const telemetryCalls: MicroagentAgentStub['telemetryCalls'] = [];
+    const agent = microagentAgent({
+      history,
+      enabledFlags: new Set(['repo-knowledge']),
+      sessionActive: false,
+      microagents: [reuse],
+      telemetryCalls,
+    });
+    const injector = new KnowledgeMicroagentInjector(agent);
+
+    await injector.inject();
+    const countAfterFirst = history.length;
+    expect(countAfterFirst).toBeGreaterThan(1);
+
+    await injector.inject();
+    expect(history.length).toBe(countAfterFirst);
+  });
+
+  it('I3: clears injected set on context clear', async () => {
+    const history: ContextMessage[] = [userMessage('add a component')];
+    const telemetryCalls: MicroagentAgentStub['telemetryCalls'] = [];
+    const agent = microagentAgent({
+      history,
+      enabledFlags: new Set(['repo-knowledge']),
+      sessionActive: false,
+      microagents: [reuse],
+      telemetryCalls,
+    });
+    const injector = new KnowledgeMicroagentInjector(agent);
+
+    await injector.inject();
+    expect(history.length).toBeGreaterThan(1);
+
+    injector.onContextClear();
+    history.push(userMessage('add a component'));
+
+    const countBeforeReInject = history.length;
+    await injector.inject();
+    expect(history.length).toBe(countBeforeReInject + 1);
+  });
+
+  it('I4: clears injected set on compaction', async () => {
+    const history: ContextMessage[] = [userMessage('add a component')];
+    const telemetryCalls: MicroagentAgentStub['telemetryCalls'] = [];
+    const agent = microagentAgent({
+      history,
+      enabledFlags: new Set(['repo-knowledge']),
+      sessionActive: false,
+      microagents: [reuse],
+      telemetryCalls,
+    });
+    const injector = new KnowledgeMicroagentInjector(agent);
+
+    await injector.inject();
+    expect(history.length).toBeGreaterThan(1);
+
+    injector.onContextCompacted(5);
+    history.push(userMessage('add a component'));
+
+    const countBeforeReInject = history.length;
+    await injector.inject();
+    expect(history.length).toBe(countBeforeReInject + 1);
+  });
+
+  it('I5: skips empty bodies', async () => {
+    const emptyReuse = microagent('empty-reuse', ['component'], '');
+    const history: ContextMessage[] = [userMessage('add a component')];
+    const telemetryCalls: MicroagentAgentStub['telemetryCalls'] = [];
+    const agent = microagentAgent({
+      history,
+      enabledFlags: new Set(['repo-knowledge']),
+      sessionActive: false,
+      microagents: [emptyReuse],
+      telemetryCalls,
+    });
+    const injector = new KnowledgeMicroagentInjector(agent);
+
+    await injector.inject();
+    expect(reminderText(history)).toBeUndefined();
+
+    // Verify: after microagent gets content, it should match on next turn
+    const filledReuse = microagent('empty-reuse', ['component'], '# Now has content');
+    (agent as unknown as { skills: { registry: { listKnowledgeMicroagents: () => SkillDefinition[] } } }).skills = {
+      registry: { listKnowledgeMicroagents: () => [filledReuse] },
+    };
+    history.push(userMessage('add a component'));
+    await injector.inject();
+    expect(reminderText(history)).toBeDefined();
+  });
+
+  it('I6: only runs in normal mode', async () => {
+    const history: ContextMessage[] = [userMessage('add a component')];
+    const telemetryCalls: MicroagentAgentStub['telemetryCalls'] = [];
+    const agent = microagentAgent({
+      history,
+      enabledFlags: new Set(['repo-knowledge']),
+      sessionActive: true,
+      microagents: [reuse],
+      telemetryCalls,
+    });
+    const injector = new KnowledgeMicroagentInjector(agent);
+
+    await injector.inject();
+    expect(reminderText(history)).toBeUndefined();
+  });
+
+  it('I7: no-op when flag disabled', async () => {
+    vi.stubEnv('ODY_CODE_EXPERIMENTAL_REPO_KNOWLEDGE', '0');
+    const history: ContextMessage[] = [userMessage('add a component')];
+    const telemetryCalls: MicroagentAgentStub['telemetryCalls'] = [];
+    const agent = microagentAgent({
+      history,
+      enabledFlags: new Set(),
+      sessionActive: false,
+      microagents: [reuse],
+      telemetryCalls,
+    });
+    const injector = new KnowledgeMicroagentInjector(agent);
+
+    await injector.inject();
+    expect(reminderText(history)).toBeUndefined();
+    vi.stubEnv('ODY_CODE_EXPERIMENTAL_REPO_KNOWLEDGE', '1');
+  });
+
+  it('I8: emits telemetry on injection', async () => {
+    const history: ContextMessage[] = [userMessage('add a component')];
+    const telemetryCalls: MicroagentAgentStub['telemetryCalls'] = [];
+    const agent = microagentAgent({
+      history,
+      enabledFlags: new Set(['repo-knowledge']),
+      sessionActive: false,
+      microagents: [reuse],
+      telemetryCalls,
+    });
+    const injector = new KnowledgeMicroagentInjector(agent);
+
+    await injector.inject();
+
+    expect(telemetryCalls).toHaveLength(1);
+    expect(telemetryCalls[0]!.event).toBe('microagent_injected');
+    expect(telemetryCalls[0]!.properties).toMatchObject({
+      skill_name: 'reuse',
+      trigger: 'component',
+      skill_source: 'project',
+    });
+  });
+
+  it('N1: no-op when skills not loaded (agent.skills is null)', async () => {
+    const history: ContextMessage[] = [userMessage('add a component')];
+    const telemetryCalls: MicroagentAgentStub['telemetryCalls'] = [];
+    const agent = microagentAgent({
+      history,
+      enabledFlags: new Set(['repo-knowledge']),
+      sessionActive: false,
+      microagents: null,
+      telemetryCalls,
+    });
+    (agent as unknown as { skills: null }).skills = null;
+    const injector = new KnowledgeMicroagentInjector(agent);
+
+    await injector.inject();
+    expect(reminderText(history)).toBeUndefined();
+  });
+
+  it('N2: no-op when latest user text is empty or whitespace-only', async () => {
+    const history: ContextMessage[] = [userMessage('   ')];
+    const telemetryCalls: MicroagentAgentStub['telemetryCalls'] = [];
+    const agent = microagentAgent({
+      history,
+      enabledFlags: new Set(['repo-knowledge']),
+      sessionActive: false,
+      microagents: [reuse],
+      telemetryCalls,
+    });
+    const injector = new KnowledgeMicroagentInjector(agent);
+
+    await injector.inject();
+    expect(reminderText(history)).toBeUndefined();
   });
 });
