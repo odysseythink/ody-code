@@ -118,6 +118,7 @@ describe('DesignModeInjector content', () => {
     for (const marker of [
       'Step 0 — Audit strategy gate',
       'Step 0.5 — Upstream inventory',
+      'Step 0.6 — Internal reuse scan',
       'Call-site integration',
       'Step 4.5',
       '[C:UPSTREAM]',
@@ -128,7 +129,7 @@ describe('DesignModeInjector content', () => {
     expect(entry).toContain('Design mode is now active');
   });
 
-  it('carries the C1-C7 exit checklist in the entry message, full reminder, and sparse reminder', async () => {
+  it('carries the C1-C8 exit checklist in the entry message, full reminder, and sparse reminder', async () => {
     const agent = designAgent({ isActive: true, sessionModeFilePath: '/tmp/design.md' });
     const injector = new DesignModeInjector(agent);
     await injector.inject();
@@ -150,6 +151,7 @@ describe('DesignModeInjector content', () => {
         'C5. Error Handling',
         'C6. Self-Review',
         'C7. User Final Approval',
+        'C8. Reuse Analysis',
       ]) {
         expect(text).toContain(marker);
       }
