@@ -125,6 +125,12 @@ export function findMissingDesignSections(content: string): string[] {
     missing.push('User Approval');
   }
 
+  // C8: Reuse Analysis
+  const reuseAnalysisPattern = /^#{1,3}\s+(?:reuse\s+analysis|复用分析|component\s+reuse|existing\s+components?)(?:\s|$|[\u4e00-\u9fa5])/im;
+  if (!reuseAnalysisPattern.test(trimmed)) {
+    missing.push('Reuse Analysis section');
+  }
+
   return missing;
 }
 

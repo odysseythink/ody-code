@@ -31,6 +31,9 @@ Algorithm pseudocode with sufficient content to exceed the minimum length requir
 ## Error Handling
 Error handling strategies and fallback paths with enough detail text.
 
+## Reuse Analysis
+No reusable components identified; greenfield design.
+
 ## Self-Review
 Security: checked X. Test: checked Y. Ops: verified Z.
 
@@ -96,6 +99,9 @@ Algorithm pseudocode with sufficient content to exceed the minimum.
 ## Error Handling
 Error handling strategies and fallback paths with enough detail text.
 
+## Reuse Analysis
+No reusable components identified; greenfield design.
+
 ## Self-Review
 Security: checked X. Test: checked Y. Ops: verified Z.
 
@@ -120,6 +126,9 @@ Algorithm pseudocode with sufficient content to exceed the minimum.
 ## Error Handling
 Error handling strategies and fallback paths with enough detail text.
 
+## Reuse Analysis
+No reusable components identified; greenfield design.
+
 ## Self-Review
 Security: checked X. Test: checked Y. Ops: verified Z.
 
@@ -143,6 +152,9 @@ Algorithm pseudocode with sufficient content to exceed the minimum.
 
 ## Error Handling
 Error handling strategies and fallback paths with enough detail text.
+
+## 复用分析
+无现成组件可复用。
 
 ## Self-Review
 Security: checked X. Test: checked Y. Ops: verified Z.
@@ -246,8 +258,115 @@ Security: checked X. Test: checked Y.`;
     expect(result).toContain('User Approval');
   });
 
-  // All 7 pass
-  it('returns empty for a design with all 7 criteria met', () => {
+  // C8: missing Reuse Analysis section
+  it('detects missing Reuse Analysis section', () => {
+    const design = `## Scope In/Out
+Content. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+
+## Architecture
+Architecture content here. Ut labore et dolore magna aliqua. Ut enim ad minim veniam.
+
+## Data Models
+Data model definitions with enough text for the minimum length requirement.
+
+## Algorithms
+Algorithm pseudocode with sufficient content to exceed the minimum.
+
+## Error Handling
+Error handling strategies and fallback paths with enough detail text.
+
+## Self-Review
+Security: checked X. Test: checked Y. Ops: verified Z.
+
+## User Final Approval
+Approved by user [C:USER].`;
+    const result = findMissingDesignSections(design);
+    expect(result).toContain('Reuse Analysis section');
+  });
+
+  it('rejects adversarial ReuseAnalysis heading without space', () => {
+    const design = `## Scope In/Out
+Content. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+
+## Architecture
+Architecture content here. Ut labore et dolore magna aliqua. Ut enim ad minim veniam.
+
+## Data Models
+Data model definitions with enough text for the minimum length requirement.
+
+## Algorithms
+Algorithm pseudocode with sufficient content to exceed the minimum.
+
+## Error Handling
+Error handling strategies and fallback paths with enough detail text.
+
+## ReuseAnalysis
+This heading is missing the required space and must not satisfy C8.
+
+## Self-Review
+Security: checked X. Test: checked Y. Ops: verified Z.
+
+## User Final Approval
+Approved by user [C:USER].`;
+    const result = findMissingDesignSections(design);
+    expect(result).toContain('Reuse Analysis section');
+  });
+
+  it('accepts English and Chinese Reuse Analysis headings', () => {
+    const english = `## Scope In/Out
+Content. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+
+## Architecture
+Architecture content here. Ut labore et dolore magna aliqua. Ut enim ad minim veniam.
+
+## Data Models
+Data model definitions with enough text for the minimum length requirement.
+
+## Algorithms
+Algorithm pseudocode with sufficient content to exceed the minimum.
+
+## Error Handling
+Error handling strategies and fallback paths with enough detail text.
+
+## Reuse Analysis
+Existing validation helper can be reused.
+
+## Self-Review
+Security: checked X. Test: checked Y. Ops: verified Z.
+
+## User Final Approval
+Approved by user [C:USER].`;
+
+    const chinese = `## 范围
+内容内容内容。Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+
+## 架构
+设计架构部分。Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation.
+
+## 数据模型
+更多内容以满足最小长度要求。Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+
+## 算法
+算法伪代码内容，满足最小长度要求。
+
+## 错误处理
+错误处理策略和降级路径，包含足够细节。
+
+## 复用分析
+无现成组件可复用。
+
+## 自检
+Security: checked X. Test: checked Y. Ops: verified Z.
+
+## 用户批准
+已批准。`;
+
+    expect(findMissingDesignSections(english)).toEqual([]);
+    expect(findMissingDesignSections(chinese)).toEqual([]);
+  });
+
+  // All 8 pass
+  it('returns empty for a design with all 8 criteria met', () => {
     const design = `## Scope In/Out
 Content. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor.
 
@@ -262,6 +381,9 @@ Algorithm pseudocode with sufficient content to exceed the minimum.
 
 ## Error Handling
 Error handling strategies and fallback paths with enough detail text.
+
+## Reuse Analysis
+No reusable components identified; greenfield design.
 
 ## Self-Review
 Security: checked X. Test: checked Y. Ops: verified Z.
@@ -308,6 +430,10 @@ interface Foo { id: string; }
 | Error | Strategy |
 |-------|----------|
 | ENOENT | return null |
+
+## Reuse Analysis
+
+- Existing \`findMissingDesignSections\` in \`exit-design-mode.ts\` can be extended to detect the section. [C:UPSTREAM]
 
 ## Self-Review
 
