@@ -13,6 +13,7 @@ function microagent(
   name: string,
   triggers: readonly string[],
   content = '# Test\n\nSome body text.',
+  source: SkillDefinition['source'] = 'project',
 ): SkillDefinition {
   return {
     name,
@@ -21,7 +22,7 @@ function microagent(
     dir: '/test',
     content,
     metadata: { type: 'knowledge', triggers },
-    source: 'project',
+    source,
   };
 }
 
@@ -205,6 +206,157 @@ describe('matchKnowledgeMicroagents', () => {
       alreadyInjected: new Set(),
     });
     expect(result).toHaveLength(0);
+  });
+});
+
+// ── Budget & precedence helpers ─────────────────────────────────
+
+import {
+  sortBySourcePriority,
+  resolveBudgetLimit,
+  applyBudget,
+} from '../../../src/agent/injection/knowledge-microagent';
+import { estimateTokens } from '../../../src/utils/tokens';
+import type { Agent as AgentType } from '../../../src/agent';
+
+describe('sortBySourcePriority', () => {
+  it('orders by source: project > user > extra > builtin', () => {
+    const builtin = microagent('ba', ['t1']);
+    const project = microagent('pa', ['t1']);
+    const user = microagent('ua', ['t1']);
+    const extra = microagent('ea', ['t1']);
+
+    const skillDefs = [
+      { ...builtin, source: 'builtin' as const },
+      { ...project, source: 'project' as const },
+      { ...user, source: 'user' as const },
+      { ...extra, source: 'extra' as const },
+    ] as SkillDefinition[];
+
+    const matches = skillDefs.map((s) => ({ skill: s, trigger: 't1' }));
+    const sorted = sortBySourcePriority(matches);
+    const sources = sorted.map((m) => m.skill.source);
+    expect(sources).toEqual(['project', 'user', 'extra', 'builtin']);
+  });
+
+  it('tie-breaks by name lexicographically within same source', () => {
+    const beta = { ...microagent('beta', ['t1']), source: 'project' as const } as SkillDefinition;
+    const alpha = { ...microagent('alpha', ['t1']), source: 'project' as const } as SkillDefinition;
+
+    const matches = [
+      { skill: beta, trigger: 't1' },
+      { skill: alpha, trigger: 't1' },
+    ];
+    const sorted = sortBySourcePriority(matches);
+    expect(sorted.map((m) => m.skill.name)).toEqual(['alpha', 'beta']);
+  });
+
+  it('returns empty for empty input', () => {
+    expect(sortBySourcePriority([])).toEqual([]);
+  });
+});
+
+describe('resolveBudgetLimit', () => {
+  it('returns configured maxTokens', () => {
+    const agent = {
+      kimiConfig: { microagentBudget: { maxTokens: 500 } },
+    } as unknown as AgentType;
+    expect(resolveBudgetLimit(agent)).toBe(500);
+  });
+
+  it('returns default 1024 when microagentBudget is undefined', () => {
+    const agent = { kimiConfig: undefined } as unknown as AgentType;
+    expect(resolveBudgetLimit(agent)).toBe(1024);
+  });
+
+  it('returns default 1024 when maxTokens is undefined', () => {
+    const agent = {
+      kimiConfig: { microagentBudget: {} },
+    } as unknown as AgentType;
+    expect(resolveBudgetLimit(agent)).toBe(1024);
+  });
+
+  it('returns Infinity when maxTokens is 0', () => {
+    const agent = {
+      kimiConfig: { microagentBudget: { maxTokens: 0 } },
+    } as unknown as AgentType;
+    expect(resolveBudgetLimit(agent)).toBe(Infinity);
+  });
+});
+
+describe('applyBudget', () => {
+  const shortContent = '# Short\n\nOnly a few tokens.';           // ~10 tokens
+  const longContent = '# Long\n\n' + 'x'.repeat(5000);           // ~1250 tokens
+
+  const short = {
+    ...microagent('short', ['t1'], shortContent),
+    source: 'project' as const,
+  } as SkillDefinition;
+  const long = {
+    ...microagent('long', ['t1'], longContent),
+    source: 'project' as const,
+  } as SkillDefinition;
+
+  it('injects all when budget is unlimited (maxTokens=Infinity)', () => {
+    const matches = [
+      { skill: long, trigger: 't1' },
+      { skill: short, trigger: 't1' },
+    ];
+    const result = applyBudget(matches, Infinity);
+    expect(result.injected).toHaveLength(2);
+    expect(result.skipped).toHaveLength(0);
+    expect(result.total).toBe(Infinity);
+    expect(result.used).toBeGreaterThan(0);
+  });
+
+  it('skips microagent when it would exceed budget', () => {
+    const budget = estimateTokens(shortContent) + 1; // fits short + 1 extra
+    const matches = [
+      { skill: short, trigger: 't1' },
+      { skill: long, trigger: 't1' },
+    ];
+    const result = applyBudget(matches, budget);
+    expect(result.injected).toHaveLength(1);
+    expect(result.injected[0]!.skill.name).toBe('short');
+    expect(result.skipped).toHaveLength(1);
+    expect(result.skipped[0]!.match.skill.name).toBe('long');
+    expect(result.skipped[0]!.reason).toBe('budget_exceeded');
+  });
+
+  it('skips all when every body exceeds budget', () => {
+    const matches = [{ skill: long, trigger: 't1' }];
+    const result = applyBudget(matches, 10); // tiny budget
+    expect(result.injected).toHaveLength(0);
+    expect(result.skipped).toHaveLength(1);
+    expect(result.used).toBe(0);
+  });
+
+  it('skips empty bodies silently (no budget consumed)', () => {
+    const empty = {
+      ...microagent('empty', ['t1'], ''),
+      source: 'project' as const,
+    } as SkillDefinition;
+    const matches = [
+      { skill: empty, trigger: 't1' },
+      { skill: short, trigger: 't1' },
+    ];
+    const result = applyBudget(matches, 100);
+    // empty body skipped without consuming budget
+    expect(result.injected).toHaveLength(1);
+    expect(result.injected[0]!.skill.name).toBe('short');
+    expect(result.skipped).toHaveLength(0);
+  });
+
+  it('injects body that fits exactly at budget limit', () => {
+    const exactContent = 'abcd'; // 1 ASCII token
+    const exactBudget = estimateTokens(exactContent);
+    const skill = {
+      ...microagent('exact', ['t1'], exactContent),
+      source: 'project' as const,
+    } as SkillDefinition;
+    const result = applyBudget([{ skill, trigger: 't1' }], exactBudget);
+    expect(result.injected).toHaveLength(1);
+    expect(result.skipped).toHaveLength(0);
   });
 });
 

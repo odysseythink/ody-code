@@ -3,6 +3,8 @@ import type { SkillDefinition } from '../../skill';
 import { DynamicInjector } from './injector';
 import type { Agent } from '..';
 import { flags } from '../../flags';
+import { estimateTokens } from '../../utils/tokens';
+import type { OdyConfig } from '../../config';
 
 // ── Types ──────────────────────────────────────────────────────────────
 
@@ -15,6 +17,18 @@ export interface MatchKnowledgeMicroagentsOptions {
 export interface KnowledgeMicroagentMatch {
   readonly skill: SkillDefinition;
   readonly trigger: string;
+}
+
+export interface MicroagentBudgetResult {
+  readonly injected: readonly KnowledgeMicroagentMatch[];
+  readonly skipped: readonly SkippedMicroagent[];
+  readonly used: number;
+  readonly total: number;
+}
+
+export interface SkippedMicroagent {
+  readonly match: KnowledgeMicroagentMatch;
+  readonly reason: 'budget_exceeded';
 }
 
 // ── Matcher ────────────────────────────────────────────────────────────
@@ -113,6 +127,74 @@ export function matchKnowledgeMicroagents(
   }
 
   return matches;
+}
+
+// ── Budget & precedence helpers ─────────────────────────────────────────
+
+const SOURCE_PRIORITY: Record<SkillDefinition['source'], number> = {
+  project: 0,
+  user: 1,
+  extra: 2,
+  builtin: 3,
+};
+
+/**
+ * Resolve the per-injection token budget limit from agent config.
+ *   - `undefined` → default 1024
+ *   - `0` → unlimited (Infinity)
+ *   - positive number → as configured
+ */
+export function resolveBudgetLimit(agent: Agent): number {
+  const configured = (agent.kimiConfig as OdyConfig | undefined)?.microagentBudget?.maxTokens;
+  if (configured === undefined) return 1024;
+  if (configured === 0) return Infinity;
+  return configured;
+}
+
+/**
+ * Sort matched microagents by source precedence (project > user > extra > builtin),
+ * then by name lexicographically within the same source.
+ */
+export function sortBySourcePriority(
+  matches: readonly KnowledgeMicroagentMatch[],
+): KnowledgeMicroagentMatch[] {
+  return [...matches].sort((a, b) => {
+    const pa = SOURCE_PRIORITY[a.skill.source];
+    const pb = SOURCE_PRIORITY[b.skill.source];
+    if (pa !== pb) return pa - pb;
+    return a.skill.name.localeCompare(b.skill.name);
+  });
+}
+
+/**
+ * Apply a per-injection token budget to sorted matches.
+ * Microagents are injected in order until the budget is exhausted;
+ * remaining matches are skipped with reason 'budget_exceeded'.
+ * Empty bodies are skipped silently and do not consume budget.
+ */
+export function applyBudget(
+  sortedMatches: readonly KnowledgeMicroagentMatch[],
+  maxTokens: number,
+): MicroagentBudgetResult {
+  const budget = maxTokens === Infinity ? Infinity : maxTokens;
+  let used = 0;
+  const injected: KnowledgeMicroagentMatch[] = [];
+  const skipped: SkippedMicroagent[] = [];
+
+  for (const match of sortedMatches) {
+    const body = match.skill.content.trim();
+    if (body.length === 0) continue;
+
+    const tokens = estimateTokens(body);
+    if (used + tokens <= budget) {
+      used += tokens;
+      injected.push(match);
+    } else {
+      skipped.push({ match, reason: 'budget_exceeded' });
+    }
+  }
+
+  return { injected, skipped, used, total: budget };
 }
 
 // ── Injector ───────────────────────────────────────────────────────────
