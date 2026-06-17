@@ -230,7 +230,8 @@ function formatBadgeElapsed(ms: number): string {
 
 function modelDisplayName(state: AppState): string {
   const model = state.availableModels[state.model];
-  return model?.displayName ?? model?.model ?? state.model;
+  if (!model) return state.model;
+  return `${model.provider}/${model.model}`;
 }
 
 function shortenCwd(path: string): string {
