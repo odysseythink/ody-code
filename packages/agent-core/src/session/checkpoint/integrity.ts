@@ -190,10 +190,16 @@ function validateDesignMode(payload: SessionCheckpointPayload, errors: string[])
     }
     seenIds.add(session.designSessionID);
 
+    // startedAtMsg / exitedAtMsg are boundary cursors (count of preceding
+    // messages), not element indices, so the valid range is the INCLUSIVE
+    // [0, messages.length]: a session entered (or exited) after the last message
+    // has a cursor equal to the length. An exclusive upper bound here produced a
+    // spurious "out of range [0, N)" warning on resume for sessions started at
+    // the very end of history.
     const started = session.startedAtMsg;
-    if (!Number.isInteger(started) || started < 0 || started >= messages.length) {
+    if (!Number.isInteger(started) || started < 0 || started > messages.length) {
       errors.push(
-        `Design session ${session.designSessionID} startedAtMsg ${started} is out of range [0, ${messages.length})`,
+        `Design session ${session.designSessionID} startedAtMsg ${started} is out of range [0, ${messages.length}]`,
       );
       ok = false;
       continue;
@@ -201,9 +207,9 @@ function validateDesignMode(payload: SessionCheckpointPayload, errors: string[])
 
     if (session.exitedAtMsg !== undefined) {
       const exited = session.exitedAtMsg;
-      if (!Number.isInteger(exited) || exited < started || exited >= messages.length) {
+      if (!Number.isInteger(exited) || exited < started || exited > messages.length) {
         errors.push(
-          `Design session ${session.designSessionID} exitedAtMsg ${exited} is invalid (must be >= ${started} and < ${messages.length})`,
+          `Design session ${session.designSessionID} exitedAtMsg ${exited} is invalid (must be >= ${started} and <= ${messages.length})`,
         );
         ok = false;
       }

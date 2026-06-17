@@ -89,7 +89,42 @@ describe('verifyCheckpointIntegrity', () => {
     expect(result.checks.designModeConsistent).toBe(true);
   });
 
-  it('fails designMode consistency when startedAtMsg is out of range', () => {
+  it('passes when startedAtMsg equals messages.length (session entered at the end)', () => {
+    // startedAtMsg is a boundary cursor (count of preceding messages), not an
+    // element index, so == length means "started after the last message" and is
+    // valid. Regression for the false "out of range [0, N)" warning on resume.
+    const result = verifyCheckpointIntegrity(
+      makePayload({
+        messages: [
+          { role: 'user', content: [{ type: 'text', text: 'a' }] },
+          { role: 'assistant', content: [{ type: 'text', text: 'b' }] },
+        ],
+        designModeContext: {
+          sessions: [{ designSessionID: 'd1', startedAtMsg: 2 }],
+        },
+      }),
+    );
+    expect(result.checks.designModeConsistent).toBe(true);
+    expect(result.errors).toHaveLength(0);
+  });
+
+  it('passes when exitedAtMsg equals messages.length (session exited at the end)', () => {
+    const result = verifyCheckpointIntegrity(
+      makePayload({
+        messages: [
+          { role: 'user', content: [{ type: 'text', text: 'a' }] },
+          { role: 'assistant', content: [{ type: 'text', text: 'b' }] },
+        ],
+        designModeContext: {
+          sessions: [{ designSessionID: 'd1', startedAtMsg: 1, exitedAtMsg: 2 }],
+        },
+      }),
+    );
+    expect(result.checks.designModeConsistent).toBe(true);
+  });
+
+  it('fails designMode consistency when startedAtMsg is past the end boundary', () => {
+    // length is the max valid cursor; anything beyond (here 2 with length 1) is corrupt.
     const result = verifyCheckpointIntegrity(
       makePayload({
         messages: [{ role: 'user', content: [{ type: 'text', text: 'a' }] }],
@@ -100,6 +135,19 @@ describe('verifyCheckpointIntegrity', () => {
     );
     expect(result.checks.designModeConsistent).toBe(false);
     expect(result.errors.some((e) => e.includes('startedAtMsg'))).toBe(true);
+  });
+
+  it('fails designMode consistency when exitedAtMsg is past the end boundary', () => {
+    const result = verifyCheckpointIntegrity(
+      makePayload({
+        messages: [{ role: 'user', content: [{ type: 'text', text: 'a' }] }],
+        designModeContext: {
+          sessions: [{ designSessionID: 'd1', startedAtMsg: 0, exitedAtMsg: 2 }],
+        },
+      }),
+    );
+    expect(result.checks.designModeConsistent).toBe(false);
+    expect(result.errors.some((e) => e.includes('exitedAtMsg'))).toBe(true);
   });
 
   it('fails designMode consistency when exitedAtMsg is before startedAtMsg', () => {
