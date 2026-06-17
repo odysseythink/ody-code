@@ -45,6 +45,13 @@ If the request is to port / adapt / mirror / "introduce X's design", then BEFORE
 (B) Prior art search — for new standalone tools or features with likely open-source parallels:
 BEFORE writing any clarifying question, run 1-2 web searches (e.g. "open source <tool> <language>") to survey existing solutions. Enumerate: the approaches they use, what they defer, and what edge cases they surface. Add a short ## Prior Art section to the design file. These findings inform your Step 1 clarifying questions — they reveal scope that practitioners have found necessary, common architecture decisions, and pitfalls to name in the Risk Register. Skip this sub-step for purely internal changes (refactors, adding a field, etc.).`;
 
+const STEP_0_6_REUSE = `## Step 0.6 — Internal reuse scan (before proposing new code)
+Before you design new components, functions, or data structures, scan the existing codebase for code that already solves the same problem or a substantially similar one. Use Read, Grep, Glob, or \`Agent(subagent_type="explore")\` for non-trivial searches. For each candidate:
+  1. Record the file path and the function/type/module that could be reused.
+  2. Decide whether it can be used as-is, adapted, or should be replaced.
+  3. If no reusable candidate exists, explicitly note "greenfield — no reusable component found".
+Write the findings to a \`## Reuse Analysis\` section in the design file. This section is a hard exit gate (C8).`;
+
 const STEP_1_CLARIFY = `## Step 1 — Clarify, ONE question per turn (do not stop early)
 Before detailed questions, assess scope: if the goal describes multiple independent subsystems or products (e.g. "a platform with chat, billing, and analytics"), flag it immediately — do NOT refine details of something that should be decomposed first. If the goal is too large for a single design, help the user decompose into sub-projects (name the independent pieces, how they relate, what order to build), then design the FIRST sub-project through this flow; each sub-project gets its own design → plan → implementation cycle. (A large but single coherent design is NOT decomposition — that is the multi-file split at Step 4.)
 After the audit level is recorded, refine the idea by asking questions one at a time (prefer multiple-choice via AskUserQuestion). Never batch questions. After each answer, record the decision in a running "Resolved decisions" list. You may NOT proceed to propose approaches until EVERY dimension below has a user-confirmed decision:
@@ -109,7 +116,7 @@ First name the 1-3 decisions where being wrong is most expensive (a filter, rege
   - Deep — confirm each numbered section's key claim PLUS list every assumption.
 You MUST NOT call ExitDesignMode until every assumption the recorded level requires has been signed off — never write-then-stop. This gate confirms ASSUMPTIONS, not final approval. If the user corrects anything, update the file, re-tag the source, and re-run this self-review. Final design approval is ExitDesignMode's job only.`;
 
-const DESIGN_EXIT_CHECKLIST = `ExitDesignMode completeness checklist (C1-C7) — the design file MUST contain all of the following before you call ExitDesignMode:
+const DESIGN_EXIT_CHECKLIST = `ExitDesignMode completeness checklist (C1-C8) — the design file MUST contain all of the following before you call ExitDesignMode:
   - C1. Scope In/Out — what is in scope and explicitly deferred.
   - C2. Architecture / Design — components, data flow, typed interfaces.
   - C3. Data Models — new data structures, persistence, lifecycle.
@@ -117,6 +124,7 @@ const DESIGN_EXIT_CHECKLIST = `ExitDesignMode completeness checklist (C1-C7) —
   - C5. Error Handling — failure scenarios, fallback, retry, degradation path.
   - C6. Self-Review — the four-lens findings written to a \`## Self-Review\` section.
   - C7. User Final Approval — a \`## User Final Approval\` section recording the approval state.
+  - C8. Reuse Analysis — a \`## Reuse Analysis\` section listing existing-code reuse candidates or explicitly stating greenfield.
 If any item is missing, return to the corresponding Step and add it before calling ExitDesignMode.`;
 
 const STEP_5_EXIT = `## Step 5 — Exit for approval
@@ -147,7 +155,7 @@ const TURN_DISCIPLINE = `## Turn discipline
 AskUserQuestion is for the audit gate, clarifying assumptions, and per-section approval — one question per turn. Whenever you ask, INVOKE the AskUserQuestion tool (a structured tool call); never emit the question or its options as text or as \`<ask_user_question>\`/XML markup — text is not a tool call and produces no prompt for the user. Never ask about final design approval via text or AskUserQuestion; that is ExitDesignMode's job. Do NOT reference "the design" in AskUserQuestion — the user cannot see it until you call ExitDesignMode. Your turn must end with either AskUserQuestion or ExitDesignMode (tool calls such as ShowDesignMockup happen *within* a turn and do not count as ending it). Do NOT end your turn any other way (no silent investigation-only turns once the audit gate has been asked).`;
 
 /** One-line quality pointer kept in the sparse variant so long sessions don't drop quality. */
-const SPARSE_QUALITY_POINTER = `Reminder: the design file must follow the fidelity rubric (Scope In/Out, data-flow arrows, typed interfaces, per-algorithm language-agnostic pseudocode (not production code), call-sites with file path + line range, an error/degradation table, test assertions, and a risk register), and you MUST run the self-review + post-write audit gate (scaled to the recorded audit level) before ExitDesignMode — that gate lists each [C:INFERRED] assumption verbatim for per-item sign-off and blocks ExitDesignMode until done, and a user-named target (a specific binary/path) must not be silently retargeted. Before ExitDesignMode, verify the C1-C7 completeness checklist is satisfied: C1. Scope In/Out, C2. Architecture, C3. Data Models, C4. Algorithms, C5. Error Handling, C6. Self-Review, and C7. User Final Approval.`;
+const SPARSE_QUALITY_POINTER = `Reminder: the design file must follow the fidelity rubric (Scope In/Out, data-flow arrows, typed interfaces, per-algorithm language-agnostic pseudocode (not production code), call-sites with file path + line range, an error/degradation table, test assertions, and a risk register), and you MUST run the self-review + post-write audit gate (scaled to the recorded audit level) before ExitDesignMode — that gate lists each [C:INFERRED] assumption verbatim for per-item sign-off and blocks ExitDesignMode until done, and a user-named target (a specific binary/path) must not be silently retargeted. Before proposing new code, run the Step 0.6 internal reuse scan and record candidates in a \`## Reuse Analysis\` section. Before ExitDesignMode, verify the C1-C8 completeness checklist is satisfied: C1. Scope In/Out, C2. Architecture, C3. Data Models, C4. Algorithms, C5. Error Handling, C6. Self-Review, C7. User Final Approval, and C8. Reuse Analysis.`;
 
 /** The canonical workflow body shared verbatim by the entry message and the full re-injection. */
 function contractBody(mockupAvailable: boolean): string {
@@ -155,6 +163,7 @@ function contractBody(mockupAvailable: boolean): string {
     HARD_GATE,
     STEP_0_AUDIT,
     STEP_0_5_UPSTREAM,
+    STEP_0_6_REUSE,
     STEP_1_CLARIFY,
     STEP_2_PROPOSE,
     STEP_3_PRESENT,
@@ -239,7 +248,7 @@ A design file from a previous session already exists.
   2. Confirm (or re-ask) the audit level before continuing — ask by INVOKING the AskUserQuestion tool (a real structured tool call). NEVER write the question or its options as text or as \`<ask_user_question>\`/XML markup; text produces no prompt and wastes the turn. Present exactly these options: Basic (only high-stakes assumptions flagged — fastest), Standard (every [C:INFERRED] assumption surfaced), Deep (key claim of every section + every assumption). If auto permission mode is active, AskUserQuestion is disabled — do NOT ask; default to Basic and note it in \`## Assumptions\`.
   3. Evaluate the user's current request against that design. Same topic: update it. Different topic: replace it.
   4. If it is a split index, the Parts manifest is the source of truth — write the next \`pending\` part INSIDE the index's subdirectory as \`<index-stem>/<subsystem>.md\` (a directory named exactly after the index filename stem, alongside the index; a file written next to the index instead will be rejected by the write guard), flip its row to \`done\`; never re-write a \`done\` part.
-  5. Clarify any newly-required decisions one question per turn (seven-dimension checklist); verify any data source / hook point the design relies on actually exists in code; if the request names a concrete target, design THERE — do not silently retarget.
+  5. Run an internal reuse scan for existing components before proposing new ones and record the findings in a \`## Reuse Analysis\` section; clarify any newly-required decisions one question per turn (seven-dimension checklist); verify any data source / hook point the design relies on actually exists in code; if the request names a concrete target, design THERE — do not silently retarget.
   6. Maintain decision tags [C:USER]/[C:INFERRED]/[C:DEFERRED]/[C:UPSTREAM] and the ## Assumptions chapter; keep the fidelity rubric.
   7. Run the self-review + post-write audit gate (write the \`## Self-Review\` section to the design file; list each [C:INFERRED] assumption verbatim for sign-off; do not ExitDesignMode until signed off), then update the design file before calling ExitDesignMode.
 
