@@ -8,6 +8,7 @@ import { PermissionModeInjector } from './permission-mode';
 import { PluginSessionStartInjector } from './plugin-session-start';
 import { PlanModeInjector } from './plan-mode';
 import { TodoListReminderInjector } from './todo-list';
+import { KnowledgeMicroagentInjector } from './knowledge-microagent';
 
 export class InjectionManager {
   private readonly injectors: DynamicInjector[];
@@ -26,6 +27,7 @@ export class InjectionManager {
       new DesignModeInjector(agent),
       new OfficeHoursInjector(agent),
       new PermissionModeInjector(agent),
+      ...(flags.enabled('repo-knowledge') ? [new KnowledgeMicroagentInjector(agent)] : []),
     ];
     this.goalInjector =
       flags.enabled('goal-command') && agent.type === 'main' ? new GoalInjector(agent) : null;
