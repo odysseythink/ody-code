@@ -81,7 +81,7 @@ export function parseReviewReport(raw: string, reviewerAlias: string): CodeRevie
 function extractSection(text: string, sectionName: string): string {
   const pattern = new RegExp(`(?:^|\\n)${escapeRegex(sectionName)}:[^\\S\\n]*\\n([\\s\\S]*?)(?:\\n\\n|\\n(?:Strengths|Assessment|Findings|Critical|Important|Minor):|$)`);
   const match = text.match(pattern);
-  return match !== null ? match[1]!.trim() : '';
+  return match?.[1]?.trim() ?? '';
 }
 
 function parseFindings(section: string, severity: CodeReviewFinding['severity']): CodeReviewFinding[] {
@@ -96,7 +96,7 @@ function parseFindings(section: string, severity: CodeReviewFinding['severity'])
     const titleMatch = clean.match(/^-\s*\[(.+?)\]\s*(?:\(([^)]+)\))?/);
     if (titleMatch === null) continue;
 
-    const title = titleMatch[1]!.trim();
+    const title = titleMatch[1]?.trim() ?? '';
     const location = titleMatch[2]?.trim();
 
     const bodyLines = clean.split('\n').slice(1);

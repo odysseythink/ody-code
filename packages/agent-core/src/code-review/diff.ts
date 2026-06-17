@@ -10,7 +10,7 @@ export function parsePrNumber(urlOrNumber: string): string {
   if (match === null) {
     throw new Error('PR URL must be a GitHub pull request URL (e.g. https://github.com/owner/repo/pull/42)');
   }
-  return match[3]!;
+  return match[3];
 }
 
 export function buildDiffSource(options: {
