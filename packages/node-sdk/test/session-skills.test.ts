@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import type * as KosongModule from '@odysseythink/kosong';
 import { afterEach, beforeEach, describe, expect, expectTypeOf, it, vi } from 'vitest';
 
-import type { Event, KimiError, SkillActivatedEvent, SkillSummary } from '#/index';
+import type { Event, OdyError, SkillActivatedEvent, SkillSummary } from '#/index';
 import type { SDKRpcClient } from '#/rpc';
 
 import {
@@ -230,22 +230,22 @@ describe('Session skills', () => {
     });
 
     await expect(session.activateSkill('   ')).rejects.toMatchObject({
-      name: 'KimiError',
+      name: 'OdyError',
       code: 'skill.name_empty',
-    } satisfies Partial<KimiError>);
+    } satisfies Partial<OdyError>);
     expect(activateSkill).not.toHaveBeenCalled();
 
     await session.close();
     expect(closeSession).toHaveBeenCalledWith({ sessionId: session.id });
     expect(clearSessionHandlers).toHaveBeenCalledWith(session.id);
     await expect(session.listSkills()).rejects.toMatchObject({
-      name: 'KimiError',
+      name: 'OdyError',
       code: 'session.closed',
-    } satisfies Partial<KimiError>);
+    } satisfies Partial<OdyError>);
     await expect(session.activateSkill('review')).rejects.toMatchObject({
-      name: 'KimiError',
+      name: 'OdyError',
       code: 'session.closed',
-    } satisfies Partial<KimiError>);
+    } satisfies Partial<OdyError>);
   });
 
   it('finalizes local close state when the core close RPC fails', async () => {
@@ -271,9 +271,9 @@ describe('Session skills', () => {
     expect(closeSession).toHaveBeenCalledTimes(1);
     expect(clearSessionHandlers).toHaveBeenCalledWith(session.id);
     await expect(session.listSkills()).rejects.toMatchObject({
-      name: 'KimiError',
+      name: 'OdyError',
       code: 'session.closed',
-    } satisfies Partial<KimiError>);
+    } satisfies Partial<OdyError>);
   });
 
   it('exposes public skill event and summary types', () => {

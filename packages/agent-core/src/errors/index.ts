@@ -1,17 +1,17 @@
 export {
   ErrorCodes,
   ODY_ERROR_INFO,
-  type KimiErrorCode,
-  type KimiErrorInfo,
+  type OdyErrorCode,
+  type OdyErrorInfo,
 } from './codes';
 export {
-  KimiError,
-  type KimiErrorOptions,
+  OdyError,
+  type OdyErrorOptions,
 } from './classes';
 export {
-  fromKimiErrorPayload,
-  isKimiError,
+  fromOdyErrorPayload,
+  isOdyError,
   makeErrorPayload,
-  toKimiErrorPayload,
-  type KimiErrorPayload,
+  toOdyErrorPayload,
+  type OdyErrorPayload,
 } from './serialize';

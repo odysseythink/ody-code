@@ -1,4 +1,4 @@
-import { ErrorCodes, KimiError } from '#/errors';
+import { ErrorCodes, OdyError } from '#/errors';
 import type { McpServerHttpConfig } from '#/config/schema';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import type { OAuthClientProvider } from '@modelcontextprotocol/sdk/client/auth.js';
@@ -215,7 +215,7 @@ export function buildMcpHttpHeaders(
   if (config.bearerTokenEnvVar !== undefined) {
     const token = envLookup(config.bearerTokenEnvVar);
     if (token === undefined || token.length === 0) {
-      throw new KimiError(ErrorCodes.CONFIG_INVALID, `MCP HTTP bearer token env var "${config.bearerTokenEnvVar}" is not set or is empty`);
+      throw new OdyError(ErrorCodes.CONFIG_INVALID, `MCP HTTP bearer token env var "${config.bearerTokenEnvVar}" is not set or is empty`);
     }
     // Strip any case-variant 'authorization' static header before injecting the
     // bearer; Fetch Headers folds duplicate keys into a comma-joined value,

@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { homedir } from 'node:os';
 
-import { ErrorCodes, KimiError } from '#/errors';
+import { ErrorCodes, OdyError } from '#/errors';
 import { getRootLogger, log } from '#/logging/logger';
 import { PluginManager } from '#/plugin';
 import { LocalFetchURLProvider } from '#/tools/providers/local-fetch-url';
@@ -9,6 +9,12 @@ import { MoonshotFetchURLProvider } from '#/tools/providers/moonshot-fetch-url';
 import { resolveWebSearchRuntime } from '#/tools/providers/web-search/runtime';
 import type { PromisableMethods } from '#/utils/types';
 import { getCoreVersion } from '#/version';
+import { fetchDiff as codeReviewFetchDiff } from '#/code-review/diff';
+import { createCodeReviewExecutor } from '#/code-review/executor';
+import { resolveCodeReviewModel } from '#/code-review/model-resolver';
+import { createProvider, generate, createUserMessage } from '@odysseythink/kosong';
+import type { ProviderRequestAuth } from '@odysseythink/kosong';
+import { estimateTokens } from '#/utils/tokens';
 import { resolveThinkingLevel } from '../agent/config/thinking';
 import {
   ensureOdyHome,
@@ -18,7 +24,7 @@ import {
   resolveConfigPath,
   resolveOdyHome,
   writeConfigFile,
-  type KimiConfig,
+  type OdyConfig,
   type MoonshotServiceConfig,
 } from '../config';
 import {
@@ -51,6 +57,7 @@ import type {
   CreateGoalPayload,
   CreateSessionPayload,
   EmptyPayload,
+  CodeReviewReportData,
   ReviewDesignPayload,
   EnterPlanPayload,
   GoalControlPayload,
@@ -61,7 +68,7 @@ import type {
   ForkSessionPayload,
   GetBackgroundOutputPayload,
   GetBackgroundPayload,
-  GetKimiConfigPayload,
+  GetOdyConfigPayload,
   GetPluginInfoPayload,
   InstallPluginPayload,
   ListSessionsPayload,
@@ -76,10 +83,11 @@ import type {
   RemoveKimiProviderPayload,
   RemovePluginPayload,
   RenameSessionPayload,
+  RequestCodeReviewPayload,
   ResumeSessionPayload,
   SessionSummary,
   SetActiveToolsPayload,
-  SetKimiConfigPayload,
+  SetOdyConfigPayload,
   SetModelPayload,
   SetModelResult,
   SetPermissionPayload,
@@ -130,7 +138,7 @@ export class KimiCore implements PromisableMethods<CoreAPI> {
 
   private kaos: Promise<Kaos>;
   private runtime: ToolServices | undefined;
-  private config: KimiConfig;
+  private config: OdyConfig;
   private readonly userHomeDir: string;
   private readonly kimiRequestHeaders: Record<string, string> | undefined;
   private readonly resolveOAuthTokenProvider: OAuthTokenProviderResolver | undefined;
@@ -154,7 +162,7 @@ export class KimiCore implements PromisableMethods<CoreAPI> {
     });
     this.kaos = LocalKaos.create().catch((error: unknown) => {
       if (error instanceof KaosShellNotFoundError) {
-        throw new KimiError(ErrorCodes.SHELL_GIT_BASH_NOT_FOUND, error.message);
+        throw new OdyError(ErrorCodes.SHELL_GIT_BASH_NOT_FOUND, error.message);
       }
       throw error;
     });
@@ -404,14 +412,14 @@ export class KimiCore implements PromisableMethods<CoreAPI> {
     return result;
   }
 
-  async getKimiConfig(input?: GetKimiConfigPayload): Promise<KimiConfig> {
+  async getOdyConfig(input?: GetOdyConfigPayload): Promise<OdyConfig> {
     if (input?.reload) {
       this.config = loadRuntimeConfig(this.configPath);
     }
     return this.config;
   }
 
-  async setKimiConfig(input: SetKimiConfigPayload): Promise<KimiConfig> {
+  async setOdyConfig(input: SetOdyConfigPayload): Promise<OdyConfig> {
     const config = mergeConfigPatch(readConfigFile(this.configPath), input);
     await writeConfigFile(this.configPath, config);
     this.config = loadRuntimeConfig(this.configPath);
@@ -425,7 +433,7 @@ export class KimiCore implements PromisableMethods<CoreAPI> {
     return this.config;
   }
 
-  async removeKimiProvider(input: RemoveKimiProviderPayload): Promise<KimiConfig> {
+  async removeKimiProvider(input: RemoveKimiProviderPayload): Promise<OdyConfig> {
     const config = readConfigFile(this.configPath);
     delete config.providers[input.providerId];
 
@@ -454,6 +462,85 @@ export class KimiCore implements PromisableMethods<CoreAPI> {
 
     await writeConfigFile(this.configPath, config);
     return this.config = loadRuntimeConfig(this.configPath);
+  }
+
+  async requestCodeReview(payload: RequestCodeReviewPayload): Promise<CodeReviewReportData> {
+    this.reloadProviderManager();
+
+    const providerManager = this.resolveProviderManager('code-review');
+
+    const resolvedModel = resolveCodeReviewModel(
+      'request',
+      this.config.modeModels,
+      this.config.defaultModel,
+      { explicit: payload.modelAlias },
+      (alias) => {
+        try {
+          providerManager.resolveProviderConfig(alias);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+    );
+
+    const resolvedProvider = providerManager.resolveProviderConfig(resolvedModel);
+    const provider = createProvider(resolvedProvider.provider);
+
+    const executor = createCodeReviewExecutor({
+      cwd: payload.workDir,
+      fetchDiff: async (source) => codeReviewFetchDiff(source, payload.workDir),
+      generate: async (options) => {
+        const doGenerate = async (auth?: ProviderRequestAuth): ReturnType<typeof generate> => {
+          return generate(
+            provider,
+            options.systemPrompt,
+            [],
+            [createUserMessage(options.userPrompt)],
+            undefined,
+            { signal: options.signal, ...(auth !== undefined ? { auth } : {}) },
+          );
+        };
+
+        const withAuth = providerManager.resolveAuth?.(resolvedModel);
+        const result = withAuth !== undefined
+          ? await withAuth((auth) => doGenerate(auth))
+          : await doGenerate();
+
+        return {
+          message: {
+            role: result.message.role,
+            content: result.message.content.filter((p): p is { type: 'text'; text: string } => p.type === 'text'),
+          },
+          usage: result.usage,
+        };
+      },
+      resolveProviderConfig: (alias) => providerManager.resolveProviderConfig(alias),
+      estimateTokens,
+    });
+
+    const report = await executor.review({
+      source: payload.source,
+      modelAlias: resolvedModel,
+      description: payload.description,
+      requirements: payload.requirements,
+      deep: payload.deep,
+      timeoutMs: payload.timeoutMs,
+    });
+
+    return {
+      ok: report.ok,
+      reviewerAlias: report.reviewerAlias,
+      summary: report.summary,
+      findings: report.findings.map((f) => ({
+        severity: f.severity,
+        title: f.title,
+        detail: f.detail,
+        location: f.location,
+        suggestedFix: f.suggestedFix,
+      })),
+      note: report.note,
+    };
   }
 
   prompt({ sessionId, ...payload }: SessionAgentPayload<PromptPayload>) {
@@ -693,7 +780,7 @@ export class KimiCore implements PromisableMethods<CoreAPI> {
       return summary;
     } catch (error) {
       this.pluginsLoadError = error instanceof Error ? error : new Error(String(error));
-      throw new KimiError(
+      throw new OdyError(
         ErrorCodes.PLUGIN_LOAD_FAILED,
         `Failed to reload plugins: ${this.pluginsLoadError.message}`,
         { cause: error, details: { kimiHomeDir: this.homeDir } },
@@ -706,7 +793,7 @@ export class KimiCore implements PromisableMethods<CoreAPI> {
     this.assertPluginsLoaded();
     const info = this.plugins.info(id);
     if (info === undefined) {
-      throw new KimiError(
+      throw new OdyError(
         ErrorCodes.PLUGIN_NOT_FOUND,
         `Plugin "${id}" is not installed`,
         { details: { id } },
@@ -717,7 +804,7 @@ export class KimiCore implements PromisableMethods<CoreAPI> {
 
   private assertPluginsLoaded(): void {
     if (this.pluginsLoadError === undefined) return;
-    throw new KimiError(
+    throw new OdyError(
       ErrorCodes.PLUGIN_LOAD_FAILED,
       `Plugin state failed to load: ${this.pluginsLoadError.message}. ` +
         `Fix the file at ${this.homeDir}/plugins/installed.json and run /plugins reload.`,
@@ -725,7 +812,7 @@ export class KimiCore implements PromisableMethods<CoreAPI> {
     );
   }
 
-  private async resolveRuntime(config: KimiConfig): Promise<ToolServices> {
+  private async resolveRuntime(config: OdyConfig): Promise<ToolServices> {
     if (this.runtime !== undefined) return this.runtime;
     const runtime = await createRuntimeConfig({
       config,
@@ -736,7 +823,7 @@ export class KimiCore implements PromisableMethods<CoreAPI> {
     return runtime;
   }
 
-  private resolveSessionSkillConfig(config: KimiConfig): SessionSkillConfig {
+  private resolveSessionSkillConfig(config: OdyConfig): SessionSkillConfig {
     const explicitDirs = this.skillDirs.length > 0 ? this.skillDirs : undefined;
     return {
       userHomeDir: this.userHomeDir,
@@ -769,7 +856,7 @@ export class KimiCore implements PromisableMethods<CoreAPI> {
 
   private mergeBuiltInMcpConfig(
     base: SessionMcpConfig | undefined,
-    ctx: { sessionId: string; config: KimiConfig },
+    ctx: { sessionId: string; config: OdyConfig },
   ): SessionMcpConfig | undefined {
     const builtInServers = this.builtInMcpRegistry.getEnabledConfigs(
       {
@@ -791,20 +878,20 @@ export class KimiCore implements PromisableMethods<CoreAPI> {
   private sessionApi(sessionId: string): SessionAPIImpl {
     const session = this.sessions.get(sessionId);
     if (session === undefined) {
-      throw new KimiError(ErrorCodes.SESSION_NOT_FOUND, `Session "${sessionId}" was not found`, {
+      throw new OdyError(ErrorCodes.SESSION_NOT_FOUND, `Session "${sessionId}" was not found`, {
         details: { sessionId },
       });
     }
     return new SessionAPIImpl(session);
   }
 
-  private reloadProviderManager(): KimiConfig {
+  private reloadProviderManager(): OdyConfig {
     return this.config = loadRuntimeConfig(this.configPath);
   }
 
   private async refreshSessionRuntimeConfig(
     session: Session,
-    config: KimiConfig,
+    config: OdyConfig,
   ): Promise<void> {
     const main = session.agents.get('main')!;
     const currentMode = main.sessionMode.isActive ? main.sessionMode.kind : 'normal';
@@ -823,7 +910,7 @@ export class KimiCore implements PromisableMethods<CoreAPI> {
 }
 
 async function createRuntimeConfig(input: {
-  readonly config: KimiConfig;
+  readonly config: OdyConfig;
   readonly kimiRequestHeaders?: Record<string, string> | undefined;
   readonly resolveOAuthTokenProvider?: OAuthTokenProviderResolver | undefined;
 }): Promise<ToolServices> {
@@ -876,7 +963,7 @@ function nonEmptyString(value: string | undefined): string | undefined {
 
 function requiredWorkDir(operation: string, value: string): string {
   if (typeof value !== 'string' || value.trim() === '') {
-    throw new KimiError(ErrorCodes.REQUEST_WORK_DIR_REQUIRED, `${operation} requires workDir`);
+    throw new OdyError(ErrorCodes.REQUEST_WORK_DIR_REQUIRED, `${operation} requires workDir`);
   }
   return normalizeWorkDir(value);
 }
@@ -886,7 +973,7 @@ function createSessionId(): string {
 }
 
 function telemetryErrorReason(error: unknown): string {
-  if (error instanceof KimiError) return error.code;
+  if (error instanceof OdyError) return error.code;
   if (error instanceof Error && error.name.length > 0) return error.name;
   return typeof error;
 }

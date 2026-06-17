@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import {
-  KimiConfigSchema,
+  OdyConfigSchema,
   ServicesConfigSchema,
   WebSearchConfigSchema,
   WebSearchProviderConfigSchema,
   WebSearchProviderNameSchema,
 } from '../../src/config/schema';
 import { resolveWebSearchConfig } from '../../src/config/web-search';
-import type { KimiConfig } from '../../src/config/schema';
+import type { OdyConfig } from '../../src/config/schema';
 
 describe('WebSearchConfigSchema', () => {
   it('accepts a minimal primary config', () => {
@@ -52,8 +52,8 @@ describe('WebSearchConfigSchema', () => {
     expect(result.success).toBe(true);
   });
 
-  it('includes webSearch in KimiConfigSchema through services', () => {
-    const result = KimiConfigSchema.safeParse({
+  it('includes webSearch in OdyConfigSchema through services', () => {
+    const result = OdyConfigSchema.safeParse({
       services: { webSearch: { primary: { provider: 'perplexity' } } },
     });
     expect(result.success).toBe(true);
@@ -64,12 +64,12 @@ describe('WebSearchConfigSchema', () => {
 
 describe('resolveWebSearchConfig', () => {
   it('returns undefined when neither webSearch nor moonshotSearch is configured', () => {
-    const config: KimiConfig = { providers: {} };
+    const config: OdyConfig = { providers: {} };
     expect(resolveWebSearchConfig(config)).toBeUndefined();
   });
 
   it('aliases moonshotSearch to a moonshot primary provider', () => {
-    const config: KimiConfig = {
+    const config: OdyConfig = {
       providers: {},
       services: {
         moonshotSearch: { baseUrl: 'https://search.example/v1', apiKey: 'sk-moonshot' },
@@ -83,7 +83,7 @@ describe('resolveWebSearchConfig', () => {
   });
 
   it('gives webSearch precedence over moonshotSearch', () => {
-    const config: KimiConfig = {
+    const config: OdyConfig = {
       providers: {},
       services: {
         moonshotSearch: { baseUrl: 'https://search.example/v1' },
@@ -95,7 +95,7 @@ describe('resolveWebSearchConfig', () => {
   });
 
   it('preserves secondary provider from webSearch', () => {
-    const config: KimiConfig = {
+    const config: OdyConfig = {
       providers: {},
       services: {
         webSearch: {

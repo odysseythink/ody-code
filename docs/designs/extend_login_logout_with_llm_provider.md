@@ -149,7 +149,7 @@ export interface ApplyProviderLoginResult {
 }
 
 export function applyProviderLoginConfig(
-  config: ManagedKimiConfigShape,
+  config: ManagedOdyConfigShape,
   options: {
     readonly providerName: string;
     readonly definition: ProviderLoginDefinition;
@@ -253,7 +253,7 @@ async function fetchAnthropicModels(
 
 ```ts
 function applyProviderLoginConfig(
-  config: ManagedKimiConfigShape,
+  config: ManagedOdyConfigShape,
   options: {
     readonly providerName: string;
     readonly definition: ProviderLoginDefinition;
@@ -319,7 +319,7 @@ function applyProviderLoginConfig(
 
 ```ts
 function removeProviderConfig(
-  config: ManagedKimiConfigShape,
+  config: ManagedOdyConfigShape,
   providerId: string,
 ): void {
   delete config.providers[providerId];
@@ -689,4 +689,4 @@ pnpm build
 | A5 | All OpenAI-compatible providers (deepseek, openai, kimi, openai_responses) support `GET /models` with `Authorization: Bearer <key>` | Medium | Model fetch fails for some providers | Manual test each provider's /models endpoint |
 | A6 | `runShell` accepts an optional `authIntent` startup parameter (or can be added without breaking existing callers) | Medium | CLI `--login` cannot trigger TUI flow | Read `apps/ody-code/src/cli/run-shell.ts` signature |
 | A7 | `promptApiKey`, `promptModelSelectionForOpenPlatform`, `promptLogoutProviderSelection` can be reused or extended for the new flow | High | Need to duplicate prompt logic | Read `apps/ody-code/src/tui/commands/prompts.ts` — verified ✓ |
-| A8 | `ManagedKimiConfigShape` type from `@odysseythink/kimi-code-oauth` is compatible with the generic provider config shape | High | Type errors in `applyProviderLoginConfig` | Read `packages/oauth/src/managed-kimi-code.ts` |
+| A8 | `ManagedOdyConfigShape` type from `@odysseythink/kimi-code-oauth` is compatible with the generic provider config shape | High | Type errors in `applyProviderLoginConfig` | Read `packages/oauth/src/managed-kimi-code.ts` |

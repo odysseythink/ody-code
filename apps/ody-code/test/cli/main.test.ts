@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ErrorCodes, KimiError } from '@odysseythink/ody-code-sdk';
+import { ErrorCodes, OdyError } from '@odysseythink/ody-code-sdk';
 
 import { validateOptions } from '#/cli/options';
 import type { CLIOptions } from '#/cli/options';
@@ -309,7 +309,7 @@ describe('main entry command handling', () => {
   });
 
   it('formats Kimi startup errors with structured fields', () => {
-    const error = new KimiError(
+    const error = new OdyError(
       ErrorCodes.SHELL_GIT_BASH_NOT_FOUND,
       'Git Bash was not found on this Windows host. Checked: C:\\Program Files\\Git\\bin\\bash.exe.',
     );

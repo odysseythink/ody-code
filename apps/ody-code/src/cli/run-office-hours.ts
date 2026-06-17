@@ -13,7 +13,7 @@ import { KimiHarness, log, type TelemetryClient } from '@odysseythink/ody-code-s
 import { CLI_SHUTDOWN_TIMEOUT_MS, CLI_UI_MODE } from '#/constant/app';
 import type { TuiConfig } from '#/tui/config';
 import { loadTuiConfig, TuiConfigParseError } from '#/tui/config';
-import { KimiTUI } from '#/tui/index';
+import { OdyTUI } from '#/tui/index';
 import { detectTerminalTheme } from '#/tui/theme/detect';
 
 import type { CLIOptions } from './options';
@@ -57,7 +57,7 @@ export async function runOfficeHours(opts: CLIOptions, version: string): Promise
   await harness.ensureConfigFile();
   const config = await harness.getConfig();
 
-  const tui = new KimiTUI(harness, {
+  const tui = new OdyTUI(harness, {
     cliOptions: { ...opts, sessionMode: 'office-hours', officeHours: true },
     tuiConfig,
     version,

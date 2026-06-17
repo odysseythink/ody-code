@@ -2,10 +2,10 @@ import { readApiErrorMessage } from './api-error';
 import { isRecord } from './utils';
 import type {
   ManagedKimiCodeModelInfo,
-  ManagedKimiConfigShape,
+  ManagedOdyConfigShape,
 } from './managed-kimi-code';
 
-export type { ManagedKimiConfigShape };
+export type { ManagedOdyConfigShape };
 
 export interface OpenPlatformDefinition {
   readonly id: string;
@@ -128,7 +128,7 @@ export interface ApplyOpenPlatformResult {
 }
 
 export function applyOpenPlatformConfig(
-  config: ManagedKimiConfigShape,
+  config: ManagedOdyConfigShape,
   options: {
     readonly platform: OpenPlatformDefinition;
     readonly models: readonly ManagedKimiCodeModelInfo[];
@@ -172,7 +172,7 @@ export function applyOpenPlatformConfig(
 }
 
 export function removeOpenPlatformConfig(
-  config: ManagedKimiConfigShape,
+  config: ManagedOdyConfigShape,
   platformId: string,
 ): void {
   delete config.providers[platformId];

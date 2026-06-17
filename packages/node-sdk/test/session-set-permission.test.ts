@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { KimiHarness, type KimiError, type PermissionMode } from '#/index';
+import { KimiHarness, type OdyError, type PermissionMode } from '#/index';
 import { makeTempDir, removeTempDirs, waitForAgentWireEvent } from './session-runtime-helpers';
 import { TEST_IDENTITY } from './test-identity';
 
@@ -52,9 +52,9 @@ describe('Session.setPermission', () => {
       const session = await harness.createSession({ id: 'ses_permission_invalid', workDir });
 
       await expect(session.setPermission('invalid' as never)).rejects.toMatchObject({
-        name: 'KimiError',
+        name: 'OdyError',
         code: 'session.permission_mode_invalid',
-      } satisfies Partial<KimiError>);
+      } satisfies Partial<OdyError>);
     } finally {
       await harness.close();
     }
@@ -70,9 +70,9 @@ describe('Session.setPermission', () => {
       await session.close();
 
       await expect(session.setPermission('yolo')).rejects.toMatchObject({
-        name: 'KimiError',
+        name: 'OdyError',
         code: 'session.closed',
-      } satisfies Partial<KimiError>);
+      } satisfies Partial<OdyError>);
     } finally {
       await harness.close();
     }

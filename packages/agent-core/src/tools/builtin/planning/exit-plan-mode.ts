@@ -7,7 +7,7 @@
  */
 
 import type { Agent } from '#/agent';
-import type { KimiConfig } from '#/config/schema';
+import type { OdyConfig } from '#/config/schema';
 import type { SessionModeData } from '#/agent/session-mode';
 import type { Kaos } from '@odysseythink/kaos';
 import { z } from 'zod';
@@ -108,7 +108,7 @@ export class ExitPlanModeTool implements BuiltinTool<ExitPlanModeInput> {
 
   private async maybeEnrichPlanForE2E(): Promise<void> {
     try {
-      const e2eConfig = E2EConfigResolver.resolve(this.agent.kimiConfig ?? ({} as KimiConfig));
+      const e2eConfig = E2EConfigResolver.resolve(this.agent.kimiConfig ?? ({} as OdyConfig));
       if (!e2eConfig.enabled) return;
 
       const modeData = await this.agent.sessionMode.data();

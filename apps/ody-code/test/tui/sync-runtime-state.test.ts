@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { KimiTUI, type KimiTUIStartupInput, type TUIState } from '#/tui/ody-tui';
+import { OdyTUI, type OdyTUIStartupInput, type TUIState } from '#/tui/ody-tui';
 
 vi.mock('node:fs/promises', async (importOriginal) => {
   const actual = await importOriginal<typeof import('node:fs/promises')>();
@@ -55,7 +55,7 @@ function makeHarness(session = makeSession()) {
   };
 }
 
-function makeStartupInput(officeHours = false): KimiTUIStartupInput {
+function makeStartupInput(officeHours = false): OdyTUIStartupInput {
   return {
     cliOptions: {
       session: undefined,
@@ -84,11 +84,11 @@ function makeStartupInput(officeHours = false): KimiTUIStartupInput {
   };
 }
 
-describe('KimiTUI syncRuntimeState', () => {
+describe('OdyTUI syncRuntimeState', () => {
   it('propagates sessionModeFilePath when the file exists', async () => {
     const session = makeSession();
     const harness = makeHarness(session);
-    const driver = new KimiTUI(harness as never, makeStartupInput()) as unknown as SyncDriver;
+    const driver = new OdyTUI(harness as never, makeStartupInput()) as unknown as SyncDriver;
     vi.spyOn(driver.state.ui, 'requestRender').mockImplementation(() => {});
     vi.spyOn(driver.state.terminal, 'setProgress').mockImplementation(() => {});
 
@@ -102,7 +102,7 @@ describe('KimiTUI syncRuntimeState', () => {
   it('falls back to null when the plan file does not exist', async () => {
     const session = makeSession();
     const harness = makeHarness(session);
-    const driver = new KimiTUI(harness as never, makeStartupInput()) as unknown as SyncDriver;
+    const driver = new OdyTUI(harness as never, makeStartupInput()) as unknown as SyncDriver;
     vi.spyOn(driver.state.ui, 'requestRender').mockImplementation(() => {});
     vi.spyOn(driver.state.terminal, 'setProgress').mockImplementation(() => {});
 
@@ -127,7 +127,7 @@ describe('KimiTUI syncRuntimeState', () => {
       })),
     });
     const harness = makeHarness(session);
-    const driver = new KimiTUI(harness as never, makeStartupInput(true)) as unknown as SyncDriver;
+    const driver = new OdyTUI(harness as never, makeStartupInput(true)) as unknown as SyncDriver;
     vi.spyOn(driver.state.ui, 'requestRender').mockImplementation(() => {});
     vi.spyOn(driver.state.terminal, 'setProgress').mockImplementation(() => {});
 

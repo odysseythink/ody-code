@@ -7,7 +7,7 @@ import * as zlib from 'node:zlib';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import {
-  KimiError,
+  OdyError,
   KimiHarness,
   type SessionSummary,
 } from '#/index';
@@ -255,9 +255,9 @@ describe('exportSessionDirectory', () => {
         summary: makeSummary({ id: sid, sessionDir, workDir: tmp }),
       }),
     ).rejects.toMatchObject({
-      name: 'KimiError',
+      name: 'OdyError',
       code: 'session.export_not_found',
-    } satisfies Partial<KimiError>);
+    } satisfies Partial<OdyError>);
   });
 });
 
@@ -304,10 +304,10 @@ describe('KimiHarness.exportSession', () => {
     const harness = new KimiHarness({ homeDir, identity: TEST_IDENTITY });
 
     const missingExport = harness.exportSession({ id: 'ses_missing', version: '1.0.0-test' });
-    await expect(missingExport).rejects.toBeInstanceOf(KimiError);
+    await expect(missingExport).rejects.toBeInstanceOf(OdyError);
     await expect(missingExport).rejects.toMatchObject({
       code: 'session.not_found',
       details: { sessionId: 'ses_missing' },
-    } satisfies Partial<KimiError>);
+    } satisfies Partial<OdyError>);
   });
 });

@@ -33,7 +33,7 @@ vi.mock('@odysseythink/ody-code-sdk', async () => {
 let lastTuiInstance: { onExit?: (exitCode?: number) => Promise<void>; getCurrentSessionId: () => string } | undefined;
 
 vi.mock('#/tui/index', () => ({
-  KimiTUI: vi.fn().mockImplementation(function () {
+  OdyTUI: vi.fn().mockImplementation(function () {
     const instance = {
       onExit: undefined as unknown as ((exitCode?: number) => Promise<void>) | undefined,
       start: vi.fn().mockResolvedValue(undefined),

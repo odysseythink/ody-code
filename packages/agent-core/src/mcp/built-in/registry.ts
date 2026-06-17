@@ -1,4 +1,4 @@
-import type { KimiConfig, McpServerConfig } from '#/config/schema';
+import type { OdyConfig, McpServerConfig } from '#/config/schema';
 
 export interface BuiltInContext {
   readonly kimiHomeDir: string;
@@ -22,7 +22,7 @@ export class BuiltInMcpRegistry {
     this.definitions.set(def.name, def);
   }
 
-  getEnabledConfigs(ctx: BuiltInContext, config: KimiConfig): Record<string, McpServerConfig> {
+  getEnabledConfigs(ctx: BuiltInContext, config: OdyConfig): Record<string, McpServerConfig> {
     const result: Record<string, McpServerConfig> = {};
     for (const [name, def] of this.definitions) {
       if (this.isDisabled(name, config)) continue;
@@ -41,7 +41,7 @@ export class BuiltInMcpRegistry {
     return result;
   }
 
-  isDisabled(name: string, config: KimiConfig): boolean {
+  isDisabled(name: string, config: OdyConfig): boolean {
     const def = this.definitions.get(name);
     if (def === undefined) return true;
     if (name === 'chrome-devtools') {

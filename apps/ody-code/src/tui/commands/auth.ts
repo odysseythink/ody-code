@@ -6,7 +6,7 @@ import {
   OPEN_PLATFORMS,
   OpenPlatformApiError,
   type ManagedKimiCodeModelInfo,
-  type ManagedKimiConfigShape,
+  type ManagedOdyConfigShape,
   type OpenPlatformDefinition,
 } from '@odysseythink/kimi-code-oauth';
 import {
@@ -202,7 +202,7 @@ async function handleOpenPlatformLogin(
   }
 
   const config = await host.harness.getConfig();
-  applyOpenPlatformConfig(config as ManagedKimiConfigShape, {
+  applyOpenPlatformConfig(config as ManagedOdyConfigShape, {
     platform,
     models,
     selectedModel: selection.model,
@@ -245,7 +245,7 @@ async function handleProviderLogin(
       resolve(true);
     });
     if (!overwrite) return;
-    removeProviderConfig(config as ManagedKimiConfigShape, providerName);
+    removeProviderConfig(config as ManagedOdyConfigShape, providerName);
   }
 
   const subtitleLines = [
@@ -294,7 +294,7 @@ async function handleProviderLogin(
   if (selection === undefined) return;
 
   const updatedConfig = await host.harness.getConfig();
-  applyProviderLoginConfig(updatedConfig as ManagedKimiConfigShape, {
+  applyProviderLoginConfig(updatedConfig as ManagedOdyConfigShape, {
     providerName,
     definition,
     baseUrl,

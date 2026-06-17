@@ -15,7 +15,7 @@ import {
   ODY_CODE_PROVIDER_NAME,
   provisionManagedKimiCodeConfig,
   type ManagedKimiCodeProvisionResult,
-  type ManagedKimiConfigAdapter,
+  type ManagedOdyConfigAdapter,
 } from './managed-kimi-code';
 import {
   fetchManagedUsage,
@@ -46,7 +46,7 @@ export interface KimiOAuthToolkitOptions<TConfig = unknown> {
   readonly credentialsDir?: string | undefined;
   readonly storage?: TokenStorage | undefined;
   readonly flowConfig?: OAuthFlowConfig | undefined;
-  readonly configAdapter?: ManagedKimiConfigAdapter<TConfig> | undefined;
+  readonly configAdapter?: ManagedOdyConfigAdapter<TConfig> | undefined;
   readonly fetchImpl?: typeof fetch | undefined;
   readonly now?: OAuthManagerOptions['now'];
   readonly sleep?: OAuthManagerOptions['sleep'];
@@ -88,7 +88,7 @@ export class KimiOAuthToolkit<TConfig = unknown> {
   private readonly identity: KimiHostIdentity | undefined;
   private readonly storage: TokenStorage;
   private readonly flowConfig: OAuthFlowConfig;
-  private readonly configAdapter: ManagedKimiConfigAdapter<TConfig> | undefined;
+  private readonly configAdapter: ManagedOdyConfigAdapter<TConfig> | undefined;
   private readonly fetchImpl: typeof fetch | undefined;
   private readonly managerOptions: Pick<
     OAuthManagerOptions,

@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { log, type GoalSnapshot } from "@odysseythink/ody-code-sdk";
 
-import { KimiTUI, type KimiTUIStartupInput, type TUIState } from "#/tui/ody-tui";
+import { OdyTUI, type OdyTUIStartupInput, type TUIState } from "#/tui/ody-tui";
 import {
   handleLoginCommand,
   handleLogoutCommand,
@@ -44,10 +44,10 @@ interface InitMainTuiDriver extends StartupDriver {
 }
 
 function makeStartupInput(
-  cliOptions: Partial<KimiTUIStartupInput["cliOptions"]> = {},
-  tuiConfig: Partial<KimiTUIStartupInput["tuiConfig"]> = {},
-  resolvedTheme: KimiTUIStartupInput["resolvedTheme"] = "dark",
-): KimiTUIStartupInput {
+  cliOptions: Partial<OdyTUIStartupInput["cliOptions"]> = {},
+  tuiConfig: Partial<OdyTUIStartupInput["tuiConfig"]> = {},
+  resolvedTheme: OdyTUIStartupInput["resolvedTheme"] = "dark",
+): OdyTUIStartupInput {
   return {
     cliOptions: {
       session: undefined,
@@ -165,8 +165,8 @@ function makeHarness(session = makeSession(), overrides: Record<string, unknown>
   };
 }
 
-function makeDriver(harness: ReturnType<typeof makeHarness>, input: KimiTUIStartupInput) {
-  const driver = new KimiTUI(harness as never, input) as unknown as StartupDriver;
+function makeDriver(harness: ReturnType<typeof makeHarness>, input: OdyTUIStartupInput) {
+  const driver = new OdyTUI(harness as never, input) as unknown as StartupDriver;
   vi.spyOn(driver.state.ui, "requestRender").mockImplementation(() => {});
   vi.spyOn(driver.state.terminal, "setProgress").mockImplementation(() => {});
   return driver;
@@ -190,7 +190,7 @@ function captureInputListeners(driver: StartupDriver) {
   return { listeners, removeInputListener, write, addInputListener };
 }
 
-describe("KimiTUI startup", () => {
+describe("OdyTUI startup", () => {
   it("creates a fresh session from startup flags and syncs runtime state", async () => {
     const session = makeSession({
       getStatus: vi.fn(async () => ({

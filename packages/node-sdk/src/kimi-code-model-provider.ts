@@ -1,6 +1,6 @@
 import {
   ErrorCodes,
-  KimiError,
+  OdyError,
   resolveOdyHome,
   type Logger,
   type ModelProvider,
@@ -59,7 +59,7 @@ export class KimiForCodingProvider implements ModelProvider {
 
   resolveProviderConfig(model: string): ResolvedRuntimeProvider {
     if (model !== this.model) {
-      throw new KimiError(
+      throw new OdyError(
         ErrorCodes.CONFIG_INVALID,
         `Model "${model}" is not supported by KimiForCodingProvider.`,
       );
@@ -98,7 +98,7 @@ export class KimiForCodingProvider implements ModelProvider {
           const is401 = error instanceof APIStatusError && error.statusCode === 401;
           if (!is401) throw error;
           if (refreshed) {
-            throw new KimiError(
+            throw new OdyError(
               ErrorCodes.AUTH_LOGIN_REQUIRED,
               'OAuth token was rejected after refresh. Run /login to re-authenticate.',
               { cause: error },

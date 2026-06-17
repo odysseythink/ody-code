@@ -11,7 +11,7 @@
 import { mkdir, readFile } from 'node:fs/promises';
 import { dirname } from 'pathe';
 
-import { ErrorCodes, KimiError } from '#/errors';
+import { ErrorCodes, OdyError } from '#/errors';
 import { atomicWrite } from '#/utils/fs';
 import { withFileLock } from '#/utils/file-lock';
 import { CheckpointBackupStore } from './backup-store';
@@ -147,7 +147,7 @@ export class CheckpointIndex {
       if (code === 'ENOENT') {
         return { versions: [] };
       }
-      throw new KimiError(
+      throw new OdyError(
         ErrorCodes.SESSION_STATE_INVALID,
         `Failed to read checkpoint index ${this.path}: ${error instanceof Error ? error.message : String(error)}`,
         { cause: error },
@@ -157,7 +157,7 @@ export class CheckpointIndex {
     try {
       return JSON.parse(text) as CheckpointIndexData;
     } catch (error) {
-      throw new KimiError(
+      throw new OdyError(
         ErrorCodes.SESSION_STATE_INVALID,
         `Checkpoint index ${this.path} is not valid JSON: ${error instanceof Error ? error.message : String(error)}`,
         { cause: error },

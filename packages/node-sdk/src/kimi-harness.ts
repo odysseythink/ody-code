@@ -1,13 +1,14 @@
 import {
   ensureConfigFile,
   ErrorCodes,
-  KimiError,
+  OdyError,
   getRootLogger,
   noopTelemetryClient,
   resolveConfigPath,
   resolveOdyHome,
   resolveLoggingConfig,
   withTelemetryContext,
+  type CodeReviewReport,
   type ExperimentalFlagMap,
   type TelemetryClient,
   type TelemetryContextPatch,
@@ -24,8 +25,8 @@ import type {
   ExportSessionResult,
   ForkSessionInput,
   GetConfigOptions,
-  KimiConfig,
-  KimiConfigPatch,
+  OdyConfig,
+  OdyConfigPatch,
   KimiHarnessOptions,
   KimiHostIdentity,
   ListSessionsOptions,
@@ -192,7 +193,7 @@ export class KimiHarness {
     return this.rpc.listSessions(options);
   }
 
-  async getConfig(options: GetConfigOptions = {}): Promise<KimiConfig> {
+  async getConfig(options: GetConfigOptions = {}): Promise<OdyConfig> {
     return this.rpc.getConfig(options);
   }
 
@@ -201,15 +202,35 @@ export class KimiHarness {
     return this.rpc.getExperimentalFlags();
   }
 
+  /** Request an AI code review for the given source diff. */
+  async requestCodeReview(input: {
+    readonly source:
+      | { readonly kind: 'commits'; readonly base: string; readonly head: string }
+      | { readonly kind: 'pr'; readonly prUrlOrNumber: string }
+      | { readonly kind: 'working-tree' };
+    readonly modelAlias?: string | undefined;
+    readonly description?: string | undefined;
+    readonly requirements?: string | undefined;
+    readonly deep?: boolean | undefined;
+    readonly timeoutMs?: number | undefined;
+    readonly workDir?: string | undefined;
+  }): Promise<CodeReviewReport> {
+    const result = await this.rpc.requestCodeReview({
+      ...input,
+      workDir: input.workDir ?? process.cwd(),
+    });
+    return result as unknown as CodeReviewReport;
+  }
+
   async ensureConfigFile(): Promise<void> {
     await ensureConfigFile(this.configPath);
   }
 
-  async setConfig(patch: KimiConfigPatch): Promise<KimiConfig> {
+  async setConfig(patch: OdyConfigPatch): Promise<OdyConfig> {
     return this.rpc.setConfig(patch);
   }
 
-  async removeProvider(providerId: string): Promise<KimiConfig> {
+  async removeProvider(providerId: string): Promise<OdyConfig> {
     return this.rpc.removeProvider(providerId);
   }
 
@@ -240,11 +261,11 @@ const DEFAULT_SESSION_STARTED_UI_MODE = 'shell';
 
 function normalizeSessionId(value: string): string {
   if (typeof value !== 'string') {
-    throw new KimiError(ErrorCodes.SESSION_ID_REQUIRED, 'Session id is required.');
+    throw new OdyError(ErrorCodes.SESSION_ID_REQUIRED, 'Session id is required.');
   }
   const normalized = value.trim();
   if (normalized.length === 0) {
-    throw new KimiError(ErrorCodes.SESSION_ID_EMPTY, 'Session id cannot be empty.');
+    throw new OdyError(ErrorCodes.SESSION_ID_EMPTY, 'Session id cannot be empty.');
   }
   return normalized;
 }

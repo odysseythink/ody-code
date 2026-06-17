@@ -21,7 +21,7 @@ import {
   PluginRemoveConfirmComponent,
   PluginsOverviewSelectorComponent,
 } from '#/tui/components/dialogs/plugins-selector';
-import { KimiTUI, type KimiTUIStartupInput, type TUIState } from '#/tui/ody-tui';
+import { OdyTUI, type OdyTUIStartupInput, type TUIState } from '#/tui/ody-tui';
 import type { StreamingUIController } from '#/tui/controllers/streaming-ui';
 import { handleFeedbackCommand } from '#/tui/commands/info';
 import {
@@ -81,7 +81,7 @@ interface ModelSelectorDriver extends MessageDriver {
   ): Promise<{ alias: string; thinking: boolean } | undefined>;
 }
 
-function makeStartupInput(): KimiTUIStartupInput {
+function makeStartupInput(): OdyTUIStartupInput {
   return {
     cliOptions: {
       session: undefined,
@@ -237,7 +237,7 @@ async function makeDriver(
   harness: ReturnType<typeof makeHarness>;
 }> {
   const harness = makeHarness(session, harnessOverrides);
-  const driver = new KimiTUI(harness as never, makeStartupInput()) as unknown as MessageDriver;
+  const driver = new OdyTUI(harness as never, makeStartupInput()) as unknown as MessageDriver;
   vi.spyOn(driver.state.ui, 'requestRender').mockImplementation(() => {});
   vi.spyOn(driver.state.terminal, 'setProgress').mockImplementation(() => {});
   driver.persistInputHistory = vi.fn(async () => {});
@@ -292,7 +292,7 @@ afterEach(async () => {
   }
 });
 
-describe('KimiTUI message flow', () => {
+describe('OdyTUI message flow', () => {
   it('tracks editor shortcut and paste hooks', async () => {
     const { driver, harness } = await makeDriver();
     harness.track.mockClear();

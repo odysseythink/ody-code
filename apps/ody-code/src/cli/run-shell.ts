@@ -13,7 +13,7 @@ import { CLI_SHUTDOWN_TIMEOUT_MS, CLI_UI_MODE } from '#/constant/app';
 import type { TuiConfig } from '#/tui/config';
 import { loadTuiConfig, TuiConfigParseError } from '#/tui/config';
 import { CHROME_GUTTER } from '#/tui/constant/rendering';
-import { KimiTUI } from '#/tui/index';
+import { OdyTUI } from '#/tui/index';
 import { detectTerminalTheme } from '#/tui/theme/detect';
 
 import type { CLIOptions } from './options';
@@ -78,7 +78,7 @@ export async function runShell(
   await harness.ensureConfigFile();
   const config = await harness.getConfig();
   const configMs = Date.now() - configStartedAt;
-  const tui = new KimiTUI(harness, {
+  const tui = new OdyTUI(harness, {
     cliOptions: opts,
     tuiConfig,
     version,

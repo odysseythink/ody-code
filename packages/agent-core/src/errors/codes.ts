@@ -80,9 +80,9 @@ export const ErrorCodes = {
   INTERNAL: 'internal',
 } as const;
 
-export type KimiErrorCode = (typeof ErrorCodes)[keyof typeof ErrorCodes];
+export type OdyErrorCode = (typeof ErrorCodes)[keyof typeof ErrorCodes];
 
-export interface KimiErrorInfo {
+export interface OdyErrorInfo {
   readonly title: string;
   readonly retryable: boolean;
   /**
@@ -448,4 +448,4 @@ export const ODY_ERROR_INFO = {
     public: true,
     action: 'Inspect logs or report the issue with diagnostics.',
   },
-} as const satisfies Record<KimiErrorCode, KimiErrorInfo>;
+} as const satisfies Record<OdyErrorCode, OdyErrorInfo>;

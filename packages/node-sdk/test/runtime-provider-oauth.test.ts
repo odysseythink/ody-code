@@ -1,10 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { ErrorCodes, KimiError, type KimiConfig, type Logger } from '#/index';
+import { ErrorCodes, OdyError, type OdyConfig, type Logger } from '#/index';
 
 import { ProviderManager } from '../../agent-core/src/session/provider-manager';
 
-function managedConfig(): KimiConfig {
+function managedConfig(): OdyConfig {
   return {
     providers: {
       'managed:ody-code': {
@@ -26,7 +26,7 @@ function managedConfig(): KimiConfig {
 }
 
 async function resolveRuntimeProviderWithOAuth(options: {
-  readonly config: KimiConfig;
+  readonly config: OdyConfig;
   readonly resolveOAuthTokenProvider?: import('../../agent-core/src/session/provider-manager').OAuthTokenProviderResolver;
   readonly log?: Logger;
 }) {
@@ -36,13 +36,13 @@ async function resolveRuntimeProviderWithOAuth(options: {
   });
   const model = options.config.defaultModel;
   if (model === undefined) {
-    throw new KimiError(ErrorCodes.CONFIG_INVALID, 'No model is selected.');
+    throw new OdyError(ErrorCodes.CONFIG_INVALID, 'No model is selected.');
   }
   const { providerName, provider } = manager.resolveProviderConfig(model);
 
   const providerConfig = options.config.providers[providerName];
   if (providerConfig?.oauth !== undefined && (providerConfig.apiKey ?? '').length > 0) {
-    throw new KimiError(
+    throw new OdyError(
       ErrorCodes.CONFIG_INVALID,
       `Provider "${providerName}" has both apiKey and oauth set in config.toml — they are mutually exclusive. Remove one.`,
     );
@@ -52,7 +52,7 @@ async function resolveRuntimeProviderWithOAuth(options: {
   const tokenProvider = options.resolveOAuthTokenProvider?.(providerName, oauthRef);
 
   if (tokenProvider === undefined) {
-    throw new KimiError(
+    throw new OdyError(
       ErrorCodes.AUTH_LOGIN_REQUIRED,
       `OAuth provider "${providerName}" requires login before it can be used.`,
     );
@@ -64,11 +64,11 @@ async function resolveRuntimeProviderWithOAuth(options: {
     await tokenProvider.getAccessToken(undefined);
   } catch (error) {
     if (
-      !(error instanceof KimiError && error.code === ErrorCodes.AUTH_LOGIN_REQUIRED)
+      !(error instanceof OdyError && error.code === ErrorCodes.AUTH_LOGIN_REQUIRED)
     ) {
       options.log?.warn('oauth token fetch failed', { providerName, error });
     }
-    throw new KimiError(
+    throw new OdyError(
       ErrorCodes.AUTH_LOGIN_REQUIRED,
       `OAuth provider "${providerName}" requires login before it can be used.`,
       { cause: error },
@@ -84,7 +84,7 @@ async function resolveRuntimeProviderWithOAuth(options: {
           opts?.forceRefresh ? { force: true } : undefined,
         );
         if (apiKey.trim().length === 0) {
-          throw new KimiError(
+          throw new OdyError(
             ErrorCodes.AUTH_LOGIN_REQUIRED,
             `OAuth provider "${providerName}" requires login before it can be used.`,
           );
@@ -92,11 +92,11 @@ async function resolveRuntimeProviderWithOAuth(options: {
         return { apiKey };
       } catch (error) {
         if (
-          !(error instanceof KimiError && error.code === ErrorCodes.AUTH_LOGIN_REQUIRED)
+          !(error instanceof OdyError && error.code === ErrorCodes.AUTH_LOGIN_REQUIRED)
         ) {
           options.log?.warn('oauth token fetch failed', { providerName, error });
         }
-        throw new KimiError(
+        throw new OdyError(
           ErrorCodes.AUTH_LOGIN_REQUIRED,
           `OAuth provider "${providerName}" requires login before it can be used.`,
           { cause: error },
@@ -146,7 +146,7 @@ describe('resolveRuntimeProviderWithOAuth', () => {
   });
 
   it('rejects providers that set both apiKey and oauth on the same config', async () => {
-    const conflicting: KimiConfig = {
+    const conflicting: OdyConfig = {
       ...managedConfig(),
       providers: {
         'managed:ody-code': {
@@ -177,7 +177,7 @@ describe('resolveRuntimeProviderWithOAuth', () => {
         }),
       }),
     ).rejects.toMatchObject({
-      name: 'KimiError',
+      name: 'OdyError',
       code: 'auth.login_required',
     });
   });
@@ -208,7 +208,7 @@ describe('resolveRuntimeProviderWithOAuth', () => {
         log,
         resolveOAuthTokenProvider: () => ({
           getAccessToken: vi.fn().mockRejectedValue(
-            new KimiError(ErrorCodes.AUTH_LOGIN_REQUIRED, 'not logged in'),
+            new OdyError(ErrorCodes.AUTH_LOGIN_REQUIRED, 'not logged in'),
           ),
         }),
       }),

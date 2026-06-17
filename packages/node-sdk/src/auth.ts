@@ -1,4 +1,4 @@
-import { readConfigFile, writeConfigFile, type KimiConfig, type OAuthRef } from '@odysseythink/agent-core';
+import { readConfigFile, writeConfigFile, type OdyConfig, type OAuthRef } from '@odysseythink/agent-core';
 import {
   applyManagedKimiCodeConfig,
   applyManagedKimiCodeLogoutConfig,
@@ -10,7 +10,7 @@ import {
   type FetchSubmitFeedbackResult,
   type KimiHostIdentity,
   type KimiOAuthLoginOptions,
-  type ManagedKimiConfigShape,
+  type ManagedOdyConfigShape,
   type OAuthRefreshOutcome,
 } from '@odysseythink/kimi-code-oauth';
 
@@ -41,11 +41,11 @@ export interface KimiAuthFacadeOptions {
   readonly homeDir: string;
   readonly configPath: string;
   readonly identity?: KimiHostIdentity | undefined;
-  readonly onConfigUpdated?: ((config: KimiConfig) => void) | undefined;
+  readonly onConfigUpdated?: ((config: OdyConfig) => void) | undefined;
   readonly onRefresh?: ((outcome: OAuthRefreshOutcome) => void) | undefined;
 }
 
-type SDKManagedConfig = KimiConfig & ManagedKimiConfigShape;
+type SDKManagedConfig = OdyConfig & ManagedOdyConfigShape;
 
 export class KimiAuthFacade {
   private readonly toolkit: KimiOAuthToolkit<SDKManagedConfig>;

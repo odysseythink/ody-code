@@ -4,7 +4,7 @@ import { join } from 'node:path';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
-import type { KimiConfig } from '@odysseythink/agent-core';
+import type { OdyConfig } from '@odysseythink/agent-core';
 import { createKimiDefaultHeaders } from '@odysseythink/kimi-code-oauth';
 
 import { ProviderManager } from '../../agent-core/src/session/provider-manager';
@@ -13,7 +13,7 @@ import { TEST_IDENTITY } from './test-identity';
 const tempDirs: string[] = [];
 
 function resolveRuntimeProvider(options: {
-  readonly config: KimiConfig;
+  readonly config: OdyConfig;
   readonly model?: string;
   readonly kimiRequestHeaders?: Record<string, string>;
 }) {
@@ -81,7 +81,7 @@ describe('runtime provider identity headers', () => {
   it('lets Kimi provider customHeaders override default identity headers', async () => {
     const homeDir = await makeTempDir();
     const kimiRequestHeaders = createKimiDefaultHeaders({ homeDir, ...TEST_IDENTITY });
-    const config: KimiConfig = {
+    const config: OdyConfig = {
       providers: {
         kimi: {
           type: 'kimi',
@@ -121,7 +121,7 @@ describe('runtime provider identity headers', () => {
   it('does not add Kimi identity headers to non-Kimi providers', async () => {
     const homeDir = await makeTempDir();
     const kimiRequestHeaders = createKimiDefaultHeaders({ homeDir, ...TEST_IDENTITY });
-    const config: KimiConfig = {
+    const config: OdyConfig = {
       providers: {
         openai: {
           type: 'openai',

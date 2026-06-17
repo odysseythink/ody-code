@@ -7,6 +7,7 @@ import {
   type AgentContextData,
   type ApprovalRequest,
   type ApprovalResponse,
+  type CodeReviewReportData,
   type CoreAPI,
   type DesignReviewData,
   type Event,
@@ -16,6 +17,7 @@ import {
   type OpenExternalResponse,
   type QuestionRequest,
   type QuestionResult,
+  type RequestCodeReviewPayload,
   type SDKAPI,
   type SDKRPCClient,
   type TelemetryClient,
@@ -35,8 +37,8 @@ import type {
   GetConfigOptions,
   GoalSnapshot,
   GoalToolResult,
-  KimiConfig,
-  KimiConfigPatch,
+  OdyConfig,
+  OdyConfigPatch,
   ListSessionsOptions,
   McpServerInfo,
   McpStartupMetrics,
@@ -208,9 +210,9 @@ export class SDKRpcClient {
     });
   }
 
-  async getConfig(input?: GetConfigOptions): Promise<KimiConfig> {
+  async getConfig(input?: GetConfigOptions): Promise<OdyConfig> {
     const rpc = await this.getRpc();
-    return rpc.getKimiConfig(input ?? {});
+    return rpc.getOdyConfig(input ?? {});
   }
 
   async getExperimentalFlags(): Promise<ExperimentalFlagMap> {
@@ -218,12 +220,12 @@ export class SDKRpcClient {
     return rpc.getExperimentalFlags({});
   }
 
-  async setConfig(input: KimiConfigPatch): Promise<KimiConfig> {
+  async setConfig(input: OdyConfigPatch): Promise<OdyConfig> {
     const rpc = await this.getRpc();
-    return rpc.setKimiConfig(input);
+    return rpc.setOdyConfig(input);
   }
 
-  async removeProvider(providerId: string): Promise<KimiConfig> {
+  async removeProvider(providerId: string): Promise<OdyConfig> {
     const rpc = await this.getRpc();
     return rpc.removeKimiProvider({ providerId });
   }
@@ -337,6 +339,11 @@ export class SDKRpcClient {
       kind: input.kind,
       timeoutMs: input.timeoutMs,
     });
+  }
+
+  async requestCodeReview(input: RequestCodeReviewPayload): Promise<CodeReviewReportData> {
+    const rpc = await this.getRpc();
+    return rpc.requestCodeReview(input);
   }
 
   async compact(input: SessionIdRpcInput & CompactOptions): Promise<void> {

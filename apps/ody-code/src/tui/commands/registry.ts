@@ -282,6 +282,22 @@ export const BUILTIN_SLASH_COMMANDS = [
     hiddenInModes: OFFICE_HOURS_HIDDEN,
   },
   {
+    name: 'request-code-review',
+    aliases: [],
+    description: 'Request a code review of the current changes.',
+    priority: 80,
+    availability: 'idle-only',
+    hiddenInModes: ['plan', 'design', 'office-hours'],
+  },
+  {
+    name: 'receive-code-review',
+    aliases: [],
+    description: 'Enter receiving-code-review mode: switch model and load the receiving skill.',
+    priority: 80,
+    availability: 'idle-only',
+    hiddenInModes: ['plan', 'design', 'office-hours'],
+  },
+  {
     name: 'exit',
     aliases: ['quit', 'q'],
     description: 'Exit the application',

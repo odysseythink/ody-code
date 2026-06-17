@@ -1,7 +1,7 @@
 
 import { describe, it, expect } from 'vitest';
 
-import { createTUIState, type KimiTUIOptions } from '#/tui/ody-tui';
+import { createTUIState, type OdyTUIOptions } from '#/tui/ody-tui';
 import type { AppState } from '#/tui/types';
 
 function fakeInitialAppState(): AppState {
@@ -33,7 +33,7 @@ function fakeInitialAppState(): AppState {
 
 describe('createTUIState', () => {
   it('initializes all fields with sensible defaults', () => {
-    const opts: KimiTUIOptions = {
+    const opts: OdyTUIOptions = {
       initialAppState: fakeInitialAppState(),
       startup: {
         continueLast: false,

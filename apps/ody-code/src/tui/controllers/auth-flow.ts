@@ -4,14 +4,14 @@ import type { SkillListSession } from '../commands';
 import { OAUTH_LOGIN_REQUIRED_STARTUP_NOTICE } from '../constant/ody-tui';
 import { refreshAllProviderModels } from '../utils/refresh-providers';
 import type { SessionEventHandler } from './session-event-handler';
-import type { AppState, KimiTUIOptions } from '../types';
+import type { AppState, OdyTUIOptions } from '../types';
 import type { TUIState } from '../tui-state';
 
 export interface AuthFlowHost {
   state: TUIState;
   session: Session | undefined;
   readonly harness: KimiHarness;
-  readonly options: KimiTUIOptions;
+  readonly options: OdyTUIOptions;
 
   setAppState(patch: Partial<AppState>): void;
   setStartupReady(): void;

@@ -6,7 +6,7 @@ import type { ExecutableToolResult, ToolExecution } from '#/loop/types';
 import { toInputJsonSchema } from '#/tools/support/input-schema';
 import { literalRulePattern, matchesGlobRuleSubject } from '#/tools/support/rule-match';
 import { E2EConfigResolver } from '#/e2e-testing/config';
-import type { KimiConfig } from '#/config/schema';
+import type { OdyConfig } from '#/config/schema';
 import { ImpactAnalyzer } from '#/e2e-testing/impact-analyzer';
 import { E2ETestExecutor } from '#/e2e-testing/executor';
 import { registry } from '#/e2e-testing/registry';
@@ -44,7 +44,7 @@ export class RunE2ETestsTool implements BuiltinTool<RunE2ETestsInput> {
     input: RunE2ETestsInput,
     ctx: { signal: AbortSignal; turnId: string; toolCallId: string },
   ): Promise<ExecutableToolResult> {
-    const config = E2EConfigResolver.resolve(this.agent.kimiConfig ?? ({} as KimiConfig));
+    const config = E2EConfigResolver.resolve(this.agent.kimiConfig ?? ({} as OdyConfig));
     if (!config.enabled) {
       return { output: 'E2E testing is disabled in config.toml (e2e.enabled = false).' };
     }

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { parseConfigString } from '../../src/config/toml';
 import { E2EConfigResolver } from '#/e2e-testing/config';
 import type { ResolvedE2EConfig } from '#/e2e-testing/config';
-import type { KimiConfig } from '#/config/schema';
+import type { OdyConfig } from '#/config/schema';
 import { ImpactAnalyzer } from '#/e2e-testing/impact-analyzer';
 import { registry } from '#/e2e-testing/registry';
 import { TypeScriptVitestGenerator } from '#/e2e-testing/generator';
@@ -37,19 +37,19 @@ generated_test_dir = ".ody-code/test-generated/e2e"
 
 describe('E2EConfigResolver', () => {
   it('returns defaults for empty config', () => {
-    const result = E2EConfigResolver.resolve({} as KimiConfig);
+    const result = E2EConfigResolver.resolve({} as OdyConfig);
     expect(result.enabled).toBe(true);
     expect(result.strategy).toBe('smart');
     expect(result.criticalTools).toEqual(['ExitPlanModeTool']);
   });
 
   it('overrides enabled from raw', () => {
-    const result = E2EConfigResolver.resolve({ e2e: { enabled: false } as any } as KimiConfig);
+    const result = E2EConfigResolver.resolve({ e2e: { enabled: false } as any } as OdyConfig);
     expect(result.enabled).toBe(false);
   });
 
   it('throws for maxConcurrency 0', () => {
-    expect(() => E2EConfigResolver.resolve({ e2e: { maxConcurrency: 0 } as any } as KimiConfig))
+    expect(() => E2EConfigResolver.resolve({ e2e: { maxConcurrency: 0 } as any } as OdyConfig))
       .toThrow();
   });
 });
@@ -171,12 +171,12 @@ describe('ImpactAnalyzer edge cases', () => {
 
 describe('E2EConfigResolver edge cases', () => {
   it('defaults testTimeout when omitted', () => {
-    const result = E2EConfigResolver.resolve({ e2e: {} as any } as KimiConfig);
+    const result = E2EConfigResolver.resolve({ e2e: {} as any } as OdyConfig);
     expect(result.testTimeout).toBe(30000);
   });
 
   it('defaults failurePolicy to warn', () => {
-    const result = E2EConfigResolver.resolve({} as KimiConfig);
+    const result = E2EConfigResolver.resolve({} as OdyConfig);
     expect(result.failurePolicy).toBe('warn');
   });
 });

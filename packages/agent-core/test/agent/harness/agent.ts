@@ -18,7 +18,7 @@ import {
   AGENT_WIRE_PROTOCOL_VERSION,
   InMemoryAgentRecordPersistence,
 } from '../../../src/agent/records';
-import type { KimiConfig } from '../../../src/config';
+import type { OdyConfig } from '../../../src/config';
 import type { ExecutableToolResult } from '../../../src/loop';
 import type { Logger } from '../../../src/logging';
 import { ProviderManager } from '../../../src/session/provider-manager';
@@ -99,7 +99,7 @@ export interface TestAgentOptions {
   readonly permission?: AgentOptions['permission'];
   readonly goals?: AgentOptions['goals'];
   readonly providerManager?: ProviderManager;
-  readonly initialConfig?: KimiConfig;
+  readonly initialConfig?: OdyConfig;
   readonly providerManagerOverrides?: Omit<ConstructorParameters<typeof ProviderManager>[0], 'config'>;
   readonly sessionId?: string;
   readonly subagentHost?: AgentOptions['subagentHost'];
@@ -160,7 +160,7 @@ export class AgentTestContext {
   readonly mockNextResponse = this.scriptedGenerate.mockNextResponse;
   readonly mockNextProviderResponse = this.scriptedGenerate.mockNextProviderResponse;
 
-  private kimiConfig: KimiConfig;
+  private kimiConfig: OdyConfig;
 
   constructor(options: TestAgentOptions = {}) {
     this.options = options;
@@ -1036,15 +1036,15 @@ function configStateSnapshot(agent: Agent): ResumeStateSnapshot['config'] {
   };
 }
 
-function emptyConfig(): KimiConfig {
+function emptyConfig(): OdyConfig {
   return configWithProvider({ providers: {} }, MOCK_PROVIDER, undefined);
 }
 
 function configWithProvider(
-  config: KimiConfig,
+  config: OdyConfig,
   provider: ProviderConfig,
   modelCapabilities: ModelCapability | undefined,
-): KimiConfig {
+): OdyConfig {
   const providerName = 'test-provider';
   const maxContextSize = modelCapabilities?.max_context_tokens;
   return {
@@ -1066,7 +1066,7 @@ function configWithProvider(
   };
 }
 
-function providerConfigForAlias(provider: ProviderConfig): KimiConfig['providers'][string] {
+function providerConfigForAlias(provider: ProviderConfig): OdyConfig['providers'][string] {
   return {
     type: provider.type,
     apiKey: 'apiKey' in provider ? provider.apiKey : undefined,

@@ -7,7 +7,7 @@ import {
 } from '@odysseythink/kosong';
 
 import type { Agent } from '..';
-import { ErrorCodes, KimiError } from '../../errors';
+import { ErrorCodes, OdyError } from '../../errors';
 import type { AgentConfigData, AgentConfigUpdateData } from './types';
 import { resolveThinkingEffort, type ThinkingEffort } from './thinking';
 import type { ResolvedRuntimeProvider } from '../../session/provider-manager';
@@ -91,7 +91,7 @@ export class ConfigState {
   get providerConfig(): ProviderConfig {
     const provider = this.resolvedProviderConfig?.provider;
     if (provider === undefined) {
-      throw new KimiError(ErrorCodes.MODEL_NOT_CONFIGURED, 'Provider not set');
+      throw new OdyError(ErrorCodes.MODEL_NOT_CONFIGURED, 'Provider not set');
     }
     return provider;
   }
@@ -102,7 +102,7 @@ export class ConfigState {
 
   get model(): string {
     if (this._modelAlias === undefined) {
-      throw new KimiError(ErrorCodes.MODEL_NOT_CONFIGURED, 'Model not set');
+      throw new OdyError(ErrorCodes.MODEL_NOT_CONFIGURED, 'Model not set');
     }
     return this._modelAlias;
   }

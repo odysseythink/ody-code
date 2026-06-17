@@ -1,6 +1,6 @@
 import { HOOK_EVENT_TYPES } from '../session/hooks/types';
 import { parsePattern } from '#/agent/permission/matches-rule';
-import { ErrorCodes, KimiError } from '#/errors';
+import { ErrorCodes, OdyError } from '#/errors';
 import { z } from 'zod';
 
 export const ProviderTypeSchema = z.enum([
@@ -293,7 +293,7 @@ export const E2EConfigSchema = z.object({
 
 export type E2EConfig = z.infer<typeof E2EConfigSchema>;
 
-export const KimiConfigSchema = z.object({
+export const OdyConfigSchema = z.object({
   providers: z.record(z.string(), ProviderConfigSchema).default({}),
   defaultProvider: z.string().optional(),
   defaultModel: z.string().optional(),
@@ -316,13 +316,16 @@ export const KimiConfigSchema = z.object({
     plan: z.string().optional(),
     design: z.string().optional(),
     review: z.string().optional(),
+    codeReview: z.string().optional(),
+    codeReviewRequest: z.string().optional(),
+    codeReviewReceive: z.string().optional(),
   }).optional(),
   browser: BrowserConfigSchema.optional(),
   e2e: E2EConfigSchema.optional(),
   raw: z.record(z.string(), z.unknown()).optional(),
 });
 
-export type KimiConfig = z.infer<typeof KimiConfigSchema>;
+export type OdyConfig = z.infer<typeof OdyConfigSchema>;
 
 const ProviderConfigPatchSchema = ProviderConfigSchema.partial();
 const ModelAliasPatchSchema = ModelAliasSchema.partial();
@@ -342,7 +345,7 @@ const ServicesConfigPatchSchema = z.object({
   webSearch: WebSearchConfigPatchSchema.optional(),
 });
 
-export const KimiConfigPatchSchema = z
+export const OdyConfigPatchSchema = z
   .object({
     providers: z.record(z.string(), ProviderConfigPatchSchema).optional(),
     defaultProvider: z.string().optional(),
@@ -366,24 +369,27 @@ export const KimiConfigPatchSchema = z
       plan: z.string().optional(),
       design: z.string().optional(),
       review: z.string().optional(),
+      codeReview: z.string().optional(),
+      codeReviewRequest: z.string().optional(),
+      codeReviewReceive: z.string().optional(),
     }).optional(),
     browser: BrowserConfigSchema.optional(),
   })
   .strict();
 
-export type KimiConfigPatch = z.infer<typeof KimiConfigPatchSchema>;
+export type OdyConfigPatch = z.infer<typeof OdyConfigPatchSchema>;
 
-export function getDefaultConfig(): KimiConfig {
+export function getDefaultConfig(): OdyConfig {
   return {
     providers: {},
   };
 }
 
-export function validateConfig(config: unknown): KimiConfig {
+export function validateConfig(config: unknown): OdyConfig {
   try {
-    return KimiConfigSchema.parse(config);
+    return OdyConfigSchema.parse(config);
   } catch (error) {
-    throw new KimiError(ErrorCodes.CONFIG_INVALID, `Invalid configuration: ${formatConfigValidationError(error)}`, {
+    throw new OdyError(ErrorCodes.CONFIG_INVALID, `Invalid configuration: ${formatConfigValidationError(error)}`, {
       cause: error,
     });
   }

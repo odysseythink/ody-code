@@ -10,7 +10,7 @@ import {
   type ProviderModelInfo,
 } from '../src/provider-login';
 import { OpenPlatformApiError } from '../src/open-platform';
-import type { ManagedKimiConfigShape } from '../src/managed-kimi-code';
+import type { ManagedOdyConfigShape } from '../src/managed-kimi-code';
 
 describe('SUPPORTED_PROVIDER_LOGINS', () => {
   it('contains deepseek with correct metadata', () => {
@@ -213,7 +213,7 @@ describe('fetchProviderModels (glm overrides)', () => {
 
 describe('applyProviderLoginConfig', () => {
   it('writes provider, models, and sets default when none exists', () => {
-    const config: ManagedKimiConfigShape = { providers: {} };
+    const config: ManagedOdyConfigShape = { providers: {} };
     const def = getProviderLoginDefinition('deepseek')!;
     const models: ProviderModelInfo[] = [
       { id: 'deepseek-chat', contextLength: 64000, supportsToolUse: true, supportsReasoning: false, supportsImageIn: false, supportsVideoIn: false },
@@ -243,7 +243,7 @@ describe('applyProviderLoginConfig', () => {
   });
 
   it('does not overwrite existing defaultModel', () => {
-    const config: ManagedKimiConfigShape = {
+    const config: ManagedOdyConfigShape = {
       providers: {},
       defaultModel: 'other/model',
     };
@@ -266,7 +266,7 @@ describe('applyProviderLoginConfig', () => {
   });
 
   it('uses model.maxOutputSize when present, otherwise falls back to 8192', () => {
-    const config: ManagedKimiConfigShape = { providers: {} };
+    const config: ManagedOdyConfigShape = { providers: {} };
     const def = getProviderLoginDefinition('deepseek')!;
     const models: ProviderModelInfo[] = [
       { id: 'glm-5', contextLength: 200_000, maxOutputSize: 128_000, supportsToolUse: true, supportsReasoning: true, supportsImageIn: false, supportsVideoIn: false },
@@ -292,7 +292,7 @@ describe('applyProviderLoginConfig', () => {
 
 describe('removeProviderConfig', () => {
   it('cascade-deletes models and clears default when matched', () => {
-    const config: ManagedKimiConfigShape = {
+    const config: ManagedOdyConfigShape = {
       providers: { deepseek_main: { type: 'deepseek', apiKey: 'sk-test' } },
       models: { 'deepseek_main/chat': { provider: 'deepseek_main', model: 'chat', maxContextSize: 64000 } },
       defaultModel: 'deepseek_main/chat',

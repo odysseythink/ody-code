@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { KimiHarness, type KimiError } from '#/index';
+import { KimiHarness, type OdyError } from '#/index';
 
 import { makeTempDir, removeTempDirs, waitForAgentWireEvent } from './session-runtime-helpers';
 import { TEST_IDENTITY } from './test-identity';
@@ -47,9 +47,9 @@ describe('Session.setThinking', () => {
       const session = await harness.createSession({ id: 'ses_thinking_empty', workDir });
 
       await expect(session.setThinking('   ')).rejects.toMatchObject({
-        name: 'KimiError',
+        name: 'OdyError',
         code: 'session.thinking_empty',
-      } satisfies Partial<KimiError>);
+      } satisfies Partial<OdyError>);
     } finally {
       await harness.close();
     }
@@ -65,9 +65,9 @@ describe('Session.setThinking', () => {
       await session.close();
 
       await expect(session.setThinking('high')).rejects.toMatchObject({
-        name: 'KimiError',
+        name: 'OdyError',
         code: 'session.closed',
-      } satisfies Partial<KimiError>);
+      } satisfies Partial<OdyError>);
     } finally {
       await harness.close();
     }

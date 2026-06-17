@@ -5,7 +5,7 @@ import type { BackgroundTaskInfo } from '#/agent/background';
 import type { PermissionData, PermissionMode } from '#/agent/permission';
 import type { SessionModeData, SessionModeKind } from '#/agent/session-mode';
 import type { ToolInfo } from '#/agent/tool';
-import type { KimiConfig, KimiConfigPatch } from '#/config';
+import type { OdyConfig, OdyConfigPatch } from '#/config';
 import type { ExperimentalFlagMap } from '#/flags';
 import type { ResumeSessionResult } from '#/rpc/resumed';
 import type { SupportedLanguage } from '#/i18n';
@@ -22,6 +22,7 @@ import type {
 } from '#/session/goal';
 import type { ContentPart } from '@odysseythink/kosong';
 
+import type { CodeReviewDiffSource } from '#/code-review/types';
 import type { PluginInfo, PluginSummary, ReloadSummary } from '#/plugin';
 import type { UsageStatus } from './events';
 import type { WithAgentId, WithSessionId } from './types';
@@ -32,7 +33,7 @@ export type JsonObject = { readonly [key: string]: JsonValue };
 
 export type Unsubscribe = () => void;
 
-export type { KimiConfig, KimiConfigPatch };
+export type { OdyConfig, OdyConfigPatch };
 
 export type TextPromptPart = Extract<ContentPart, { type: 'text' }>;
 export type PromptPart = Extract<ContentPart, { type: 'text' | 'image_url' | 'video_url' }>;
@@ -295,11 +296,11 @@ export interface GoalControlPayload {
   readonly reason?: string;
 }
 
-export interface GetKimiConfigPayload {
+export interface GetOdyConfigPayload {
   readonly reload?: boolean;
 }
 
-export type SetKimiConfigPayload = KimiConfigPatch;
+export type SetOdyConfigPayload = OdyConfigPatch;
 
 export interface RemoveKimiProviderPayload {
   readonly providerId: string;
@@ -342,6 +343,32 @@ export interface DesignReviewData {
   readonly ok: boolean;
   readonly note?: string;
   readonly findings: readonly ReviewFindingData[];
+}
+
+export interface RequestCodeReviewPayload {
+  readonly modelAlias?: string | undefined;
+  readonly source: CodeReviewDiffSource;
+  readonly description?: string | undefined;
+  readonly requirements?: string | undefined;
+  readonly deep?: boolean | undefined;
+  readonly timeoutMs?: number | undefined;
+  readonly workDir: string;
+}
+
+export interface CodeReviewFindingData {
+  readonly severity: 'critical' | 'important' | 'minor';
+  readonly title: string;
+  readonly detail: string;
+  readonly location?: string | undefined;
+  readonly suggestedFix?: string | undefined;
+}
+
+export interface CodeReviewReportData {
+  readonly ok: boolean;
+  readonly reviewerAlias: string;
+  readonly summary?: string | undefined;
+  readonly findings: readonly CodeReviewFindingData[];
+  readonly note?: string | undefined;
 }
 
 export interface AgentAPI {
@@ -400,9 +427,9 @@ type SessionAPIWithId = WithSessionId<SessionAPI>;
 export interface CoreAPI extends SessionAPIWithId {
   getCoreInfo: (payload: EmptyPayload) => CoreInfo;
   getExperimentalFlags: (payload: EmptyPayload) => ExperimentalFlagMap;
-  getKimiConfig: (payload: GetKimiConfigPayload) => KimiConfig;
-  setKimiConfig: (payload: SetKimiConfigPayload) => KimiConfig;
-  removeKimiProvider: (payload: RemoveKimiProviderPayload) => KimiConfig;
+  getOdyConfig: (payload: GetOdyConfigPayload) => OdyConfig;
+  setOdyConfig: (payload: SetOdyConfigPayload) => OdyConfig;
+  removeKimiProvider: (payload: RemoveKimiProviderPayload) => OdyConfig;
   createSession: (payload: CreateSessionPayload) => SessionSummary;
   closeSession: (payload: CloseSessionPayload) => void;
   resumeSession: (payload: ResumeSessionPayload) => ResumeSessionResult;
@@ -416,4 +443,5 @@ export interface CoreAPI extends SessionAPIWithId {
   removePlugin: (payload: RemovePluginPayload) => void;
   reloadPlugins: (payload: EmptyPayload) => ReloadPluginsResult;
   getPluginInfo: (payload: GetPluginInfoPayload) => PluginInfo;
+  requestCodeReview: (payload: RequestCodeReviewPayload) => Promise<CodeReviewReportData>;
 }

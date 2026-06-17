@@ -1,6 +1,6 @@
-import type { KimiConfig, WebSearchConfig } from './schema';
+import type { OdyConfig, WebSearchConfig } from './schema';
 
-export function resolveWebSearchConfig(config: KimiConfig): WebSearchConfig | undefined {
+export function resolveWebSearchConfig(config: OdyConfig): WebSearchConfig | undefined {
   if (config.services?.webSearch !== undefined) {
     return config.services.webSearch;
   }

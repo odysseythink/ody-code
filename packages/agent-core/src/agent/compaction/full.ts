@@ -1,9 +1,9 @@
 import {
   ErrorCodes,
-  KimiError,
-  isKimiError,
+  OdyError,
+  isOdyError,
   makeErrorPayload,
-  toKimiErrorPayload,
+  toOdyErrorPayload,
 } from '#/errors';
 import {
   APIEmptyResponseError,
@@ -105,7 +105,7 @@ export class FullCompaction {
     }
     const compactedCount = this.strategy.computeCompactCount(this.agent.context.history, data.source);
     if (compactedCount === 0) {
-      throw new KimiError(ErrorCodes.COMPACTION_UNABLE, 'No prefix that can be compacted in current history.');
+      throw new OdyError(ErrorCodes.COMPACTION_UNABLE, 'No prefix that can be compacted in current history.');
     }
     this.agent.records.logRecord({
       type: 'full_compaction.begin',
@@ -204,7 +204,7 @@ export class FullCompaction {
     } catch (error) {
       // "Nothing compactable yet" must never abort the turn — this checkpoint fires
       // below the global threshold, so it is the first caller that can hit this.
-      if (isKimiError(error) && error.code === ErrorCodes.COMPACTION_UNABLE) return;
+      if (isOdyError(error) && error.code === ErrorCodes.COMPACTION_UNABLE) return;
       throw error;
     }
     if (started) await this.block(signal);
@@ -229,7 +229,7 @@ export class FullCompaction {
     const maxCompactions = this.strategy.maxCompactionPerTurn;
     if (this.compactionCountInTurn >= maxCompactions) {
       if (throwOnLimit) {
-        throw new KimiError(ErrorCodes.CONTEXT_OVERFLOW, `Compaction limit exceeded (${String(maxCompactions)})`, {
+        throw new OdyError(ErrorCodes.CONTEXT_OVERFLOW, `Compaction limit exceeded (${String(maxCompactions)})`, {
           details: { maxCompactions },
         });
       }
@@ -375,14 +375,14 @@ export class FullCompaction {
         const active = this.compacting;
         const blockedByTurn = active?.blockedByTurn === true;
         this.agent.log.error('compaction failed', {
-          code: isKimiError(error) ? error.code : undefined,
+          code: isOdyError(error) ? error.code : undefined,
           error,
         });
         this.markCanceled();
         if (!blockedByTurn) {
           const payload =
-            isKimiError(error) && error.code === ErrorCodes.AUTH_LOGIN_REQUIRED
-              ? toKimiErrorPayload(error)
+            isOdyError(error) && error.code === ErrorCodes.AUTH_LOGIN_REQUIRED
+              ? toOdyErrorPayload(error)
               : makeErrorPayload(ErrorCodes.COMPACTION_FAILED, String(error));
           this.agent.emitEvent({
             type: 'error',
@@ -397,8 +397,8 @@ export class FullCompaction {
           error_type: error instanceof Error ? error.name : 'Unknown',
         });
         if (blockedByTurn) {
-          if (isKimiError(error) && error.code === ErrorCodes.AUTH_LOGIN_REQUIRED) throw error;
-          throw new KimiError(ErrorCodes.COMPACTION_FAILED, String(error), { cause: error });
+          if (isOdyError(error) && error.code === ErrorCodes.AUTH_LOGIN_REQUIRED) throw error;
+          throw new OdyError(ErrorCodes.COMPACTION_FAILED, String(error), { cause: error });
         }
       }
     }

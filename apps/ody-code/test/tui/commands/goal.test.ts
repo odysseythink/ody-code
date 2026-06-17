@@ -1,4 +1,4 @@
-import { ErrorCodes, KimiError } from '@odysseythink/ody-code-sdk';
+import { ErrorCodes, OdyError } from '@odysseythink/ody-code-sdk';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
@@ -304,7 +304,7 @@ describe('handleGoalCommand', () => {
 
   it('surfaces duplicate-goal errors with replace guidance', async () => {
     session.createGoal.mockRejectedValueOnce(
-      new KimiError(ErrorCodes.GOAL_ALREADY_EXISTS, 'exists'),
+      new OdyError(ErrorCodes.GOAL_ALREADY_EXISTS, 'exists'),
     );
     await handleGoalCommand(host, 'Ship feature X');
     expect(host.showError).toHaveBeenCalledWith(expect.stringContaining('/goal replace'));
@@ -348,14 +348,14 @@ describe('handleGoalCommand', () => {
 
   // No-goal control commands all read as calm status messages, never red errors.
   it('pausing with no goal shows a friendly status, not an error', async () => {
-    session.pauseGoal.mockRejectedValueOnce(new KimiError(ErrorCodes.GOAL_NOT_FOUND, 'No current goal'));
+    session.pauseGoal.mockRejectedValueOnce(new OdyError(ErrorCodes.GOAL_NOT_FOUND, 'No current goal'));
     await handleGoalCommand(host, 'pause');
     expect(host.showStatus).toHaveBeenCalledWith('No goal to pause.');
     expect(host.showError).not.toHaveBeenCalled();
   });
 
   it('resuming with no goal shows a friendly status, not an error', async () => {
-    session.resumeGoal.mockRejectedValueOnce(new KimiError(ErrorCodes.GOAL_NOT_FOUND, 'No current goal'));
+    session.resumeGoal.mockRejectedValueOnce(new OdyError(ErrorCodes.GOAL_NOT_FOUND, 'No current goal'));
     await handleGoalCommand(host, 'resume');
     expect(host.showStatus).toHaveBeenCalledWith('No goal to resume.');
     expect(host.showError).not.toHaveBeenCalled();

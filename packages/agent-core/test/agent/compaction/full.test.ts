@@ -1724,10 +1724,10 @@ describe('FullCompaction', () => {
       [wire] usage.record                { "model": "mock-model", "usage": { "inputOther": 9, "output": 11, "inputCacheRead": 0, "inputCacheCreation": 0 }, "usageScope": "turn", "time": "<time>" }
       [emit] agent.status.updated        { "model": "mock-model", "contextTokens": 20, "maxContextTokens": 1000000, "contextUsage": 0.00002, "sessionMode": "normal", "sessionModeFilePath": null, "permission": "manual", "usage": { "byModel": { "mock-model": { "inputOther": 465, "output": 20, "inputCacheRead": 0, "inputCacheCreation": 0 } }, "total": { "inputOther": 465, "output": 20, "inputCacheRead": 0, "inputCacheCreation": 0 }, "currentTurn": { "inputOther": 9, "output": 11, "inputCacheRead": 0, "inputCacheCreation": 0 } } }
       [emit] turn.step.interrupted       { "turnId": 0, "step": 2, "reason": "error", "message": "Compaction limit exceeded (1)" }
-      [emit] turn.ended                  { "turnId": 0, "reason": "failed", "error": { "code": "context.overflow", "message": "Compaction limit exceeded (1)", "name": "KimiError", "details": { "maxCompactions": 1, "turnId": 0 }, "retryable": true } }
+      [emit] turn.ended                  { "turnId": 0, "reason": "failed", "error": { "code": "context.overflow", "message": "Compaction limit exceeded (1)", "name": "OdyError", "details": { "maxCompactions": 1, "turnId": 0 }, "retryable": true } }
     `);
     expect(ctx.newEvents()).toMatchInlineSnapshot(
-      `[emit] error   { "code": "context.overflow", "message": "Compaction limit exceeded (1)", "name": "KimiError", "details": { "maxCompactions": 1, "turnId": 0 }, "retryable": true }`,
+      `[emit] error   { "code": "context.overflow", "message": "Compaction limit exceeded (1)", "name": "OdyError", "details": { "maxCompactions": 1, "turnId": 0 }, "retryable": true }`,
     );
     expect(ctx.llmInputs()).toMatchInlineSnapshot(`
       call 1:

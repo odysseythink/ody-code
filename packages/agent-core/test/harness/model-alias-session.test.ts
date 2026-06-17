@@ -119,7 +119,7 @@ describe('HarnessAPI session model aliases', () => {
       model: 'kimi-code/kimi-for-coding',
     });
 
-    const updatedConfig = await rpc.setKimiConfig({
+    const updatedConfig = await rpc.setOdyConfig({
       defaultModel: 'gpt-alias',
       providers: {
         openai: {
@@ -330,7 +330,7 @@ max_context_size = 1000000
       properties: { enabled: true },
     });
 
-    await createRpc.setKimiConfig({
+    await createRpc.setOdyConfig({
       defaultModel: 'gpt-alias',
       providers: {
         openai: {

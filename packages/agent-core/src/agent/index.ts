@@ -1,10 +1,10 @@
 import { createHash } from 'node:crypto';
 import { basename, dirname, isAbsolute, join } from 'pathe';
 
-import { ErrorCodes, KimiError, makeErrorPayload } from '#/errors';
+import { ErrorCodes, OdyError, makeErrorPayload } from '#/errors';
 import { log } from '#/logging/logger';
 import type { Logger } from '#/logging/types';
-import type { AgentAPI, AgentEvent, KimiConfig, SDKAgentRPC, UsageStatus } from '#/rpc';
+import type { AgentAPI, AgentEvent, OdyConfig, SDKAgentRPC, UsageStatus } from '#/rpc';
 import {
   generate,
   type ChatProvider,
@@ -81,7 +81,7 @@ export type ModeKey = 'normal' | 'plan' | 'design' | 'office-hours';
 
 export interface AgentOptions {
   readonly kaos: Kaos;
-  readonly config?: KimiConfig;
+  readonly config?: OdyConfig;
   readonly homedir?: string;
   readonly rpc?: Partial<SDKAgentRPC>;
   readonly persistence?: AgentRecordPersistence;
@@ -111,7 +111,7 @@ export interface AgentOptions {
 export class Agent {
   readonly type: AgentType;
   readonly kaos: Kaos;
-  kimiConfig?: KimiConfig;
+  kimiConfig?: OdyConfig;
   readonly homedir?: string;
   readonly rpc?: Partial<SDKAgentRPC>;
   readonly toolServices?: ToolServices;
@@ -520,7 +520,7 @@ export class Agent {
       },
       activateSkill: (payload) => {
         if (this.skills === null) {
-          throw new KimiError(ErrorCodes.SKILL_NOT_FOUND, `Skill "${payload.name}" was not found`);
+          throw new OdyError(ErrorCodes.SKILL_NOT_FOUND, `Skill "${payload.name}" was not found`);
         }
         this.skills.activate(payload);
       },
@@ -537,7 +537,7 @@ export class Agent {
           try {
             content = await this.kaos.readText(payload.path);
           } catch {
-            throw new KimiError(
+            throw new OdyError(
               ErrorCodes.SESSION_PLAN_MODE_INVALID,
               `Plan/design file not found or unreadable: ${payload.path}`,
             );
@@ -547,7 +547,7 @@ export class Agent {
         } else {
           const data = await this.sessionMode.data();
           if (data === null || data.content.trim().length === 0) {
-            throw new KimiError(
+            throw new OdyError(
               ErrorCodes.SESSION_PLAN_MODE_INVALID,
               'No plan/design file to review. Enter plan or design mode, or pass a file path.',
             );
@@ -557,7 +557,7 @@ export class Agent {
           kind = payload.kind ?? (data.kind === 'office-hours' ? 'design' : data.kind);
         }
         if (content.trim().length === 0) {
-          throw new KimiError(ErrorCodes.SESSION_PLAN_MODE_INVALID, `Document is empty: ${path}`);
+          throw new OdyError(ErrorCodes.SESSION_PLAN_MODE_INVALID, `Document is empty: ${path}`);
         }
 
         // A split plan keeps its tasks in sibling files listed in the index's Parts
@@ -587,7 +587,7 @@ export class Agent {
           this.kimiConfig?.modeModels?.plan ??
           this.kimiConfig?.defaultModel;
         if (reviewerAlias === undefined || reviewerAlias.length === 0) {
-          throw new KimiError(
+          throw new OdyError(
             ErrorCodes.CONFIG_INVALID,
             'No reviewer model configured. Set mode_models.review (or default_model) in config.toml.',
           );

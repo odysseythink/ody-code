@@ -20,7 +20,7 @@ import type {
 } from '@modelcontextprotocol/sdk/shared/auth.js';
 import { z } from 'zod';
 
-import { KimiError } from '../../src/errors';
+import { OdyError } from '../../src/errors';
 import { ProviderManager } from '../../src/session/provider-manager';
 import { McpConnectionManager, type McpServerEntry } from '../../src/mcp/connection-manager';
 import { JsonFileStore, McpOAuthService } from '../../src/mcp/oauth';
@@ -220,10 +220,10 @@ describe('McpConnectionManager', () => {
     }
   }, 7000);
 
-  it('reconnect throws a coded KimiError when the server name is unknown', async () => {
+  it('reconnect throws a coded OdyError when the server name is unknown', async () => {
     const cm = new McpConnectionManager();
     try {
-      await expect(cm.reconnect('nope')).rejects.toBeInstanceOf(KimiError);
+      await expect(cm.reconnect('nope')).rejects.toBeInstanceOf(OdyError);
       await expect(cm.reconnect('nope')).rejects.toMatchObject({ code: 'mcp.server_not_found' });
     } finally {
       await cm.shutdown();
@@ -238,7 +238,7 @@ describe('McpConnectionManager', () => {
       });
 
       const reconnect = cm.reconnect('off');
-      await expect(reconnect).rejects.toBeInstanceOf(KimiError);
+      await expect(reconnect).rejects.toBeInstanceOf(OdyError);
       await expect(reconnect).rejects.toMatchObject({ code: 'mcp.server_disabled' });
       expect(cm.get('off')).toMatchObject({
         status: 'disabled',

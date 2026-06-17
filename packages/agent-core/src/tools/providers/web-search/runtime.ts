@@ -1,5 +1,5 @@
 import { resolveWebSearchConfig } from '../../../config/web-search';
-import type { KimiConfig } from '../../../config/schema';
+import type { OdyConfig } from '../../../config/schema';
 import type { Logger } from '../../../logging/types';
 import { FallbackWebSearchProvider } from './fallback';
 import { createDefaultRegistry, type ProviderFactoryDeps } from './registry';
@@ -10,7 +10,7 @@ export interface ResolveWebSearchRuntimeDeps extends ProviderFactoryDeps {
 }
 
 export function resolveWebSearchRuntime(
-  config: KimiConfig,
+  config: OdyConfig,
   deps: ResolveWebSearchRuntimeDeps,
 ): WebSearchProvider | undefined {
   const webSearchConfig = resolveWebSearchConfig(config);

@@ -1,4 +1,4 @@
-import { ErrorCodes, KimiError } from '#/errors';
+import { ErrorCodes, OdyError } from '#/errors';
 import type { McpServerStdioConfig } from '#/config/schema';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
@@ -54,7 +54,7 @@ export class StdioMcpClient implements MCPClient {
 
   constructor(config: McpServerStdioConfig, options: StdioMcpClientOptions = {}) {
     if (config.executor !== undefined && config.executor !== 'local') {
-      throw new KimiError(ErrorCodes.NOT_IMPLEMENTED, `MCP stdio executor '${config.executor}' is not yet implemented`);
+      throw new OdyError(ErrorCodes.NOT_IMPLEMENTED, `MCP stdio executor '${config.executor}' is not yet implemented`);
     }
     this.transport = new StdioClientTransport({
       command: config.command,

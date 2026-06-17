@@ -1,15 +1,15 @@
 import { describe, expect, it, vi } from 'vitest';
 import { resolveWebSearchRuntime } from '../../../../src/tools/providers/web-search/runtime';
-import type { KimiConfig } from '../../../../src/config/schema';
+import type { OdyConfig } from '../../../../src/config/schema';
 
 describe('resolveWebSearchRuntime', () => {
   it('returns undefined when no search config exists', () => {
-    const config: KimiConfig = { providers: {} };
+    const config: OdyConfig = { providers: {} };
     expect(resolveWebSearchRuntime(config, { fetchImpl: vi.fn() })).toBeUndefined();
   });
 
   it('returns a fallback provider for webSearch.primary', () => {
-    const config: KimiConfig = {
+    const config: OdyConfig = {
       providers: {},
       services: {
         webSearch: { primary: { provider: 'duckduckgo' } },
@@ -21,7 +21,7 @@ describe('resolveWebSearchRuntime', () => {
   });
 
   it('composes primary and secondary providers', () => {
-    const config: KimiConfig = {
+    const config: OdyConfig = {
       providers: {},
       services: {
         webSearch: {
@@ -35,7 +35,7 @@ describe('resolveWebSearchRuntime', () => {
   });
 
   it('aliases moonshotSearch to a moonshot provider', () => {
-    const config: KimiConfig = {
+    const config: OdyConfig = {
       providers: {},
       services: {
         moonshotSearch: { baseUrl: 'https://search.example/v1' },

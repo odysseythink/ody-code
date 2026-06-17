@@ -52,8 +52,8 @@ export type {
   ManagedKimiCodeCleanupResult,
   ManagedKimiCodeModelInfo,
   ManagedKimiCodeProvisionResult,
-  ManagedKimiConfigAdapter,
-  ManagedKimiConfigShape,
+  ManagedOdyConfigAdapter,
+  ManagedOdyConfigShape,
   ProvisionManagedKimiCodeConfigOptions,
 } from './managed-kimi-code';
 

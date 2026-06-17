@@ -9,7 +9,7 @@
 import { mkdir, readFile } from 'node:fs/promises';
 import { dirname } from 'pathe';
 
-import { ErrorCodes, KimiError } from '#/errors';
+import { ErrorCodes, OdyError } from '#/errors';
 import { atomicWrite } from '#/utils/fs';
 import { withFileLock } from '#/utils/file-lock';
 import type { ModeKey } from '../../agent';
@@ -84,7 +84,7 @@ export class SessionCheckpoint {
     } catch (error) {
       const code = (error as NodeJS.ErrnoException).code;
       if (code === 'ENOENT') return null;
-      throw new KimiError(
+      throw new OdyError(
         ErrorCodes.SESSION_STATE_INVALID,
         `Failed to read checkpoint ${this.path}: ${error instanceof Error ? error.message : String(error)}`,
         { cause: error },
@@ -94,7 +94,7 @@ export class SessionCheckpoint {
     try {
       return JSON.parse(text) as SessionCheckpointPayload;
     } catch (error) {
-      throw new KimiError(
+      throw new OdyError(
         ErrorCodes.SESSION_STATE_INVALID,
         `Checkpoint ${this.path} is not valid JSON: ${error instanceof Error ? error.message : String(error)}`,
         { cause: error },

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import type { KimiConfig } from '../../src/config';
-import { ErrorCodes, KimiError } from '../../src/errors';
+import type { OdyConfig } from '../../src/config';
+import { ErrorCodes, OdyError } from '../../src/errors';
 import { ProviderManager } from '../../src/session/provider-manager';
 import { resolveThinkingLevel } from '../../src/agent/config/thinking';
 
@@ -9,7 +9,7 @@ import { resolveThinkingLevel } from '../../src/agent/config/thinking';
 // the current ProviderManager API. Kept local so the existing test bodies do
 // not need to change.
 function resolveRuntimeProvider(input: {
-  readonly config: KimiConfig;
+  readonly config: OdyConfig;
   readonly model?: string;
   readonly kimiRequestHeaders?: Record<string, string>;
   readonly promptCacheKey?: string;
@@ -21,7 +21,7 @@ function resolveRuntimeProvider(input: {
   });
   const model = input.model ?? input.config.defaultModel;
   if (model === undefined) {
-    throw new KimiError(
+    throw new OdyError(
       ErrorCodes.CONFIG_INVALID,
       'No model is selected. Set default_model in config.toml or pass a configured model alias.',
     );
@@ -29,7 +29,7 @@ function resolveRuntimeProvider(input: {
   return manager.resolveProviderConfig(model);
 }
 
-const BASE_CONFIG: KimiConfig = {
+const BASE_CONFIG: OdyConfig = {
   defaultModel: 'kimi-code/kimi-for-coding',
   providers: {
     'managed:ody-code': {
@@ -180,7 +180,7 @@ describe('resolveRuntimeProvider model metadata', () => {
         config: BASE_CONFIG,
         model: 'kimi-code',
       }),
-    ).toThrow(KimiError);
+    ).toThrow(OdyError);
   });
 
   it('allows vertexai providers without an apiKey', () => {
@@ -215,7 +215,7 @@ describe('resolveRuntimeProvider model metadata', () => {
           capabilities: ['thinking'],
         },
       },
-    } as unknown as KimiConfig;
+    } as unknown as OdyConfig;
 
     expect(() =>
       resolveRuntimeProvider({
@@ -532,7 +532,7 @@ describe('resolveRuntimeProvider customHeaders propagation', () => {
   });
 
   it('keeps customHeaders isolated between resolved provider instances', () => {
-    const config: KimiConfig = {
+    const config: OdyConfig = {
       defaultModel: 'gpt-alias',
       providers: {
         openai: {
@@ -607,7 +607,7 @@ describe('ProviderManager prompt cache key', () => {
   });
 
   it('reads the current config when constructed with a function', () => {
-    let sharedConfig: KimiConfig = { providers: {} };
+    let sharedConfig: OdyConfig = { providers: {} };
     const manager = new ProviderManager({
       config: () => sharedConfig,
       promptCacheKey: 'session-test',

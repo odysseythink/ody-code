@@ -2,7 +2,7 @@ import {
   applyCustomRegistryEntries,
   fetchCustomRegistry,
   type CustomRegistrySource,
-  type ManagedKimiConfigShape,
+  type ManagedOdyConfigShape,
 } from '@odysseythink/kimi-code-oauth';
 import {
   applyCatalogProvider,
@@ -281,7 +281,7 @@ async function handleCustomRegistryAddViaDialog(host: SlashCommandHost): Promise
   try {
     const config = await host.harness.getConfig();
     applyCustomRegistryEntries(
-      config as unknown as ManagedKimiConfigShape,
+      config as unknown as ManagedOdyConfigShape,
       entries,
       source,
     );

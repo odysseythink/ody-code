@@ -2,16 +2,16 @@ import { existsSync, readFileSync } from 'node:fs';
 import { mkdir, open } from 'node:fs/promises';
 import { dirname } from 'pathe';
 
-import { ErrorCodes, KimiError } from '#/errors';
+import { ErrorCodes, OdyError } from '#/errors';
 import { applyEnvModelConfig, stripEnvModelConfig } from './env-model';
 import {
-  KimiConfigSchema,
+  OdyConfigSchema,
   formatConfigValidationError,
   getDefaultConfig,
   type BackgroundConfig,
   type BrowserConfig,
   type HookDefConfig,
-  type KimiConfig,
+  type OdyConfig,
   type LoopControl,
   type ModelAlias,
   type MoonshotServiceConfig,
@@ -64,7 +64,7 @@ export async function ensureConfigFile(filePath: string): Promise<void> {
   }
 }
 
-export function readConfigFile(filePath: string): KimiConfig {
+export function readConfigFile(filePath: string): OdyConfig {
   if (!existsSync(filePath)) {
     return getDefaultConfig();
   }
@@ -81,11 +81,11 @@ export function readConfigFile(filePath: string): KimiConfig {
 export function loadRuntimeConfig(
   filePath: string,
   env: Readonly<Record<string, string | undefined>> = process.env,
-): KimiConfig {
+): OdyConfig {
   return applyEnvModelConfig(readConfigFile(filePath), env);
 }
 
-export function parseConfigString(tomlText: string, filePath = 'config.toml'): KimiConfig {
+export function parseConfigString(tomlText: string, filePath = 'config.toml'): OdyConfig {
   if (tomlText.trim().length === 0) {
     return getDefaultConfig();
   }
@@ -94,7 +94,7 @@ export function parseConfigString(tomlText: string, filePath = 'config.toml'): K
   try {
     data = parseToml(tomlText) as Record<string, unknown>;
   } catch (error) {
-    throw new KimiError(ErrorCodes.CONFIG_INVALID, `Invalid TOML in ${filePath}: ${error instanceof Error ? error.message : String(error)}`, {
+    throw new OdyError(ErrorCodes.CONFIG_INVALID, `Invalid TOML in ${filePath}: ${error instanceof Error ? error.message : String(error)}`, {
       cause: error,
     });
   }
@@ -102,15 +102,15 @@ export function parseConfigString(tomlText: string, filePath = 'config.toml'): K
   return parseConfigData(data, filePath);
 }
 
-function parseConfigData(data: Record<string, unknown>, filePath: string): KimiConfig {
+function parseConfigData(data: Record<string, unknown>, filePath: string): OdyConfig {
   const raw = cloneRecord(data);
   const transformed = transformTomlData(data);
   transformed['raw'] = raw;
 
   try {
-    return KimiConfigSchema.parse(transformed);
+    return OdyConfigSchema.parse(transformed);
   } catch (error) {
-    throw new KimiError(ErrorCodes.CONFIG_INVALID, `Invalid configuration in ${filePath}: ${formatConfigValidationError(error)}`, {
+    throw new OdyError(ErrorCodes.CONFIG_INVALID, `Invalid configuration in ${filePath}: ${formatConfigValidationError(error)}`, {
       cause: error,
     });
   }
@@ -301,7 +301,7 @@ function transformLoopControlData(data: Record<string, unknown>): Record<string,
 /*  Write / stringify                                                  */
 /* ------------------------------------------------------------------ */
 
-export async function writeConfigFile(filePath: string, config: KimiConfig): Promise<void> {
+export async function writeConfigFile(filePath: string, config: OdyConfig): Promise<void> {
   // Final guard: never persist the env-synthesized model/provider to disk,
   // even if a caller passes back the runtime config as a patch (see
   // stripEnvModelConfig / the getConfig -> setConfig round-trip).
@@ -310,7 +310,7 @@ export async function writeConfigFile(filePath: string, config: KimiConfig): Pro
   await atomicWrite(filePath, `${stringifyToml(configToTomlData(validated))}\n`);
 }
 
-export function configToTomlData(config: KimiConfig): Record<string, unknown> {
+export function configToTomlData(config: OdyConfig): Record<string, unknown> {
   const out = cloneRecord(config.raw);
 
   // Strip deprecated fields
@@ -319,7 +319,7 @@ export function configToTomlData(config: KimiConfig): Record<string, unknown> {
   delete out['defaultPermissionMode'];
 
   // Top-level scalar fields
-  const scalarFields: (keyof KimiConfig)[] = [
+  const scalarFields: (keyof OdyConfig)[] = [
     'defaultProvider',
     'defaultModel',
     'sessionMode',
@@ -533,12 +533,12 @@ function backgroundToToml(
 }
 
 function modeModelsToToml(
-  modeModels: NonNullable<KimiConfig['modeModels']>,
+  modeModels: NonNullable<OdyConfig['modeModels']>,
   _raw: unknown,
 ): Record<string, unknown> {
   const out: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(modeModels)) {
-    setDefined(out, key, value);
+    setDefined(out, camelToSnake(key), value);
   }
   return out;
 }
@@ -554,7 +554,7 @@ function browserToToml(
   return out;
 }
 
-function e2eToToml(e2e: NonNullable<KimiConfig['e2e']>, rawE2e: unknown): Record<string, unknown> {
+function e2eToToml(e2e: NonNullable<OdyConfig['e2e']>, rawE2e: unknown): Record<string, unknown> {
   const out = cloneRecord(rawE2e);
   for (const [key, value] of Object.entries(e2e)) {
     setDefined(out, camelToSnake(key), value);

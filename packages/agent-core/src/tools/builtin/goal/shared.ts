@@ -1,5 +1,5 @@
 import type { Agent } from '#/agent';
-import { isKimiError } from '#/errors';
+import { isOdyError } from '#/errors';
 
 import type { ExecutableToolErrorResult } from '../../../loop/types';
 import type { SessionGoalStore } from '../../../session/goal';
@@ -32,9 +32,9 @@ export function isGoalToolError(
   return (value as ExecutableToolErrorResult).isError === true;
 }
 
-/** Converts a thrown error (typically a typed `KimiError`) into a tool error result. */
+/** Converts a thrown error (typically a typed `OdyError`) into a tool error result. */
 export function goalErrorResult(error: unknown): ExecutableToolErrorResult {
-  if (isKimiError(error)) {
+  if (isOdyError(error)) {
     return { isError: true, output: `${error.code}: ${error.message}` };
   }
   return { isError: true, output: error instanceof Error ? error.message : String(error) };

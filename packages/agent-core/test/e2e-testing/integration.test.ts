@@ -6,7 +6,7 @@ import { createFakeKaos } from '../tools/fixtures/fake-kaos';
 import { E2EPlanEnricher } from '#/e2e-testing/plan-enricher';
 import { ImpactAnalyzer } from '#/e2e-testing/impact-analyzer';
 import { E2EConfigResolver } from '#/e2e-testing/config';
-import type { KimiConfig } from '#/config/schema';
+import type { OdyConfig } from '#/config/schema';
 
 function fakeKaosWithGit(files: string[]): Kaos {
   return createFakeKaos({
@@ -31,7 +31,7 @@ function fakeKaosWithGit(files: string[]): Kaos {
   });
 }
 
-const baseConfig = E2EConfigResolver.resolve({} as KimiConfig);
+const baseConfig = E2EConfigResolver.resolve({} as OdyConfig);
 const planContent = '# Plan\n\n### Task 1: Do stuff\n\n### Task 2: More stuff\n';
 
 describe('E2EPlanEnricher', () => {

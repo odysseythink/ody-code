@@ -1,4 +1,4 @@
-import { ErrorCodes, KimiError } from '#/errors';
+import { ErrorCodes, OdyError } from '#/errors';
 import type {
   ActivateSkillPayload,
   AgentAPI,
@@ -47,7 +47,7 @@ export class SessionAPIImpl implements PromisableMethods<SessionAPI> {
   async renameSession(payload: RenameSessionPayload): Promise<void> {
     const title = payload.title.trim();
     if (title.length === 0) {
-      throw new KimiError(ErrorCodes.SESSION_TITLE_EMPTY, 'Session title cannot be empty');
+      throw new OdyError(ErrorCodes.SESSION_TITLE_EMPTY, 'Session title cannot be empty');
     }
     this.session.metadata = {
       ...this.session.metadata,
@@ -65,7 +65,7 @@ export class SessionAPIImpl implements PromisableMethods<SessionAPI> {
     const reservedGoal = this.session.metadata.custom?.['goal'];
     const patchCustom = (payload.metadata as Partial<SessionMeta> | undefined)?.custom;
     if (patchCustom !== undefined && 'goal' in patchCustom) {
-      throw new KimiError(
+      throw new OdyError(
         ErrorCodes.GOAL_METADATA_RESERVED,
         'metadata.custom.goal is reserved; use the goal lifecycle methods',
       );
@@ -153,7 +153,7 @@ export class SessionAPIImpl implements PromisableMethods<SessionAPI> {
 
   private assertGoalCommandEnabled(): void {
     if (flags.enabled('goal-command')) return;
-    throw new KimiError(ErrorCodes.NOT_IMPLEMENTED, 'Goal command is disabled');
+    throw new OdyError(ErrorCodes.NOT_IMPLEMENTED, 'Goal command is disabled');
   }
 
   async prompt({ agentId, ...payload }: AgentScopedPayload<PromptPayload>) {
@@ -281,7 +281,7 @@ export class SessionAPIImpl implements PromisableMethods<SessionAPI> {
   private getAgent(agentId: string): PromisableMethods<AgentAPI> {
     const agent = this.session.agents.get(agentId);
     if (agent === undefined) {
-      throw new KimiError(ErrorCodes.AGENT_NOT_FOUND, `Agent "${agentId}" was not found`);
+      throw new OdyError(ErrorCodes.AGENT_NOT_FOUND, `Agent "${agentId}" was not found`);
     }
     return agent.rpcMethods;
   }

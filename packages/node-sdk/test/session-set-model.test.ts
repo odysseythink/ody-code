@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { FileTokenStorage, type TokenInfo } from '@odysseythink/kimi-code-oauth';
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { KimiHarness, type KimiError } from '#/index';
+import { KimiHarness, type OdyError } from '#/index';
 import { makeTempDir, removeTempDirs, waitForAgentWireEvent } from './session-runtime-helpers';
 import { TEST_IDENTITY } from './test-identity';
 
@@ -124,9 +124,9 @@ describe('Session.setModel', () => {
       const session = await harness.createSession({ id: 'ses_model_empty', workDir });
 
       await expect(session.setModel('   ')).rejects.toMatchObject({
-        name: 'KimiError',
+        name: 'OdyError',
         code: 'session.model_empty',
-      } satisfies Partial<KimiError>);
+      } satisfies Partial<OdyError>);
     } finally {
       await harness.close();
     }
@@ -143,9 +143,9 @@ describe('Session.setModel', () => {
       await session.close();
 
       await expect(session.setModel('next-model')).rejects.toMatchObject({
-        name: 'KimiError',
+        name: 'OdyError',
         code: 'session.closed',
-      } satisfies Partial<KimiError>);
+      } satisfies Partial<OdyError>);
     } finally {
       await harness.close();
     }

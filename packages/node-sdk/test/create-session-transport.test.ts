@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { KimiHarness } from '#/index';
-import type { KimiError } from '#/index';
+import type { OdyError } from '#/index';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { waitForAgentWireEvent } from './session-runtime-helpers';
@@ -332,15 +332,15 @@ effort = "medium"
       await expect(
         harness.createSession({ id: 'ses_missing_workdir' } as never),
       ).rejects.toMatchObject({
-        name: 'KimiError',
+        name: 'OdyError',
         code: 'request.work_dir_required',
-      } satisfies Partial<KimiError>);
+      } satisfies Partial<OdyError>);
       await expect(
         harness.createSession({ id: 'ses_blank_workdir', workDir: '   ' }),
       ).rejects.toMatchObject({
-        name: 'KimiError',
+        name: 'OdyError',
         code: 'request.work_dir_required',
-      } satisfies Partial<KimiError>);
+      } satisfies Partial<OdyError>);
     } finally {
       await harness.close();
     }
@@ -361,7 +361,7 @@ effort = "medium"
       await expect(
         harness.createSession({ id: 'ses_bad_mcp_config', workDir }),
       ).rejects.toMatchObject({
-        name: 'KimiError',
+        name: 'OdyError',
         code: 'config.invalid',
       });
       expect(await harness.listSessions({ workDir })).toEqual([]);

@@ -1,3 +1,3 @@
-export { KimiTUI } from './ody-tui';
-export type { KimiTUIStartupInput } from './ody-tui';
-export type { KimiTUIOptions } from './types';
+export { OdyTUI } from './ody-tui';
+export type { OdyTUIStartupInput } from './ody-tui';
+export type { OdyTUIOptions } from './types';

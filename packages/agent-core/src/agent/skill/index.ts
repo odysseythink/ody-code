@@ -4,7 +4,7 @@ import type { ActivateSkillPayload } from '#/rpc';
 import type { ContentPart } from '@odysseythink/kosong';
 
 import type { Agent } from '..';
-import { ErrorCodes, KimiError } from '#/errors';
+import { ErrorCodes, OdyError } from '#/errors';
 import { isUserActivatableSkillType, type SkillRegistry } from '../../skill';
 import { escapeXml } from '#/utils/xml-escape';
 import type { SkillActivationOrigin } from '../context';
@@ -18,10 +18,10 @@ export class SkillManager {
   activate(input: ActivateSkillPayload): void {
     const skill = this.registry.getSkill(input.name);
     if (skill === undefined) {
-      throw new KimiError(ErrorCodes.SKILL_NOT_FOUND, `Skill "${input.name}" was not found`);
+      throw new OdyError(ErrorCodes.SKILL_NOT_FOUND, `Skill "${input.name}" was not found`);
     }
     if (!isUserActivatableSkillType(skill.metadata.type)) {
-      throw new KimiError(ErrorCodes.SKILL_TYPE_UNSUPPORTED, `Skill "${skill.name}" cannot be activated by the user`);
+      throw new OdyError(ErrorCodes.SKILL_TYPE_UNSUPPORTED, `Skill "${skill.name}" cannot be activated by the user`);
     }
 
     const skillContent = this.registry.renderSkillPrompt(skill, input.args ?? '');

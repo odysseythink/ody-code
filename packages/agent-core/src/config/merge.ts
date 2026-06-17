@@ -1,24 +1,24 @@
-import { ErrorCodes, KimiError } from '#/errors';
+import { ErrorCodes, OdyError } from '#/errors';
 import {
-  KimiConfigPatchSchema,
+  OdyConfigPatchSchema,
   formatConfigValidationError,
-  type KimiConfig,
-  type KimiConfigPatch,
+  type OdyConfig,
+  type OdyConfigPatch,
   validateConfig,
 } from '#/config/schema';
 
-export function mergeConfigPatch(config: KimiConfig, patch: KimiConfigPatch): KimiConfig {
+export function mergeConfigPatch(config: OdyConfig, patch: OdyConfigPatch): OdyConfig {
   const base = validateConfig(config);
   const parsedPatch = parsePatch(patch);
   const merged = deepMerge(base, parsedPatch);
   return validateConfig(merged);
 }
 
-function parsePatch(patch: KimiConfigPatch): KimiConfigPatch {
+function parsePatch(patch: OdyConfigPatch): OdyConfigPatch {
   try {
-    return stripUndefinedDeep(KimiConfigPatchSchema.parse(patch)) as KimiConfigPatch;
+    return stripUndefinedDeep(OdyConfigPatchSchema.parse(patch)) as OdyConfigPatch;
   } catch (error) {
-    throw new KimiError(ErrorCodes.CONFIG_INVALID, `Invalid configuration patch: ${formatConfigValidationError(error)}`, {
+    throw new OdyError(ErrorCodes.CONFIG_INVALID, `Invalid configuration patch: ${formatConfigValidationError(error)}`, {
       cause: error,
     });
   }

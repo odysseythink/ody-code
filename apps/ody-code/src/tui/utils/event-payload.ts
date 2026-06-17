@@ -1,4 +1,4 @@
-import { isKimiError } from '@odysseythink/ody-code-sdk';
+import { isOdyError } from '@odysseythink/ody-code-sdk';
 
 import {
   STREAMING_ARGS_FIELD_RE,
@@ -90,7 +90,7 @@ export function isTodoItemShape(
 }
 
 export function formatErrorMessage(error: unknown): string {
-  if (isKimiError(error)) return `[${error.code}] ${error.message}`;
+  if (isOdyError(error)) return `[${error.code}] ${error.message}`;
   return error instanceof Error ? error.message : String(error);
 }
 

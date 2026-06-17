@@ -1,4 +1,4 @@
-import { ErrorCodes, isKimiError, type PermissionMode } from '@odysseythink/ody-code-sdk';
+import { ErrorCodes, isOdyError, type PermissionMode } from '@odysseythink/ody-code-sdk';
 
 import {
   GoalStartPermissionPromptComponent,
@@ -181,7 +181,7 @@ async function startGoal(
       replace: parsed.replace,
     });
   } catch (error) {
-    if (isKimiError(error) && error.code === ErrorCodes.GOAL_ALREADY_EXISTS) {
+    if (isOdyError(error) && error.code === ErrorCodes.GOAL_ALREADY_EXISTS) {
       host.showError(
         'A goal is already active. Use `/goal replace <objective>` to replace it, or `/goal status` to inspect it.',
       );
@@ -202,7 +202,7 @@ async function pauseGoal(host: SlashCommandHost): Promise<void> {
     await session.pauseGoal();
     if (isStreaming(host)) await session.cancel();
   } catch (error) {
-    if (isKimiError(error) && error.code === ErrorCodes.GOAL_NOT_FOUND) {
+    if (isOdyError(error) && error.code === ErrorCodes.GOAL_NOT_FOUND) {
       host.showStatus('No goal to pause.');
       return;
     }
@@ -222,7 +222,7 @@ async function resumeGoal(host: SlashCommandHost): Promise<void> {
   try {
     await host.requireSession().resumeGoal();
   } catch (error) {
-    if (isKimiError(error) && error.code === ErrorCodes.GOAL_NOT_FOUND) {
+    if (isOdyError(error) && error.code === ErrorCodes.GOAL_NOT_FOUND) {
       host.showStatus('No goal to resume.');
       return;
     }
@@ -240,7 +240,7 @@ async function cancelGoal(host: SlashCommandHost): Promise<void> {
     await session.cancelGoal();
     if (isStreaming(host)) await session.cancel();
   } catch (error) {
-    if (isKimiError(error) && error.code === ErrorCodes.GOAL_NOT_FOUND) {
+    if (isOdyError(error) && error.code === ErrorCodes.GOAL_NOT_FOUND) {
       host.showStatus('No goal to cancel.');
       return;
     }

@@ -8,7 +8,7 @@ import {
   KimiOAuthToolkit,
   type DeviceAuthorization,
   type KimiHostIdentity,
-  type ManagedKimiConfigShape,
+  type ManagedOdyConfigShape,
 } from '@odysseythink/kimi-code-oauth';
 
 async function main(): Promise<void> {
@@ -16,9 +16,9 @@ async function main(): Promise<void> {
   const homeDir = explicitHomeDir ?? (await mkdtemp(join(tmpdir(), 'kimi-oauth-smoke-')));
   const keepToken = shouldKeepToken(explicitHomeDir !== undefined);
   const forceLogin = process.env['KIMI_OAUTH_SMOKE_FORCE_LOGIN'] === '1';
-  const config: ManagedKimiConfigShape = { providers: {} };
+  const config: ManagedOdyConfigShape = { providers: {} };
 
-  const toolkit = new KimiOAuthToolkit<ManagedKimiConfigShape>({
+  const toolkit = new KimiOAuthToolkit<ManagedOdyConfigShape>({
     homeDir,
     identity: smokeIdentityFromEnv(),
     configAdapter: {
@@ -98,7 +98,7 @@ function printDeviceCode(auth: DeviceAuthorization): void {
 }
 
 function printUsage(
-  usage: Awaited<ReturnType<KimiOAuthToolkit<ManagedKimiConfigShape>['getManagedUsage']>>,
+  usage: Awaited<ReturnType<KimiOAuthToolkit<ManagedOdyConfigShape>['getManagedUsage']>>,
 ): void {
   if (usage.kind === 'error') {
     process.stderr.write(`usage request returned: ${usage.message}\n`);

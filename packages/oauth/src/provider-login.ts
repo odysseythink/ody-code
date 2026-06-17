@@ -1,7 +1,7 @@
 import { readApiErrorMessage } from './api-error';
 import { isRecord } from './utils';
 import { OpenPlatformApiError } from './open-platform';
-import type { ManagedKimiConfigShape } from './managed-kimi-code';
+import type { ManagedOdyConfigShape } from './managed-kimi-code';
 
 export interface ProviderLoginDefinition {
   readonly type: string;
@@ -192,7 +192,7 @@ function applyKimiModelOverrides(model: ProviderModelInfo): ProviderModelInfo {
 }
 
 export function applyProviderLoginConfig(
-  config: ManagedKimiConfigShape,
+  config: ManagedOdyConfigShape,
   options: {
     readonly providerName: string;
     readonly definition: ProviderLoginDefinition;
@@ -250,7 +250,7 @@ export function applyProviderLoginConfig(
 }
 
 export function removeProviderConfig(
-  config: ManagedKimiConfigShape,
+  config: ManagedOdyConfigShape,
   providerId: string,
 ): void {
   delete config.providers[providerId];

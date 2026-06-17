@@ -1,8 +1,8 @@
 import { readApiErrorMessage } from './api-error';
 import { isRecord } from './utils';
-import type { ManagedKimiConfigShape } from './managed-kimi-code';
+import type { ManagedOdyConfigShape } from './managed-kimi-code';
 
-export type { ManagedKimiConfigShape };
+export type { ManagedOdyConfigShape };
 
 /**
  * Identifies where a custom-registry-managed provider came from. The same
@@ -280,7 +280,7 @@ function resolveCapabilities(model: CustomRegistryModelEntry): string[] {
  * refresh dispatcher can rediscover it later.
  */
 export function applyCustomRegistryProvider(
-  config: ManagedKimiConfigShape,
+  config: ManagedOdyConfigShape,
   entry: CustomRegistryProviderEntry,
   source: CustomRegistrySource,
 ): void {
@@ -327,7 +327,7 @@ export function applyCustomRegistryProvider(
  * `removeOpenPlatformConfig`.
  */
 export function removeCustomRegistryProvider(
-  config: ManagedKimiConfigShape,
+  config: ManagedOdyConfigShape,
   providerId: string,
 ): void {
   delete config.providers[providerId];
@@ -371,7 +371,7 @@ export function removeCustomRegistryProvider(
  * registry".
  */
 export function applyCustomRegistryEntries(
-  config: ManagedKimiConfigShape,
+  config: ManagedOdyConfigShape,
   entries: Record<string, CustomRegistryProviderEntry>,
   source: CustomRegistrySource,
 ): void {

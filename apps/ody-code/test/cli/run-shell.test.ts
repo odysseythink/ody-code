@@ -115,7 +115,7 @@ vi.mock('../../src/tui/config', () => ({
 }));
 
 vi.mock('../../src/tui/index', () => ({
-  KimiTUI: class {
+  OdyTUI: class {
     onExit?: () => Promise<void>;
 
     constructor(...args: unknown[]) {
@@ -155,7 +155,7 @@ describe('runShell', () => {
     mocks.harnessCreatesDeviceIdOnConstruction = false;
   });
 
-  it('constructs KimiHarness and KimiTUI with startup input', async () => {
+  it('constructs KimiHarness and OdyTUI with startup input', async () => {
     mocks.loadTuiConfig.mockResolvedValue({
       theme: 'dark',
       editorCommand: null,

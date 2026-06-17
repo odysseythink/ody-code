@@ -36,6 +36,8 @@ import {
   showSettingsSelector,
 } from './config';
 import { handleDesignReviewCommand, handlePlanReviewCommand } from './design-review';
+import { handleReceiveCodeReviewCommand } from './receive-code-review';
+import { handleRequestCodeReviewCommand } from './request-code-review';
 import { handleGoalCommand } from './goal';
 import { handleProviderCommand } from './provider';
 import { handleFeedbackCommand, showMcpServers, showStatusReport, showUsage } from './info';
@@ -318,6 +320,12 @@ async function handleBuiltInSlashCommand(
       return;
     case 'undo':
       await handleUndoCommand(host, args);
+      return;
+    case 'request-code-review':
+      await handleRequestCodeReviewCommand(host, args);
+      return;
+    case 'receive-code-review':
+      await handleReceiveCodeReviewCommand(host, args);
       return;
     default:
       host.showError(`Unknown slash command: /${String(name)}`);

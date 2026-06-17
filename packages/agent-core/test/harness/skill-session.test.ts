@@ -502,7 +502,7 @@ describe('HarnessAPI session skills', () => {
     await expect(
       rpc.activateSkill({ sessionId: created.id, agentId: 'main', name: 'missing' }),
     ).rejects.toMatchObject({
-      name: 'KimiError',
+      name: 'OdyError',
       code: 'skill.not_found',
     });
 
@@ -520,7 +520,7 @@ describe('HarnessAPI session skills', () => {
     await expect(
       rpc.activateSkill({ sessionId: created.id, agentId: 'main', name: 'forked' }),
     ).rejects.toMatchObject({
-      name: 'KimiError',
+      name: 'OdyError',
       code: 'skill.type_unsupported',
     });
   });

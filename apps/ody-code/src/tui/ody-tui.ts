@@ -59,6 +59,7 @@ import { AuthFlowController } from './controllers/auth-flow';
 import { EditorKeyboardController } from './controllers/editor-keyboard';
 import { SessionEventHandler } from './controllers/session-event-handler';
 import * as slashCommands from './commands/dispatch';
+import { maybeRestoreModelAfterReceiveReview } from './commands/receive-code-review';
 import { SessionReplayRenderer } from './controllers/session-replay';
 import { StreamingUIController } from './controllers/streaming-ui';
 import { TasksBrowserController } from './controllers/tasks-browser';
@@ -92,13 +93,13 @@ import { registerReverseRPCHandlers } from './reverse-rpc/index';
 import { QuestionController } from './reverse-rpc/question/controller';
 import { createQuestionAskHandler } from './reverse-rpc/question/handler';
 import type { ApprovalPanelData, QuestionPanelData } from './reverse-rpc/types';
-import { createKimiTUIThemeBundle } from './theme/bundle';
+import { createOdyTUIThemeBundle } from './theme/bundle';
 import type { ResolvedTheme } from './theme/colors';
 import type { Theme } from './theme/index';
 import {
   INITIAL_LIVE_PANE,
   type AppState,
-  type KimiTUIOptions,
+  type OdyTUIOptions,
   type LivePaneState,
   type LoginProgressSpinnerHandle,
   type QueuedMessage,
@@ -127,13 +128,13 @@ import { nextTranscriptId } from './utils/transcript-id';
 export type { TUIState } from './tui-state';
 export { createTUIState } from './tui-state';
 export type {
-  KimiTUIOptions,
+  OdyTUIOptions,
   LoginProgressSpinnerHandle,
   TUIStartupOptions,
   TUIStartupState,
 } from './types';
 
-export interface KimiTUIStartupInput {
+export interface OdyTUIStartupInput {
   readonly cliOptions: CLIOptions;
   readonly tuiConfig: TuiConfig;
   readonly version: string;
@@ -146,7 +147,7 @@ export interface KimiTUIStartupInput {
 
 type EffectiveActivityPaneMode = ActivityPaneMode | 'idle' | 'session';
 
-function createInitialAppState(input: KimiTUIStartupInput): AppState {
+function createInitialAppState(input: OdyTUIStartupInput): AppState {
   const startupPermission: PermissionMode = input.cliOptions.auto
     ? 'auto'
     : input.cliOptions.yolo
@@ -177,6 +178,7 @@ function createInitialAppState(input: KimiTUIStartupInput): AppState {
     goal: null,
     mcpServersSummary: null,
     userLanguage: undefined,
+    receiveCodeReview: undefined,
   };
 }
 
@@ -186,9 +188,9 @@ interface SendMessageOptions {
   readonly hasMedia?: boolean;
 }
 
-export class KimiTUI {
+export class OdyTUI {
   readonly harness: KimiHarness;
-  readonly options: KimiTUIOptions;
+  readonly options: OdyTUIOptions;
   session: Session | undefined;
   state: TUIState;
   private readonly approvalController = new ApprovalController();
@@ -242,9 +244,9 @@ export class KimiTUI {
     this.harness.track(event, properties);
   }
 
-  constructor(harness: KimiHarness, startupInput: KimiTUIStartupInput) {
+  constructor(harness: KimiHarness, startupInput: OdyTUIStartupInput) {
     this.harness = harness;
-    const tuiOptions: KimiTUIOptions = {
+    const tuiOptions: OdyTUIOptions = {
       initialAppState: createInitialAppState(startupInput),
       startup: {
         sessionFlag: startupInput.cliOptions.session,
@@ -691,6 +693,9 @@ export class KimiTUI {
     if (session === undefined) {
       this.showError(LLM_NOT_SET_MESSAGE);
       return;
+    }
+    if ((this.state.appState as any).receiveCodeReview?.active) {
+      maybeRestoreModelAfterReceiveReview(this as any);
     }
     if (extraction.hasMedia) {
       this.sendMessage(session, text, {
@@ -1631,7 +1636,7 @@ export class KimiTUI {
   }
 
   applyTheme(theme: Theme, resolved?: ResolvedTheme): void {
-    const nextTheme = createKimiTUIThemeBundle(theme, resolved);
+    const nextTheme = createOdyTUIThemeBundle(theme, resolved);
     Object.assign(this.state.theme.colors, nextTheme.colors);
     this.state.theme.resolvedTheme = nextTheme.resolvedTheme;
     this.state.theme.styles = nextTheme.styles;

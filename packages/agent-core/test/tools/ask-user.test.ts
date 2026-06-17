@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import type { Agent } from '../../src/agent';
 import type { PermissionMode } from '../../src/agent/permission';
-import { ErrorCodes, KimiError } from '../../src/errors';
+import { ErrorCodes, OdyError } from '../../src/errors';
 import type { QuestionRequest, QuestionResult } from '../../src/rpc';
 import {
   AskUserQuestionInputSchema,
@@ -270,7 +270,7 @@ describe('AskUserQuestionTool', () => {
   it('resolves question rpc error responses as dismissed answers', async () => {
     const { tool } = makeTool({
       requestQuestion: async () => {
-        throw new KimiError(ErrorCodes.INTERNAL, 'JSON-RPC question error response');
+        throw new OdyError(ErrorCodes.INTERNAL, 'JSON-RPC question error response');
       },
     });
 
@@ -325,7 +325,7 @@ describe('AskUserQuestionTool', () => {
   it('returns a distinct hard error when the client signals unsupported', async () => {
     const { tool } = makeTool({
       requestQuestion: async () => {
-        throw new KimiError(ErrorCodes.NOT_IMPLEMENTED, 'Client does not support questions');
+        throw new OdyError(ErrorCodes.NOT_IMPLEMENTED, 'Client does not support questions');
       },
     });
 

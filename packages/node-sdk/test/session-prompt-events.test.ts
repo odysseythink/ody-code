@@ -320,7 +320,7 @@ describe('Session.prompt events', () => {
     try {
       const session = await harness.createSession({ id: 'ses_empty_prompt', workDir });
       await expect(session.prompt('   ')).rejects.toMatchObject({
-        name: 'KimiError',
+        name: 'OdyError',
         code: 'request.prompt_input_empty',
       });
     } finally {

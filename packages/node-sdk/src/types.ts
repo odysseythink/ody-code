@@ -32,8 +32,8 @@ export type {
   GoalSnapshot,
   GoalStatus,
   GoalToolResult,
-  KimiConfig,
-  KimiConfigPatch,
+  OdyConfig,
+  OdyConfigPatch,
   LoopControl,
   McpServerInfo,
   McpStartupMetrics,
@@ -52,6 +52,9 @@ export type {
   ProviderType,
   QuestionBackgroundTaskInfo,
   ReloadSummary,
+  CodeReviewReportData,
+  CodeReviewFindingData,
+  RequestCodeReviewPayload,
   ReviewFindingData,
   ResumedAgentState,
   ServicesConfig,
@@ -59,6 +62,13 @@ export type {
   SkillSummary,
   ThinkingConfig,
   ToolInfo,
+} from '@odysseythink/agent-core';
+
+export type {
+  CodeReviewDiffSource,
+  CodeReviewRequestInput,
+  CodeReviewReport,
+  CodeReviewFinding,
 } from '@odysseythink/agent-core';
 
 export type { KimiHostIdentity, OAuthRefreshOutcome };

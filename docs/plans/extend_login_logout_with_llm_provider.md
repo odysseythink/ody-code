@@ -23,7 +23,7 @@
 | 7 | `apps/ody-code/src/main.ts` | Handle `--login` / `--logout` in `handleMainCommand` |
 | 8 | `apps/ody-code/src/cli/run-shell.ts` | Extend `runShell` to accept optional `authIntent` |
 | 9 | `apps/ody-code/src/tui/types.ts` | Add `authIntent` to `TUIStartupOptions` |
-| 10 | `apps/ody-code/src/tui/kimi-tui.ts` | Accept `authIntent` in `KimiTUIStartupInput`; dispatch on startup |
+| 10 | `apps/ody-code/src/tui/kimi-tui.ts` | Accept `authIntent` in `OdyTUIStartupInput`; dispatch on startup |
 | 11 | `apps/ody-code/src/tui/components/dialogs/text-input-dialog.ts` **(new)** | Generic single-line text input dialog (reused for provider name & base URL) |
 | 12 | `apps/ody-code/src/tui/commands/prompts.ts` | Add `promptCustomProviderName`, `promptCustomBaseUrl`, `promptModelSelectionForProviderLogin` |
 | 13 | `apps/ody-code/src/tui/commands/auth.ts` | Extend `handleLoginCommand` / `handleLogoutCommand` with provider-type arg; add `handleProviderLogin`; add telemetry `provider_type` |
@@ -44,7 +44,7 @@ Phase B — CLI wiring (depends on Phase A)
   Task 3: CLIOptions + CLI commands + main.ts + run-shell.ts
 
 Phase C — TUI startup wiring (depends on Phase B)
-  Task 4: TUI types + KimiTUI authIntent dispatch
+  Task 4: TUI types + OdyTUI authIntent dispatch
 
 Phase D — TUI prompts & commands (depends on Phase A + C)
   Task 5: Text-input dialog + prompt helpers
@@ -65,7 +65,7 @@ Tasks within a phase cannot run in parallel if they touch the same file; tasks a
 |---|---|---|
 | R1 | `ProviderTypeSchema` missing `deepseek` breaks config write | Task 1 adds it and ends with whole-tree typecheck |
 | R2 | `handleLoginCommand` / `handleLogoutCommand` signature change breaks existing callers | Task 6 & 7 update `dispatch.ts` in the same task; ends with typecheck |
-| R3 | `CLIOptions` / `runShell` / `KimiTUIStartupInput` shared-signature churn | Task 3 and Task 4 each consolidate all caller updates into one task |
+| R3 | `CLIOptions` / `runShell` / `OdyTUIStartupInput` shared-signature churn | Task 3 and Task 4 each consolidate all caller updates into one task |
 | R4 | Anthropic `/v1/models` endpoint unavailable | Design doc already specifies `anthropic-sdk` strategy with safe fallback |
 | R5 | New `TextInputDialogComponent` may not match pi-tui lifecycle | Modeled after existing `ApiKeyInputDialogComponent` and `FeedbackInputDialogComponent` |
 
@@ -132,7 +132,7 @@ This module provides provider definitions, model fetching, config application/re
     type ProviderModelInfo,
   } from '../src/provider-login';
   import { OpenPlatformApiError } from '../src/open-platform';
-  import type { ManagedKimiConfigShape } from '../src/managed-kimi-code';
+  import type { ManagedOdyConfigShape } from '../src/managed-kimi-code';
 
   describe('SUPPORTED_PROVIDER_LOGINS', () => {
     it('contains deepseek with correct metadata', () => {
@@ -188,7 +188,7 @@ This module provides provider definitions, model fetching, config application/re
 
   describe('applyProviderLoginConfig', () => {
     it('writes provider, models, and sets default when none exists', () => {
-      const config: ManagedKimiConfigShape = { providers: {} };
+      const config: ManagedOdyConfigShape = { providers: {} };
       const def = getProviderLoginDefinition('deepseek')!;
       const models: ProviderModelInfo[] = [
         { id: 'deepseek-chat', contextLength: 64000, supportsToolUse: true, supportsReasoning: false, supportsImageIn: false, supportsVideoIn: false },
@@ -218,7 +218,7 @@ This module provides provider definitions, model fetching, config application/re
     });
 
     it('does not overwrite existing defaultModel', () => {
-      const config: ManagedKimiConfigShape = {
+      const config: ManagedOdyConfigShape = {
         providers: {},
         defaultModel: 'other/model',
       };
@@ -243,7 +243,7 @@ This module provides provider definitions, model fetching, config application/re
 
   describe('removeProviderConfig', () => {
     it('cascade-deletes models and clears default when matched', () => {
-      const config: ManagedKimiConfigShape = {
+      const config: ManagedOdyConfigShape = {
         providers: { deepseek_main: { type: 'deepseek', apiKey: 'sk-test' } },
         models: { 'deepseek_main/chat': { provider: 'deepseek_main', model: 'chat', maxContextSize: 64000 } },
         defaultModel: 'deepseek_main/chat',
@@ -294,7 +294,7 @@ This module provides provider definitions, model fetching, config application/re
   import { readApiErrorMessage } from './api-error';
   import { isRecord } from './utils';
   import { OpenPlatformApiError } from './open-platform';
-  import type { ManagedKimiConfigShape } from './managed-kimi-code';
+  import type { ManagedOdyConfigShape } from './managed-kimi-code';
 
   export interface ProviderLoginDefinition {
     readonly type: string;
@@ -426,7 +426,7 @@ This module provides provider definitions, model fetching, config application/re
   }
 
   export function applyProviderLoginConfig(
-    config: ManagedKimiConfigShape,
+    config: ManagedOdyConfigShape,
     options: {
       readonly providerName: string;
       readonly definition: ProviderLoginDefinition;
@@ -485,7 +485,7 @@ This module provides provider definitions, model fetching, config application/re
   }
 
   export function removeProviderConfig(
-    config: ManagedKimiConfigShape,
+    config: ManagedOdyConfigShape,
     providerId: string,
   ): void {
     delete config.providers[providerId];
@@ -628,9 +628,9 @@ This task changes two shared signatures (`CLIOptions` and `runShell`) and must u
     runOptions: { readonly migrateOnly?: boolean; readonly authIntent?: AuthIntent } = {},
   ): Promise<void> {
   ```
-- [ ] Forward `authIntent` through `KimiTUIStartupInput` in `apps/ody-code/src/cli/run-shell.ts`. In the `KimiTUI` constructor call (around line 89–98), add:
+- [ ] Forward `authIntent` through `OdyTUIStartupInput` in `apps/ody-code/src/cli/run-shell.ts`. In the `OdyTUI` constructor call (around line 89–98), add:
   ```ts
-  const tui = new KimiTUI(harness, {
+  const tui = new OdyTUI(harness, {
     cliOptions: opts,
     tuiConfig,
     version,
@@ -687,17 +687,17 @@ This task changes two shared signatures (`CLIOptions` and `runShell`) and must u
 
 ## Phase C — TUI Startup Wiring
 
-### Task 4: Wire `authIntent` through TUI types and `KimiTUI` startup
+### Task 4: Wire `authIntent` through TUI types and `OdyTUI` startup
 
 **Depends on:** Task 3  
 **Files:**
 - Modify: `apps/ody-code/src/tui/types.ts:174-183`
-- Modify: `apps/ody-code/src/tui/kimi-tui.ts:137-147` (KimiTUIStartupInput)
+- Modify: `apps/ody-code/src/tui/kimi-tui.ts:137-147` (OdyTUIStartupInput)
 - Modify: `apps/ody-code/src/tui/kimi-tui.ts:248-266` (constructor)
 - Modify: `apps/ody-code/src/tui/kimi-tui.ts:359-467` (start / finishStartup)
 - Test: whole-tree typecheck
 
-This task changes the shared `KimiTUIStartupInput` / `TUIStartupOptions` signatures.
+This task changes the shared `OdyTUIStartupInput` / `TUIStartupOptions` signatures.
 
 - [ ] Add `authIntent` to `TUIStartupOptions` in `apps/ody-code/src/tui/types.ts` line 174–183:
   ```ts
@@ -713,9 +713,9 @@ This task changes the shared `KimiTUIStartupInput` / `TUIStartupOptions` signatu
     readonly authIntent?: { readonly kind: 'login' | 'logout'; readonly providerType: string }; // ← NEW
   }
   ```
-- [ ] Add `authIntent` to `KimiTUIStartupInput` in `apps/ody-code/src/tui/kimi-tui.ts` line 137–147:
+- [ ] Add `authIntent` to `OdyTUIStartupInput` in `apps/ody-code/src/tui/kimi-tui.ts` line 137–147:
   ```ts
-  export interface KimiTUIStartupInput {
+  export interface OdyTUIStartupInput {
     readonly cliOptions: CLIOptions;
     readonly tuiConfig: TuiConfig;
     readonly version: string;
@@ -727,7 +727,7 @@ This task changes the shared `KimiTUIStartupInput` / `TUIStartupOptions` signatu
     readonly authIntent?: { readonly kind: 'login' | 'logout'; readonly providerType: string }; // ← NEW
   }
   ```
-- [ ] Forward `authIntent` into `KimiTUIOptions.startup` in the constructor (`apps/ody-code/src/tui/kimi-tui.ts` line 248–266). Inside the `tuiOptions` object, add to the `startup` property:
+- [ ] Forward `authIntent` into `OdyTUIOptions.startup` in the constructor (`apps/ody-code/src/tui/kimi-tui.ts` line 248–266). Inside the `tuiOptions` object, add to the `startup` property:
   ```ts
   startup: {
     sessionFlag: startupInput.cliOptions.session,
@@ -741,7 +741,7 @@ This task changes the shared `KimiTUIStartupInput` / `TUIStartupOptions` signatu
     authIntent: startupInput.authIntent,   // ← NEW
   },
   ```
-- [ ] Add a private field to store `authIntent` in `KimiTUI` class (`apps/ody-code/src/tui/kimi-tui.ts`, near other private fields around line 214):
+- [ ] Add a private field to store `authIntent` in `OdyTUI` class (`apps/ody-code/src/tui/kimi-tui.ts`, near other private fields around line 214):
   ```ts
   private readonly authIntent: { readonly kind: 'login' | 'logout'; readonly providerType: string } | undefined;
   ```
@@ -1108,7 +1108,7 @@ This task rewrites `handleLoginCommand` to accept an optional `providerTypeArg`,
         resolve(true);
       });
       if (!overwrite) return;
-      removeProviderConfig(config as ManagedKimiConfigShape, providerName);
+      removeProviderConfig(config as ManagedOdyConfigShape, providerName);
     }
 
     const subtitleLines = [
@@ -1157,7 +1157,7 @@ This task rewrites `handleLoginCommand` to accept an optional `providerTypeArg`,
     if (selection === undefined) return;
 
     const updatedConfig = await host.harness.getConfig();
-    applyProviderLoginConfig(updatedConfig as ManagedKimiConfigShape, {
+    applyProviderLoginConfig(updatedConfig as ManagedOdyConfigShape, {
       providerName,
       definition,
       baseUrl,
@@ -1485,7 +1485,7 @@ This task changes the `handleLogoutCommand` signature (shared) and updates its o
   > Every task contains complete, copy-pasteable code. No `TODO` markers remain. The overwrite-confirmation in Task 6 resolves immediately (the plan notes that pi-tui question-dialog infrastructure is overkill for a yes/no; the validation gate in `promptCustomProviderName` already prevents duplicates, and the harness `removeProvider` call in Task 6 handles the overwrite case).
 
 - [ ] 3. No phantom tasks: every task produces a verifiable change; zero `--allow-empty` / "already done in Task N".
-  > Task 1 modifies schema. Task 2 creates a new module + tests + exports. Task 3 modifies CLI options + commands + main + run-shell. Task 4 modifies TUI types + KimiTUI. Task 5 creates a new dialog component + prompt helpers. Task 6 rewrites handleLoginCommand + adds handleProviderLogin. Task 7 rewrites handleLogoutCommand + updates dispatch. Task 8 creates integration tests + runs final verification. Every task ends with a commit.
+  > Task 1 modifies schema. Task 2 creates a new module + tests + exports. Task 3 modifies CLI options + commands + main + run-shell. Task 4 modifies TUI types + OdyTUI. Task 5 creates a new dialog component + prompt helpers. Task 6 rewrites handleLoginCommand + adds handleProviderLogin. Task 7 rewrites handleLogoutCommand + updates dispatch. Task 8 creates integration tests + runs final verification. Every task ends with a commit.
 
 - [ ] 4. Dependency soundness: every `Depends on:` is satisfied by an earlier task; nothing references a symbol only a later task creates.
   > Task 1 (none) → Task 2 (Task 1) → Task 3 (Task 2) → Task 4 (Task 3) → Task 5 (Task 2, Task 4) → Task 6 (Task 2, Task 5) → Task 7 (Task 2, Task 6) → Task 8 (all). The `authIntent` type is introduced in Task 3 and consumed in Task 4. `ProviderModelInfo` and `fetchProviderModels` are introduced in Task 2 and consumed in Task 5 and Task 6. All symbols flow forward.
@@ -1493,7 +1493,7 @@ This task changes the `handleLogoutCommand` signature (shared) and updates its o
 - [ ] 5. Caller & build soundness: every shared-signature task updated all callers (incl. test files) and ends with a whole-tree typecheck, not a single-package build; the same signature is not changed across multiple tasks.
   > - **CLIOptions** (Task 3): updated in `commands.ts`, `main.ts` (`MIGRATE_CLI_OPTIONS`), and `run-shell.ts`. Ends with `pnpm run typecheck`.
   > - **runShell** (Task 3): only caller is `main.ts` and `handleMigrateCommand` in `main.ts`; both updated. Ends with whole-tree typecheck.
-  > - **KimiTUIStartupInput / TUIStartupOptions** (Task 4): updated in `run-shell.ts` and `kimi-tui.ts` constructor. Ends with whole-tree typecheck.
+  > - **OdyTUIStartupInput / TUIStartupOptions** (Task 4): updated in `run-shell.ts` and `kimi-tui.ts` constructor. Ends with whole-tree typecheck.
   > - **handleLoginCommand / handleLogoutCommand** (Task 6 & 7): updated in `dispatch.ts` in the same tasks. Task 6 and 7 each end with `pnpm --filter ody-code run typecheck`.
   > No signature is changed in more than one task.
 

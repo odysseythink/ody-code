@@ -82,3 +82,14 @@ export type {
   ExecutableToolSuccessResult,
   ExecutableToolErrorResult,
 } from './loop/types';
+
+// ─── Code Review ───────────────────────────────────────────────────────────
+export { renderCodeReviewReportToMarkdown } from './code-review/report';
+export { resolveCodeReviewModel } from './code-review/model-resolver';
+export type { ResolveModelOverrides } from './code-review/model-resolver';
+export type {
+  CodeReviewDiffSource,
+  CodeReviewRequestInput,
+  CodeReviewReport,
+  CodeReviewFinding,
+} from './code-review/types';

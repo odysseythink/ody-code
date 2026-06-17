@@ -1,4 +1,4 @@
-import type { KimiConfig } from '@odysseythink/agent-core';
+import type { OdyConfig } from '@odysseythink/agent-core';
 import { describe, expect, it, vi } from 'vitest';
 
 import {
@@ -69,7 +69,7 @@ describe('catalogModelToAlias', () => {
 
 describe('applyCatalogProvider', () => {
   it('writes provider, model aliases, and defaults', () => {
-    const config = { providers: {} } as KimiConfig;
+    const config = { providers: {} } as OdyConfig;
     const result = applyCatalogProvider(config, {
       providerId: 'anthropic',
       wire: 'anthropic',
@@ -106,7 +106,7 @@ describe('applyCatalogProvider', () => {
         },
       },
     });
-    const config = { providers: {} } as KimiConfig;
+    const config = { providers: {} } as OdyConfig;
 
     applyCatalogProvider(config, {
       providerId: 'deepseek',
@@ -132,7 +132,7 @@ describe('applyCatalogProvider', () => {
         'anthropic/stale': { provider: 'anthropic', model: 'stale', maxContextSize: 1 },
         'other/keep': { provider: 'other', model: 'keep', maxContextSize: 1 },
       },
-    } as unknown as KimiConfig;
+    } as unknown as OdyConfig;
 
     applyCatalogProvider(config, {
       providerId: 'anthropic',

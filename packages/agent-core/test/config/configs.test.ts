@@ -5,9 +5,10 @@ import { join } from 'pathe';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { ErrorCodes, KimiError } from '../../src/errors';
+import { ErrorCodes, OdyError } from '../../src/errors';
 import {
-  KimiConfigSchema,
+  OdyConfigSchema,
+  configToTomlData,
   ensureConfigFile,
   mergeConfigPatch,
   parseConfigString,
@@ -34,12 +35,12 @@ function makeTempDir(): string {
   return dir;
 }
 
-function expectKimiErrorCode(fn: () => unknown, code: string): void {
+function expectOdyErrorCode(fn: () => unknown, code: string): void {
   try {
     fn();
   } catch (error) {
-    expect(error).toBeInstanceOf(KimiError);
-    expect((error as KimiError).code).toBe(code);
+    expect(error).toBeInstanceOf(OdyError);
+    expect((error as OdyError).code).toBe(code);
     return;
   }
   throw new Error('expected function to throw');
@@ -383,12 +384,12 @@ source = { kind = "apiJson", url = "https://registry.example/api.json", apiKey =
     expect(text).not.toContain('default_permission_mode');
   });
 
-  it('rejects invalid TOML and invalid schema with KimiError(config.invalid)', () => {
-    expectKimiErrorCode(
+  it('rejects invalid TOML and invalid schema with OdyError(config.invalid)', () => {
+    expectOdyErrorCode(
       () => parseConfigString('[[[', 'broken.toml'),
       ErrorCodes.CONFIG_INVALID,
     );
-    expectKimiErrorCode(
+    expectOdyErrorCode(
       () =>
         parseConfigString(
           `
@@ -399,7 +400,7 @@ type = "not-a-provider"
         ),
       ErrorCodes.CONFIG_INVALID,
     );
-    expectKimiErrorCode(
+    expectOdyErrorCode(
       () =>
         parseConfigString(
           `
@@ -436,7 +437,7 @@ timeout = 5
   });
 
   it('rejects invalid hooks config', () => {
-    expectKimiErrorCode(
+    expectOdyErrorCode(
       () =>
         parseConfigString(
           `
@@ -451,7 +452,7 @@ hooks = [{ type = "pre-tool-call", command = "echo hi" }]
 
 describe('harness config schema and patch merge', () => {
   it('accepts the empty public config and requires model context size in full configs', () => {
-    expect(KimiConfigSchema.parse({})).toEqual({ providers: {} });
+    expect(OdyConfigSchema.parse({})).toEqual({ providers: {} });
     expect(() =>
       validateConfig({
         providers: {
@@ -464,7 +465,7 @@ describe('harness config schema and patch merge', () => {
     ).toThrow(/max_context_size/);
   });
 
-  it('parses modeModels from TOML and round-trips through KimiConfigSchema', () => {
+  it('parses modeModels from TOML and round-trips through OdyConfigSchema', () => {
     const config = parseConfigString(`
 [mode_models]
 plan   = "opus-alias"
@@ -474,7 +475,7 @@ design = "sonnet-alias"
   });
 
   it('accepts a partial modeModels (only design set)', () => {
-    const config = KimiConfigSchema.parse({ modeModels: { design: 'sonnet-alias' } });
+    const config = OdyConfigSchema.parse({ modeModels: { design: 'sonnet-alias' } });
     expect(config.modeModels?.design).toBe('sonnet-alias');
     expect(config.modeModels?.plan).toBeUndefined();
   });
@@ -516,7 +517,7 @@ design = "sonnet-alias"
   });
 
   it('rejects unknown fields in config patches', () => {
-    expectKimiErrorCode(
+    expectOdyErrorCode(
       () => mergeConfigPatch({ providers: {} }, { theme: 'dark' } as never),
       ErrorCodes.CONFIG_INVALID,
     );
@@ -534,7 +535,7 @@ design = "sonnet-alias"
   });
 
   it('accepts maxOutputSize on a model alias and round-trips it', () => {
-    const parsed = KimiConfigSchema.parse({
+    const parsed = OdyConfigSchema.parse({
       providers: { local: { type: 'anthropic', apiKey: 'sk-test' } },
       models: {
         opus: {
@@ -552,7 +553,7 @@ design = "sonnet-alias"
   });
 
   it('leaves maxOutputSize undefined when omitted', () => {
-    const parsed = KimiConfigSchema.parse({
+    const parsed = OdyConfigSchema.parse({
       providers: { local: { type: 'anthropic', apiKey: 'sk-test' } },
       models: {
         opus: {
@@ -567,7 +568,7 @@ design = "sonnet-alias"
 
   it('rejects maxOutputSize <= 0', () => {
     expect(() =>
-      KimiConfigSchema.parse({
+      OdyConfigSchema.parse({
         providers: { local: { type: 'anthropic', apiKey: 'sk-test' } },
         models: {
           opus: {
@@ -654,5 +655,54 @@ describe('config value env override helpers', () => {
         parseEnv: parseBooleanEnv,
       }),
     ).toBe(false);
+  });
+});
+
+describe('modeModels code-review fields', () => {
+  const TOML_WITH_CODE_REVIEW = `
+default_model = "base"
+
+[mode_models]
+plan = "plan-model"
+review = "generic-reviewer"
+code_review = "deepseek-coder"
+code_review_request = "claude-3-5-sonnet"
+code_review_receive = "claude-3-5-sonnet"
+`;
+
+  it('parseConfigString parses new code_review fields as camelCase', () => {
+    const config = parseConfigString(TOML_WITH_CODE_REVIEW, 'test.toml');
+    expect(config.modeModels).toBeDefined();
+    expect(config.modeModels!.plan).toBe('plan-model');
+    expect(config.modeModels!.review).toBe('generic-reviewer');
+    expect(config.modeModels!.codeReview).toBe('deepseek-coder');
+    expect(config.modeModels!.codeReviewRequest).toBe('claude-3-5-sonnet');
+    expect(config.modeModels!.codeReviewReceive).toBe('claude-3-5-sonnet');
+  });
+
+  it('configToTomlData round-trips code_review fields as snake_case', () => {
+    const config = parseConfigString(TOML_WITH_CODE_REVIEW, 'test.toml');
+    const data = configToTomlData(config);
+    const modeModels = data['mode_models'] as Record<string, unknown>;
+    expect(modeModels).toBeDefined();
+    expect(modeModels['plan']).toBe('plan-model');
+    expect(modeModels['review']).toBe('generic-reviewer');
+    expect(modeModels['code_review']).toBe('deepseek-coder');
+    expect(modeModels['code_review_request']).toBe('claude-3-5-sonnet');
+    expect(modeModels['code_review_receive']).toBe('claude-3-5-sonnet');
+  });
+
+  it('writeConfigFile then readConfigFile round-trips all code_review fields', async () => {
+    const dir = makeTempDir();
+    const configPath = join(dir, 'config.toml');
+    const config = parseConfigString(TOML_WITH_CODE_REVIEW, configPath);
+    await writeConfigFile(configPath, config);
+    const text = await readFile(configPath, 'utf-8');
+    expect(text).toContain('code_review = "deepseek-coder"');
+    expect(text).toContain('code_review_request = "claude-3-5-sonnet"');
+    expect(text).toContain('code_review_receive = "claude-3-5-sonnet"');
+    const roundTripped = parseConfigString(text, configPath);
+    expect(roundTripped.modeModels!.codeReviewRequest).toBe('claude-3-5-sonnet');
+    expect(roundTripped.modeModels!.codeReviewReceive).toBe('claude-3-5-sonnet');
   });
 });

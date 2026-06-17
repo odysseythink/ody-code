@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { BuiltInMcpRegistry } from '../../../src/mcp/built-in/registry';
-import type { KimiConfig } from '../../../src/config/schema';
+import type { OdyConfig } from '../../../src/config/schema';
 
 describe('BuiltInMcpRegistry', () => {
   it('register then getEnabledConfigs returns the server', () => {
@@ -27,7 +27,7 @@ describe('BuiltInMcpRegistry', () => {
       enabledByDefault: true,
       config: { transport: 'stdio' as const, command: 'node' },
     });
-    const config: KimiConfig = { providers: {}, browser: { enabled: false } };
+    const config: OdyConfig = { providers: {}, browser: { enabled: false } };
     expect(registry.isDisabled('chrome-devtools', config)).toBe(true);
   });
 
@@ -39,7 +39,7 @@ describe('BuiltInMcpRegistry', () => {
       enabledByDefault: true,
       config: { transport: 'stdio' as const, command: 'node' },
     });
-    const config: KimiConfig = { providers: {} };
+    const config: OdyConfig = { providers: {} };
     expect(registry.isDisabled('chrome-devtools', config)).toBe(false);
   });
 

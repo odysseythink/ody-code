@@ -1,7 +1,7 @@
 import { createToolMessage, type ContentPart, type Message } from '@odysseythink/kosong';
 
 import type { Agent } from '..';
-import { ErrorCodes, KimiError } from '../../errors';
+import { ErrorCodes, OdyError } from '../../errors';
 import type { ExecutableToolResult, LoopRecordedEvent } from '../../loop';
 import { estimateTokensForMessages } from '../../utils/tokens';
 import type { CompactionResult } from '../compaction';
@@ -117,7 +117,7 @@ export class ContextMemory {
       !this.agent.records.restoring &&
       (stoppedAtBoundary || removedUserCount < count)
     ) {
-      throw new KimiError(
+      throw new OdyError(
         ErrorCodes.REQUEST_INVALID,
         'Nothing to undo in the active context.',
       );

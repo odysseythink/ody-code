@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import type * as KosongModule from '@odysseythink/kosong';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import type { KimiError, Event } from '#/index';
+import type { OdyError, Event } from '#/index';
 
 import { makeTempDir, removeTempDirs, waitForSDKEvent } from './session-runtime-helpers';
 import { TEST_IDENTITY } from './test-identity';
@@ -90,9 +90,9 @@ describe('Session.cancel', () => {
       const session = await harness.createSession({ id: 'ses_cancel_compaction', workDir });
 
       await expect(session.compact({ instruction: 'Keep the compact test pending.' })).rejects.toMatchObject({
-        name: 'KimiError',
+        name: 'OdyError',
         code: 'compaction.unable',
-      } satisfies Partial<KimiError>);
+      } satisfies Partial<OdyError>);
     } finally {
       await harness.close();
     }
@@ -108,13 +108,13 @@ describe('Session.cancel', () => {
       await session.close();
 
       await expect(session.cancel()).rejects.toMatchObject({
-        name: 'KimiError',
+        name: 'OdyError',
         code: 'session.closed',
-      } satisfies Partial<KimiError>);
+      } satisfies Partial<OdyError>);
       await expect(session.cancelCompaction()).rejects.toMatchObject({
-        name: 'KimiError',
+        name: 'OdyError',
         code: 'session.closed',
-      } satisfies Partial<KimiError>);
+      } satisfies Partial<OdyError>);
     } finally {
       await harness.close();
     }

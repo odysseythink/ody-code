@@ -1,8 +1,8 @@
 import type { Logger } from '#/logging/types';
 import type { ProviderConfig as KosongProviderConfig, ModelCapability, ProviderRequestAuth } from '@odysseythink/kosong';
 import { APIStatusError, createProvider, UNKNOWN_CAPABILITY } from '@odysseythink/kosong';
-import type { KimiConfig, ModelAlias, OAuthRef, ProviderConfig } from '../config';
-import { ErrorCodes, isKimiError, KimiError } from '../errors';
+import type { OdyConfig, ModelAlias, OAuthRef, ProviderConfig } from '../config';
+import { ErrorCodes, isOdyError, OdyError } from '../errors';
 
 export interface BearerTokenProvider {
   getAccessToken(options?: { readonly force?: boolean }): Promise<string>;
@@ -20,7 +20,7 @@ export interface ResolvedRuntimeProvider {
 }
 
 interface ProviderManagerOptions {
-  readonly config: KimiConfig | (() => KimiConfig);
+  readonly config: OdyConfig | (() => OdyConfig);
   readonly kimiRequestHeaders?: Record<string, string>;
   readonly resolveOAuthTokenProvider?: OAuthTokenProviderResolver;
   readonly promptCacheKey?: string;
@@ -48,7 +48,7 @@ export class SingleModelProvider implements ModelProvider {
 
   resolveProviderConfig(model: string): ResolvedRuntimeProvider {
     if (model !== this.providerConfig.model) {
-      throw new KimiError(
+      throw new OdyError(
         ErrorCodes.CONFIG_INVALID,
         `Model "${model}" is not supported by SingleModelProvider.`,
       );
@@ -64,7 +64,7 @@ export class SingleModelProvider implements ModelProvider {
 export class ProviderManager implements ModelProvider {
   constructor(private readonly options: ProviderManagerOptions) {}
 
-  private get config(): KimiConfig {
+  private get config(): OdyConfig {
     const { config } = this.options;
     return typeof config === 'function' ? config() : config;
   }
@@ -72,7 +72,7 @@ export class ProviderManager implements ModelProvider {
   resolveProviderConfig(model: string): ResolvedRuntimeProvider {
     const alias = this.config.models?.[model];
     if (alias === undefined) {
-      throw new KimiError(
+      throw new OdyError(
         ErrorCodes.CONFIG_INVALID,
         `Model "${model}" is not configured in config.toml. Add a [models."${model}"] entry with max_context_size.`,
       );
@@ -80,7 +80,7 @@ export class ProviderManager implements ModelProvider {
 
     const providerName = alias.provider ?? this.config.defaultProvider;
     if (providerName === undefined) {
-      throw new KimiError(
+      throw new OdyError(
         ErrorCodes.CONFIG_INVALID,
         `Model "${model}" must define a provider in config.toml.`,
       );
@@ -88,14 +88,14 @@ export class ProviderManager implements ModelProvider {
 
     const providerConfig = this.config.providers[providerName];
     if (providerConfig === undefined) {
-      throw new KimiError(
+      throw new OdyError(
         ErrorCodes.CONFIG_INVALID,
         `Provider "${providerName}" for model "${model}" is not configured.`,
       );
     }
 
     if (!Number.isInteger(alias.maxContextSize) || alias.maxContextSize <= 0) {
-      throw new KimiError(
+      throw new OdyError(
         ErrorCodes.CONFIG_INVALID,
         `Model "${model}" must define a positive max_context_size in config.toml.`,
       );
@@ -130,14 +130,14 @@ export class ProviderManager implements ModelProvider {
       // oauth + apiKey on the same provider makes request auth ambiguous:
       // provider construction would prefer apiKey while runtime auth resolves
       // OAuth. Reject it so misconfiguration surfaces at model resolution.
-      throw new KimiError(
+      throw new OdyError(
         ErrorCodes.CONFIG_INVALID,
         `Provider "${providerName}" has both apiKey and oauth set in config.toml — they are mutually exclusive. Remove one.`,
       );
     }
 
-    const loginRequired = (cause?: unknown): KimiError =>
-      new KimiError(
+    const loginRequired = (cause?: unknown): OdyError =>
+      new OdyError(
         ErrorCodes.AUTH_LOGIN_REQUIRED,
         `OAuth provider "${providerName}" requires login before it can be used.`,
         cause === undefined ? undefined : { cause },
@@ -156,7 +156,7 @@ export class ProviderManager implements ModelProvider {
       try {
         apiKey = await tokenProvider.getAccessToken(force ? { force: true } : undefined);
       } catch (error) {
-        if (!isKimiError(error) || error.code !== ErrorCodes.AUTH_LOGIN_REQUIRED) {
+        if (!isOdyError(error) || error.code !== ErrorCodes.AUTH_LOGIN_REQUIRED) {
           log?.warn('oauth token fetch failed', { providerName, error });
         }
         throw loginRequired(error);
@@ -173,7 +173,7 @@ export class ProviderManager implements ModelProvider {
         } catch (error) {
           if (!(error instanceof APIStatusError) || error.statusCode !== 401) throw error;
           if (refreshed) {
-            throw new KimiError(
+            throw new OdyError(
               ErrorCodes.AUTH_LOGIN_REQUIRED,
               'OAuth provider credentials were rejected. Send /login to login.',
               {
@@ -290,7 +290,7 @@ function toKosongProviderConfig(
       };
     default: {
       const exhaustive: never = provider.type;
-      throw new KimiError(
+      throw new OdyError(
         ErrorCodes.MODEL_CONFIG_INVALID,
         `Unsupported provider type: ${String(exhaustive)}`,
       );
@@ -339,7 +339,7 @@ function providerApiKey(provider: ProviderConfig): string | undefined {
       return providerValue(provider.apiKey, provider.env, 'GLM_API_KEY');
     default: {
       const exhaustive: never = provider.type;
-      throw new KimiError(
+      throw new OdyError(
         ErrorCodes.MODEL_CONFIG_INVALID,
         `Unsupported provider type: ${String(exhaustive)}`,
       );

@@ -7,7 +7,7 @@ import {
   fetchManagedKimiCodeModels,
   ODY_CODE_PROVIDER_NAME,
   provisionManagedKimiCodeConfig,
-  type ManagedKimiConfigShape,
+  type ManagedOdyConfigShape,
 } from '../src/managed-kimi-code';
 
 function makeModelsResponse(): Response {
@@ -38,7 +38,7 @@ function makeModelsResponse(): Response {
 
 describe('provisionManagedKimiCodeConfig', () => {
   it('writes the managed provider, models, services, and default model through an adapter', async () => {
-    const config: ManagedKimiConfigShape = {
+    const config: ManagedOdyConfigShape = {
       providers: {
         custom: {
           type: 'kimi',
@@ -123,7 +123,7 @@ describe('provisionManagedKimiCodeConfig', () => {
   });
 
   it('preserves an existing valid default model during refresh', async () => {
-    const config: ManagedKimiConfigShape = {
+    const config: ManagedOdyConfigShape = {
       providers: {
         custom: {
           type: 'kimi',
@@ -171,7 +171,7 @@ describe('provisionManagedKimiCodeConfig', () => {
   });
 
   it('infers default_thinking from fresh managed model capabilities', async () => {
-    const config: ManagedKimiConfigShape = {
+    const config: ManagedOdyConfigShape = {
       providers: {
         [ODY_CODE_PROVIDER_NAME]: {
           type: 'kimi',
@@ -206,7 +206,7 @@ describe('provisionManagedKimiCodeConfig', () => {
   });
 
   it('preserves explicit default_thinking when preserving a custom default without capabilities', async () => {
-    const config: ManagedKimiConfigShape = {
+    const config: ManagedOdyConfigShape = {
       providers: {
         custom: {
           type: 'kimi',
@@ -241,7 +241,7 @@ describe('provisionManagedKimiCodeConfig', () => {
   });
 
   it('defaults default_thinking to false when a preserved custom default has no signal', async () => {
-    const config: ManagedKimiConfigShape = {
+    const config: ManagedOdyConfigShape = {
       providers: {
         custom: {
           type: 'kimi',
@@ -275,7 +275,7 @@ describe('provisionManagedKimiCodeConfig', () => {
   });
 
   it('does not infer default_thinking from preserved custom default capabilities', async () => {
-    const config: ManagedKimiConfigShape = {
+    const config: ManagedOdyConfigShape = {
       providers: {
         custom: {
           type: 'kimi',
@@ -310,7 +310,7 @@ describe('provisionManagedKimiCodeConfig', () => {
   });
 
   it('keeps default_thinking off even when preserved custom default has thinking capability', async () => {
-    const config: ManagedKimiConfigShape = {
+    const config: ManagedOdyConfigShape = {
       providers: {
         custom: {
           type: 'kimi',
@@ -345,7 +345,7 @@ describe('provisionManagedKimiCodeConfig', () => {
   });
 
   it('falls back to the first fetched model when the preserved default was removed', async () => {
-    const config: ManagedKimiConfigShape = {
+    const config: ManagedOdyConfigShape = {
       providers: {
         [ODY_CODE_PROVIDER_NAME]: {
           type: 'kimi',
@@ -381,7 +381,7 @@ describe('provisionManagedKimiCodeConfig', () => {
   });
 
   it('removes managed provider, models, services, and default model on logout', () => {
-    const config: ManagedKimiConfigShape = {
+    const config: ManagedOdyConfigShape = {
       providers: {
         [ODY_CODE_PROVIDER_NAME]: {
           type: 'kimi',
@@ -485,7 +485,7 @@ describe('provisionManagedKimiCodeConfig', () => {
   });
 
   it('clears managed provider, models, default model, and services on logout', () => {
-    const config: ManagedKimiConfigShape = {
+    const config: ManagedOdyConfigShape = {
       providers: {
         [ODY_CODE_PROVIDER_NAME]: {
           type: 'kimi',

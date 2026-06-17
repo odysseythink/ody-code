@@ -2,7 +2,7 @@ import type { FinishReason, TokenUsage } from '@odysseythink/kosong';
 
 import type { GoalChange, GoalSnapshot } from '../session/goal';
 import type { CronJobOrigin, PromptOrigin } from '../agent/context';
-import type { KimiErrorPayload } from '../errors';
+import type { OdyErrorPayload } from '../errors';
 import type { PermissionMode } from '../agent/permission';
 import type { SkillSource } from '../skill';
 import type { BackgroundTaskInfo } from '../agent/background';
@@ -10,7 +10,7 @@ import type { ToolInputDisplay } from '../tools/display';
 import type { SupportedLanguage } from '../i18n';
 
 export type { ToolInputDisplay } from '../tools/display';
-export type { KimiErrorPayload } from '../errors';
+export type { OdyErrorPayload } from '../errors';
 
 export interface UsageStatus {
   readonly byModel?: Record<string, TokenUsage> | undefined;
@@ -83,7 +83,7 @@ export interface SkillActivatedEvent {
   readonly skillSource?: SkillSource | undefined;
 }
 
-export interface ErrorEvent extends KimiErrorPayload {
+export interface ErrorEvent extends OdyErrorPayload {
   readonly type: 'error';
 }
 
@@ -103,7 +103,7 @@ export interface TurnEndedEvent {
   readonly type: 'turn.ended';
   readonly turnId: number;
   readonly reason: TurnEndReason;
-  readonly error?: KimiErrorPayload | undefined;
+  readonly error?: OdyErrorPayload | undefined;
 }
 
 export interface TurnStepStartedEvent {

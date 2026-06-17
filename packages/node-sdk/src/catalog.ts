@@ -1,4 +1,4 @@
-import type { KimiConfig, ModelAlias } from '@odysseythink/agent-core';
+import type { OdyConfig, ModelAlias } from '@odysseythink/agent-core';
 import {
   catalogBaseUrl,
   catalogProviderModels,
@@ -100,7 +100,7 @@ export function loadBuiltInCatalog(text?: string): Catalog | undefined {
  * after the merge.
  */
 export function applyCatalogProvider(
-  config: KimiConfig,
+  config: OdyConfig,
   options: ApplyCatalogProviderOptions,
 ): { defaultModel: string } {
   config.providers[options.providerId] = {

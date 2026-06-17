@@ -5,6 +5,7 @@ import { CLI_COMMAND_NAME } from '#/constant/app';
 import type { CLIOptions } from './options';
 import { registerExportCommand } from './sub/export';
 import { registerProviderCommand } from './sub/provider';
+import { registerRequestCodeReviewCommand } from './sub/request-code-review';
 
 export type MainCommandHandler = (opts: CLIOptions) => void;
 export type PluginNodeRunnerHandler = (entry: string, args: readonly string[]) => void;
@@ -92,6 +93,7 @@ export function createProgram(
 
   registerExportCommand(program);
   registerProviderCommand(program);
+  registerRequestCodeReviewCommand(program);
   program
     .command('upgrade')
     .description('Upgrade Ody Code to the latest version.')

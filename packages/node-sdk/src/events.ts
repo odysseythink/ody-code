@@ -8,7 +8,7 @@ import type {
 } from '@odysseythink/agent-core';
 
 // Event union plus shared fields/payloads used across event families.
-export type { KimiErrorPayload, Event } from '@odysseythink/agent-core';
+export type { OdyErrorPayload, Event } from '@odysseythink/agent-core';
 
 export { MCP_OAUTH_AUTHORIZATION_URL_TOOL_UPDATE } from '@odysseythink/agent-core';
 

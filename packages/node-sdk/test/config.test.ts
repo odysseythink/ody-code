@@ -4,7 +4,7 @@ import { join } from 'node:path';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { KimiError, KimiHarness } from '#/index';
+import { OdyError, KimiHarness } from '#/index';
 
 import {
   parseConfigString,
@@ -270,10 +270,10 @@ describe('KimiHarness config API', () => {
       },
     } as never);
 
-    await expect(setInvalidConfig).rejects.toBeInstanceOf(KimiError);
+    await expect(setInvalidConfig).rejects.toBeInstanceOf(OdyError);
     await expect(setInvalidConfig).rejects.toMatchObject({
       code: 'config.invalid',
-    } satisfies Partial<KimiError>);
+    } satisfies Partial<OdyError>);
 
     await expect(readFile(configPath, 'utf-8')).resolves.toBe(before);
   });

@@ -3,7 +3,7 @@ import { dirname, join } from 'node:path';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { KimiHarness, type Event, type KimiError } from '#/index';
+import { KimiHarness, type Event, type OdyError } from '#/index';
 
 import { makeTempDir, removeTempDirs } from './session-runtime-helpers';
 import { TEST_IDENTITY } from './test-identity';
@@ -98,9 +98,9 @@ describe('Session plan, compact, usage, and resume APIs', () => {
       const session = await harness.createSession({ id: 'ses_compact_runtime', workDir });
 
       await expect(session.compact({ instruction: 'Keep important facts.' })).rejects.toMatchObject({
-        name: 'KimiError',
+        name: 'OdyError',
         code: 'compaction.unable',
-      } satisfies Partial<KimiError>);
+      } satisfies Partial<OdyError>);
     } finally {
       await harness.close();
     }
@@ -276,9 +276,9 @@ describe('Session plan, compact, usage, and resume APIs', () => {
 
     try {
       await expect(harness.resumeSession({ id: '   ' })).rejects.toMatchObject({
-        name: 'KimiError',
+        name: 'OdyError',
         code: 'session.id_empty',
-      } satisfies Partial<KimiError>);
+      } satisfies Partial<OdyError>);
     } finally {
       await harness.close();
     }

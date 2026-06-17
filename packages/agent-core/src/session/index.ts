@@ -2,10 +2,10 @@ import { homedir } from 'node:os';
 import { join } from 'pathe';
 import type { Kaos } from '@odysseythink/kaos';
 
-import { ErrorCodes, KimiError } from '#/errors';
+import { ErrorCodes, OdyError } from '#/errors';
 import { getRootLogger, log } from '#/logging/logger';
 import type { Logger, SessionLogHandle } from '#/logging/types';
-import type { KimiConfig, SDKSessionRPC } from '#/rpc';
+import type { OdyConfig, SDKSessionRPC } from '#/rpc';
 import { proxyWithExtraPayload } from '#/rpc/types';
 
 import { Agent, type AgentOptions, type AgentType } from '../agent';
@@ -52,7 +52,7 @@ import {
 
 export interface SessionOptions {
   readonly kaos: Kaos;
-  readonly config?: KimiConfig;
+  readonly config?: OdyConfig;
   readonly id?: string | undefined;
   readonly homedir: string;
   readonly kimiHomeDir?: string;
@@ -348,7 +348,7 @@ export class Session {
       });
       await mainAgent.records.flush();
     } catch (error) {
-      throw new KimiError(
+      throw new OdyError(
         ErrorCodes.SESSION_INIT_FAILED,
         error instanceof Error ? error.message : 'Init failed',
         { cause: error },
@@ -541,7 +541,7 @@ export class Session {
     const existing = this.agents.get(id);
     if (existing !== undefined) return existing;
     if (stack.includes(id)) {
-      throw new KimiError(
+      throw new OdyError(
         ErrorCodes.SESSION_STATE_INVALID,
         `Session agent parent chain contains a cycle: ${[...stack, id].join(' -> ')}`,
       );
@@ -549,7 +549,7 @@ export class Session {
 
     const meta = agents[id];
     if (meta === undefined) {
-      throw new KimiError(ErrorCodes.SESSION_STATE_INVALID, `Session agent "${id}" is missing`);
+      throw new OdyError(ErrorCodes.SESSION_STATE_INVALID, `Session agent "${id}" is missing`);
     }
 
     const parentAgentId = meta.parentAgentId ?? null;
@@ -574,7 +574,7 @@ export class Session {
   private requireMainAgent(): Agent {
     const agent = this.agents.get('main');
     if (agent === undefined) {
-      throw new KimiError(ErrorCodes.AGENT_NOT_FOUND, 'Main agent was not found');
+      throw new OdyError(ErrorCodes.AGENT_NOT_FOUND, 'Main agent was not found');
     }
     return agent;
   }

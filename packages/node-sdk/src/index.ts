@@ -24,15 +24,15 @@ export type {
 
 export {
   ErrorCodes,
-  KimiError,
-  type KimiErrorCode,
-  type KimiErrorInfo,
-  type KimiErrorOptions,
-  type KimiErrorPayload,
+  OdyError,
+  type OdyErrorCode,
+  type OdyErrorInfo,
+  type OdyErrorOptions,
+  type OdyErrorPayload,
   ODY_ERROR_INFO,
-  fromKimiErrorPayload,
-  isKimiError,
-  toKimiErrorPayload,
+  fromOdyErrorPayload,
+  isOdyError,
+  toOdyErrorPayload,
 } from '@odysseythink/agent-core';
 
 // Diagnostic logging — public surface only.
@@ -72,3 +72,9 @@ export type * from '#/types';
 // i18n for office-hours language adaptation
 export { t, isSupportedLanguage, normalizeLanguage } from '@odysseythink/agent-core';
 export type { SupportedLanguage, MessageKey } from '@odysseythink/agent-core';
+
+// Code review report markdown renderer
+export { renderCodeReviewReportToMarkdown } from '@odysseythink/agent-core';
+// Code review model resolver
+export { resolveCodeReviewModel } from '@odysseythink/agent-core';
+export type { ResolveModelOverrides } from '@odysseythink/agent-core';

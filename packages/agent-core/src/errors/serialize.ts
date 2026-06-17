@@ -5,8 +5,8 @@ import {
   ChatProviderError,
 } from '@odysseythink/kosong';
 
-import { KimiError } from './classes';
-import { ErrorCodes, ODY_ERROR_INFO, type KimiErrorCode } from './codes';
+import { OdyError } from './classes';
+import { ErrorCodes, ODY_ERROR_INFO, type OdyErrorCode } from './codes';
 
 /**
  * Wire-safe payload of a Kimi error.
@@ -18,30 +18,30 @@ import { ErrorCodes, ODY_ERROR_INFO, type KimiErrorCode } from './codes';
  * `details` is JSON-serialized. `cause` is intentionally absent -- it is
  * local-only diagnostic state and must not cross the boundary.
  */
-export interface KimiErrorPayload {
-  readonly code: KimiErrorCode;
+export interface OdyErrorPayload {
+  readonly code: OdyErrorCode;
   readonly message: string;
   readonly name?: string;
   readonly details?: Record<string, unknown>;
   readonly retryable: boolean;
 }
 
-/** Type guard for KimiError. */
-export function isKimiError(error: unknown): error is KimiError {
-  return error instanceof KimiError;
+/** Type guard for OdyError. */
+export function isOdyError(error: unknown): error is OdyError {
+  return error instanceof OdyError;
 }
 
 /**
- * Build a KimiErrorPayload directly from a code + message (no Error instance
+ * Build a OdyErrorPayload directly from a code + message (no Error instance
  * needed). Use this for synthetic error events that are signaled, not thrown
  * -- e.g. "turn busy" or "compaction failed". `retryable` is filled from
  * ODY_ERROR_INFO so callers cannot drift out of sync with the registry.
  */
 export function makeErrorPayload(
-  code: KimiErrorCode,
+  code: OdyErrorCode,
   message: string,
   options?: { readonly details?: Record<string, unknown>; readonly name?: string },
-): KimiErrorPayload {
+): OdyErrorPayload {
   return {
     code,
     message,
@@ -52,10 +52,10 @@ export function makeErrorPayload(
 }
 
 /**
- * Normalize any value into a KimiErrorPayload.
+ * Normalize any value into a OdyErrorPayload.
  *
  * Recognized errors:
- * - `KimiError`: passthrough.
+ * - `OdyError`: passthrough.
  * - `APIStatusError`: 429 -> rate_limit, 401 -> auth_error, otherwise -> api_error.
  * - `APIConnectionError` / `APITimeoutError`: connection_error.
  * - `ChatProviderError`: api_error.
@@ -63,8 +63,8 @@ export function makeErrorPayload(
  * Anything else collapses to `internal`. We never echo `cause` or stack on
  * the wire.
  */
-export function toKimiErrorPayload(error: unknown): KimiErrorPayload {
-  if (isKimiError(error)) {
+export function toOdyErrorPayload(error: unknown): OdyErrorPayload {
+  if (isOdyError(error)) {
     return {
       code: error.code,
       message: error.message,
@@ -75,7 +75,7 @@ export function toKimiErrorPayload(error: unknown): KimiErrorPayload {
   }
 
   if (error instanceof APIStatusError) {
-    const code: KimiErrorCode =
+    const code: OdyErrorCode =
       error.statusCode === 429
         ? ErrorCodes.PROVIDER_RATE_LIMIT
         : error.statusCode === 401
@@ -128,12 +128,12 @@ export function toKimiErrorPayload(error: unknown): KimiErrorPayload {
 }
 
 /**
- * Rehydrate a KimiErrorPayload into a KimiError. Used by SDK boundary code
+ * Rehydrate a OdyErrorPayload into a OdyError. Used by SDK boundary code
  * receiving errors over RPC to re-surface them with a real class so
  * in-process consumers can still use `instanceof`.
  */
-export function fromKimiErrorPayload(payload: KimiErrorPayload): KimiError {
-  return new KimiError(payload.code, payload.message, {
+export function fromOdyErrorPayload(payload: OdyErrorPayload): OdyError {
+  return new OdyError(payload.code, payload.message, {
     details: payload.details,
   });
 }

@@ -16,7 +16,7 @@ import {
   CustomRegistryApiError,
   fetchCustomRegistry,
   type CustomRegistrySource,
-  type ManagedKimiConfigShape,
+  type ManagedOdyConfigShape,
 } from '@odysseythink/kimi-code-oauth';
 import {
   applyCatalogProvider,
@@ -29,7 +29,7 @@ import {
   KimiHarness,
   type Catalog,
   type CatalogProviderEntry,
-  type KimiConfig,
+  type OdyConfig,
 } from '@odysseythink/ody-code-sdk';
 import type { Command } from 'commander';
 
@@ -504,11 +504,11 @@ function resolveApiKey(flag: string | undefined, env: NodeJS.ProcessEnv): string
   return undefined;
 }
 
-function asManaged(config: KimiConfig): ManagedKimiConfigShape {
-  return config as unknown as ManagedKimiConfigShape;
+function asManaged(config: OdyConfig): ManagedOdyConfigShape {
+  return config as unknown as ManagedOdyConfigShape;
 }
 
-function providerSourceLabel(provider: KimiConfig['providers'][string]): string {
+function providerSourceLabel(provider: OdyConfig['providers'][string]): string {
   const source = provider.source;
   if (source !== undefined) {
     if (source['kind'] === 'apiJson' && typeof source['url'] === 'string') {

@@ -10,7 +10,7 @@ import {
   OPEN_PLATFORMS,
   OpenPlatformApiError,
   removeOpenPlatformConfig,
-  type ManagedKimiConfigShape,
+  type ManagedOdyConfigShape,
 } from '../src/open-platform';
 
 function makeModelsResponse(): Response {
@@ -183,7 +183,7 @@ describe('capabilitiesForModel', () => {
 
 describe('applyOpenPlatformConfig', () => {
   it('writes provider, models, and defaults', () => {
-    const config: ManagedKimiConfigShape = {
+    const config: ManagedOdyConfigShape = {
       providers: {},
     };
     const platform = getOpenPlatformById('moonshot-cn')!;
@@ -223,7 +223,7 @@ describe('applyOpenPlatformConfig', () => {
   });
 
   it('clears stale models for the same provider', () => {
-    const config: ManagedKimiConfigShape = {
+    const config: ManagedOdyConfigShape = {
       providers: {
         'moonshot-cn': { type: 'kimi', baseUrl: 'https://api.moonshot.cn/v1', apiKey: 'sk-old' },
       },
@@ -252,7 +252,7 @@ describe('applyOpenPlatformConfig', () => {
 
 describe('removeOpenPlatformConfig', () => {
   it('removes provider, its models, and defaultModel when matched', () => {
-    const config: ManagedKimiConfigShape = {
+    const config: ManagedOdyConfigShape = {
       providers: {
         'moonshot-cn': { type: 'kimi', baseUrl: 'https://api.moonshot.cn/v1', apiKey: 'sk-test' },
         'other': { type: 'kimi', baseUrl: 'https://other.test/v1', apiKey: 'sk-other' },
@@ -274,7 +274,7 @@ describe('removeOpenPlatformConfig', () => {
   });
 
   it('leaves defaultModel intact when it belongs to another provider', () => {
-    const config: ManagedKimiConfigShape = {
+    const config: ManagedOdyConfigShape = {
       providers: {
         'moonshot-cn': { type: 'kimi', baseUrl: 'https://api.moonshot.cn/v1', apiKey: 'sk-test' },
       },

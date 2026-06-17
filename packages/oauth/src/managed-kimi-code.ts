@@ -77,7 +77,7 @@ export interface ManagedKimiServicesConfig {
   readonly [key: string]: unknown;
 }
 
-export interface ManagedKimiConfigShape {
+export interface ManagedOdyConfigShape {
   providers: Record<string, ManagedKimiProviderConfig | Record<string, unknown>>;
   models?: Record<string, ManagedKimiModelAlias | Record<string, unknown>> | undefined;
   defaultModel?: string | undefined;
@@ -86,7 +86,7 @@ export interface ManagedKimiConfigShape {
   [key: string]: unknown;
 }
 
-export interface ManagedKimiConfigAdapter<TConfig> {
+export interface ManagedOdyConfigAdapter<TConfig> {
   read(): Promise<TConfig> | TConfig;
   write(config: TConfig): Promise<void> | void;
   apply(
@@ -102,7 +102,7 @@ export interface ManagedKimiConfigAdapter<TConfig> {
 }
 
 export interface ProvisionManagedKimiCodeConfigOptions<TConfig> {
-  readonly adapter: ManagedKimiConfigAdapter<TConfig>;
+  readonly adapter: ManagedOdyConfigAdapter<TConfig>;
   readonly accessToken: string;
   readonly baseUrl?: string | undefined;
   readonly preserveDefaultModel?: boolean | undefined;
@@ -185,7 +185,7 @@ export async function fetchManagedKimiCodeModels(
 }
 
 export function applyManagedKimiCodeConfig(
-  config: ManagedKimiConfigShape,
+  config: ManagedOdyConfigShape,
   options: {
     readonly models: readonly ManagedKimiCodeModelInfo[];
     readonly baseUrl?: string | undefined;
@@ -250,7 +250,7 @@ export function applyManagedKimiCodeConfig(
   };
 }
 
-export function applyManagedKimiCodeLogoutConfig(config: ManagedKimiConfigShape): void {
+export function applyManagedKimiCodeLogoutConfig(config: ManagedOdyConfigShape): void {
   delete config.providers[ODY_CODE_PROVIDER_NAME];
 
   let removedDefaultModel = false;
@@ -280,7 +280,7 @@ export function applyManagedKimiCodeLogoutConfig(config: ManagedKimiConfigShape)
 }
 
 function selectDefaultModel(
-  config: ManagedKimiConfigShape,
+  config: ManagedOdyConfigShape,
   models: readonly ManagedKimiCodeModelInfo[],
   options: { readonly preserveExisting: boolean },
 ): SelectedDefaultModel {
@@ -325,7 +325,7 @@ function canPreserveDefaultModel(
 }
 
 export function clearManagedKimiCodeConfig(
-  config: ManagedKimiConfigShape,
+  config: ManagedOdyConfigShape,
 ): ManagedKimiCodeCleanupResult {
   const removedProvider = Object.hasOwn(config.providers, ODY_CODE_PROVIDER_NAME);
   delete config.providers[ODY_CODE_PROVIDER_NAME];
@@ -375,7 +375,7 @@ function assertPositiveContextLength(model: ManagedKimiCodeModelInfo): void {
 }
 
 export async function provisionManagedKimiCodeConfigAfterLogin(
-  options: ProvisionManagedKimiCodeConfigOptions<ManagedKimiConfigShape>,
+  options: ProvisionManagedKimiCodeConfigOptions<ManagedOdyConfigShape>,
 ): Promise<ManagedKimiCodeProvisionResult> {
   return provisionManagedKimiCodeConfig(options);
 }

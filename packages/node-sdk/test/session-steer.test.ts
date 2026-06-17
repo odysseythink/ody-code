@@ -1,7 +1,7 @@
 import type * as KosongModule from '@odysseythink/kosong';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { KimiError } from '#/index';
+import type { OdyError } from '#/index';
 
 import { makeTempDir, removeTempDirs, waitForAgentWireEvent } from './session-runtime-helpers';
 import { TEST_IDENTITY } from './test-identity';
@@ -86,9 +86,9 @@ describe('Session.steer', () => {
       const session = await harness.createSession({ id: 'ses_steer_empty', workDir });
 
       await expect(session.steer('   ')).rejects.toMatchObject({
-        name: 'KimiError',
+        name: 'OdyError',
         code: 'request.prompt_input_empty',
-      } satisfies Partial<KimiError>);
+      } satisfies Partial<OdyError>);
     } finally {
       await harness.close();
     }
@@ -104,9 +104,9 @@ describe('Session.steer', () => {
       await session.close();
 
       await expect(session.steer('hello')).rejects.toMatchObject({
-        name: 'KimiError',
+        name: 'OdyError',
         code: 'session.closed',
-      } satisfies Partial<KimiError>);
+      } satisfies Partial<OdyError>);
     } finally {
       await harness.close();
     }

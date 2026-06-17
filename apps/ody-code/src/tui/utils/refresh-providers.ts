@@ -13,14 +13,14 @@ import {
   removeCustomRegistryProvider,
   removeOpenPlatformConfig,
   type CustomRegistrySource,
-  type ManagedKimiConfigShape,
+  type ManagedOdyConfigShape,
 } from '@odysseythink/kimi-code-oauth';
-import type { KimiConfig, KimiConfigPatch, OAuthRef, ProviderConfig } from '@odysseythink/ody-code-sdk';
+import type { OdyConfig, OdyConfigPatch, OAuthRef, ProviderConfig } from '@odysseythink/ody-code-sdk';
 
 export interface RefreshProviderHost {
-  getConfig(): Promise<KimiConfig>;
-  removeProvider(providerId: string): Promise<KimiConfig>;
-  setConfig(patch: KimiConfigPatch): Promise<KimiConfig>;
+  getConfig(): Promise<OdyConfig>;
+  removeProvider(providerId: string): Promise<OdyConfig>;
+  setConfig(patch: OdyConfigPatch): Promise<OdyConfig>;
   resolveOAuthToken(providerName: string, oauthRef?: OAuthRef): Promise<string>;
 }
 
@@ -52,11 +52,11 @@ function readCustomRegistrySource(provider: ProviderConfig): CustomRegistrySourc
   return { kind: 'apiJson', url, apiKey };
 }
 
-function asManaged(config: KimiConfig): ManagedKimiConfigShape {
-  return config as unknown as ManagedKimiConfigShape;
+function asManaged(config: OdyConfig): ManagedOdyConfigShape {
+  return config as unknown as ManagedOdyConfigShape;
 }
 
-function collectModelIdsForProvider(config: KimiConfig, providerId: string): Set<string> {
+function collectModelIdsForProvider(config: OdyConfig, providerId: string): Set<string> {
   const ids = new Set<string>();
   for (const alias of Object.values(config.models ?? {})) {
     if (alias.provider === providerId && alias.model.length > 0) {
@@ -86,7 +86,7 @@ function computeChanges(oldIds: Set<string>, newIds: Set<string>): { added: numb
   return { added, removed };
 }
 
-function pickDefaultModel(config: KimiConfig, providerId: string, models: Array<{ id: string }>): string {
+function pickDefaultModel(config: OdyConfig, providerId: string, models: Array<{ id: string }>): string {
   const firstModel = models[0];
   if (firstModel === undefined) return '';
 

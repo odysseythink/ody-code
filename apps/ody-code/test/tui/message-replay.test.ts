@@ -10,7 +10,7 @@ import type {
 } from '@odysseythink/ody-code-sdk';
 import { describe, expect, it, vi } from 'vitest';
 
-import { KimiTUI, type KimiTUIStartupInput, type TUIState } from '#/tui/ody-tui';
+import { OdyTUI, type OdyTUIStartupInput, type TUIState } from '#/tui/ody-tui';
 import type { SessionEventHandler } from '#/tui/controllers/session-event-handler';
 import type { StreamingUIController } from '#/tui/controllers/streaming-ui';
 import { AgentGroupComponent } from '#/tui/components/messages/agent-group';
@@ -26,7 +26,7 @@ interface ReplayDriver {
   switchToSession(session: Session, statusMessage: string): Promise<void>;
 }
 
-function makeStartupInput(): KimiTUIStartupInput {
+function makeStartupInput(): OdyTUIStartupInput {
   return {
     cliOptions: {
       session: undefined,
@@ -185,7 +185,7 @@ function makeHarness(initialSession: Session) {
 }
 
 async function makeDriver(initialSession: Session): Promise<ReplayDriver> {
-  const driver = new KimiTUI(
+  const driver = new OdyTUI(
     makeHarness(initialSession) as never,
     makeStartupInput(),
   ) as unknown as ReplayDriver;
@@ -236,7 +236,7 @@ function backgroundTask(
   };
 }
 
-describe('KimiTUI resume message replay', () => {
+describe('OdyTUI resume message replay', () => {
   it('renders persisted goal completion reminders as assistant completion messages', async () => {
     const driver = await replayIntoDriver([
       message(

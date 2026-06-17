@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url';
 
 import { describe, expect, it } from 'vitest';
 
-import { KimiError } from '../../src/errors';
+import { OdyError } from '../../src/errors';
 import { StdioMcpClient } from '../../src/mcp/client-stdio';
 
 const here = import.meta.dirname;
@@ -21,7 +21,7 @@ describe('StdioMcpClient', () => {
           executor: 'kaos',
         }),
     ).toThrow(
-      expect.objectContaining({ name: 'KimiError', code: 'not_implemented' }) as unknown as Error,
+      expect.objectContaining({ name: 'OdyError', code: 'not_implemented' }) as unknown as Error,
     );
     // Sanity-check the error class identity too.
     let thrown: unknown;
@@ -31,7 +31,7 @@ describe('StdioMcpClient', () => {
     } catch (error) {
       thrown = error;
     }
-    expect(thrown).toBeInstanceOf(KimiError);
+    expect(thrown).toBeInstanceOf(OdyError);
   });
 
   it('connects, lists tools, and round-trips a text result', async () => {

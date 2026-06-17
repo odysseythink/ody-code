@@ -6,7 +6,7 @@
 
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import { Command } from 'commander';
-import type { KimiConfig } from '@odysseythink/ody-code-sdk';
+import type { OdyConfig } from '@odysseythink/ody-code-sdk';
 
 import {
   handleCatalogAdd,
@@ -26,15 +26,15 @@ class ExitCalled extends Error {
 
 interface FakeHarness {
   ensureConfigFile: () => Promise<void>;
-  getConfig: () => Promise<KimiConfig>;
-  setConfig: (patch: Partial<KimiConfig>) => Promise<KimiConfig>;
-  removeProvider: (providerId: string) => Promise<KimiConfig>;
+  getConfig: () => Promise<OdyConfig>;
+  setConfig: (patch: Partial<OdyConfig>) => Promise<OdyConfig>;
+  removeProvider: (providerId: string) => Promise<OdyConfig>;
 }
 
-function makeHarness(initial: KimiConfig): {
+function makeHarness(initial: OdyConfig): {
   harness: FakeHarness;
-  current: () => KimiConfig;
-  setConfigCalls: Array<Partial<KimiConfig>>;
+  current: () => OdyConfig;
+  setConfigCalls: Array<Partial<OdyConfig>>;
   removeCalls: string[];
 } {
   // `persisted` simulates the on-disk config; the real RPC's `removeProvider`
@@ -43,15 +43,15 @@ function makeHarness(initial: KimiConfig): {
   // model this: anything the handler builds up in its in-memory `config`
   // object disappears unless it is flushed via `setConfig` BEFORE the next
   // `removeProvider`.
-  let persisted: KimiConfig = structuredClone(initial);
-  const setConfigCalls: Array<Partial<KimiConfig>> = [];
+  let persisted: OdyConfig = structuredClone(initial);
+  const setConfigCalls: Array<Partial<OdyConfig>> = [];
   const removeCalls: string[] = [];
   const harness: FakeHarness = {
     ensureConfigFile: async () => {},
     getConfig: async () => structuredClone(persisted),
     setConfig: async (patch) => {
       setConfigCalls.push(structuredClone(patch));
-      // Mirror the real `setKimiConfig`: deep-merge with undefined keys
+      // Mirror the real `setOdyConfig`: deep-merge with undefined keys
       // skipped (see `agent-core/src/config/merge.ts deepMerge`). This is
       // load-bearing for tests that assert `setConfig({defaultModel:
       // undefined})` does NOT wipe a key from disk — only `removeProvider`
@@ -61,7 +61,7 @@ function makeHarness(initial: KimiConfig): {
         if (value === undefined) continue;
         next[key] = value;
       }
-      persisted = next as KimiConfig;
+      persisted = next as OdyConfig;
       return structuredClone(persisted);
     },
     removeProvider: async (providerId) => {
@@ -228,7 +228,7 @@ const CATALOG_BODY = {
 describe('ody provider add', () => {
   it('imports providers and models from a custom registry, persisting source on each provider', async () => {
     const fetchMock = mockRegistryFetch();
-    const { harness, current, setConfigCalls } = makeHarness({ providers: {} } as KimiConfig);
+    const { harness, current, setConfigCalls } = makeHarness({ providers: {} } as OdyConfig);
     const { deps, stdout, stderr, exitCodes } = makeDeps(harness);
 
     await tryRun(() =>
@@ -280,7 +280,7 @@ describe('ody provider add', () => {
 
   it('drops a stale provider before re-applying when the id already exists', async () => {
     mockRegistryFetch();
-    const initial: KimiConfig = {
+    const initial: OdyConfig = {
       providers: {
         kohub: {
           type: 'kimi',
@@ -296,7 +296,7 @@ describe('ody provider add', () => {
           capabilities: [],
         },
       },
-    } as unknown as KimiConfig;
+    } as unknown as OdyConfig;
     const { harness, removeCalls, current } = makeHarness(initial);
     const { deps, exitCodes } = makeDeps(harness);
 
@@ -317,7 +317,7 @@ describe('ody provider add', () => {
     // would silently drop providers added earlier in the same iteration.
     // The handler now removes every stale id up front in a single batch.
     mockRegistryFetch();
-    const initial: KimiConfig = {
+    const initial: OdyConfig = {
       providers: {
         // The registry will replace this one.
         'kohub-responses': {
@@ -334,7 +334,7 @@ describe('ody provider add', () => {
           capabilities: [],
         },
       },
-    } as unknown as KimiConfig;
+    } as unknown as OdyConfig;
     const { harness, current } = makeHarness(initial);
     const { deps, exitCodes } = makeDeps(harness);
 
@@ -358,7 +358,7 @@ describe('ody provider add', () => {
 
   it('reads the api key from ODY_REGISTRY_API_KEY when --api-key is omitted', async () => {
     const fetchMock = mockRegistryFetch();
-    const { harness } = makeHarness({ providers: {} } as KimiConfig);
+    const { harness } = makeHarness({ providers: {} } as OdyConfig);
     const { deps, exitCodes } = makeDeps(harness, {
       env: { ODY_REGISTRY_API_KEY: 'sk-env-token' },
     });
@@ -376,7 +376,7 @@ describe('ody provider add', () => {
 
   it('exits 1 with a clear message when no api key is supplied anywhere', async () => {
     const fetchMock = mockRegistryFetch();
-    const { harness } = makeHarness({ providers: {} } as KimiConfig);
+    const { harness } = makeHarness({ providers: {} } as OdyConfig);
     const { deps, stderr, exitCodes } = makeDeps(harness);
 
     await tryRun(() => handleProviderAdd(deps, REGISTRY_URL, {}));
@@ -388,7 +388,7 @@ describe('ody provider add', () => {
 
   it('exits 1 when the registry fetch fails with an HTTP error', async () => {
     mockRegistryFetch({ message: 'invalid token' }, 401);
-    const { harness } = makeHarness({ providers: {} } as KimiConfig);
+    const { harness } = makeHarness({ providers: {} } as OdyConfig);
     const { deps, stderr, exitCodes } = makeDeps(harness);
 
     await tryRun(() =>
@@ -402,7 +402,7 @@ describe('ody provider add', () => {
 
 describe('ody provider remove', () => {
   it('removes a provider and reports success', async () => {
-    const initial: KimiConfig = {
+    const initial: OdyConfig = {
       providers: {
         kohub: { type: 'anthropic', baseUrl: 'https://x', apiKey: 'k' },
       },
@@ -414,7 +414,7 @@ describe('ody provider remove', () => {
           capabilities: [],
         },
       },
-    } as unknown as KimiConfig;
+    } as unknown as OdyConfig;
     const { harness, removeCalls, current } = makeHarness(initial);
     const { deps, stdout, exitCodes } = makeDeps(harness);
 
@@ -427,7 +427,7 @@ describe('ody provider remove', () => {
   });
 
   it('exits 1 when the provider id does not exist', async () => {
-    const { harness } = makeHarness({ providers: {} } as KimiConfig);
+    const { harness } = makeHarness({ providers: {} } as OdyConfig);
     const { deps, stderr, exitCodes } = makeDeps(harness);
 
     await tryRun(() => handleProviderRemove(deps, 'nope'));
@@ -438,7 +438,7 @@ describe('ody provider remove', () => {
 });
 
 describe('ody provider list', () => {
-  const config: KimiConfig = {
+  const config: OdyConfig = {
     providers: {
       kohub: {
         type: 'anthropic',
@@ -474,7 +474,7 @@ describe('ody provider list', () => {
       },
     },
     defaultModel: 'kohub/a',
-  } as unknown as KimiConfig;
+  } as unknown as OdyConfig;
 
   it('renders one row per provider with counts and source labels', async () => {
     const { harness } = makeHarness(config);
@@ -490,7 +490,7 @@ describe('ody provider list', () => {
   });
 
   it('prints a friendly message when nothing is configured', async () => {
-    const { harness } = makeHarness({ providers: {} } as KimiConfig);
+    const { harness } = makeHarness({ providers: {} } as OdyConfig);
     const { deps, stdout } = makeDeps(harness);
 
     await tryRun(() => handleProviderList(deps, { json: false }));
@@ -520,7 +520,7 @@ describe('ody provider list', () => {
 describe('registerProviderCommand', () => {
   it('describes the user-facing subcommand and routes flags through commander', async () => {
     const fetchMock = mockRegistryFetch();
-    const { harness, current } = makeHarness({ providers: {} } as KimiConfig);
+    const { harness, current } = makeHarness({ providers: {} } as OdyConfig);
     const { deps, exitCodes, stdout } = makeDeps(harness);
 
     const program = new Command('ody');
@@ -551,7 +551,7 @@ describe('registerProviderCommand', () => {
 describe('ody provider catalog list', () => {
   it('lists catalog providers with wire/model counts, sorted by id', async () => {
     mockRegistryFetch(CATALOG_BODY);
-    const { harness } = makeHarness({ providers: {} } as KimiConfig);
+    const { harness } = makeHarness({ providers: {} } as OdyConfig);
     const { deps, stdout, exitCodes } = makeDeps(harness);
 
     await tryRun(() => handleCatalogList(deps, undefined, { json: false }));
@@ -566,7 +566,7 @@ describe('ody provider catalog list', () => {
 
   it('filters case-insensitively by id and name substring', async () => {
     mockRegistryFetch(CATALOG_BODY);
-    const { harness } = makeHarness({ providers: {} } as KimiConfig);
+    const { harness } = makeHarness({ providers: {} } as OdyConfig);
     const { deps, stdout } = makeDeps(harness);
 
     await tryRun(() => handleCatalogList(deps, undefined, { json: false, filter: 'open' }));
@@ -578,7 +578,7 @@ describe('ody provider catalog list', () => {
 
   it('drills into a specific providerId and lists its models with capabilities', async () => {
     mockRegistryFetch(CATALOG_BODY);
-    const { harness } = makeHarness({ providers: {} } as KimiConfig);
+    const { harness } = makeHarness({ providers: {} } as OdyConfig);
     const { deps, stdout } = makeDeps(harness);
 
     await tryRun(() => handleCatalogList(deps, 'anthropic', { json: false }));
@@ -591,7 +591,7 @@ describe('ody provider catalog list', () => {
 
   it('exits 1 when the requested providerId is missing from the catalog', async () => {
     mockRegistryFetch(CATALOG_BODY);
-    const { harness } = makeHarness({ providers: {} } as KimiConfig);
+    const { harness } = makeHarness({ providers: {} } as OdyConfig);
     const { deps, stderr, exitCodes } = makeDeps(harness);
 
     await tryRun(() => handleCatalogList(deps, 'unknown', { json: false }));
@@ -602,7 +602,7 @@ describe('ody provider catalog list', () => {
 
   it('emits parseable JSON for the providerId view', async () => {
     mockRegistryFetch(CATALOG_BODY);
-    const { harness } = makeHarness({ providers: {} } as KimiConfig);
+    const { harness } = makeHarness({ providers: {} } as OdyConfig);
     const { deps, stdout } = makeDeps(harness);
 
     await tryRun(() => handleCatalogList(deps, 'openai', { json: true }));
@@ -617,7 +617,7 @@ describe('ody provider catalog list', () => {
 
   it('honors --url override when supplied', async () => {
     const fetchMock = mockRegistryFetch(CATALOG_BODY);
-    const { harness } = makeHarness({ providers: {} } as KimiConfig);
+    const { harness } = makeHarness({ providers: {} } as OdyConfig);
     const { deps } = makeDeps(harness);
 
     await tryRun(() =>
@@ -631,7 +631,7 @@ describe('ody provider catalog list', () => {
 describe('ody provider catalog add', () => {
   it('imports a provider from the catalog without changing the default model', async () => {
     mockRegistryFetch(CATALOG_BODY);
-    const initial: KimiConfig = {
+    const initial: OdyConfig = {
       providers: {
         other: { type: 'kimi', baseUrl: 'https://x', apiKey: 'k' },
       },
@@ -645,7 +645,7 @@ describe('ody provider catalog add', () => {
       },
       defaultModel: 'other/main',
       defaultThinking: true,
-    } as unknown as KimiConfig;
+    } as unknown as OdyConfig;
     const { harness, current, setConfigCalls } = makeHarness(initial);
     const { deps, stdout, exitCodes } = makeDeps(harness);
 
@@ -678,7 +678,7 @@ describe('ody provider catalog add', () => {
     mockRegistryFetch(CATALOG_BODY);
     const { harness, current, setConfigCalls } = makeHarness({
       providers: {},
-    } as KimiConfig);
+    } as OdyConfig);
     const { deps, stdout, exitCodes } = makeDeps(harness);
 
     await tryRun(() =>
@@ -696,7 +696,7 @@ describe('ody provider catalog add', () => {
 
   it('rejects an unknown --default-model with a helpful hint', async () => {
     mockRegistryFetch(CATALOG_BODY);
-    const { harness } = makeHarness({ providers: {} } as KimiConfig);
+    const { harness } = makeHarness({ providers: {} } as OdyConfig);
     const { deps, stderr, exitCodes } = makeDeps(harness);
 
     await tryRun(() =>
@@ -719,7 +719,7 @@ describe('ody provider catalog add', () => {
     // `removeProvider`, otherwise rotating the api key on an already-
     // configured provider would silently wipe the user's chosen default.
     mockRegistryFetch(CATALOG_BODY);
-    const initial: KimiConfig = {
+    const initial: OdyConfig = {
       providers: {
         anthropic: {
           type: 'anthropic',
@@ -737,7 +737,7 @@ describe('ody provider catalog add', () => {
       },
       defaultModel: 'anthropic/claude-opus-4-7',
       defaultThinking: true,
-    } as unknown as KimiConfig;
+    } as unknown as OdyConfig;
     const { harness, current } = makeHarness(initial);
     const { deps, exitCodes } = makeDeps(harness);
 
@@ -759,10 +759,10 @@ describe('ody provider catalog add', () => {
     // and is just importing a known provider. The handler now threads the
     // previous value through.
     mockRegistryFetch(CATALOG_BODY);
-    const initial: KimiConfig = {
+    const initial: OdyConfig = {
       providers: {},
       defaultThinking: true,
-    } as unknown as KimiConfig;
+    } as unknown as OdyConfig;
     const { harness, current, setConfigCalls } = makeHarness(initial);
     const { deps, exitCodes } = makeDeps(harness);
 
@@ -791,7 +791,7 @@ describe('ody provider catalog add', () => {
     // Note: `defaultThinking` is omitted on purpose to model a fresh user.
     const { harness, current, setConfigCalls } = makeHarness({
       providers: {},
-    } as KimiConfig);
+    } as OdyConfig);
     const { deps, exitCodes } = makeDeps(harness);
 
     await tryRun(() =>
@@ -817,7 +817,7 @@ describe('ody provider catalog add', () => {
     // The handler now checks whether the alias still resolves and clears
     // it otherwise.
     mockRegistryFetch(CATALOG_BODY);
-    const initial: KimiConfig = {
+    const initial: OdyConfig = {
       providers: {
         anthropic: {
           type: 'anthropic',
@@ -834,7 +834,7 @@ describe('ody provider catalog add', () => {
         },
       },
       defaultModel: 'anthropic/legacy-claude',
-    } as unknown as KimiConfig;
+    } as unknown as OdyConfig;
     const { harness, current } = makeHarness(initial);
     const { deps, exitCodes } = makeDeps(harness);
 
@@ -853,7 +853,7 @@ describe('ody provider catalog add', () => {
 
   it('falls back to ODY_REGISTRY_API_KEY when --api-key is omitted', async () => {
     mockRegistryFetch(CATALOG_BODY);
-    const { harness, current } = makeHarness({ providers: {} } as KimiConfig);
+    const { harness, current } = makeHarness({ providers: {} } as OdyConfig);
     const { deps, exitCodes } = makeDeps(harness, {
       env: { ODY_REGISTRY_API_KEY: 'sk-env' },
     });
@@ -866,7 +866,7 @@ describe('ody provider catalog add', () => {
 
   it('exits 1 when the api key is missing and skips the network', async () => {
     const fetchMock = mockRegistryFetch(CATALOG_BODY);
-    const { harness } = makeHarness({ providers: {} } as KimiConfig);
+    const { harness } = makeHarness({ providers: {} } as OdyConfig);
     const { deps, stderr, exitCodes } = makeDeps(harness);
 
     await tryRun(() => handleCatalogAdd(deps, 'anthropic', {}));
@@ -878,7 +878,7 @@ describe('ody provider catalog add', () => {
 
   it('exits 1 when the providerId is missing from the catalog', async () => {
     mockRegistryFetch(CATALOG_BODY);
-    const { harness } = makeHarness({ providers: {} } as KimiConfig);
+    const { harness } = makeHarness({ providers: {} } as OdyConfig);
     const { deps, stderr, exitCodes } = makeDeps(harness);
 
     await tryRun(() =>

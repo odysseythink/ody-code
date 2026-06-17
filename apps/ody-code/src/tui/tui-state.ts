@@ -12,12 +12,12 @@ import type { SessionRow } from './components/dialogs/session-picker';
 import { CustomEditor } from './components/editor/custom-editor';
 import { CHROME_GUTTER } from './constant/rendering';
 import type { TasksBrowserState } from './controllers/tasks-browser';
-import { createKimiTUIThemeBundle, type KimiTUIThemeBundle } from './theme/bundle';
+import { createOdyTUIThemeBundle, type OdyTUIThemeBundle } from './theme/bundle';
 import { createTerminalState, type TerminalState } from './utils/terminal-state';
 import {
   INITIAL_LIVE_PANE,
   type AppState,
-  type KimiTUIOptions,
+  type OdyTUIOptions,
   type LivePaneState,
   type QueuedMessage,
   type TranscriptEntry,
@@ -37,7 +37,7 @@ export interface TUIState {
   editorContainer: Container;
   footer: FooterComponent;
   editor: CustomEditor;
-  theme: KimiTUIThemeBundle;
+  theme: OdyTUIThemeBundle;
   appState: AppState;
   startupState: TUIStartupState;
   livePane: LivePaneState;
@@ -58,9 +58,9 @@ export interface TUIState {
   queuedMessages: QueuedMessage[];
 }
 
-export function createTUIState(options: KimiTUIOptions): TUIState {
+export function createTUIState(options: OdyTUIOptions): TUIState {
   const initialAppState = options.initialAppState;
-  const theme = createKimiTUIThemeBundle(initialAppState.theme, options.resolvedTheme);
+  const theme = createOdyTUIThemeBundle(initialAppState.theme, options.resolvedTheme);
 
   const terminal = new ProcessTerminal();
   const ui = new TUI(terminal);

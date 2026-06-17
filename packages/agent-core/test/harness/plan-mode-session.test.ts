@@ -153,8 +153,8 @@ max_context_size = 1000000
     const session = await core.createSession({ workDir });
 
     // At this point modeModels is not configured.
-    // Now add it via setKimiConfig (simulating a manual config edit or UI action).
-    await core.setKimiConfig({
+    // Now add it via setOdyConfig (simulating a manual config edit or UI action).
+    await core.setOdyConfig({
       modeModels: { plan: 'plan-only-model' },
     });
 

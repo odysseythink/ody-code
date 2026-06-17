@@ -1,4 +1,4 @@
-import { ODY_ERROR_INFO, isKimiError } from '@odysseythink/ody-code-sdk';
+import { ODY_ERROR_INFO, isOdyError } from '@odysseythink/ody-code-sdk';
 import { chalkStderr } from 'chalk';
 
 import { STARTUP_ERROR_COLOR } from '#/constant/startup-error';
@@ -18,7 +18,7 @@ export function formatStartupError(
 ): string {
   const errorStyle = options.errorStyle ?? chalkStderr.hex(STARTUP_ERROR_COLOR);
 
-  if (!isKimiError(error)) {
+  if (!isOdyError(error)) {
     const operation = options.operation ?? 'start shell';
     return `${errorStyle(`error: failed to ${operation}: ${formatUnknownErrorMessage(error)}`)}\n`;
   }

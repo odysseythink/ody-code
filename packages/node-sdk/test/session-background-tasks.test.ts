@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { KimiHarness, type KimiError } from '#/index';
+import { KimiHarness, type OdyError } from '#/index';
 
 import { makeTempDir, removeTempDirs } from './session-runtime-helpers';
 import { TEST_IDENTITY } from './test-identity';
@@ -51,13 +51,13 @@ describe('Session.listBackgroundTasks / getBackgroundTaskOutput', () => {
     try {
       const session = await harness.createSession({ id: 'ses_bg_empty_id', workDir });
       await expect(session.getBackgroundTaskOutput('')).rejects.toMatchObject({
-        name: 'KimiError',
+        name: 'OdyError',
         code: 'background.task_id_empty',
-      } satisfies Partial<KimiError>);
+      } satisfies Partial<OdyError>);
       await expect(session.stopBackgroundTask('')).rejects.toMatchObject({
-        name: 'KimiError',
+        name: 'OdyError',
         code: 'background.task_id_empty',
-      } satisfies Partial<KimiError>);
+      } satisfies Partial<OdyError>);
     } finally {
       await harness.close();
     }
@@ -73,17 +73,17 @@ describe('Session.listBackgroundTasks / getBackgroundTaskOutput', () => {
       await session.close();
 
       await expect(session.listBackgroundTasks()).rejects.toMatchObject({
-        name: 'KimiError',
+        name: 'OdyError',
         code: 'session.closed',
-      } satisfies Partial<KimiError>);
+      } satisfies Partial<OdyError>);
       await expect(session.getBackgroundTaskOutput('bash-aaaaaaaa')).rejects.toMatchObject({
-        name: 'KimiError',
+        name: 'OdyError',
         code: 'session.closed',
-      } satisfies Partial<KimiError>);
+      } satisfies Partial<OdyError>);
       await expect(session.stopBackgroundTask('bash-aaaaaaaa')).rejects.toMatchObject({
-        name: 'KimiError',
+        name: 'OdyError',
         code: 'session.closed',
-      } satisfies Partial<KimiError>);
+      } satisfies Partial<OdyError>);
     } finally {
       await harness.close();
     }

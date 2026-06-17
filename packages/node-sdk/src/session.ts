@@ -1,4 +1,4 @@
-import { ErrorCodes, KimiError, type AgentContextData, type KimiErrorCode } from '@odysseythink/agent-core';
+import { ErrorCodes, OdyError, type AgentContextData, type OdyErrorCode } from '@odysseythink/agent-core';
 import {
   type ApprovalHandler,
   type Event,
@@ -137,7 +137,7 @@ export class Session {
   async setPermission(mode: PermissionMode): Promise<void> {
     this.ensureOpen();
     if (!isPermissionMode(mode)) {
-      throw new KimiError(
+      throw new OdyError(
         ErrorCodes.SESSION_PERMISSION_MODE_INVALID,
         'Session permission mode must be yolo, manual, or auto',
       );
@@ -419,7 +419,7 @@ export class Session {
 
   private ensureOpen(): void {
     if (this.closed) {
-      throw new KimiError(ErrorCodes.SESSION_CLOSED, 'Session is closed');
+      throw new OdyError(ErrorCodes.SESSION_CLOSED, 'Session is closed');
     }
   }
 }
@@ -427,20 +427,20 @@ export class Session {
 function normalizePromptInput(input: string | PromptInput): PromptInput {
   if (typeof input === 'string') {
     if (input.trim().length === 0) {
-      throw new KimiError(ErrorCodes.REQUEST_PROMPT_INPUT_EMPTY, 'Prompt input cannot be empty');
+      throw new OdyError(ErrorCodes.REQUEST_PROMPT_INPUT_EMPTY, 'Prompt input cannot be empty');
     }
     return [{ type: 'text', text: input }];
   }
 
   if (input.length === 0) {
-    throw new KimiError(ErrorCodes.REQUEST_PROMPT_INPUT_EMPTY, 'Prompt input cannot be empty');
+    throw new OdyError(ErrorCodes.REQUEST_PROMPT_INPUT_EMPTY, 'Prompt input cannot be empty');
   }
 
   for (const part of input) {
     switch (part.type) {
       case 'text':
         if (part.text.trim().length === 0) {
-          throw new KimiError(
+          throw new OdyError(
             ErrorCodes.REQUEST_PROMPT_INPUT_EMPTY,
             'Prompt input cannot contain empty text parts',
           );
@@ -448,7 +448,7 @@ function normalizePromptInput(input: string | PromptInput): PromptInput {
         break;
       case 'image_url':
         if (part.imageUrl.url.trim().length === 0) {
-          throw new KimiError(
+          throw new OdyError(
             ErrorCodes.REQUEST_PROMPT_INPUT_EMPTY,
             'Prompt input cannot contain empty image URLs',
           );
@@ -456,7 +456,7 @@ function normalizePromptInput(input: string | PromptInput): PromptInput {
         break;
       case 'video_url':
         if (part.videoUrl.url.trim().length === 0) {
-          throw new KimiError(
+          throw new OdyError(
             ErrorCodes.REQUEST_PROMPT_INPUT_EMPTY,
             'Prompt input cannot contain empty video URLs',
           );
@@ -470,11 +470,11 @@ function normalizePromptInput(input: string | PromptInput): PromptInput {
 function normalizeRequiredString(
   value: string,
   message: string,
-  code: KimiErrorCode,
+  code: OdyErrorCode,
 ): string {
   const normalized = value.trim();
   if (normalized.length === 0) {
-    throw new KimiError(code, message);
+    throw new OdyError(code, message);
   }
   return normalized;
 }

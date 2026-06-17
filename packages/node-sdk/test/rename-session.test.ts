@@ -5,7 +5,7 @@ import { join } from 'node:path';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { KimiError, KimiHarness, type Event } from '#/index';
+import { OdyError, KimiHarness, type Event } from '#/index';
 
 import { SessionStore } from '../../agent-core/src/session/store';
 import { TEST_IDENTITY } from './test-identity';
@@ -88,9 +88,9 @@ describe('SessionStore.rename', () => {
     const summary = await store.create({ id: 'ses_no_state_rename', workDir });
 
     await expect(store.rename(summary.id, 'Missing State')).rejects.toMatchObject({
-      name: 'KimiError',
+      name: 'OdyError',
       code: 'session.state_not_found',
-    } satisfies Partial<KimiError>);
+    } satisfies Partial<OdyError>);
     expect(existsSync(join(summary.sessionDir, 'state.json'))).toBe(false);
   });
 
@@ -102,9 +102,9 @@ describe('SessionStore.rename', () => {
     await writeFile(join(summary.sessionDir, 'state.json'), '[]', 'utf-8');
 
     await expect(store.rename(summary.id, 'Bad State')).rejects.toMatchObject({
-      name: 'KimiError',
+      name: 'OdyError',
       code: 'session.state_invalid',
-    } satisfies Partial<KimiError>);
+    } satisfies Partial<OdyError>);
     expect(await readFile(join(summary.sessionDir, 'state.json'), 'utf-8')).toBe('[]');
   });
 
@@ -113,10 +113,10 @@ describe('SessionStore.rename', () => {
     const store = new SessionStore(homeDir);
 
     await expect(store.rename('ses_missing', 'Missing Title')).rejects.toMatchObject({
-      name: 'KimiError',
+      name: 'OdyError',
       code: 'session.not_found',
       details: { sessionId: 'ses_missing' },
-    } satisfies Partial<KimiError>);
+    } satisfies Partial<OdyError>);
     expect(existsSync(join(homeDir, 'sessions', 'ses_missing', 'state.json'))).toBe(false);
   });
 });
@@ -216,11 +216,11 @@ describe('KimiHarness.renameSession', () => {
         id: 'ses_missing',
         title: 'Missing Title',
       });
-      await expect(missingRename).rejects.toBeInstanceOf(KimiError);
+      await expect(missingRename).rejects.toBeInstanceOf(OdyError);
       await expect(missingRename).rejects.toMatchObject({
         code: 'session.not_found',
         details: { sessionId: 'ses_missing' },
-      } satisfies Partial<KimiError>);
+      } satisfies Partial<OdyError>);
     } finally {
       await harness.close();
     }
