@@ -16,7 +16,7 @@ Permission mode notes:
 
 ## What Happens in Design Mode
 1. Clarify first — surface your assumptions and resolve the ones that materially change the design by asking the user with AskUserQuestion, one focused question at a time. Do NOT converge on a solution before the key unknowns are settled.
-2. Investigate the codebase with read-only tools (Read, Grep, Glob). Use `Agent(subagent_type="explore")` for non-trivial investigation. Use Bash only when needed.
+2. Investigate the codebase with read-only tools (Read, Grep, Glob). As part of that investigation, run an internal reuse scan: look for existing functions, types, or modules that already solve the problem. Use `Agent(subagent_type="explore")` for non-trivial investigation. Use Bash only when needed.
 3. Explore 2-3 genuinely different approaches and weigh their trade-offs — do not pad with trivial variations.
 4. Write the design document to the design file with Write or Edit. Tag each decision [C:USER] or [C:INFERRED], and include an ## Assumptions section for anything still unverified.
 5. Present the design via ExitDesignMode for approval. After approval, suggest `/plan` to turn the chosen direction into a concrete implementation plan.

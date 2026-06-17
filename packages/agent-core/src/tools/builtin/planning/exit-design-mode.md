@@ -12,6 +12,7 @@ Use this tool when you are in design mode and have finished writing your design 
 ## Required sections (must be present in the design file before calling)
 - **Scope** — a `## Scope`, `### Scope In/Out`, or equivalent heading with in/out lists
 - **Architecture / Design** — an `## Architecture`, `## Design`, `## Approach`, or equivalent
+- **Reuse Analysis** — a `## Reuse Analysis` section listing existing-code reuse candidates (or an explicit greenfield note)
 - At least **3 total `##` sections** and **300 characters** of substantive content
 
 If any of these are missing, ExitDesignMode will reject the call and list what's absent. Complete the missing sections and call again.
