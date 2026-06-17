@@ -245,6 +245,36 @@ describe('mode visibility blocking', () => {
       reason: 'mode-unavailable',
     });
   });
+
+  it('blocks non-exit commands in office-hours mode', () => {
+    expect(resolve('/model', { sessionMode: 'office-hours' })).toEqual({
+      kind: 'blocked',
+      commandName: 'model',
+      reason: 'mode-unavailable',
+    });
+    expect(resolve('/help', { sessionMode: 'office-hours' })).toEqual({
+      kind: 'blocked',
+      commandName: 'help',
+      reason: 'mode-unavailable',
+    });
+    expect(resolve('/plan', { sessionMode: 'office-hours' })).toEqual({
+      kind: 'blocked',
+      commandName: 'plan',
+      reason: 'mode-unavailable',
+    });
+    expect(resolve('/design', { sessionMode: 'office-hours' })).toEqual({
+      kind: 'blocked',
+      commandName: 'design',
+      reason: 'mode-unavailable',
+    });
+  });
+
+  it('allows /exit in office-hours mode', () => {
+    expect(resolve('/exit', { sessionMode: 'office-hours' })).toMatchObject({
+      kind: 'builtin',
+      name: 'exit',
+    });
+  });
 });
 
 describe('slash command busy helpers', () => {

@@ -95,6 +95,12 @@ describe('office-hours-contract', () => {
       expect(msg).toContain('DEPENDENCY CHAIN');
       expect(msg).toContain('Status Quo');
     });
+
+    it('requires AppendBuilderProfile before exit', () => {
+      const msg = officeHoursFullReminder(path);
+      expect(msg).toContain('MUST call AppendBuilderProfile');
+      expect(msg).toContain('before moving to Phase 5 or calling ExitOfficeHoursMode');
+    });
   });
 
   describe('officeHoursSparseReminder', () => {

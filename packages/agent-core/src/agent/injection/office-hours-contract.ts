@@ -128,7 +128,7 @@ export function officeHoursFullReminder(designFilePath: SessionModeFilePath): st
     '- taste: cares about details, design, UX',
     '- agency: already building, shipped something, made progress',
     '- reasoned_defense: defended premises with reasoning, not emotion',
-    'After counting, call AppendBuilderProfile to persist.',
+    'After counting, you MUST call AppendBuilderProfile to persist the signals before moving to Phase 5 or calling ExitOfficeHoursMode. This step is not optional.',
     '',
     '### Phase 5: Design Doc',
     'Write the design document to ' + path + '. Use the appropriate template:',

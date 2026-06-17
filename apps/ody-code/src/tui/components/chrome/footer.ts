@@ -13,6 +13,7 @@ import { basename } from 'node:path';
 
 import { isRainbowDancing, renderDanceFooterModel } from '#/tui/easter-eggs/dance';
 import type { ColorPalette } from '#/tui/theme/colors';
+import type { SessionMode } from '#/tui/commands/types';
 import type { AppState } from '#/tui/types';
 import {
   createGitStatusCache,
@@ -103,10 +104,15 @@ export interface ToolbarTip {
    * to 1. Used to give newer/important features more airtime.
    */
   readonly priority?: number;
+  /**
+   * Modes in which this tip is suppressed. Undefined means the tip is shown
+   * in every mode.
+   */
+  readonly hiddenInModes?: readonly SessionMode[];
 }
 
 const TOOLBAR_TIPS: readonly ToolbarTip[] = [
-  { text: 'shift+tab: cycle plan/design mode' },
+  { text: 'shift+tab: cycle plan/design mode', hiddenInModes: ['office-hours'] },
   { text: '/model: switch model' },
   { text: 'ctrl+s: steer mid-turn', priority: 2 },
   { text: '/compact: compact context', priority: 2 },
@@ -152,30 +158,32 @@ export function buildWeightedTips(tips: readonly ToolbarTip[]): readonly Toolbar
   return seq;
 }
 
-const ROTATION: readonly ToolbarTip[] = buildWeightedTips(TOOLBAR_TIPS);
-
 function currentTipIndex(): number {
   return Math.floor(Date.now() / TIP_ROTATE_INTERVAL_MS);
 }
 
-/**
- * Pick the tip(s) for a rotation index over the weighted ROTATION sequence.
- * `primary` is always shown when it fits; `pair` (primary + next tip joined
- * by the separator) is offered for wide terminals. Pairing is skipped when
- * the current/next tip is `solo` or when the neighbour is a duplicate of the
- * current tip (which can happen at the wrap boundary), keeping long/important
- * tips on their own and avoiding "X | X".
- */
-function tipsForIndex(index: number): { primary: string; pair: string | null } {
-  const n = ROTATION.length;
+/** Build the weighted tip rotation for a session mode, suppressing tips that
+ *  do not apply in that mode (e.g. mode-cycling hints in office-hours). */
+export function tipsForMode(mode: SessionMode): readonly ToolbarTip[] {
+  const visible = TOOLBAR_TIPS.filter((tip) => !tip.hiddenInModes?.includes(mode));
+  return buildWeightedTips(visible);
+}
+
+function tipsForRotation(
+  rotation: readonly ToolbarTip[],
+  index: number,
+): { primary: string; pair: string | null } {
+  const n = rotation.length;
   if (n === 0) return { primary: '', pair: null };
   const offset = ((index % n) + n) % n;
-  const current = ROTATION[offset]!;
+  const current = rotation[offset]!;
   if (n === 1 || current.solo) return { primary: current.text, pair: null };
-  const next = ROTATION[(offset + 1) % n]!;
+  const next = rotation[(offset + 1) % n]!;
   if (next.solo || next.text === current.text) return { primary: current.text, pair: null };
   return { primary: current.text, pair: current.text + TIP_SEPARATOR + next.text };
 }
+
+
 
 /**
  * Footer goal badge, e.g. `[goal ● active · 4m · 7 turns]`. Only shown for a
@@ -387,7 +395,7 @@ export class FooterComponent implements Component {
     const leftWidth = visibleWidth(leftLine);
 
     // Rotating hint tips, fill remaining space on line 1.
-    const { primary, pair } = tipsForIndex(currentTipIndex());
+    const { primary, pair } = tipsForRotation(tipsForMode(state.sessionMode), currentTipIndex());
     const gap = 2;
     const remaining = Math.max(0, width - leftWidth - gap);
     let tipText = '';

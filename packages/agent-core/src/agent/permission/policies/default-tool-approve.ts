@@ -20,6 +20,10 @@ const DEFAULT_APPROVE_TOOLS = new Set([
   'GetGoal',
   'SetGoalBudget',
   'UpdateGoal',
+  // Office-hours profile persistence only appends to the application's own
+  // data directory (~/.ody-code/office-hours) and is required for the mode's
+  // tiered handoff to work.
+  'AppendBuilderProfile',
 ]);
 
 export class DefaultToolApprovePermissionPolicy implements PermissionPolicy {

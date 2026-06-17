@@ -44,4 +44,19 @@ describe('DefaultToolApprovePermissionPolicy', () => {
   it('does not approve CronDelete', () => {
     expect(policy.evaluate(policyContext('CronDelete', { id: 'job_1' }))).toBeUndefined();
   });
+
+  it('auto-approves AppendBuilderProfile', () => {
+    expect(
+      policy.evaluate(
+        policyContext('AppendBuilderProfile', {
+          mode: 'builder',
+          projectSlug: 'test-project',
+          signalCount: 0,
+          signals: [],
+          resourcesShown: [],
+          topics: [],
+        }),
+      ),
+    ).toEqual({ kind: 'approve' });
+  });
 });

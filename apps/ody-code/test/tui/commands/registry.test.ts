@@ -124,15 +124,24 @@ describe('built-in slash command registry', () => {
   });
 
   it('declares hiddenInModes for mode-specific commands', () => {
-    expect(findBuiltInSlashCommand('plan')?.hiddenInModes).toEqual(['plan']);
-    expect(findBuiltInSlashCommand('design')?.hiddenInModes).toEqual(['design']);
-    expect(findBuiltInSlashCommand('design-review')?.hiddenInModes).toEqual(['plan', 'normal']);
-    expect(findBuiltInSlashCommand('plan-review')?.hiddenInModes).toEqual(['design', 'normal']);
+    expect(findBuiltInSlashCommand('plan')?.hiddenInModes).toEqual(['plan', 'office-hours']);
+    expect(findBuiltInSlashCommand('design')?.hiddenInModes).toEqual(['design', 'office-hours']);
+    expect(findBuiltInSlashCommand('design-review')?.hiddenInModes).toEqual([
+      'plan',
+      'normal',
+      'office-hours',
+    ]);
+    expect(findBuiltInSlashCommand('plan-review')?.hiddenInModes).toEqual([
+      'design',
+      'normal',
+      'office-hours',
+    ]);
   });
 
-  it('does not declare hiddenInModes for universal commands', () => {
-    expect(findBuiltInSlashCommand('help')?.hiddenInModes).toBeUndefined();
+  it('hides universal commands in office-hours mode except exit', () => {
+    expect(findBuiltInSlashCommand('help')?.hiddenInModes).toContain('office-hours');
+    expect(findBuiltInSlashCommand('model')?.hiddenInModes).toContain('office-hours');
+    expect(findBuiltInSlashCommand('version')?.hiddenInModes).toContain('office-hours');
     expect(findBuiltInSlashCommand('exit')?.hiddenInModes).toBeUndefined();
-    expect(findBuiltInSlashCommand('model')?.hiddenInModes).toBeUndefined();
   });
 });

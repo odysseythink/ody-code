@@ -1,7 +1,7 @@
 import chalk from 'chalk';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { FooterComponent } from '#/tui/components/chrome/footer';
+import { FooterComponent, tipsForMode } from '#/tui/components/chrome/footer';
 import { setRainbowDance, type RainbowDanceController } from '#/tui/easter-eggs/dance';
 import { darkColors } from '#/tui/theme/colors';
 import type { AppState } from '#/tui/types';
@@ -166,6 +166,25 @@ describe('FooterComponent mode badge', () => {
     const line2 = stripAnsi(lines[1]!);
     expect(line2).toContain('办公时间');
     expect(line2).not.toContain('office-hours');
+  });
+
+  it('hides the shift+tab mode-cycling tip in office-hours mode', () => {
+    const state: AppState = { ...baseAppState, sessionMode: 'office-hours' };
+    const footer = new FooterComponent(state, darkColors);
+    const lines = footer.render(120);
+    const line1 = stripAnsi(lines[0]!);
+    expect(line1).not.toContain('shift+tab');
+    expect(line1).not.toContain('cycle plan/design');
+  });
+
+  it('includes the shift+tab mode-cycling tip in the normal-mode rotation', () => {
+    const normalTips = tipsForMode('normal').map((t) => t.text);
+    expect(normalTips).toContain('shift+tab: cycle plan/design mode');
+  });
+
+  it('excludes the shift+tab mode-cycling tip from the office-hours rotation', () => {
+    const officeHoursTips = tipsForMode('office-hours').map((t) => t.text);
+    expect(officeHoursTips).not.toContain('shift+tab: cycle plan/design mode');
   });
 
   it('renders normal badge without filename when no sessionModeFilePath is set', () => {

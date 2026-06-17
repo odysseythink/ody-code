@@ -1,5 +1,4 @@
 import { access } from 'node:fs/promises';
-import { join } from 'node:path';
 
 import {
   deleteAllKittyImages,
@@ -53,7 +52,7 @@ import {
   type ApprovalPreviewBlock,
 } from './components/dialogs/approval-preview';
 import { CompactionComponent } from './components/dialogs/compaction';
-import { HelpPanelComponent } from './components/dialogs/help-panel';
+import { DEFAULT_KEYBOARD_SHORTCUTS, HelpPanelComponent } from './components/dialogs/help-panel';
 import { QuestionDialogComponent } from './components/dialogs/question-dialog';
 import { SessionPickerComponent } from './components/dialogs/session-picker';
 import { AuthFlowController } from './controllers/auth-flow';
@@ -304,7 +303,9 @@ export class KimiTUI {
     const builtins = sortSlashCommands(BUILTIN_SLASH_COMMANDS)
       .filter((command) => isCommandVisibleInMode(command, mode))
       .filter((command) => isExperimentalFlagEnabled(command.experimentalFlag));
-    return [...builtins, ...this.skillCommands];
+    // Office-hours is a restricted mode: only built-in `/exit` is exposed.
+    const skillCommands = mode === 'office-hours' ? [] : this.skillCommands;
+    return [...builtins, ...skillCommands];
   }
 
   private setupAutocomplete(): void {
@@ -1732,9 +1733,14 @@ export class KimiTUI {
 
   showHelpPanel(): void {
     this.state.activeDialog = 'help';
+    const shortcuts =
+      this.state.appState.sessionMode === 'office-hours'
+        ? DEFAULT_KEYBOARD_SHORTCUTS.filter((s) => !s.description.toLowerCase().includes('cycle mode'))
+        : DEFAULT_KEYBOARD_SHORTCUTS;
     this.mountEditorReplacement(
       new HelpPanelComponent({
         commands: this.getSlashCommands(),
+        shortcuts,
         colors: this.state.theme.colors,
         onClose: () => {
           this.hideHelpPanel();

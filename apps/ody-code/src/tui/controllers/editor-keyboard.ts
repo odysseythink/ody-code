@@ -122,6 +122,10 @@ export class EditorKeyboardController {
         return;
       }
       const mode = host.state.appState.sessionMode;
+      if (mode === 'office-hours') {
+        // Office-hours is a single-mode session; mode cycling is disabled.
+        return;
+      }
       if (mode === 'normal') {
         // normal → plan
         host.track('shortcut_plan_toggle', { enabled: true });

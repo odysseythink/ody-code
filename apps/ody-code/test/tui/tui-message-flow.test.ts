@@ -543,6 +543,19 @@ describe('KimiTUI message flow', () => {
     expect(harness.track).toHaveBeenCalledWith('shortcut_mode_switch', { to_mode: 'plan' });
   });
 
+  it('ignores Shift-Tab while in office-hours mode', async () => {
+    const { driver, session, harness } = await makeDriver();
+    driver.state.appState.sessionMode = 'office-hours';
+    harness.track.mockClear();
+
+    driver.state.editor.onShiftTab?.();
+
+    // Give any pending async handler a tick to run.
+    await new Promise((resolve) => setImmediate(resolve));
+    expect(session.setSessionMode).not.toHaveBeenCalled();
+    expect(harness.track).not.toHaveBeenCalled();
+  });
+
   it('routes /yolo through session permission state without app-layer telemetry duplication', async () => {
     const { driver, session, harness } = await makeDriver();
     harness.track.mockClear();
