@@ -32,7 +32,13 @@ import type {
 export interface RunTurnInput {
   readonly turnId: string;
   readonly signal: AbortSignal;
-  readonly llm: LLM;
+  /**
+   * The LLM to use for this turn. May be a static instance or a factory that
+   * returns a fresh LLM for each step. A factory is required when the caller
+   * changes the active model/provider between steps (e.g. session-mode tool
+   * handoffs), so each step resolves against the current configuration.
+   */
+  readonly llm: LLM | (() => LLM);
   readonly buildMessages: LoopMessageBuilder;
   readonly dispatchEvent: LoopEventDispatcher;
   readonly tools?: readonly ExecutableTool[] | undefined;
@@ -43,6 +49,10 @@ export interface RunTurnInput {
   readonly recordStepUsage?:
     | ((usage: TokenUsage) => RecordStepUsageResult | void | Promise<RecordStepUsageResult | void>)
     | undefined;
+}
+
+function resolveLlmForStep(llm: LLM | (() => LLM)): LLM {
+  return typeof llm === 'function' ? llm() : llm;
 }
 
 export async function runTurn(input: RunTurnInput): Promise<TurnResult> {
@@ -81,12 +91,17 @@ export async function runTurn(input: RunTurnInput): Promise<TurnResult> {
 
       steps += 1;
       activeStep = steps;
+      const stepLlm = resolveLlmForStep(llm);
+      log?.debug('runTurn step llm resolved', {
+        step: steps,
+        modelName: stepLlm.modelName,
+      });
       const stepResult = await executeLoopStep({
         turnId,
         signal,
         buildMessages,
         dispatchEvent,
-        llm,
+        llm: stepLlm,
         tools,
         hooks,
         log,
@@ -109,7 +124,7 @@ export async function runTurn(input: RunTurnInput): Promise<TurnResult> {
         usage: stepResult.usage,
         stopReason: terminalStopReason,
         signal,
-        llm,
+        llm: resolveLlmForStep(llm),
       });
       if (continuation?.continue !== true) {
         break;

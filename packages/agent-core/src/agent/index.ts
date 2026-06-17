@@ -166,6 +166,7 @@ export class Agent {
   checkpointCoordinator?: CheckpointCoordinator;
 
   private lastLlmConfigLogSignature?: string;
+  private _llm: KosongLLM | undefined;
 
   constructor(options: AgentOptions) {
     this.type = options.type ?? 'main';
@@ -294,11 +295,17 @@ export class Agent {
 
   get generate(): typeof generate {
     return async (provider, systemPrompt, tools, history, callbacks, options) => {
+      const modelAlias = this.config.modelAlias;
+      this.log?.debug('agent.generate called', {
+        modelAlias,
+        providerName: provider.name,
+        providerModel: provider.modelName,
+        hasAuth: options?.auth !== undefined,
+      });
       if (options?.auth !== undefined) {
         this.logLlmRequest(provider, systemPrompt, tools, history, options);
         return this.rawGenerate(provider, systemPrompt, tools, history, callbacks, options);
       }
-      const modelAlias = this.config.modelAlias;
       const withAuth =
         modelAlias === undefined
           ? undefined
@@ -315,14 +322,32 @@ export class Agent {
     };
   }
 
+  /**
+   * Invalidates the cached LLM so the next access creates a fresh instance
+   * from the current config. Call this when the active model/provider must
+   * change mid-turn (e.g. session-mode handoffs) or at turn boundaries.
+   */
+  refreshLlm(): void {
+    this._llm = undefined;
+  }
+
   get llm(): KosongLLM {
+    if (this._llm !== undefined) {
+      return this._llm;
+    }
     const model = this.config.model;
     const provider = this.config.provider.withThinking(this.config.thinkingLevel);
+    this.log?.debug('agent.llm created', {
+      modelAlias: this.config.modelAlias,
+      model,
+      providerName: provider.name,
+      providerModel: provider.modelName,
+    });
     const loopControl = this.kimiConfig?.loopControl;
     const completionBudgetConfig = resolveCompletionBudget({
       reservedContextSize: loopControl?.reservedContextSize,
     });
-    return new KosongLLM({
+    this._llm = new KosongLLM({
       provider,
       modelName: model,
       systemPrompt: this.config.systemPrompt,
@@ -330,6 +355,7 @@ export class Agent {
       generate: this.generate,
       completionBudgetConfig,
     });
+    return this._llm;
   }
 
   private logLlmRequest(

@@ -185,6 +185,15 @@ export const BUILTIN_SLASH_COMMANDS = [
     hiddenInModes: OFFICE_HOURS_HIDDEN,
   },
   {
+    name: 'microagent',
+    aliases: [],
+    description: 'Create a new repo knowledge microagent',
+    priority: 80,
+    availability: 'idle-only',
+    experimentalFlag: 'repo-knowledge',
+    hiddenInModes: OFFICE_HOURS_HIDDEN,
+  },
+  {
     name: 'init',
     aliases: [],
     description: 'Analyze the codebase and generate AGENTS.md',

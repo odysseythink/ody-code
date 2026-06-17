@@ -32,7 +32,8 @@ function makeAgent(overrides: {
       readText: vi.fn().mockRejectedValue(Object.assign(new Error('ENOENT'), { code: 'ENOENT' })),
       writeText: vi.fn().mockResolvedValue(undefined),
     },
-    log: { warn: vi.fn() },
+    log: { warn: vi.fn(), error: vi.fn(), info: vi.fn(), debug: vi.fn() },
+    refreshLlm: vi.fn(),
     setContextMode: vi.fn(),
   } as unknown as Agent;
 }
@@ -123,6 +124,40 @@ describe('SessionMode', () => {
       await sm.enter('id-1', undefined, false, 'plan');
       expect(agent.config.update).not.toHaveBeenCalled();
       expect(agent.log.warn).toHaveBeenCalledWith(expect.stringContaining('not found'));
+    });
+
+    it('invalidates the cached LLM when switching to a modeModels model', async () => {
+      const agent = makeAgent({
+        modelAlias: 'design-model',
+        kimiConfig: { modeModels: { plan: 'plan-model' } },
+        modelProvider: {
+          resolveProviderConfig: vi.fn().mockReturnValue({
+            providerName: 'test-p',
+            provider: { type: 'openai', apiKey: 'sk-test' },
+            modelCapabilities: {},
+          }),
+        },
+      });
+      const sm = new SessionMode(agent);
+      await sm.enter('id-1', undefined, false, 'plan');
+      expect(agent.refreshLlm).toHaveBeenCalled();
+    });
+
+    it('does not invalidate the cached LLM when the modeModels model equals the current model', async () => {
+      const agent = makeAgent({
+        modelAlias: 'same-model',
+        kimiConfig: { modeModels: { plan: 'same-model' } },
+        modelProvider: {
+          resolveProviderConfig: vi.fn().mockReturnValue({
+            providerName: 'test-p',
+            provider: { type: 'openai', apiKey: 'sk-test' },
+            modelCapabilities: {},
+          }),
+        },
+      });
+      const sm = new SessionMode(agent);
+      await sm.enter('id-1', undefined, false, 'plan');
+      expect(agent.refreshLlm).not.toHaveBeenCalled();
     });
   });
 
@@ -325,6 +360,28 @@ describe('SessionMode', () => {
       // No pre-mode alias was seeded → exit must not push a model restore.
       expect(agent.config.update).not.toHaveBeenCalled();
     });
+
+    it('invalidates the cached LLM when exit restores the previous model', () => {
+      const agent = makeAgent({
+        modelAlias: 'design-model',
+        kimiConfig: { defaultModel: 'normal-model' },
+      });
+      const sm = new SessionMode(agent);
+      sm.restoreEnter({ id: 'id', kind: 'design' });
+      sm.exit();
+      expect(agent.refreshLlm).toHaveBeenCalled();
+    });
+
+    it('invalidates the cached LLM when cancel restores the previous model', () => {
+      const agent = makeAgent({
+        modelAlias: 'plan-model',
+        kimiConfig: { defaultModel: 'normal-model' },
+      });
+      const sm = new SessionMode(agent);
+      sm.restoreEnter({ id: 'id', kind: 'plan' });
+      sm.cancel();
+      expect(agent.refreshLlm).toHaveBeenCalled();
+    });
   });
 
   describe('stripDatePrefix', () => {
@@ -524,7 +581,7 @@ describe('SessionMode', () => {
       expect(sm.designSessions[0]!.startedAtMsg).toBe(3);
 
       // Simulate context clear (e.g. from replay of a `context.clear` WAL record).
-      (agent as { context: { history: unknown[] } }).context.history = [];
+      (agent as unknown as { context: { history: unknown[] } }).context.history = [];
 
       sm.exit();
 

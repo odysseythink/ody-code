@@ -54,6 +54,14 @@ describe('runTurn — error paths', () => {
     expect(error).toBe(llmError);
     expect(entries).toEqual([
       {
+        level: 'debug',
+        message: 'runTurn step llm resolved',
+        payload: {
+          step: 1,
+          modelName: 'fake-model',
+        },
+      },
+      {
         level: 'warn',
         message: 'llm request failed',
         payload: {
@@ -62,6 +70,7 @@ describe('runTurn — error paths', () => {
           model: 'fake-model',
           errorName: 'Error',
           errorMessage: 'upstream blew up',
+          statusCode: undefined,
         },
       },
     ]);
@@ -78,7 +87,16 @@ describe('runTurn — error paths', () => {
     });
 
     expect(result.stopReason).toBe('aborted');
-    expect(entries).toEqual([]);
+    expect(entries).toEqual([
+      {
+        level: 'debug',
+        message: 'runTurn step llm resolved',
+        payload: {
+          step: 1,
+          modelName: 'fake-model',
+        },
+      },
+    ]);
   });
 
   it('throws OdyError(loop.max_steps_exceeded) with turn.interrupted{reason:"max_steps"} before the throw', async () => {

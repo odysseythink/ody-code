@@ -61,8 +61,16 @@ export class SessionMode {
     emitStatus = true,
     kind: SessionModeKind = 'plan',
   ): Promise<void> {
+    const enterModelAlias = this.agent.config.modelAlias;
+    this.agent.log?.debug('sessionMode.enter start', {
+      kind,
+      fromModelAlias: enterModelAlias,
+      isActive: this._isActive,
+      currentKind: this._kind,
+    });
     if (this._isActive) {
       if (this._kind === kind) {
+        this.agent.log?.debug('sessionMode.enter already in kind', { kind });
         return;
       }
       // Switching directly between plan and design: exit current first.
@@ -91,9 +99,15 @@ export class SessionMode {
           this._preModeModelAlias = null;
         }
         if (usable) {
-          this._preModeModelAlias = { value: this.agent.config.modelAlias };
+          this._preModeModelAlias = { value: enterModelAlias };
           if (modeModel !== this.agent.config.modelAlias) {
+            this.agent.log?.debug('sessionMode.enter switching model', {
+              kind,
+              fromModelAlias: enterModelAlias,
+              toModelAlias: modeModel,
+            });
             this.agent.config.update({ modelAlias: modeModel });
+            this.agent.refreshLlm();
           }
         } else if (resolved !== undefined) {
           this.agent.log?.warn(
@@ -103,6 +117,12 @@ export class SessionMode {
         }
       }
     }
+
+    this.agent.log?.debug('sessionMode.enter end', {
+      kind,
+      modelAlias: this.agent.config.modelAlias,
+      preModeModelAlias: this._preModeModelAlias?.value,
+    });
 
     try {
       const { isProjectScoped } = await this.resolveSessionModeDirectory(kind);
@@ -127,6 +147,7 @@ export class SessionMode {
       this.agent.setContextMode('normal');
       if (this._preModeModelAlias !== null) {
         this.agent.config.update({ modelAlias: this._preModeModelAlias.value });
+        this.agent.refreshLlm();
         this._preModeModelAlias = null;
       }
       this._isActive = false;
@@ -174,6 +195,7 @@ export class SessionMode {
   cancel(id?: string): void {
     if (this._preModeModelAlias !== null) {
       this.agent.config.update({ modelAlias: this._preModeModelAlias.value });
+      this.agent.refreshLlm();
       this._preModeModelAlias = null;
     }
     if (this._kind === 'design') {
@@ -209,14 +231,26 @@ export class SessionMode {
   }
 
   exit(id?: string): void {
+    const exitModelAlias = this.agent.config.modelAlias;
+    const restoreModelAlias = this._preModeModelAlias?.value;
+    this.agent.log?.debug('sessionMode.exit start', {
+      kind: this._kind,
+      currentModelAlias: exitModelAlias,
+      restoreModelAlias,
+    });
     if (this._preModeModelAlias !== null) {
       this.agent.config.update({ modelAlias: this._preModeModelAlias.value });
+      this.agent.refreshLlm();
       this._preModeModelAlias = null;
     }
     if (this._kind === 'design') {
       this.closeCurrentDesignSession(this._sessionModeFilePath ?? undefined);
     }
     this.agent.records.logRecord({ type: 'session_mode.exit', id });
+    this.agent.log?.debug('sessionMode.exit end', {
+      kind: this._kind,
+      modelAlias: this.agent.config.modelAlias,
+    });
     // Return to the normal context partition AFTER the WAL record so replay
     // routes subsequent context records correctly.
     this.agent.setContextMode('normal');
@@ -320,6 +354,11 @@ export class SessionMode {
     opts?: { selectedLabel?: string },
   ): Promise<void> {
     const data = await this.data();
+    this.agent.log?.debug('sessionMode.handoffTo start', {
+      target,
+      fromKind: this._kind,
+      fromModelAlias: this.agent.config.modelAlias,
+    });
 
     if (target === 'plan') {
       const selectedLabel = opts?.selectedLabel;
@@ -356,6 +395,11 @@ export class SessionMode {
             : artifact;
       this.exit();
     }
+    this.agent.log?.debug('sessionMode.handoffTo end', {
+      target,
+      toKind: this._kind,
+      toModelAlias: this.agent.config.modelAlias,
+    });
   }
 
   get isActive() {

@@ -551,16 +551,26 @@ export class TurnFlow {
     // goal mode is off). Each goal continuation is its own turn, so this re-injects
     // the reminder once per turn rather than per step, preserving prompt caching.
     await this.agent.injection.injectGoal();
+    // Ensure each turn starts with a fresh LLM resolved from the current config.
+    // Session-mode handoffs invalidate the cache mid-turn so subsequent steps use
+    // the switched model/provider, while ordinary config updates are deferred.
+    this.agent.refreshLlm();
     while (true) {
       signal.throwIfAborted();
       const model = this.agent.config.model;
+      const modelAlias = this.agent.config.modelAlias;
+      this.agent.log?.debug('runStepLoop iteration start', {
+        turnId,
+        modelAlias,
+        model,
+      });
       const loopControl = this.agent.kimiConfig?.loopControl;
       let stopForGoalBudget = false;
       try {
         const result = await runTurn({
           turnId: String(turnId),
           signal,
-          llm: this.agent.llm,
+          llm: () => this.agent.llm,
           buildMessages: () => this.agent.context.messages,
           dispatchEvent: this.buildDispatchEvent(turnId),
           tools: this.agent.tools.loopTools,
