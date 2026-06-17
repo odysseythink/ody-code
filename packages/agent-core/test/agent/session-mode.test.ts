@@ -9,13 +9,15 @@ const CWD = '/workspace/project';
 function makeAgent(overrides: {
   existingPaths?: Set<string>;
   modelAlias?: string;
-  kimiConfig?: { defaultModel?: string };
+  kimiConfig?: { defaultModel?: string; modeModels?: { plan?: string; design?: string } };
+  modelProvider?: { resolveProviderConfig: ReturnType<typeof vi.fn>; resolveAuth?: ReturnType<typeof vi.fn> };
 } = {}): Agent {
   const existing = overrides.existingPaths ?? new Set<string>();
   return {
     homedir: '/home/user',
     config: { cwd: CWD, modelAlias: overrides.modelAlias ?? 'test', provider: 'test', update: vi.fn() },
     kimiConfig: overrides.kimiConfig,
+    modelProvider: overrides.modelProvider,
     emitStatusUpdated: vi.fn(),
     replayBuilder: { push: vi.fn() },
     records: { logRecord: vi.fn() },
@@ -42,6 +44,85 @@ describe('SessionMode', () => {
       const sm = new SessionMode(agent);
       await sm.enter('id-1', undefined, false, 'design');
       expect(sm.sessionModeFilePath).toBeNull();
+    });
+
+    it('switches to the modeModels model when it has an API key', async () => {
+      const agent = makeAgent({
+        modelAlias: 'design-model',
+        kimiConfig: {
+          modeModels: { plan: 'plan-model' },
+        },
+        modelProvider: {
+          resolveProviderConfig: vi.fn().mockReturnValue({
+            providerName: 'test-p',
+            provider: { type: 'openai', apiKey: 'sk-test' },
+            modelCapabilities: {},
+          }),
+        },
+      });
+      const sm = new SessionMode(agent);
+      await sm.enter('id-1', undefined, false, 'plan');
+      expect(agent.config.update).toHaveBeenCalledWith({ modelAlias: 'plan-model' });
+    });
+
+    it('switches to the modeModels model when it uses OAuth', async () => {
+      const agent = makeAgent({
+        modelAlias: 'design-model',
+        kimiConfig: {
+          modeModels: { plan: 'plan-model' },
+        },
+        modelProvider: {
+          resolveProviderConfig: vi.fn().mockReturnValue({
+            providerName: 'managed:ody-code',
+            provider: { type: 'kimi', apiKey: '' },
+            modelCapabilities: {},
+          }),
+          resolveAuth: vi.fn().mockReturnValue(vi.fn()),
+        },
+      });
+      const sm = new SessionMode(agent);
+      await sm.enter('id-1', undefined, false, 'plan');
+      expect(agent.config.update).toHaveBeenCalledWith({ modelAlias: 'plan-model' });
+    });
+
+    it('keeps the current model when modeModels model lacks API key and OAuth', async () => {
+      const agent = makeAgent({
+        modelAlias: 'design-model',
+        kimiConfig: {
+          modeModels: { plan: 'plan-model' },
+        },
+        modelProvider: {
+          resolveProviderConfig: vi.fn().mockReturnValue({
+            providerName: 'test-p',
+            provider: { type: 'openai', apiKey: '' },
+            modelCapabilities: {},
+          }),
+        },
+      });
+      const sm = new SessionMode(agent);
+      await sm.enter('id-1', undefined, false, 'plan');
+      expect(agent.config.update).not.toHaveBeenCalled();
+      expect(agent.log.warn).toHaveBeenCalledWith(
+        expect.stringContaining('no configured API key or OAuth login'),
+      );
+    });
+
+    it('keeps the current model when modeModels model is not found', async () => {
+      const agent = makeAgent({
+        modelAlias: 'design-model',
+        kimiConfig: {
+          modeModels: { plan: 'unknown-model' },
+        },
+        modelProvider: {
+          resolveProviderConfig: vi.fn().mockImplementation(() => {
+            throw new Error('not found');
+          }),
+        },
+      });
+      const sm = new SessionMode(agent);
+      await sm.enter('id-1', undefined, false, 'plan');
+      expect(agent.config.update).not.toHaveBeenCalled();
+      expect(agent.log.warn).toHaveBeenCalledWith(expect.stringContaining('not found'));
     });
   });
 

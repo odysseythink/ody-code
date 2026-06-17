@@ -34,8 +34,17 @@ describe('Session plan, compact, usage, and resume APIs', () => {
         sessionMode: 'plan',
       });
 
+      // Path resolution is lazy: no file/path is assigned until the first write.
       const status = await session.getStatus();
-      expect(status.sessionModeFilePath).toMatch(/\.md$/);
+      expect(status.sessionModeFilePath).toBeNull();
+
+      // Lock the plan file via /writing-plan to force path resolution.
+      const sourcePath = join(workDir, 'plan-source.md');
+      await writeFile(sourcePath, 'source', 'utf-8');
+      await session.writingPlan({ filePath: sourcePath });
+
+      const statusAfterWrite = await session.getStatus();
+      expect(statusAfterWrite.sessionModeFilePath).toMatch(/\.md$/);
 
       await expect(session.clearPlan()).resolves.toBeUndefined();
       await expect(session.getPlan()).resolves.toMatchObject({
@@ -70,6 +79,12 @@ describe('Session plan, compact, usage, and resume APIs', () => {
       const session = await harness.createSession({ id: 'ses_plan_toggle_runtime', workDir });
 
       await session.setSessionMode('plan');
+      // Lazy resolution: no path is assigned until a plan file is locked.
+      await expect(session.getPlan()).resolves.toBeNull();
+
+      const sourcePath1 = join(workDir, 'plan-source-1.md');
+      await writeFile(sourcePath1, 'source 1', 'utf-8');
+      await session.writingPlan({ filePath: sourcePath1 });
       const firstPlan = await session.getPlan();
       if (firstPlan === null) throw new Error('expected first plan');
       const plansDir = dirname(firstPlan.path);
@@ -77,6 +92,11 @@ describe('Session plan, compact, usage, and resume APIs', () => {
 
       await session.setSessionMode('normal');
       await session.setSessionMode('plan');
+      await expect(session.getPlan()).resolves.toBeNull();
+
+      const sourcePath2 = join(workDir, 'plan-source-2.md');
+      await writeFile(sourcePath2, 'source 2', 'utf-8');
+      await session.writingPlan({ filePath: sourcePath2 });
       const secondPlan = await session.getPlan();
       if (secondPlan === null) throw new Error('expected second plan');
 
@@ -134,6 +154,12 @@ describe('Session plan, compact, usage, and resume APIs', () => {
         model: 'test-model',
       });
       await created.setSessionMode('plan');
+      await expect(created.getPlan()).resolves.toBeNull();
+
+      // Lock a plan file so the path is resolved and recorded on the wire.
+      const sourcePath = join(workDir, 'plan-source.md');
+      await writeFile(sourcePath, 'source', 'utf-8');
+      await created.writingPlan({ filePath: sourcePath });
       await expect(created.getPlan()).resolves.toMatchObject({
         content: '',
       });
@@ -210,6 +236,12 @@ describe('Session plan, compact, usage, and resume APIs', () => {
         metadata: { source: true },
       });
       await source.setSessionMode('plan');
+      await expect(source.getPlan()).resolves.toBeNull();
+
+      // Lock a plan file so the path is resolved and recorded on the wire.
+      const sourcePath = join(workDir, 'plan-source.md');
+      await writeFile(sourcePath, 'source', 'utf-8');
+      await source.writingPlan({ filePath: sourcePath });
       const sourcePlan = await source.getPlan();
       if (sourcePlan === null) throw new Error('expected source plan');
       await mkdir(dirname(sourcePlan.path), { recursive: true });
@@ -234,23 +266,25 @@ describe('Session plan, compact, usage, and resume APIs', () => {
       expect(forkPlan).toEqual({
         id: sourcePlan.id,
         content: 'source plan',
-        path: join(forkSummary!.sessionDir, 'agents', 'main', 'plans', `${sourcePlan.id}.md`),
+        // Project-scoped plan paths are shared across sessions in the same workDir.
+        path: sourcePlan.path,
         kind: 'plan',
       });
-      expect(forkPlan?.path).not.toBe(sourcePlan.path);
       const forkWire = await readFile(
         join(forkSummary!.sessionDir, 'agents', 'main', 'wire.jsonl'),
         'utf-8',
       );
-      const enterRecord = forkWire
+      const enterRecords = forkWire
         .trim()
         .split('\n')
         .map((line) => JSON.parse(line) as Record<string, unknown>)
-        .find((record) => record['type'] === 'session_mode.enter');
-      expect(enterRecord).toEqual({
+        .filter((record) => record['type'] === 'session_mode.enter');
+      expect(enterRecords).toHaveLength(2);
+      expect(enterRecords[1]).toEqual({
         type: 'session_mode.enter',
         id: sourcePlan.id,
         kind: 'plan',
+        path: sourcePlan.path,
         time: expect.any(Number),
       });
       const forkState = JSON.parse(

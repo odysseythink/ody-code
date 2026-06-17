@@ -10,7 +10,11 @@ export function parsePrNumber(urlOrNumber: string): string {
   if (match === null) {
     throw new Error('PR URL must be a GitHub pull request URL (e.g. https://github.com/owner/repo/pull/42)');
   }
-  return match[3];
+  const prNumber = match[3];
+  if (prNumber === undefined) {
+    throw new Error('Failed to extract PR number from URL');
+  }
+  return prNumber;
 }
 
 export function buildDiffSource(options: {

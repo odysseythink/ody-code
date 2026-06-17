@@ -214,7 +214,7 @@ describe('Session.prompt events', () => {
         type: 'kimi',
         defaultHeaders: expect.objectContaining({
           'X-Msh-Platform': 'kimi_code_cli',
-          'User-Agent': 'kimi-code-cli/0.0.0-test',
+          'User-Agent': 'ody-code-cli/0.0.0-test',
         }),
       });
       expect(existsSync(join(homeDir, 'device_id'))).toBe(true);

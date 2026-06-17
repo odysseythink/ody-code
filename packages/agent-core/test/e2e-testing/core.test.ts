@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { join } from 'pathe';
 import { parseConfigString } from '../../src/config/toml';
 import { E2EConfigResolver } from '#/e2e-testing/config';
 import type { ResolvedE2EConfig } from '#/e2e-testing/config';
@@ -134,7 +135,7 @@ describe('E2EGeneratorRegistry + TS/Vitest detection', () => {
 
   it('detectProjectStructure returns structure for agent-core', async () => {
     const gen = new TypeScriptVitestGenerator();
-    const result = await gen.detectProjectStructure(process.cwd());
+    const result = await gen.detectProjectStructure(join(process.cwd(), 'packages/agent-core'));
     expect(result).toEqual({
       language: 'typescript',
       framework: 'nodejs',

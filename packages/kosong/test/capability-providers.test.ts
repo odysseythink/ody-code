@@ -24,14 +24,18 @@ describe('KimiChatProvider.getCapability', () => {
     return new KimiChatProvider({ model, apiKey: 'test-key' });
   }
 
-  it('does not infer capabilities from Kimi model names', () => {
-    for (const model of [
-      'kimi-for-coding',
-      'kimi-code',
-      'kimi-k2-turbo-preview',
-      'kimi-k2.5',
-      'kimi-thinking-preview',
-    ]) {
+  it('returns K2 capabilities for kimi-k2 models and UNKNOWN for other Kimi model names', () => {
+    for (const model of ['kimi-k2-turbo-preview', 'kimi-k2.5']) {
+      expect(make(model).getCapability()).toEqual({
+        image_in: false,
+        video_in: false,
+        audio_in: false,
+        thinking: true,
+        tool_use: true,
+        max_context_tokens: 0,
+      });
+    }
+    for (const model of ['kimi-for-coding', 'kimi-code', 'kimi-thinking-preview']) {
       expect(make(model).getCapability()).toEqual(UNKNOWN_CAPABILITY);
     }
   });

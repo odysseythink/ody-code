@@ -67,7 +67,7 @@ describe('runtime provider identity headers', () => {
     expect(resolved.provider).toMatchObject({
       type: 'kimi',
       defaultHeaders: expect.objectContaining({
-        'User-Agent': 'kimi-code-cli/0.0.0-test',
+        'User-Agent': 'ody-code-cli/0.0.0-test',
         'X-Msh-Platform': 'kimi_code_cli',
         'X-Msh-Version': '0.0.0-test',
         'X-Msh-Device-Name': expect.any(String),

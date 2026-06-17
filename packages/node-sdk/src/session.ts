@@ -145,13 +145,16 @@ export class Session {
     await this.rpc.setPermission({ sessionId: this.id, mode });
   }
 
-  async setSessionMode(mode: 'plan' | 'design' | 'office-hours' | 'normal'): Promise<void> {
+  async setSessionMode(
+    mode: 'plan' | 'design' | 'office-hours' | 'normal',
+    options?: { sourceFilePath?: string },
+  ): Promise<void> {
     this.ensureOpen();
     if (mode === 'normal') {
       await this.rpc.setSessionMode({ sessionId: this.id, mode: 'normal' });
       return;
     }
-    await this.rpc.setSessionMode({ sessionId: this.id, mode });
+    await this.rpc.setSessionMode({ sessionId: this.id, mode, sourceFilePath: options?.sourceFilePath });
   }
 
   async getPlan(): Promise<SessionPlan> {

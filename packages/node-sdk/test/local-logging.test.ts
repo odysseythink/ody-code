@@ -166,23 +166,30 @@ describe('Local logging — harness integration', () => {
   });
 
   it('default export works when no session log file exists', async () => {
-    const homeDir = await makeTempDir('kimi-log-home-');
-    const workDir = await makeTempDir('kimi-log-work-');
-    const harness = new KimiHarness({ identity: TEST_IDENTITY, homeDir });
-    const session = await harness.createSession({ id: 'ses_no_session_log', workDir });
+    const env = snapshotLogEnv();
+    process.env['ODY_LOG_LEVEL'] = 'off';
+    try {
+      await __resetRootLoggerForTest();
+      const homeDir = await makeTempDir('kimi-log-home-');
+      const workDir = await makeTempDir('kimi-log-work-');
+      const harness = new KimiHarness({ identity: TEST_IDENTITY, homeDir });
+      const session = await harness.createSession({ id: 'ses_no_session_log', workDir });
 
     const outputPath = join(workDir, 'no-log.zip');
     const result = await harness.exportSession({ id: session.id, outputPath, version: '1.0.0-test' });
 
-    const entries = readZipEntries(await readFile(result.zipPath));
-    expect(entries.has('agents/main/wire.jsonl')).toBe(true);
-    expect(entries.has('logs/ody-code.log')).toBe(false);
-    expect(result.manifest.sessionLogPath).toBeUndefined();
-    const manifest = JSON.parse(entries.get('manifest.json')!.toString('utf-8')) as Record<
-      string,
-      unknown
-    >;
-    expect(manifest['sessionLogPath']).toBeUndefined();
+      const entries = readZipEntries(await readFile(result.zipPath));
+      expect(entries.has('agents/main/wire.jsonl')).toBe(true);
+      expect(entries.has('logs/ody-code.log')).toBe(false);
+      expect(result.manifest.sessionLogPath).toBeUndefined();
+      const manifest = JSON.parse(entries.get('manifest.json')!.toString('utf-8')) as Record<
+        string,
+        unknown
+      >;
+      expect(manifest['sessionLogPath']).toBeUndefined();
+    } finally {
+      restoreLogEnv(env);
+    }
   });
 
   it('default export includes rotated session log files without requiring active ody-code.log', async () => {

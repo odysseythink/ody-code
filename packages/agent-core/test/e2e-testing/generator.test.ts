@@ -8,11 +8,11 @@ function makeFeature(toolId: string): Feature {
   return {
     toolId,
     changedFiles: ['packages/agent-core/src/tools/builtin/planning/exit-plan-mode.ts'],
-    projectRoot: process.cwd(),
+    projectRoot: join(process.cwd(), 'packages/agent-core'),
   };
 }
 
-const OUTPUT_DIR = '.ody-code/test-generated/e2e';
+const OUTPUT_DIR = 'packages/agent-core/.ody-code/test-generated/e2e';
 
 describe('TypeScriptVitestGenerator.generateTestsForFeature', () => {
   it('produces ExitPlanMode E2E test file', async () => {

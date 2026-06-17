@@ -20,10 +20,12 @@ function makeSessionMode(
   const existing = new Set([...existingPaths, ...directoryPaths]);
   const dirs = new Set(directoryPaths);
   const emitStatusUpdated = vi.fn();
+  const logRecord = vi.fn();
   const agent = {
     homedir: CWD,
     config: { cwd: CWD },
     emitStatusUpdated,
+    records: { logRecord },
     kaos: {
       mkdir: vi.fn().mockResolvedValue(undefined),
       stat: vi.fn(async (p: string) => {

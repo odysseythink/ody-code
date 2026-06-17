@@ -3,6 +3,7 @@ import { basename, dirname, join, normalize } from 'pathe';
 
 import type { Agent } from '..';
 import type { DesignSessionCheckpoint } from '../../session/checkpoint/checkpoint';
+import type { ResolvedRuntimeProvider } from '../../session/provider-manager';
 import {
   extractFirstHeading,
   extractTopicFromMessage,
@@ -80,14 +81,24 @@ export class SessionMode {
     if (kind === 'plan' || kind === 'design') {
       const modeModel = this.agent.kimiConfig?.modeModels?.[kind];
       if (modeModel !== undefined) {
+        let resolved: ResolvedRuntimeProvider | undefined;
+        let usable = false;
         try {
-          this.agent.modelProvider?.resolveProviderConfig(modeModel);
+          resolved = this.agent.modelProvider?.resolveProviderConfig(modeModel);
+          usable = resolved === undefined || this.modelAliasHasUsableAuth(modeModel, resolved);
+        } catch {
+          this.agent.log?.warn(`modeModels.${kind} "${modeModel}" not found, keeping current model`);
+          this._preModeModelAlias = null;
+        }
+        if (usable) {
           this._preModeModelAlias = { value: this.agent.config.modelAlias };
           if (modeModel !== this.agent.config.modelAlias) {
             this.agent.config.update({ modelAlias: modeModel });
           }
-        } catch {
-          this.agent.log?.warn(`modeModels.${kind} "${modeModel}" not found, keeping current model`);
+        } else if (resolved !== undefined) {
+          this.agent.log?.warn(
+            `modeModels.${kind} "${modeModel}" has no configured API key or OAuth login; keeping current model`,
+          );
           this._preModeModelAlias = null;
         }
       }
@@ -241,11 +252,18 @@ export class SessionMode {
     const stem = await this.findUniqueStemInDir(dir, sourceStem);
     // Sever any pending design handoff so it cannot win over the explicit name.
     this._lastCompletedDesignFilePath = null;
-    // NOTE: the locked path is not recorded, so a resume BEFORE the first write
-    // falls back to topic-based naming — same narrow limitation as the design→plan
-    // handoff. Once the model writes, the correctly-named file exists on disk.
-    this._sessionModeFilePath = join(dir, `${stem}.md`);
+    const path = join(dir, `${stem}.md`);
+    this._sessionModeFilePath = path;
     this.agent.emitStatusUpdated();
+    // Record the locked path so resuming (or forking) a session before the first
+    // write still restores the same plan file instead of falling back to topic-based
+    // naming and potentially losing the explicit source.
+    this.agent.records.logRecord({
+      type: 'session_mode.enter',
+      id: this._sessionModeId!,
+      kind: this._kind,
+      path,
+    });
   }
 
   /**
@@ -655,6 +673,30 @@ export class SessionMode {
   async findUniqueStem(baseStem: string): Promise<string> {
     if (!this._sessionModeFilePath) return baseStem;
     return this.findUniqueStemInDir(dirname(this._sessionModeFilePath), baseStem);
+  }
+
+  /**
+   * Whether a model alias can actually be used for generation. A model is usable
+   * when its provider has either a resolved API key (config value or environment
+   * variable) or a configured OAuth login. This prevents mode transitions from
+   * silently switching to a model that will fail on its first LLM call with a
+   * cryptic "apiKey is required" provider error.
+   */
+  private modelAliasHasUsableAuth(
+    modelAlias: string,
+    resolved: ResolvedRuntimeProvider,
+  ): boolean {
+    // OAuth path: resolveAuth returns a wrapper whenever the raw provider config
+    // has an `oauth` entry. The wrapper fetches the access token per request.
+    const withAuth = this.agent.modelProvider?.resolveAuth?.(modelAlias, {
+      log: this.agent.log,
+    });
+    if (withAuth !== undefined) return true;
+
+    // API-key path: the resolved KosongProviderConfig already folds in config
+    // values and environment variables via provider-manager's providerApiKey().
+    const apiKey = (resolved.provider as { apiKey?: string }).apiKey;
+    return apiKey !== undefined && apiKey.length > 0;
   }
 }
 

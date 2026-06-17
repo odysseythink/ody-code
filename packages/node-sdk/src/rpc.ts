@@ -99,6 +99,7 @@ export interface SetSessionPermissionRpcInput extends SessionIdRpcInput {
 
 export interface SetSessionModeRpcInput extends SessionIdRpcInput {
   readonly mode: 'plan' | 'design' | 'office-hours' | 'normal';
+  readonly sourceFilePath?: string;
 }
 
 export interface ActivateSkillRpcInput extends SessionIdRpcInput {
@@ -300,6 +301,7 @@ export class SDKRpcClient {
       sessionId: input.sessionId,
       agentId: this.interactiveAgentId,
       kind: input.mode,
+      sourceFilePath: input.sourceFilePath,
     });
   }
 

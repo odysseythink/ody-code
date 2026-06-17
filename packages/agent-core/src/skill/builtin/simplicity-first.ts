@@ -88,14 +88,16 @@ export function filterSimplicityLevels(body: string, level: SimplicityLevel): st
     }
 
     if (openPos <= closePos) {
+      // nextOpen is guaranteed non-null when openPos !== Infinity
+      const openMatch = nextOpen!;
       // Emit content before the open tag (unless currently discarding)
       const discarding = blockLevels.some(l => l !== level);
       if (!discarding) {
         out.push(body.slice(cursor, openPos));
       }
 
-      const tagLevel = nextOpen![1].toLowerCase();
-      const matchLen = nextOpen![0].length;
+      const tagLevel = (openMatch[1] ?? 'full').toLowerCase();
+      const matchLen = openMatch[0].length;
       cursor = openPos + matchLen;
 
       // Only process this tag if at the outermost level (no enclosing block).
@@ -107,14 +109,16 @@ export function filterSimplicityLevels(body: string, level: SimplicityLevel): st
         out.push(body.slice(openPos, cursor));
       }
     } else {
+      // nextClose is guaranteed non-null when closePos !== Infinity
+      const closeMatch = nextClose!;
       // Emit content before the close tag (unless currently discarding)
       const discarding = blockLevels.some(l => l !== level);
       if (!discarding) {
         out.push(body.slice(cursor, closePos));
       }
 
-      const tagLevel = nextClose![1].toLowerCase();
-      const matchLen = nextClose![0].length;
+      const tagLevel = (closeMatch[1] ?? 'full').toLowerCase();
+      const matchLen = closeMatch[0].length;
       cursor = closePos + matchLen;
 
       // Only close if the tag matches the current top-of-stack level.

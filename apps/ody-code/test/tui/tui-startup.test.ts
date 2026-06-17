@@ -8,7 +8,7 @@ import {
   handleLogoutCommand,
 } from "#/tui/commands/auth";
 import {
-  promptPlatformSelection,
+  promptLoginProviderSelection,
   promptLogoutProviderSelection,
 } from "#/tui/commands/prompts";
 import {
@@ -21,7 +21,7 @@ import {
 
 vi.mock("#/tui/commands/prompts", async (importOriginal) => {
   const actual = await importOriginal<typeof import("#/tui/commands/prompts")>();
-  return { ...actual, promptPlatformSelection: vi.fn(), promptLogoutProviderSelection: vi.fn() };
+  return { ...actual, promptLoginProviderSelection: vi.fn(), promptLogoutProviderSelection: vi.fn() };
 });
 
 interface StartupDriver {
@@ -470,7 +470,7 @@ describe("OdyTUI startup", () => {
       sessionMode: 'plan',
     });
 
-    vi.mocked(promptPlatformSelection).mockResolvedValue('kimi-code');
+    vi.mocked(promptLoginProviderSelection).mockResolvedValue('kimi-code');
     await handleLoginCommand(driver as any);
 
     expect(createSession).toHaveBeenNthCalledWith(1, {
@@ -522,7 +522,7 @@ describe("OdyTUI startup", () => {
     const driver = makeDriver(harness, makeStartupInput());
 
     await expect(driver.init()).resolves.toBe(false);
-    vi.mocked(promptPlatformSelection).mockResolvedValue('kimi-code');
+    vi.mocked(promptLoginProviderSelection).mockResolvedValue('kimi-code');
     await handleLoginCommand(driver as any);
 
     expect(createSession).toHaveBeenNthCalledWith(2, {
@@ -553,7 +553,7 @@ describe("OdyTUI startup", () => {
     await expect(driver.init()).resolves.toBe(false);
     expect(driver.state.appState.thinking).toBe(false);
 
-    vi.mocked(promptPlatformSelection).mockResolvedValue('kimi-code');
+    vi.mocked(promptLoginProviderSelection).mockResolvedValue('kimi-code');
     await handleLoginCommand(driver as any);
 
     expect(session.setModel).toHaveBeenCalledWith("k2");
@@ -586,7 +586,7 @@ describe("OdyTUI startup", () => {
     await expect(driver.init()).resolves.toBe(false);
     harness.track.mockClear();
 
-    vi.mocked(promptPlatformSelection).mockResolvedValue('kimi-code');
+    vi.mocked(promptLoginProviderSelection).mockResolvedValue('kimi-code');
     await handleLoginCommand(driver as any);
 
     expect(harness.auth.login).toHaveBeenCalledWith(
@@ -621,7 +621,7 @@ describe("OdyTUI startup", () => {
     try {
       await expect(driver.init()).resolves.toBe(false);
 
-      vi.mocked(promptPlatformSelection).mockResolvedValue('kimi-code');
+      vi.mocked(promptLoginProviderSelection).mockResolvedValue('kimi-code');
       await handleLoginCommand(driver as any);
 
       expect(harness.auth.login).toHaveBeenCalledWith(

@@ -348,24 +348,13 @@ export class FooterComponent implements Component {
     const colors = this.colors;
     const state = this.state;
 
-    // ── Line 1: mode badges + model + [N task(s) running] + [N agent(s) running] + cwd + git + hints ──
+    // ── Line 1: mode badges + [N task(s) running] + [N agent(s) running] + cwd + git + hints ──
     const left: string[] = [];
     if (state.permissionMode === 'auto') left.push(chalk.hex(colors.warning).bold('auto'));
     if (state.permissionMode === 'yolo') left.push(chalk.hex(colors.warning).bold('yolo'));
 
     const goalBadge = formatGoalBadge(state.goal, colors, this.goalWallClockMs(state.goal));
     if (goalBadge !== null) left.push(goalBadge);
-
-    const model = modelDisplayName(state);
-    if (model) {
-      const thinkingLabel = state.thinking ? ' thinking' : '';
-      const modelLabel = `${model}${thinkingLabel}`;
-      let renderedModelLabel = chalk.hex(colors.text)(modelLabel);
-      if (isRainbowDancing()) {
-        renderedModelLabel = renderDanceFooterModel(modelLabel, colors);
-      }
-      left.push(renderedModelLabel);
-    }
 
     // Background-task badges sit immediately before cwd. `bash-*` tasks
     // (shell processes) and `agent-*` tasks (background subagents) get
@@ -415,7 +404,7 @@ export class FooterComponent implements Component {
       line1 = truncateToWidth(leftLine, width, '…');
     }
 
-    // ── Line 2: inverted mode badge (left) + transient hint + context (right) ──
+    // ── Line 2: mode badge + model/thinking (left) + transient hint + context (right) ──
     const mode = state.sessionMode;
     const fileName = mode === 'normal' ? planFileName(state.sessionModeFilePath) : null;
     let badge = renderModeBadge(mode, colors, fileName ?? undefined, state.userLanguage);
@@ -426,6 +415,20 @@ export class FooterComponent implements Component {
       badgeWidth = visibleWidth(badge);
     }
 
+    // Model + thinking label, right after mode badge
+    const modelName = modelDisplayName(state);
+    let modelWithThinking = '';
+    if (modelName) {
+      const thinkingLabel = state.thinking ? ' thinking' : '';
+      const modelLabel = modelName + thinkingLabel;
+      let rendered = chalk.hex(colors.text)(modelLabel);
+      if (isRainbowDancing()) {
+        rendered = renderDanceFooterModel(modelLabel, colors);
+      }
+      modelWithThinking = rendered;
+    }
+    const modelWidth = modelWithThinking ? visibleWidth(modelWithThinking) + 1 : 0;
+
     const contextText = formatContextStatus(
       state.contextUsage,
       state.contextTokens,
@@ -434,19 +437,21 @@ export class FooterComponent implements Component {
     const contextWidth = visibleWidth(contextText);
     const contextStr = chalk.hex(colors.text)(contextText);
 
+    const line2LeftWidth = badgeWidth + modelWidth;
+
     let line2: string;
     if (this.transientHint) {
       const hint = this.transientHint;
-      const maxHintWidth = Math.max(0, width - badgeWidth - contextWidth - 2);
+      const maxHintWidth = Math.max(0, width - line2LeftWidth - contextWidth - 2);
       const shownHint =
         visibleWidth(hint) <= maxHintWidth ? hint : truncateToWidth(hint, maxHintWidth, '…');
       const hintStr = chalk.hex(colors.warning).bold(shownHint);
       const hintWidthActual = visibleWidth(shownHint);
-      const pad = Math.max(0, width - badgeWidth - hintWidthActual - contextWidth - 1);
-      line2 = badge + ' '.repeat(pad) + hintStr + ' ' + contextStr;
+      const pad = Math.max(0, width - line2LeftWidth - hintWidthActual - contextWidth - 1);
+      line2 = badge + (modelWithThinking ? ' ' + modelWithThinking : '') + ' '.repeat(pad) + hintStr + ' ' + contextStr;
     } else {
-      const pad = Math.max(0, width - badgeWidth - contextWidth);
-      line2 = badge + ' '.repeat(pad) + contextStr;
+      const pad = Math.max(0, width - line2LeftWidth - contextWidth);
+      line2 = badge + (modelWithThinking ? ' ' + modelWithThinking : '') + ' '.repeat(pad) + contextStr;
     }
 
     return [truncateToWidth(line1, width), truncateToWidth(line2, width)];
