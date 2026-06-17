@@ -7,6 +7,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import { ErrorCodes, OdyError } from '../../src/errors';
 import {
+  OdyConfigPatchSchema,
   OdyConfigSchema,
   configToTomlData,
   ensureConfigFile,
@@ -704,5 +705,46 @@ code_review_receive = "claude-3-5-sonnet"
     const roundTripped = parseConfigString(text, configPath);
     expect(roundTripped.modeModels!.codeReviewRequest).toBe('claude-3-5-sonnet');
     expect(roundTripped.modeModels!.codeReviewReceive).toBe('claude-3-5-sonnet');
+  });
+});
+
+describe('microagentBudget config', () => {
+  it('C1: OdyConfigSchema accepts microagentBudget.maxTokens', () => {
+    const config = OdyConfigSchema.parse({
+      microagentBudget: { maxTokens: 512 },
+    });
+    expect(config.microagentBudget?.maxTokens).toBe(512);
+  });
+
+  it('C2: OdyConfigSchema rejects negative maxTokens', () => {
+    expect(() =>
+      OdyConfigSchema.parse({
+        microagentBudget: { maxTokens: -1 },
+      }),
+    ).toThrow();
+  });
+
+  it('C3: OdyConfigPatchSchema accepts microagentBudget', () => {
+    const patch = OdyConfigPatchSchema.parse({
+      microagentBudget: { maxTokens: 0 },
+    });
+    expect(patch.microagentBudget?.maxTokens).toBe(0);
+  });
+
+  it('round-trips microagent_budget through TOML parse/write', () => {
+    const toml = '[microagent_budget]\nmax_tokens = 512\n';
+    const config = parseConfigString(toml, 'test.toml');
+    expect(config.microagentBudget?.maxTokens).toBe(512);
+
+    const data = configToTomlData(config);
+    const section = data['microagent_budget'] as Record<string, unknown>;
+    expect(section).toBeDefined();
+    expect(section['max_tokens']).toBe(512);
+  });
+
+  it('omits microagent_budget section when not configured', () => {
+    const config = OdyConfigSchema.parse({});
+    const data = configToTomlData(config);
+    expect(data).not.toHaveProperty('microagent_budget');
   });
 });

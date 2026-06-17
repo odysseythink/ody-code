@@ -293,6 +293,12 @@ export const E2EConfigSchema = z.object({
 
 export type E2EConfig = z.infer<typeof E2EConfigSchema>;
 
+export const MicroagentBudgetConfigSchema = z.object({
+  maxTokens: z.number().int().min(0).optional(),
+});
+
+export type MicroagentBudgetConfig = z.infer<typeof MicroagentBudgetConfigSchema>;
+
 export const OdyConfigSchema = z.object({
   providers: z.record(z.string(), ProviderConfigSchema).default({}),
   defaultProvider: z.string().optional(),
@@ -322,6 +328,7 @@ export const OdyConfigSchema = z.object({
   }).optional(),
   browser: BrowserConfigSchema.optional(),
   e2e: E2EConfigSchema.optional(),
+  microagentBudget: MicroagentBudgetConfigSchema.optional(),
   raw: z.record(z.string(), z.unknown()).optional(),
 });
 
@@ -374,6 +381,7 @@ export const OdyConfigPatchSchema = z
       codeReviewReceive: z.string().optional(),
     }).optional(),
     browser: BrowserConfigSchema.optional(),
+    microagentBudget: MicroagentBudgetConfigSchema.optional(),
   })
   .strict();
 

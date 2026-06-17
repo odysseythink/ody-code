@@ -11,6 +11,7 @@ import {
   type BackgroundConfig,
   type BrowserConfig,
   type HookDefConfig,
+  type MicroagentBudgetConfig,
   type OdyConfig,
   type LoopControl,
   type ModelAlias,
@@ -140,6 +141,8 @@ export function transformTomlData(data: Record<string, unknown>): Record<string,
     } else if (targetKey === 'browser' && isPlainObject(value)) {
       result[targetKey] = transformPlainObject(value);
     } else if (targetKey === 'e2e' && isPlainObject(value)) {
+      result[targetKey] = transformPlainObject(value);
+    } else if (targetKey === 'microagentBudget' && isPlainObject(value)) {
       result[targetKey] = transformPlainObject(value);
     } else if (!isPlainObject(value)) {
       result[targetKey] = value;
@@ -345,6 +348,7 @@ export function configToTomlData(config: OdyConfig): Record<string, unknown> {
   setSection(out, 'mode_models', config.modeModels, modeModelsToToml);
   setSection(out, 'browser', config.browser, browserToToml);
   setSection(out, 'e2e', config.e2e, e2eToToml);
+  setSection(out, 'microagent_budget', config.microagentBudget, microagentBudgetToToml);
   setHooks(out, config.hooks);
 
   return out;
@@ -557,6 +561,17 @@ function browserToToml(
 function e2eToToml(e2e: NonNullable<OdyConfig['e2e']>, rawE2e: unknown): Record<string, unknown> {
   const out = cloneRecord(rawE2e);
   for (const [key, value] of Object.entries(e2e)) {
+    setDefined(out, camelToSnake(key), value);
+  }
+  return out;
+}
+
+function microagentBudgetToToml(
+  budget: MicroagentBudgetConfig,
+  rawBudget: unknown,
+): Record<string, unknown> {
+  const out = cloneRecord(rawBudget);
+  for (const [key, value] of Object.entries(budget)) {
     setDefined(out, camelToSnake(key), value);
   }
   return out;
