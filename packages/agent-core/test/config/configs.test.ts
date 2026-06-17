@@ -242,6 +242,25 @@ describe('harness config TOML loader', () => {
     expect(roundTripped.loopControl?.normalTaskCompactionRatio).toBe(0.4);
   });
 
+  it('parses and round-trips test_review.enabled and mode_models.test_review', async () => {
+    const dir = makeTempDir();
+    const configPath = join(dir, 'test-review.toml');
+    const config = parseConfigString(
+      '[test_review]\nenabled = true\n\n[mode_models]\ntest_review = "ody-code/reviewer"\n',
+      configPath,
+    );
+    expect(config.testReview?.enabled).toBe(true);
+    expect(config.modeModels?.testReview).toBe('ody-code/reviewer');
+
+    await writeConfigFile(configPath, config);
+    const text = await readFile(configPath, 'utf-8');
+    expect(text).toContain('enabled = true');
+    expect(text).toContain('test_review = "ody-code/reviewer"');
+    const roundTripped = parseConfigString(text, configPath);
+    expect(roundTripped.testReview?.enabled).toBe(true);
+    expect(roundTripped.modeModels?.testReview).toBe('ody-code/reviewer');
+  });
+
   it('round-trips services.web_search with provider-specific options', async () => {
     const dir = makeTempDir();
     const configPath = join(dir, 'web-search.toml');

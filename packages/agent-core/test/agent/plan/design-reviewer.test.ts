@@ -7,6 +7,7 @@ import {
   escalatedSeverities,
   parseAuditLevel,
   parseFindings,
+  parseMutationProbes,
   shouldEscalate,
 } from '../../../src/agent/session-mode/reviewer';
 
@@ -140,6 +141,75 @@ describe("buildCriticPrompt('plan')", () => {
     expect(prompt).toContain('GAP');
     // The design-only PII/secrets lens is not the focus of a plan review.
     expect(prompt).not.toContain('PII leaking');
+  });
+});
+
+describe("buildCriticPrompt('tests')", () => {
+  it('shares the adversary stance, self-falsification gate, and JSON envelope', () => {
+    const prompt = buildCriticPrompt('tests');
+    expect(prompt).toContain('ADVERSARY');
+    expect(prompt).toContain('STRICT JSON');
+    expect(prompt).toContain('does not count');
+    expect(prompt).toContain('the output you describe is actually correct');
+    expect(prompt).toContain('"confidence"');
+    // It attacks the TEST SUITE, not a design or plan.
+    expect(prompt).toContain('TEST SUITE');
+    expect(prompt).not.toContain('EXECUTION PLAN');
+    expect(prompt).not.toContain('PII leaking');
+  });
+
+  it('targets test-code failure modes (tautology, mock theatre, happy-path-only, weak assertions)', () => {
+    const prompt = buildCriticPrompt('tests');
+    expect(prompt).toContain('Tautology');
+    expect(prompt).toContain('mock');
+    expect(prompt).toContain('must-pass AND a must-reject');
+    expect(prompt).toContain('Weak assertions');
+  });
+
+  it('requests executable mutation probes and extends the JSON envelope with them', () => {
+    const prompt = buildCriticPrompt('tests');
+    expect(prompt).toContain('Mutation probes');
+    expect(prompt).toContain('cannot run code');
+    expect(prompt).toContain('"mutationProbes"');
+    expect(prompt).toContain('expectedCatch');
+  });
+
+  it('does NOT leak mutation-probe instructions into design or plan prompts', () => {
+    expect(buildCriticPrompt('design')).not.toContain('mutationProbes');
+    expect(buildCriticPrompt('design')).not.toContain('Mutation probes');
+    expect(buildCriticPrompt('plan')).not.toContain('mutationProbes');
+  });
+});
+
+describe('parseMutationProbes', () => {
+  it('parses a well-formed probe array', () => {
+    const probes = parseMutationProbes(
+      '{"findings":[],"mutationProbes":[{"location":"src/a.ts:42","mutation":"negate the < check","expectedCatch":"rejects empty input"}]}',
+    );
+    expect(probes).toEqual([
+      { location: 'src/a.ts:42', mutation: 'negate the < check', expectedCatch: 'rejects empty input' },
+    ]);
+  });
+
+  it('drops probes with no mutation and tolerates coarse location/expectedCatch', () => {
+    const probes = parseMutationProbes(
+      '{"mutationProbes":[{"location":"x","expectedCatch":"y"},{"mutation":"change 3 to 4"}]}',
+    );
+    expect(probes).toEqual([{ location: '', mutation: 'change 3 to 4', expectedCatch: '' }]);
+  });
+
+  it('returns [] when the array is absent, empty, or the output is unparseable', () => {
+    expect(parseMutationProbes('{"findings":[]}')).toEqual([]);
+    expect(parseMutationProbes('{"mutationProbes":[]}')).toEqual([]);
+    expect(parseMutationProbes('not json')).toEqual([]);
+    expect(parseMutationProbes('')).toEqual([]);
+  });
+
+  it('strips ```json fences before parsing', () => {
+    const probes = parseMutationProbes(
+      '```json\n{"mutationProbes":[{"location":"l","mutation":"m","expectedCatch":"e"}]}\n```',
+    );
+    expect(probes).toHaveLength(1);
   });
 });
 
@@ -282,6 +352,56 @@ describe('AdvancedSessionReviewer', () => {
     await new AdvancedSessionReviewer(plan.agent, { reviewerAlias, kind: 'plan' }).review('a plan');
     expect(plan.rawGenerate.mock.calls[0]?.[1]).toContain('EXECUTION PLAN');
     expect(plan.rawGenerate.mock.calls[0]?.[1]).toContain('Depends on:');
+  });
+
+  it("routes kind:'tests' to the test-code attack surface and attaches mutation probes", async () => {
+    const tests = makeAgent({
+      rawGenerate: vi.fn().mockResolvedValue({
+        message: {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                findings: [{ severity: 'high', title: 'Tautological assert', detail: 'expect(x).toBe(x)' }],
+                mutationProbes: [
+                  { location: 'src/sum.ts:3', mutation: 'return a - b', expectedCatch: 'adds two numbers' },
+                ],
+              }),
+            },
+          ],
+        },
+      }),
+    });
+    const result = await new AdvancedSessionReviewer(tests.agent, { reviewerAlias, kind: 'tests' }).review(
+      'changed test + impl',
+    );
+    expect(tests.rawGenerate.mock.calls[0]?.[1]).toContain('TEST SUITE');
+    expect(tests.rawGenerate.mock.calls[0]?.[1]).toContain('Mutation probes');
+    expect(result.ok).toBe(true);
+    expect(result.findings).toHaveLength(1);
+    expect(result.mutationProbes).toEqual([
+      { location: 'src/sum.ts:3', mutation: 'return a - b', expectedCatch: 'adds two numbers' },
+    ]);
+  });
+
+  it('does not attach mutation probes for non-test reviews', async () => {
+    const { agent } = makeAgent({
+      rawGenerate: vi.fn().mockResolvedValue({
+        message: {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                findings: [],
+                mutationProbes: [{ location: 'a', mutation: 'b', expectedCatch: 'c' }],
+              }),
+            },
+          ],
+        },
+      }),
+    });
+    const result = await new AdvancedSessionReviewer(agent, { reviewerAlias, kind: 'design' }).review('a design');
+    expect(result.mutationProbes).toBeUndefined();
   });
 
   it('disables extended thinking on the reviewer provider (latency / timeout guard)', async () => {

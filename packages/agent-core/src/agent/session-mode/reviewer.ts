@@ -35,10 +35,33 @@ export interface ReviewFinding {
   readonly suggestedFix?: string;
 }
 
+/**
+ * An executable perturbation the reviewer believes a sound test must catch.
+ * Because the reviewer is a pure single-shot text model (no tools, cannot run
+ * code), it only *describes* the mutation; the controller agent applies it,
+ * runs the named test, and confirms it goes red. A test that stays green under
+ * its probe is proven to be vacuous — this turns "the tests look weak" from an
+ * assertion into a runnable check. Only emitted for `kind: 'tests'`.
+ */
+export interface MutationProbe {
+  /** Where to inject the fault, ideally `file:line`. */
+  readonly location: string;
+  /** The exact one-line break to apply (negate a condition, change a constant, early-return). */
+  readonly mutation: string;
+  /** Which existing test SHOULD turn red once the mutation is applied. */
+  readonly expectedCatch: string;
+}
+
 export interface AdvancedSessionReviewResult {
   /** Audit level read from the design file (drives human escalation). */
   readonly auditLevel: AuditLevel;
   readonly findings: readonly ReviewFinding[];
+  /**
+   * Executable perturbations the controller should run to confirm the tests
+   * actually catch regressions. Only populated for `kind: 'tests'`; empty
+   * otherwise.
+   */
+  readonly mutationProbes?: readonly MutationProbe[];
   /** false when the reviewer could not run or its output was unusable. */
   readonly ok: boolean;
   /** Human-readable degradation reason when `ok` is false. */
@@ -50,11 +73,18 @@ export interface AdvancedSessionReviewerOptions {
   readonly reviewerAlias: string;
   /**
    * Which document kind to attack. Selects the critic prompt's attack surface:
-   * `design` (spec/architecture) or `plan` (execution plan). Defaults to `design`.
+   * `design` (spec/architecture), `plan` (execution plan), or `tests` (the test
+   * code the implementation model wrote). Defaults to `design`.
    */
-  readonly kind?: 'plan' | 'design';
+  readonly kind?: 'plan' | 'design' | 'tests';
   /** Hard cap on the critique generation. Defaults to 120s. */
   readonly timeoutMs?: number;
+  /**
+   * Optional external abort signal (e.g. a tool's cancellation). Combined with
+   * the internal timeout via `AbortSignal.any`, so a caller cancellation aborts
+   * the in-flight generation rather than only relabelling a finished result.
+   */
+  readonly signal?: AbortSignal;
 }
 
 export const DEFAULT_AUDIT_LEVEL: AuditLevel = 'Standard';
@@ -124,17 +154,49 @@ const PLAN_ATTACK_SURFACE = `- Dependency soundness: a task that uses a symbol, 
 - Execution realism: stale \`path:line\` references; a "replace the whole file/function" step that silently drops existing logic; a step whose command or expected output would not run as written.`;
 
 /**
+ * Attack surface for the TEST CODE the implementation model wrote. The author and
+ * the test author are the SAME model, so its blind spots are perfectly correlated:
+ * a test written to confirm the code it just wrote tends to encode the bug rather
+ * than catch it. These are the shapes that make a test pass while proving nothing.
+ */
+const TEST_CODE_ATTACK_SURFACE = `- Tautology: an assertion that re-states a value the implementation itself computed (e.g. \`expect(result).toBe(result)\`, or snapshotting the current output as the "expected" value) — it can never fail on a wrong implementation.
+- Mock theatre: the test asserts a mock was called / returned a stubbed value instead of exercising real behaviour, so it tests the mock, not the code.
+- Happy-path only: every behaviour needs a must-pass AND a must-reject case; flag any behaviour with no negative/edge/error case (empty, null, boundary, duplicate, failure path).
+- Weak assertions: assertions so loose the implementation could be wrong and still pass (e.g. \`toBeDefined()\` where a value matters, \`toBeTruthy()\` on a number, asserting length but not contents, no assertion at all).
+- Unguarded behaviour: a behaviour stated in the spec / implied by the changed code that NO test pins down at all.
+- Assertion-vs-constant contradiction: an expected value that contradicts a constant or type the code depends on is itself a defect.`;
+
+/**
  * Compose the adversarial critic prompt. The stance (attacker, win-by-breaking),
  * evidence rules, severity scale and STRICT-JSON envelope are shared verbatim so
- * the two document kinds can never drift; only the noun and attack surface differ.
+ * the document kinds can never drift; only the noun and attack surface differ.
+ *
+ * When `withMutationProbes` is set (test-code reviews), the prompt also asks for
+ * up to three executable perturbations and extends the JSON envelope with a
+ * `mutationProbes` array — the reviewer cannot run code, so the controller agent
+ * executes these to PROVE a weak test stays green under a real fault.
  */
-function composeCriticPrompt(docNoun: string, shortNoun: string, attackSurface: string): string {
+function composeCriticPrompt(
+  docNoun: string,
+  shortNoun: string,
+  attackSurface: string,
+  withMutationProbes = false,
+): string {
+  const mutationInstruction = withMutationProbes
+    ? `\n\nMutation probes: you cannot run code, so additionally hand the controller up to THREE executable perturbations that a SOUND test must catch — pick the riskiest logic in the implementation under test. Each probe is a single concrete break (negate a condition, change a constant, early-return) at a \`file:line\`, plus the name of the existing test that SHOULD turn red. If the suite is so weak you cannot name a test that would catch a probe, that is itself a high-severity finding.`
+    : '';
+  const mutationEnvelope = withMutationProbes
+    ? `,"mutationProbes":[{"location":"<file:line>","mutation":"<the one-line break to apply>","expectedCatch":"<name of the test that should fail>"}]`
+    : '';
+  const mutationEmptyNote = withMutationProbes
+    ? ' Always include the "mutationProbes" array (use [] only if there is genuinely no riskable logic in the change).'
+    : '';
   return `You are an ADVERSARY, not a reviewer. A different, less capable model wrote the ${docNoun} below, and your goal is to BREAK it. You win only by producing a concrete defect with a trigger that proves it. "Looks fine" / "no issues" is a LOSING answer — if you cannot break the ${shortNoun}, you have not attacked it hard enough. Stay honest, though: a fabricated or unfalsifiable defect is also a loss.
 
 Attack surface — hunt along every one of these, because the author's correlated blind spots cluster here:
 ${attackSurface}
 
-Rules of engagement: every finding MUST carry a CONCRETE input that breaks it (e.g. "the substring filter rejects 'auth-refactor' because it contains 'auth'") or a concrete trace (e.g. "a file written under fileStem is denied by the guard matching planId"). A finding without a concrete trigger does not count and must be dropped — it loses you the round. Self-falsification gate: before writing down any finding, mentally execute its trigger and read the result — if the output you describe is actually correct or expected, you have NOT broken anything; discard the finding. A finding whose own trigger produces the right answer is self-contradictory and counts as a fabricated defect (a loss).
+Rules of engagement: every finding MUST carry a CONCRETE input that breaks it (e.g. "the substring filter rejects 'auth-refactor' because it contains 'auth'") or a concrete trace (e.g. "a file written under fileStem is denied by the guard matching planId"). A finding without a concrete trigger does not count and must be dropped — it loses you the round. Self-falsification gate: before writing down any finding, mentally execute its trigger and read the result — if the output you describe is actually correct or expected, you have NOT broken anything; discard the finding. A finding whose own trigger produces the right answer is self-contradictory and counts as a fabricated defect (a loss).${mutationInstruction}
 
 Severity:
 - high: will cause a real bug, wrong behaviour, security/data issue, or a self-contradiction that blocks implementation.
@@ -147,20 +209,31 @@ Confidence — rate how thoroughly you verified the trigger (be honest; over-cla
 - speculative: an untested assumption ("if X then…" where you did not verify X exists or holds).
 
 Output STRICT JSON and nothing else (no prose, no markdown fences):
-{"findings":[{"severity":"high|med|low","confidence":"certain|likely|speculative","title":"<short>","detail":"<what's wrong + the concrete trigger>","location":"<section/line if known, else omit>","suggestedFix":"<one line, else omit>"}]}
-If — after a genuine attack — the ${shortNoun} truly has no breakable defect, output {"findings":[]}.`;
+{"findings":[{"severity":"high|med|low","confidence":"certain|likely|speculative","title":"<short>","detail":"<what's wrong + the concrete trigger>","location":"<section/line if known, else omit>","suggestedFix":"<one line, else omit>"}]${mutationEnvelope}}
+If — after a genuine attack — the ${shortNoun} truly has no breakable defect, output {"findings":[]}.${mutationEmptyNote}`;
 }
 
 /**
  * Adversarial critic prompt for the given document kind. `design` (default)
  * targets spec/architecture failure modes; `plan` targets execution-plan failure
  * modes (dependency soundness, phantom tasks, placeholders, callers, filter
- * blades, spec-coverage GAPs).
+ * blades, spec-coverage GAPs); `tests` attacks the test code itself (tautology,
+ * mock theatre, happy-path-only, weak assertions) and additionally emits runnable
+ * mutation probes.
  */
-export function buildCriticPrompt(kind: 'plan' | 'design' = 'design'): string {
-  return kind === 'plan'
-    ? composeCriticPrompt('EXECUTION PLAN', 'plan', PLAN_ATTACK_SURFACE)
-    : composeCriticPrompt('DESIGN DOCUMENT', 'design', DESIGN_ATTACK_SURFACE);
+export function buildCriticPrompt(kind: 'plan' | 'design' | 'tests' = 'design'): string {
+  switch (kind) {
+    case 'plan':
+      return composeCriticPrompt('EXECUTION PLAN', 'plan', PLAN_ATTACK_SURFACE);
+    case 'tests':
+      return composeCriticPrompt('TEST SUITE', 'test suite', TEST_CODE_ATTACK_SURFACE, true);
+    case 'design':
+      return composeCriticPrompt('DESIGN DOCUMENT', 'design', DESIGN_ATTACK_SURFACE);
+    default: {
+      const _exhaustive: never = kind;
+      return _exhaustive;
+    }
+  }
 }
 
 /**
@@ -195,6 +268,51 @@ export function parseFindings(raw: string): ReviewFinding[] | null {
     if (finding !== null) findings.push(finding);
   }
   return findings;
+}
+
+/**
+ * Tolerant parse of the optional `mutationProbes` array from the reviewer's
+ * output, mirroring {@link parseFindings}. Returns an empty array when absent or
+ * malformed — probes are a best-effort bonus, never a reason to fail the review.
+ */
+export function parseMutationProbes(raw: string): MutationProbe[] {
+  const stripped = stripCodeFences(raw).trim();
+  if (stripped.length === 0) return [];
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(stripped);
+  } catch {
+    const start = stripped.indexOf('{');
+    const end = stripped.lastIndexOf('}');
+    if (start === -1 || end <= start) return [];
+    try {
+      parsed = JSON.parse(stripped.slice(start, end + 1));
+    } catch {
+      return [];
+    }
+  }
+
+  const rawProbes = (parsed as { mutationProbes?: unknown })?.mutationProbes;
+  if (!Array.isArray(rawProbes)) return [];
+
+  const probes: MutationProbe[] = [];
+  for (const entry of rawProbes) {
+    const probe = coerceProbe(entry);
+    if (probe !== null) probes.push(probe);
+  }
+  return probes;
+}
+
+function coerceProbe(entry: unknown): MutationProbe | null {
+  if (typeof entry !== 'object' || entry === null) return null;
+  const record = entry as Record<string, unknown>;
+  const location = typeof record['location'] === 'string' ? record['location'].trim() : '';
+  const mutation = typeof record['mutation'] === 'string' ? record['mutation'].trim() : '';
+  const expectedCatch = typeof record['expectedCatch'] === 'string' ? record['expectedCatch'].trim() : '';
+  // A probe with no mutation is useless; location/expectedCatch may be coarse.
+  if (mutation.length === 0) return null;
+  return { location, mutation, expectedCatch };
 }
 
 function coerceFinding(entry: unknown): ReviewFinding | null {
@@ -271,7 +389,13 @@ export class AdvancedSessionReviewer {
     const messages = [
       { role: 'user' as const, content: [{ type: 'text' as const, text: designContent }], toolCalls: [] },
     ];
-    const runOptions = { signal: AbortSignal.timeout(this.options.timeoutMs ?? 120_000) };
+    const timeoutSignal = AbortSignal.timeout(this.options.timeoutMs ?? 120_000);
+    const runOptions = {
+      signal:
+        this.options.signal === undefined
+          ? timeoutSignal
+          : AbortSignal.any([this.options.signal, timeoutSignal]),
+    };
     const criticPrompt = buildCriticPrompt(this.options.kind);
     const call = (auth?: ProviderRequestAuth) =>
       this.agent.rawGenerate(
@@ -315,10 +439,13 @@ export class AdvancedSessionReviewer {
       return fail('Reviewer output could not be parsed as findings.', 'unparseable');
     }
 
+    const mutationProbes = this.options.kind === 'tests' ? parseMutationProbes(raw) : [];
+
     this.agent.telemetry.track('advanced_session_review_completed', {
       auditLevel,
       findingCount: String(findings.length),
+      ...(this.options.kind === 'tests' ? { mutationProbeCount: String(mutationProbes.length) } : {}),
     });
-    return { auditLevel, findings, ok: true };
+    return { auditLevel, findings, ok: true, ...(mutationProbes.length > 0 ? { mutationProbes } : {}) };
   }
 }

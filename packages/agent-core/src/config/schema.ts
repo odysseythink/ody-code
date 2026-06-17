@@ -293,6 +293,20 @@ export const E2EConfigSchema = z.object({
 
 export type E2EConfig = z.infer<typeof E2EConfigSchema>;
 
+/**
+ * Independent adversarial review of the TEST CODE the implementation model wrote
+ * (judge ≠ athlete). When enabled, completing a test-related task injects a
+ * reminder to call the ReviewTests tool, which runs a second model over the
+ * changed tests + their implementation. Enabled by default; set `enabled = false`
+ * to opt out. When no `mode_models.test_review` alias is configured, the review
+ * runs on the model the current mode is already using.
+ */
+export const TestReviewConfigSchema = z.object({
+  enabled: z.boolean().default(true),
+});
+
+export type TestReviewConfig = z.infer<typeof TestReviewConfigSchema>;
+
 export const MicroagentBudgetConfigSchema = z.object({
   maxTokens: z.number().int().min(0).optional(),
 });
@@ -322,12 +336,14 @@ export const OdyConfigSchema = z.object({
     plan: z.string().optional(),
     design: z.string().optional(),
     review: z.string().optional(),
+    testReview: z.string().optional(),
     codeReview: z.string().optional(),
     codeReviewRequest: z.string().optional(),
     codeReviewReceive: z.string().optional(),
   }).optional(),
   browser: BrowserConfigSchema.optional(),
   e2e: E2EConfigSchema.optional(),
+  testReview: TestReviewConfigSchema.optional(),
   microagentBudget: MicroagentBudgetConfigSchema.optional(),
   raw: z.record(z.string(), z.unknown()).optional(),
 });

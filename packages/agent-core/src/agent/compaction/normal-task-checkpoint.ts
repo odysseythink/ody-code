@@ -23,6 +23,13 @@ export const DEFAULT_NORMAL_TASK_COMPACTION_RATIO = 0.5;
 /** Store key for the todo list — matches todo-list.ts TODO_STORE_KEY. */
 const TODO_STORE_KEY = 'todo';
 
+/**
+ * Titles that look like a test-writing task, used to suggest an independent
+ * adversarial review of the tests the model just wrote (judge ≠ athlete).
+ * Matches English (`test`/`tests`/`spec`) and Chinese (`测试`).
+ */
+const TEST_TASK_TITLE_RE = /\btests?\b|\bspec\b|测试/i;
+
 export class NormalModeTaskCheckpoint {
   /** The `done` count last observed, or null when not tracking. */
   private lastDoneCount: number | null = null;
@@ -68,6 +75,30 @@ export class NormalModeTaskCheckpoint {
           this.agent.context.appendSystemReminder(
             'The E2E task is complete. Call RunE2ETests to validate your changes.',
             { kind: 'system_trigger', name: 'e2e_reminder' },
+          );
+        } catch {
+          // best-effort
+        }
+      }
+
+      // Test-review auto-trigger: the same model wrote both the tests and the
+      // code under test, so its blind spots are correlated — a tautological or
+      // happy-path-only test passes while proving nothing. When a test-writing
+      // task completes and the feature is enabled, suggest an independent
+      // adversarial audit of those tests. Opt-in, non-blocking.
+      // Default-on: fire unless the user explicitly set `enabled = false`.
+      const testReviewEnabled = this.agent.kimiConfig?.testReview?.enabled !== false;
+      const anyTestTaskDone = testReviewEnabled && todos.some(t => {
+        if (t.status !== 'done') return false;
+        return TEST_TASK_TITLE_RE.test(t.title);
+      });
+      if (anyTestTaskDone) {
+        try {
+          this.agent.context.appendSystemReminder(
+            'A task that looks test-related just completed. If it changed tests, call ReviewTests to have ' +
+              'an independent model adversarially audit them, then run the mutation probes it returns to ' +
+              'prove the tests actually catch regressions. (ReviewTests no-ops if no test files changed.)',
+            { kind: 'system_trigger', name: 'test_review_reminder' },
           );
         } catch {
           // best-effort

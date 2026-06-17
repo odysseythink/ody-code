@@ -142,6 +142,8 @@ export function transformTomlData(data: Record<string, unknown>): Record<string,
       result[targetKey] = transformPlainObject(value);
     } else if (targetKey === 'e2e' && isPlainObject(value)) {
       result[targetKey] = transformPlainObject(value);
+    } else if (targetKey === 'testReview' && isPlainObject(value)) {
+      result[targetKey] = transformPlainObject(value);
     } else if (targetKey === 'microagentBudget' && isPlainObject(value)) {
       result[targetKey] = transformPlainObject(value);
     } else if (!isPlainObject(value)) {
@@ -348,6 +350,7 @@ export function configToTomlData(config: OdyConfig): Record<string, unknown> {
   setSection(out, 'mode_models', config.modeModels, modeModelsToToml);
   setSection(out, 'browser', config.browser, browserToToml);
   setSection(out, 'e2e', config.e2e, e2eToToml);
+  setSection(out, 'test_review', config.testReview, testReviewToToml);
   setSection(out, 'microagent_budget', config.microagentBudget, microagentBudgetToToml);
   setHooks(out, config.hooks);
 
@@ -561,6 +564,17 @@ function browserToToml(
 function e2eToToml(e2e: NonNullable<OdyConfig['e2e']>, rawE2e: unknown): Record<string, unknown> {
   const out = cloneRecord(rawE2e);
   for (const [key, value] of Object.entries(e2e)) {
+    setDefined(out, camelToSnake(key), value);
+  }
+  return out;
+}
+
+function testReviewToToml(
+  testReview: NonNullable<OdyConfig['testReview']>,
+  rawTestReview: unknown,
+): Record<string, unknown> {
+  const out = cloneRecord(rawTestReview);
+  for (const [key, value] of Object.entries(testReview)) {
     setDefined(out, camelToSnake(key), value);
   }
   return out;

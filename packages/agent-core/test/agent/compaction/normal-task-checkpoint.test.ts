@@ -21,6 +21,8 @@ interface MockOptions {
   dataThrows?: boolean;
   /** E2E config override. */
   e2e?: { enabled: boolean };
+  /** Test-review config override. */
+  testReview?: { enabled: boolean };
 }
 
 function makeAgent(opts: MockOptions): {
@@ -34,6 +36,9 @@ function makeAgent(opts: MockOptions): {
     opts.ratio === undefined ? {} : { loopControl: { normalTaskCompactionRatio: opts.ratio } };
   if (opts.e2e !== undefined) {
     kimiConfig['e2e'] = opts.e2e;
+  }
+  if (opts.testReview !== undefined) {
+    kimiConfig['testReview'] = opts.testReview;
   }
   const agent = {
     kimiConfig,
@@ -247,6 +252,7 @@ describe('NormalModeTaskCheckpoint', () => {
       const { agent, appendSystemReminder } = makeAgent({
         todos: [{ title: 'Run E2E tests', status: 'done' }],
         e2e: { enabled: true },
+        testReview: { enabled: false }, // isolate: only the E2E reminder under test here
       });
       const checkpoint = new NormalModeTaskCheckpoint(agent);
       await checkpoint.beforeStep(SIGNAL); // observe 1 done
@@ -265,6 +271,7 @@ describe('NormalModeTaskCheckpoint', () => {
       const { agent, appendSystemReminder } = makeAgent({
         todos: [{ title: 'Run E2E tests', status: 'done' }],
         e2e: { enabled: false },
+        testReview: { enabled: false },
       });
       const checkpoint = new NormalModeTaskCheckpoint(agent);
       await checkpoint.beforeStep(SIGNAL);
@@ -282,6 +289,7 @@ describe('NormalModeTaskCheckpoint', () => {
       const { agent, appendSystemReminder } = makeAgent({
         todos: [{ title: 'Write unit tests', status: 'done' }],
         e2e: { enabled: true },
+        testReview: { enabled: false },
       });
       const checkpoint = new NormalModeTaskCheckpoint(agent);
       await checkpoint.beforeStep(SIGNAL);
@@ -298,6 +306,7 @@ describe('NormalModeTaskCheckpoint', () => {
     it('does not inject reminder when E2E config is absent', async () => {
       const { agent, appendSystemReminder } = makeAgent({
         todos: [{ title: 'Run E2E tests', status: 'done' }],
+        testReview: { enabled: false },
       });
       const checkpoint = new NormalModeTaskCheckpoint(agent);
       await checkpoint.beforeStep(SIGNAL);
@@ -305,6 +314,65 @@ describe('NormalModeTaskCheckpoint', () => {
         todo: [
           { title: 'Run E2E tests', status: 'done' },
           { title: 'Task 2', status: 'done' },
+        ],
+      });
+      await checkpoint.beforeStep(SIGNAL);
+      expect(appendSystemReminder).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('test-review reminder hook', () => {
+    function reminderNames(mock: ReturnType<typeof vi.fn>): string[] {
+      return mock.mock.calls.map((c) => (c[1] as { name?: string } | undefined)?.name ?? '');
+    }
+
+    it('injects a test_review reminder by default (no config) when a test-related task completes', async () => {
+      // Default-on: testReview config absent → feature is enabled.
+      const { agent, appendSystemReminder } = makeAgent({
+        todos: [{ title: 'Write unit tests for parser', status: 'done' }],
+      });
+      const checkpoint = new NormalModeTaskCheckpoint(agent);
+      await checkpoint.beforeStep(SIGNAL); // observe baseline
+      expect(appendSystemReminder).not.toHaveBeenCalled();
+      (agent.tools.storeData as ReturnType<typeof vi.fn>).mockReturnValue({
+        todo: [
+          { title: 'Write unit tests for parser', status: 'done' },
+          { title: 'Add tests for validator', status: 'done' },
+        ],
+      });
+      await checkpoint.beforeStep(SIGNAL);
+      expect(reminderNames(appendSystemReminder)).toContain('test_review_reminder');
+      expect(appendSystemReminder.mock.calls[0]?.[0]).toContain('ReviewTests');
+    });
+
+    it('does not inject when the feature is explicitly disabled', async () => {
+      const { agent, appendSystemReminder } = makeAgent({
+        todos: [{ title: 'Write unit tests', status: 'done' }],
+        testReview: { enabled: false },
+      });
+      const checkpoint = new NormalModeTaskCheckpoint(agent);
+      await checkpoint.beforeStep(SIGNAL);
+      (agent.tools.storeData as ReturnType<typeof vi.fn>).mockReturnValue({
+        todo: [
+          { title: 'Write unit tests', status: 'done' },
+          { title: 'Refactor parser', status: 'done' },
+        ],
+      });
+      await checkpoint.beforeStep(SIGNAL);
+      expect(appendSystemReminder).not.toHaveBeenCalled();
+    });
+
+    it('does not inject for tasks unrelated to tests', async () => {
+      const { agent, appendSystemReminder } = makeAgent({
+        todos: [{ title: 'Refactor the parser', status: 'done' }],
+        testReview: { enabled: true },
+      });
+      const checkpoint = new NormalModeTaskCheckpoint(agent);
+      await checkpoint.beforeStep(SIGNAL);
+      (agent.tools.storeData as ReturnType<typeof vi.fn>).mockReturnValue({
+        todo: [
+          { title: 'Refactor the parser', status: 'done' },
+          { title: 'Wire up the loop', status: 'done' },
         ],
       });
       await checkpoint.beforeStep(SIGNAL);
