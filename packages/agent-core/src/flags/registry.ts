@@ -29,6 +29,12 @@ export const FLAG_DEFINITIONS = [
     default: false,
     surface: 'core',
   },
+  {
+    id: 'repo-knowledge',
+    env: 'ODY_CODE_EXPERIMENTAL_REPO_KNOWLEDGE',
+    default: false,
+    surface: 'core',
+  },
 ] as const satisfies readonly FlagDefinitionInput[];
 
 /** Literal union of registered flag ids. */
