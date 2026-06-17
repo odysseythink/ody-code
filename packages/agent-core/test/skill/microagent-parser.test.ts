@@ -120,3 +120,112 @@ describe('parseSkillText with type: knowledge', () => {
     ).toThrow(/triggers/);
   });
 });
+
+
+// ---- Discovery tests ----
+
+import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import path from 'pathe';
+import { afterEach } from 'vitest';
+
+import { discoverSkills, resolveSkillRoots } from '../../src/skill';
+
+const microagentTempDirs: string[] = [];
+
+afterEach(async () => {
+  for (const dir of microagentTempDirs.splice(0)) {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+async function makeMicroagentWorkspace(): Promise<{
+  homeDir: string; repoDir: string; workDir: string;
+}> {
+  const tmp = await mkdtemp(path.join(tmpdir(), 'kimi-microagent-'));
+  microagentTempDirs.push(tmp);
+  const homeDir = path.join(tmp, 'home');
+  const repoDir = path.join(tmp, 'repo');
+  const workDir = path.join(repoDir, 'packages', 'app');
+  await mkdir(path.join(repoDir, '.git'), { recursive: true });
+  await mkdir(workDir, { recursive: true });
+  return { homeDir, repoDir, workDir };
+}
+
+describe('microagent discovery', () => {
+  // D1: .ody-code/microagents/ root discovered
+  it('discovers .ody-code/microagents as a project skill root', async () => {
+    const { homeDir, repoDir, workDir } = await makeMicroagentWorkspace();
+    const microagentsDir = path.join(repoDir, '.ody-code', 'microagents');
+    await mkdir(microagentsDir, { recursive: true });
+
+    const roots = await resolveSkillRoots({
+      paths: { userHomeDir: homeDir, workDir },
+    });
+
+    const microagentRoot = roots.find(
+      (r) => r.path.endsWith('.ody-code/microagents') && r.source === 'project',
+    );
+    expect(microagentRoot).toBeDefined();
+  });
+
+  // D2: microagents loaded via discoverSkills
+  it('loads flat .md microagents from .ody-code/microagents', async () => {
+    const { homeDir, repoDir, workDir } = await makeMicroagentWorkspace();
+    const microagentsDir = path.join(repoDir, '.ody-code', 'microagents');
+    await mkdir(microagentsDir, { recursive: true });
+    await writeFile(
+      path.join(microagentsDir, 'reuse-conventions.md'),
+      [
+        '---',
+        'type: knowledge',
+        'triggers:',
+        '  - reuse',
+        '  - conventions',
+        '---',
+        'Prefer existing utilities.',
+      ].join('\n'),
+    );
+
+    const roots = await resolveSkillRoots({
+      paths: { userHomeDir: homeDir, workDir },
+    });
+    const skills = await discoverSkills({ roots });
+
+    const reuse = skills.find((s) => s.name === 'reuse-conventions');
+    expect(reuse).toBeDefined();
+    expect(reuse?.metadata.type).toBe('knowledge');
+    expect(reuse?.metadata.triggers).toEqual(['conventions', 'reuse']);
+    expect(reuse?.content).toBe('Prefer existing utilities.');
+  });
+
+  // D3: invalid microagent skipped with warning
+  it('skips invalid microagent and calls onWarning', async () => {
+    const { homeDir, repoDir, workDir } = await makeMicroagentWorkspace();
+    const microagentsDir = path.join(repoDir, '.ody-code', 'microagents');
+    await mkdir(microagentsDir, { recursive: true });
+    await writeFile(
+      path.join(microagentsDir, 'bad-triggers.md'),
+      [
+        '---',
+        'type: knowledge',
+        'triggers: not-an-array',
+        '---',
+        'Body',
+      ].join('\n'),
+    );
+
+    const roots = await resolveSkillRoots({
+      paths: { userHomeDir: homeDir, workDir },
+    });
+    const warnings: string[] = [];
+    const skills = await discoverSkills({
+      roots,
+      onWarning: (msg) => warnings.push(msg),
+    });
+
+    expect(skills.find((s) => s.name === 'bad-triggers')).toBeUndefined();
+    expect(warnings.length).toBeGreaterThanOrEqual(1);
+    expect(warnings.some((w) => w.includes('bad-triggers'))).toBe(true);
+  });
+});

@@ -7,7 +7,7 @@ import { normalizeSkillName } from './types';
 
 const USER_BRAND_DIRS = ['.ody-code/skills'] as const;
 const USER_GENERIC_DIRS = ['.agents/skills'] as const;
-const PROJECT_BRAND_DIRS = ['.ody-code/skills'] as const;
+const PROJECT_BRAND_DIRS = ['.ody-code/skills', '.ody-code/microagents'] as const;
 const PROJECT_GENERIC_DIRS = ['.agents/skills'] as const;
 
 // Bounds recursion so a directory symlink cycle inside a skill root cannot
