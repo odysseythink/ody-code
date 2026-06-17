@@ -5,6 +5,7 @@ import { FINISHING_A_DEVELOPMENT_BRANCH_SKILL } from './finishing-a-development-
 import { MCP_CONFIG_SKILL } from './mcp-config';
 import { RECEIVING_CODE_REVIEW_SKILL } from './receiving-code-review';
 import { REQUESTING_CODE_REVIEW_SKILL } from './requesting-code-review';
+import { SIMPLICITY_FIRST_SKILL } from './simplicity-first';
 import { SUBAGENT_DRIVEN_DEVELOPMENT_SKILL } from './subagent-driven-development';
 import { SYNC_CHANGELOG_SKILL } from './sync-changelog';
 import { SYSTEMATIC_DEBUGGING_SKILL } from './systematic-debugging';
@@ -19,6 +20,7 @@ export function registerBuiltinSkills(registry: SkillRegistry): void {
   registry.registerBuiltinSkill(MCP_CONFIG_SKILL);
   registry.registerBuiltinSkill(RECEIVING_CODE_REVIEW_SKILL);
   registry.registerBuiltinSkill(REQUESTING_CODE_REVIEW_SKILL);
+  registry.registerBuiltinSkill(SIMPLICITY_FIRST_SKILL);
   registry.registerBuiltinSkill(SUBAGENT_DRIVEN_DEVELOPMENT_SKILL);
   registry.registerBuiltinSkill(SYNC_CHANGELOG_SKILL);
   registry.registerBuiltinSkill(SYSTEMATIC_DEBUGGING_SKILL);
@@ -34,6 +36,7 @@ export {
   MCP_CONFIG_SKILL,
   RECEIVING_CODE_REVIEW_SKILL,
   REQUESTING_CODE_REVIEW_SKILL,
+  SIMPLICITY_FIRST_SKILL,
   SUBAGENT_DRIVEN_DEVELOPMENT_SKILL,
   SYNC_CHANGELOG_SKILL,
   SYSTEMATIC_DEBUGGING_SKILL,

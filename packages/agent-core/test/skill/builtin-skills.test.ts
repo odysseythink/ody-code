@@ -7,6 +7,7 @@ import {
   MCP_CONFIG_SKILL,
   RECEIVING_CODE_REVIEW_SKILL,
   REQUESTING_CODE_REVIEW_SKILL,
+  SIMPLICITY_FIRST_SKILL,
   SUBAGENT_DRIVEN_DEVELOPMENT_SKILL,
   SYNC_CHANGELOG_SKILL,
   SYSTEMATIC_DEBUGGING_SKILL,
@@ -22,6 +23,7 @@ const BUILTIN_SKILLS = [
   { skill: MCP_CONFIG_SKILL, name: 'mcp-config' },
   { skill: RECEIVING_CODE_REVIEW_SKILL, name: 'receiving-code-review' },
   { skill: REQUESTING_CODE_REVIEW_SKILL, name: 'requesting-code-review' },
+  { skill: SIMPLICITY_FIRST_SKILL, name: 'simplicity-first' },
   { skill: SUBAGENT_DRIVEN_DEVELOPMENT_SKILL, name: 'subagent-driven-development' },
   { skill: SYNC_CHANGELOG_SKILL, name: 'sync-changelog' },
   { skill: SYSTEMATIC_DEBUGGING_SKILL, name: 'systematic-debugging' },
@@ -31,8 +33,8 @@ const BUILTIN_SKILLS = [
 ];
 
 describe('built-in skills', () => {
-  it('has exactly 12 built-in skills', () => {
-    expect(BUILTIN_SKILLS).toHaveLength(12);
+  it('has exactly 13 built-in skills', () => {
+    expect(BUILTIN_SKILLS).toHaveLength(13);
   });
 
   it.each(BUILTIN_SKILLS)('skill "$name" has correct metadata', ({ skill, name }) => {
