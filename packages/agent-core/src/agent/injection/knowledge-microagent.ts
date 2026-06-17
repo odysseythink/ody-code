@@ -233,8 +233,14 @@ export class KnowledgeMicroagentInjector extends DynamicInjector {
     });
     if (matches.length === 0) return undefined;
 
+    const maxTokens = resolveBudgetLimit(this.agent);
+    const sorted = sortBySourcePriority(matches);
+    const budget = applyBudget(sorted, maxTokens);
+
+    if (budget.injected.length === 0 && budget.skipped.length === 0) return undefined;
+
     const bodies: string[] = [];
-    for (const match of matches) {
+    for (const match of budget.injected) {
       const body = match.skill.content.trim();
       if (body.length === 0) {
         this.agent.log.warn(`Microagent ${match.skill.name} has empty body; skipping`);
@@ -245,17 +251,38 @@ export class KnowledgeMicroagentInjector extends DynamicInjector {
         skill_name: match.skill.name,
         trigger: match.trigger,
         skill_source: match.skill.source,
+        budget_used: budget.used,
+        budget_total: budget.total === Infinity ? 0 : budget.total,
       });
       bodies.push(`## ${match.skill.name}\n\n${body}`);
     }
 
+    for (const skipped of budget.skipped) {
+      this.agent.telemetry.track('microagent_skipped', {
+        skill_name: skipped.match.skill.name,
+        trigger: skipped.match.trigger,
+        skill_source: skipped.match.skill.source,
+        reason: skipped.reason,
+        budget_used: budget.used,
+        budget_total: budget.total === Infinity ? 0 : budget.total,
+      });
+    }
+
     if (bodies.length === 0) return undefined;
 
-    return [
+    const lines = [
       "The following repo-specific conventions are relevant to your current task.",
       "Apply them without mentioning them to the user unless asked.",
       "",
       bodies.join("\n\n---\n\n"),
-    ].join("\n");
+    ];
+
+    if (budget.skipped.length > 0) {
+      const omittedNames = budget.skipped.map((s) => s.match.skill.name).join(", ");
+      lines.push("");
+      lines.push(`The following conventions were omitted due to the microagent token budget: ${omittedNames}.`);
+    }
+
+    return lines.join("\n");
   }
 }

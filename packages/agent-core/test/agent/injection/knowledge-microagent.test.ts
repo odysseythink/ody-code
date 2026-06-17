@@ -374,6 +374,7 @@ interface MicroagentAgentStub {
   sessionActive: boolean;
   microagents: SkillDefinition[] | null;
   telemetryCalls: Array<{ event: string; properties: Record<string, unknown> }>;
+  kimiConfig?: Record<string, unknown>;
 }
 
 function microagentAgent(stub: MicroagentAgentStub): Agent {
@@ -416,6 +417,7 @@ function microagentAgent(stub: MicroagentAgentStub): Agent {
       info: () => {},
       debug: () => {},
     } as unknown as Agent['log'],
+    kimiConfig: stub.kimiConfig,
   } as unknown as Agent;
 }
 
@@ -642,5 +644,328 @@ describe('KnowledgeMicroagentInjector', () => {
 
     await injector.inject();
     expect(reminderText(history)).toBeUndefined();
+  });
+
+  // ── Precedence tests ─────────────────────────────────────────────
+
+  it('P1: project wins over builtin under budget (only one fits)', async () => {
+    const projectContent = '# Project conventions\n\n' + 'x'.repeat(3600); // ~907 tokens
+    const builtinContent = '# Builtin conventions\n\nSome text.'; // ~7 tokens
+
+    const projectAgent = microagent('project-agent', ['component'], projectContent, 'project');
+    const builtinAgent = microagent('builtin-agent', ['component'], builtinContent, 'builtin');
+    const history: ContextMessage[] = [userMessage('add a component')];
+    const telemetryCalls: MicroagentAgentStub['telemetryCalls'] = [];
+    const agent = microagentAgent({
+      history,
+      enabledFlags: new Set(['repo-knowledge']),
+      sessionActive: false,
+      microagents: [projectAgent, builtinAgent],
+      telemetryCalls,
+      kimiConfig: { microagentBudget: { maxTokens: 910 } }, // project fits, project+builtin doesn't
+    });
+    const injector = new KnowledgeMicroagentInjector(agent);
+
+    await injector.inject();
+
+    const text = reminderText(history);
+    expect(text).toBeDefined();
+    expect(text).toContain('Project conventions');
+    expect(text).toContain('## project-agent');
+    expect(text).not.toContain('Builtin conventions');
+
+    // Check skipped telemetry
+    const skippedCalls = telemetryCalls.filter((c) => c.event === 'microagent_skipped');
+    expect(skippedCalls).toHaveLength(1);
+    expect(skippedCalls[0]!.properties['skill_name']).toBe('builtin-agent');
+    expect(skippedCalls[0]!.properties['reason']).toBe('budget_exceeded');
+  });
+
+  it('P2: user wins over extra under budget', async () => {
+    const userContent = '# User conventions\n\n' + 'x'.repeat(3600); // ~907 tokens
+    const extraContent = '# Extra conventions\n\nSome text.'; // ~7 tokens
+
+    const userAgent = microagent('user-agent', ['component'], userContent, 'user');
+    const extraAgent = microagent('extra-agent', ['component'], extraContent, 'extra');
+    const history: ContextMessage[] = [userMessage('add a component')];
+    const telemetryCalls: MicroagentAgentStub['telemetryCalls'] = [];
+    const agent = microagentAgent({
+      history,
+      enabledFlags: new Set(['repo-knowledge']),
+      sessionActive: false,
+      microagents: [userAgent, extraAgent],
+      telemetryCalls,
+      kimiConfig: { microagentBudget: { maxTokens: 910 } }, // user fits, user+extra doesn't
+    });
+    const injector = new KnowledgeMicroagentInjector(agent);
+
+    await injector.inject();
+
+    const text = reminderText(history);
+    expect(text).toBeDefined();
+    expect(text).toContain('User conventions');
+    expect(text).not.toContain('Extra conventions');
+  });
+
+  it('P3: same-source tie-breaker is name lexicographic', async () => {
+    const beta = microagent('beta-agent', ['component'], '# Beta conventions\n\nContent.', 'project');
+    const alpha = microagent('alpha-agent', ['component'], '# Alpha conventions\n\nContent.', 'project');
+    const history: ContextMessage[] = [userMessage('add a component')];
+    const telemetryCalls: MicroagentAgentStub['telemetryCalls'] = [];
+    const agent = microagentAgent({
+      history,
+      enabledFlags: new Set(['repo-knowledge']),
+      sessionActive: false,
+      microagents: [beta, alpha],
+      telemetryCalls,
+    });
+    const injector = new KnowledgeMicroagentInjector(agent);
+
+    await injector.inject();
+
+    const text = reminderText(history);
+    expect(text).toBeDefined();
+    const alphaIndex = text!.indexOf('## alpha-agent');
+    const betaIndex = text!.indexOf('## beta-agent');
+    expect(alphaIndex).toBeLessThan(betaIndex);
+  });
+
+  // ── Budget tests ──────────────────────────────────────────────────
+
+  it('B1: default budget (1024) caps injection', async () => {
+    // ~900 tokens → fits
+    const projectContent = '# Project\n\n' + 'x'.repeat(3600);
+    // ~300 tokens → would fit alone but together exceeds default 1024
+    const userContent = '# User\n\n' + 'y'.repeat(1200);
+
+    const projectAgent = microagent('proj', ['component'], projectContent, 'project');
+    const userAgent = microagent('usr', ['component'], userContent, 'user');
+    const history: ContextMessage[] = [userMessage('add a component')];
+    const telemetryCalls: MicroagentAgentStub['telemetryCalls'] = [];
+    const agent = microagentAgent({
+      history,
+      enabledFlags: new Set(['repo-knowledge']),
+      sessionActive: false,
+      microagents: [projectAgent, userAgent],
+      telemetryCalls,
+      // No kimiConfig → default 1024
+    });
+    const injector = new KnowledgeMicroagentInjector(agent);
+
+    await injector.inject();
+
+    const text = reminderText(history);
+    expect(text).toBeDefined();
+    expect(text).toContain('## proj');
+    // user may or may not fit depending on token estimate — check telemetry
+    const injectedCalls = telemetryCalls.filter((c) => c.event === 'microagent_injected');
+    expect(injectedCalls).toHaveLength(1);
+    expect(injectedCalls[0]!.properties['skill_name']).toBe('proj');
+    expect(injectedCalls[0]!.properties).toHaveProperty('budget_used');
+    expect(injectedCalls[0]!.properties).toHaveProperty('budget_total');
+  });
+
+  it('B2: maxTokens=0 disables cap (unlimited)', async () => {
+    const largeContent = '# Large\n\n' + 'x'.repeat(10000);
+    const agentA = microagent('a', ['component'], largeContent, 'project');
+    const agentB = microagent('b', ['component'], largeContent, 'project');
+    const history: ContextMessage[] = [userMessage('add a component')];
+    const telemetryCalls: MicroagentAgentStub['telemetryCalls'] = [];
+    const agent = microagentAgent({
+      history,
+      enabledFlags: new Set(['repo-knowledge']),
+      sessionActive: false,
+      microagents: [agentA, agentB],
+      telemetryCalls,
+      kimiConfig: { microagentBudget: { maxTokens: 0 } },
+    });
+    const injector = new KnowledgeMicroagentInjector(agent);
+
+    await injector.inject();
+
+    const text = reminderText(history);
+    expect(text).toBeDefined();
+    expect(text).toContain('## a');
+    expect(text).toContain('## b');
+
+    const skippedCalls = telemetryCalls.filter((c) => c.event === 'microagent_skipped');
+    expect(skippedCalls).toHaveLength(0);
+
+    const injectedCalls = telemetryCalls.filter((c) => c.event === 'microagent_injected');
+    injectedCalls.forEach((c) => {
+      expect(c.properties['budget_total']).toBe(0); // 0 when unlimited
+    });
+  });
+
+  it('B3: custom maxTokens works', async () => {
+    const smallContent = '# Small\n\nabc'; // ~2 tokens
+    const mediumContent = '# Medium\n\n' + 'x'.repeat(100); // ~25 tokens
+    const largeContent = '# Large\n\n' + 'x'.repeat(2000); // ~500 tokens
+
+    const small = microagent('small', ['component'], smallContent, 'project');
+    const medium = microagent('medium', ['component'], mediumContent, 'project');
+    const large = microagent('large', ['component'], largeContent, 'project');
+    const history: ContextMessage[] = [userMessage('add a component')];
+    const telemetryCalls: MicroagentAgentStub['telemetryCalls'] = [];
+    const agent = microagentAgent({
+      history,
+      enabledFlags: new Set(['repo-knowledge']),
+      sessionActive: false,
+      microagents: [small, medium, large],
+      telemetryCalls,
+      kimiConfig: { microagentBudget: { maxTokens: 50 } },
+    });
+    const injector = new KnowledgeMicroagentInjector(agent);
+
+    await injector.inject();
+
+    const injectedCalls = telemetryCalls.filter((c) => c.event === 'microagent_injected');
+    // small + medium should fit (~27 tokens), large (~500) should not
+    const names = injectedCalls.map((c) => c.properties['skill_name'] as string);
+    expect(names).toContain('small');
+    expect(names).toContain('medium');
+    expect(names).not.toContain('large');
+
+    // budget_total should be 50
+    injectedCalls.forEach((c) => {
+      expect(c.properties['budget_total']).toBe(50);
+    });
+  });
+
+  it('B4: single oversized body skipped, no reminder emitted', async () => {
+    const hugeContent = '# Huge\n\n' + 'x'.repeat(10000); // ~2500 tokens
+    const huge = microagent('huge-agent', ['component'], hugeContent, 'project');
+    const history: ContextMessage[] = [userMessage('add a component')];
+    const telemetryCalls: MicroagentAgentStub['telemetryCalls'] = [];
+    const agent = microagentAgent({
+      history,
+      enabledFlags: new Set(['repo-knowledge']),
+      sessionActive: false,
+      microagents: [huge],
+      telemetryCalls,
+      kimiConfig: { microagentBudget: { maxTokens: 500 } },
+    });
+    const injector = new KnowledgeMicroagentInjector(agent);
+
+    await injector.inject();
+
+    // No bodies injected → no reminder
+    const text = reminderText(history);
+    expect(text).toBeUndefined();
+
+    // But skipped telemetry is emitted
+    const skippedCalls = telemetryCalls.filter((c) => c.event === 'microagent_skipped');
+    expect(skippedCalls).toHaveLength(1);
+    expect(skippedCalls[0]!.properties['skill_name']).toBe('huge-agent');
+    expect(skippedCalls[0]!.properties['reason']).toBe('budget_exceeded');
+  });
+
+  it('B5: budget usage telemetry on microagent_injected', async () => {
+    const content = '# Test\n\nSome body text.';
+    const agentA = microagent('test-agent', ['component'], content, 'project');
+    const history: ContextMessage[] = [userMessage('add a component')];
+    const telemetryCalls: MicroagentAgentStub['telemetryCalls'] = [];
+    const agent = microagentAgent({
+      history,
+      enabledFlags: new Set(['repo-knowledge']),
+      sessionActive: false,
+      microagents: [agentA],
+      telemetryCalls,
+    });
+    const injector = new KnowledgeMicroagentInjector(agent);
+
+    await injector.inject();
+
+    const injectedCall = telemetryCalls.find((c) => c.event === 'microagent_injected');
+    expect(injectedCall).toBeDefined();
+    expect(injectedCall!.properties['budget_used']).toEqual(expect.any(Number));
+    expect(injectedCall!.properties['budget_total']).toEqual(expect.any(Number));
+  });
+
+  it('B6: skipped telemetry has correct properties', async () => {
+    const hugeContent = '# Huge\n\n' + 'x'.repeat(10000);
+    const huge = microagent('huge', ['component'], hugeContent, 'project');
+    const history: ContextMessage[] = [userMessage('add a component')];
+    const telemetryCalls: MicroagentAgentStub['telemetryCalls'] = [];
+    const agent = microagentAgent({
+      history,
+      enabledFlags: new Set(['repo-knowledge']),
+      sessionActive: false,
+      microagents: [huge],
+      telemetryCalls,
+      kimiConfig: { microagentBudget: { maxTokens: 100 } },
+    });
+    const injector = new KnowledgeMicroagentInjector(agent);
+
+    await injector.inject();
+
+    const skippedCall = telemetryCalls.find((c) => c.event === 'microagent_skipped');
+    expect(skippedCall).toBeDefined();
+    expect(skippedCall!.properties).toMatchObject({
+      skill_name: 'huge',
+      trigger: 'component',
+      skill_source: 'project',
+      reason: 'budget_exceeded',
+    });
+    expect(skippedCall!.properties['budget_used']).toEqual(expect.any(Number));
+    expect(skippedCall!.properties['budget_total']).toEqual(expect.any(Number));
+  });
+
+  it('B7: reminder includes omitted-note when microagent is skipped', async () => {
+    // Two microagents: one fits, one doesn't → reminder has both + omitted note
+    const shortContent = '# Short\n\nabc'; // ~2 tokens
+    const longContent = '# Long\n\n' + 'x'.repeat(10000); // ~2500 tokens
+
+    const short = microagent('short-keep', ['component'], shortContent, 'project');
+    const long = microagent('long-skip', ['component'], longContent, 'user');
+    const history: ContextMessage[] = [userMessage('add a component')];
+    const telemetryCalls: MicroagentAgentStub['telemetryCalls'] = [];
+    const agent = microagentAgent({
+      history,
+      enabledFlags: new Set(['repo-knowledge']),
+      sessionActive: false,
+      microagents: [short, long],
+      telemetryCalls,
+      kimiConfig: { microagentBudget: { maxTokens: 500 } },
+    });
+    const injector = new KnowledgeMicroagentInjector(agent);
+
+    await injector.inject();
+
+    const text = reminderText(history);
+    expect(text).toBeDefined();
+    expect(text).toContain('## short-keep');
+    expect(text).not.toContain('## long-skip');
+    expect(text).toContain('omitted due to the microagent token budget');
+    expect(text).toContain('long-skip');
+  });
+
+  it('B8: empty bodies still not counted toward budget', async () => {
+    const empty = microagent('empty-keep', ['component'], '', 'project');
+    const normal = microagent('normal-keep', ['component'], '# Normal\n\nContent.', 'project');
+    const history: ContextMessage[] = [userMessage('add a component')];
+    const telemetryCalls: MicroagentAgentStub['telemetryCalls'] = [];
+    const agent = microagentAgent({
+      history,
+      enabledFlags: new Set(['repo-knowledge']),
+      sessionActive: false,
+      microagents: [empty, normal],
+      telemetryCalls,
+      kimiConfig: { microagentBudget: { maxTokens: 5 } }, // tight budget: normal (~5 tok) fits, empty doesn't consume
+    });
+    const injector = new KnowledgeMicroagentInjector(agent);
+
+    await injector.inject();
+
+    const text = reminderText(history);
+    expect(text).toBeDefined();
+    // empty skipped without consuming budget; normal fits
+    expect(text).not.toContain('## empty-keep');
+    expect(text).toContain('## normal-keep');
+
+    // No skipped telemetry for empty body
+    const injectedCalls = telemetryCalls.filter((c) => c.event === 'microagent_injected');
+    expect(injectedCalls).toHaveLength(1);
+    expect(injectedCalls[0]!.properties['skill_name']).toBe('normal-keep');
   });
 });
