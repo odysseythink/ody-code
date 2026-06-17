@@ -6,6 +6,27 @@ import regexpEscape from 'regexp.escape';
 
 import type { SkillDefinition, SkillMetadata, SkillSource } from './types';
 import { isSupportedSkillType } from './types';
+
+function parseTriggers(raw: unknown): readonly string[] {
+  if (!Array.isArray(raw) || raw.length === 0) {
+    throw new SkillParseError(
+      "microagent 'triggers' must be a non-empty array of strings",
+    );
+  }
+  const seen = new Set<string>();
+  const result: string[] = [];
+  for (const item of raw) {
+    if (typeof item !== 'string' || item.trim() === '') {
+      throw new SkillParseError("each trigger in 'triggers' must be a non-empty string");
+    }
+    const normalized = item.trim().toLowerCase();
+    if (!seen.has(normalized)) {
+      seen.add(normalized);
+      result.push(normalized);
+    }
+  }
+  return result.toSorted();
+}
 import { escapeXmlTags } from '../utils/xml-escape';
 
 export class FrontmatterError extends Error {
@@ -137,8 +158,13 @@ export function parseSkillText(options: ParseSkillTextOptions): SkillDefinition 
     throw new UnsupportedSkillTypeError(metadata.type ?? String(frontmatter['type']));
   }
 
-  const name = nonEmptyString(metadata.name);
-  const description = nonEmptyString(metadata.description);
+  const parsedMetadata: SkillMetadata =
+    metadata.type === 'knowledge'
+      ? { ...metadata, triggers: parseTriggers(metadata.triggers) }
+      : metadata;
+
+  const name = nonEmptyString(parsedMetadata.name);
+  const description = nonEmptyString(parsedMetadata.description);
   if (isDirectorySkill && (name === undefined || description === undefined)) {
     const field = name === undefined ? '"name"' : '"description"';
     throw new SkillParseError(
@@ -154,7 +180,7 @@ export function parseSkillText(options: ParseSkillTextOptions): SkillDefinition 
     path: skillPath,
     dir: path.dirname(skillPath),
     content,
-    metadata,
+    metadata: parsedMetadata,
     source: options.source,
     mermaid: parseMermaidFlowchart(content),
     d2: parseD2Flowchart(content),

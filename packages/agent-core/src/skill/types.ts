@@ -9,6 +9,7 @@ export interface SkillMetadata {
   readonly hiddenInModes?: readonly string[] | undefined;
   readonly safe?: boolean | undefined;
   readonly arguments?: readonly unknown[] | string | undefined;
+  readonly triggers?: readonly string[] | undefined;
   readonly [key: string]: unknown;
 }
 
@@ -70,8 +71,12 @@ export function isUserActivatableSkillType(type: string | undefined): boolean {
   return isInlineSkillType(type) || type === 'flow';
 }
 
+export function isKnowledgeSkillType(type: string | undefined): boolean {
+  return type === 'knowledge';
+}
+
 export function isSupportedSkillType(type: string | undefined): boolean {
-  return isUserActivatableSkillType(type);
+  return isUserActivatableSkillType(type) || isKnowledgeSkillType(type);
 }
 
 export function summarizeSkill(skill: SkillDefinition): SkillSummary {
