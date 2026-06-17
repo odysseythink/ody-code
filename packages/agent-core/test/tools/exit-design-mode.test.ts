@@ -365,6 +365,87 @@ Security: checked X. Test: checked Y. Ops: verified Z.
     expect(findMissingDesignSections(chinese)).toEqual([]);
   });
 
+  it('accepts alternative headings Component Reuse and Existing Components', () => {
+    const componentReuse = `## Scope In/Out
+Content. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+
+## Architecture
+Architecture content here. Ut labore et dolore magna aliqua. Ut enim ad minim veniam.
+
+## Data Models
+Data model definitions with enough text for the minimum length requirement.
+
+## Algorithms
+Algorithm pseudocode with sufficient content to exceed the minimum.
+
+## Error Handling
+Error handling strategies and fallback paths with enough detail text.
+
+## Component Reuse
+Reuse existing validation helper.
+
+## Self-Review
+Security: checked X. Test: checked Y. Ops: verified Z.
+
+## User Final Approval
+Approved by user [C:USER].`;
+
+    const existingComponents = `## Scope In/Out
+Content. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+
+## Architecture
+Architecture content here. Ut labore et dolore magna aliqua. Ut enim ad minim veniam.
+
+## Data Models
+Data model definitions with enough text for the minimum length requirement.
+
+## Algorithms
+Algorithm pseudocode with sufficient content to exceed the minimum.
+
+## Error Handling
+Error handling strategies and fallback paths with enough detail text.
+
+## Existing Components
+Inventory of reusable components.
+
+## Self-Review
+Security: checked X. Test: checked Y. Ops: verified Z.
+
+## User Final Approval
+Approved by user [C:USER].`;
+
+    expect(findMissingDesignSections(componentReuse)).toEqual([]);
+    expect(findMissingDesignSections(existingComponents)).toEqual([]);
+  });
+
+  it('accepts Chinese Reuse Analysis heading followed by fullwidth punctuation', () => {
+    const design = `## 范围
+内容内容内容。Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+
+## 架构
+设计架构部分。Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation.
+
+## 数据模型
+更多内容以满足最小长度要求。Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+
+## 算法
+算法伪代码内容，满足最小长度要求。
+
+## 错误处理
+错误处理策略和降级路径，包含足够细节。
+
+## 复用分析：
+无现成组件可复用。
+
+## 自检
+Security: checked X. Test: checked Y. Ops: verified Z.
+
+## 用户批准
+已批准。`;
+
+    expect(findMissingDesignSections(design)).toEqual([]);
+  });
+
   // All 8 pass
   it('returns empty for a design with all 8 criteria met', () => {
     const design = `## Scope In/Out
