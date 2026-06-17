@@ -3,6 +3,7 @@ import { discoverSkills, type DiscoverSkillsOptions } from './scanner';
 import type { SkillDefinition, SkillRoot, SkillSource, SkippedSkill } from './types';
 import { isInlineSkillType, normalizeSkillName } from './types';
 import { escapeXmlAttr } from '../utils/xml-escape';
+import { filterSimplicityLevels, parseSimplicityLevel } from './builtin/simplicity-first';
 
 const LISTING_DESC_MAX = 250;
 
@@ -89,7 +90,12 @@ export class SkillRegistry {
 
   renderSkillPrompt(skill: SkillDefinition, rawArgs: string): string {
     const argumentNames = skillArgumentNames(skill.metadata);
-    const content = expandSkillParameters(skill.content, rawArgs, {
+    let content = skill.content;
+    if (skill.name === 'simplicity-first') {
+      const level = parseSimplicityLevel(rawArgs);
+      content = filterSimplicityLevels(content, level);
+    }
+    content = expandSkillParameters(content, rawArgs, {
       skillDir: skill.dir,
       sessionId: this.sessionId,
       argumentNames,

@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { filterSimplicityLevels, parseSimplicityLevel } from '../../src/skill/builtin/simplicity-first';
 import type { SimplicityLevel } from '../../src/skill/builtin/simplicity-first';
+import { SIMPLICITY_FIRST_SKILL } from '../../src/skill/builtin/simplicity-first';
+import { SYSTEMATIC_DEBUGGING_SKILL } from '../../src/skill/builtin/systematic-debugging';
+import { SkillRegistry } from '../../src/skill/registry';
 
 // ============================================================
 // filterSimplicityLevels
@@ -132,5 +135,69 @@ describe('parseSimplicityLevel', () => {
     } catch (e: any) {
       expect(e.code).toBe('request.invalid');
     }
+  });
+});
+
+// ============================================================
+// Integration: SkillRegistry.renderSkillPrompt with simplicity-first
+// ============================================================
+
+describe('SkillRegistry integration with simplicity-first', () => {
+  it('renders full-level content (default) when no args provided', () => {
+    const registry = new SkillRegistry();
+    registry.registerBuiltinSkill(SIMPLICITY_FIRST_SKILL);
+    const output = registry.renderSkillPrompt(SIMPLICITY_FIRST_SKILL, '');
+    // Must contain full-only content
+    expect(output).toContain('简约阶梯（必须按顺序走）');
+    // Must NOT contain lite-only or ultra-only content markers
+    expect(output).not.toContain('正常实现即可');
+    expect(output).not.toContain('首先质疑需求本身');
+    // Hard constraints always present
+    expect(output).toContain('懒但不破');
+    // Output discipline always present
+    expect(output).toContain('输出纪律');
+  });
+
+  it('renders lite-level content when "lite" arg provided', () => {
+    const registry = new SkillRegistry();
+    registry.registerBuiltinSkill(SIMPLICITY_FIRST_SKILL);
+    const output = registry.renderSkillPrompt(SIMPLICITY_FIRST_SKILL, 'lite');
+    // LITE-specific content
+    expect(output).toContain('正常实现即可');
+    // FULL-specific detailed ladder content should be absent
+    expect(output).not.toContain('**YAGNI 自问**：真的需要写代码吗？');
+    // ULTRA-specific content should be absent
+    expect(output).not.toContain('首先质疑需求本身');
+    // Unannotated hard constraints always present
+    expect(output).toContain('懒但不破');
+  });
+
+  it('renders ultra-level content when "ultra" arg provided', () => {
+    const registry = new SkillRegistry();
+    registry.registerBuiltinSkill(SIMPLICITY_FIRST_SKILL);
+    const output = registry.renderSkillPrompt(SIMPLICITY_FIRST_SKILL, 'ultra');
+    // ULTRA-specific content
+    expect(output).toContain('首先质疑需求本身');
+    // FULL-specific detailed ladder content should be absent
+    expect(output).not.toContain('**YAGNI 自问**：真的需要写代码吗？');
+    // LITE-specific content should be absent
+    expect(output).not.toContain('正常实现即可');
+    // Unannotated hard constraints always present
+    expect(output).toContain('懒但不破');
+  });
+
+  it('throws OdyError for invalid level', () => {
+    const registry = new SkillRegistry();
+    registry.registerBuiltinSkill(SIMPLICITY_FIRST_SKILL);
+    expect(() => registry.renderSkillPrompt(SIMPLICITY_FIRST_SKILL, 'extreme'))
+      .toThrow('Invalid simplicity level');
+  });
+
+  it('does not interfere with non-simplicity skills', () => {
+    const registry = new SkillRegistry();
+    registry.registerBuiltinSkill(SYSTEMATIC_DEBUGGING_SKILL);
+    const output = registry.renderSkillPrompt(SYSTEMATIC_DEBUGGING_SKILL, 'some-args');
+    expect(output).toContain('systematic');
+    expect(output.length).toBeGreaterThan(0);
   });
 });
