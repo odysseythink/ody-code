@@ -1,7 +1,7 @@
 import { expandSkillParameters, skillArgumentNames } from './parser';
 import { discoverSkills, type DiscoverSkillsOptions } from './scanner';
 import type { SkillDefinition, SkillRoot, SkillSource, SkippedSkill } from './types';
-import { isInlineSkillType, normalizeSkillName } from './types';
+import { isInlineSkillType, isKnowledgeSkillType, normalizeSkillName } from './types';
 import { escapeXmlAttr } from '../utils/xml-escape';
 import { filterSimplicityLevels, parseSimplicityLevel } from './builtin/simplicity-first';
 
@@ -131,6 +131,10 @@ export class SkillRegistry {
       }
       return true;
     });
+  }
+
+  listKnowledgeMicroagents(): readonly SkillDefinition[] {
+    return this.listSkills().filter((skill) => isKnowledgeSkillType(skill.metadata.type));
   }
 
   getSkillRoots(): readonly string[] {
