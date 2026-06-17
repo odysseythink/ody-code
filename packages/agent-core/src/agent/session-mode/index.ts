@@ -389,7 +389,14 @@ export class SessionMode {
   private closeCurrentDesignSession(approvedPath?: string): void {
     const session = this._designSessions[this._designSessions.length - 1];
     if (session === undefined || session.exitedAtMsg !== undefined) return;
-    session.exitedAtMsg = this.currentMessageCount();
+    const count = this.currentMessageCount();
+    // After a context clear (live or during replay), history.length may be 0 even
+    // though the session started at a positive index.  Writing exitedAtMsg < startedAtMsg
+    // would permanently corrupt the checkpoint — the idempotency guard above would
+    // prevent any later overwrite.  Skip the write and leave exitedAtMsg undefined,
+    // which the integrity check treats as "still active" (no validation).
+    if (count < session.startedAtMsg) return;
+    session.exitedAtMsg = count;
     if (approvedPath !== undefined && approvedPath.length > 0) {
       session.approvedPath = approvedPath;
     }

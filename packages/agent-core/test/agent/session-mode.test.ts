@@ -516,6 +516,22 @@ describe('SessionMode', () => {
       expect(sm.designSessions[0]!.designSessionID).toBe('d1');
     });
 
+    it('leaves exitedAtMsg undefined when context was cleared before exit', async () => {
+      const agent = { ...makeAgent(), context: { history: [{}, {}, {}] } } as unknown as Agent;
+      const sm = new SessionMode(agent);
+      await sm.enter('design-id', undefined, false, 'design');
+
+      expect(sm.designSessions[0]!.startedAtMsg).toBe(3);
+
+      // Simulate context clear (e.g. from replay of a `context.clear` WAL record).
+      (agent as { context: { history: unknown[] } }).context.history = [];
+
+      sm.exit();
+
+      // exitedAtMsg must stay undefined — setting it to 0 would corrupt checkpoints.
+      expect(sm.designSessions[0]!.exitedAtMsg).toBeUndefined();
+    });
+
     it('does not track sessions for plan mode', async () => {
       const agent = makeAgent();
       const sm = new SessionMode(agent);
