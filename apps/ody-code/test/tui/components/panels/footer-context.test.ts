@@ -99,8 +99,9 @@ describe('FooterComponent — context NaN resilience', () => {
     const on = new FooterComponent(baseState({ model: 'k2', thinking: true }), darkColors);
     const off = new FooterComponent(baseState({ model: 'k2', thinking: false }), darkColors);
 
-    expect(strip(on.render(120)[0]!)).toContain('thinking');
-    expect(strip(off.render(120)[0]!)).not.toContain('thinking');
+    // Model/thinking now renders on line 2 next to the mode badge.
+    expect(strip(on.render(120)[1]!)).toContain('thinking');
+    expect(strip(off.render(120)[1]!)).not.toContain('thinking');
   });
 
   it('renders transient hints on the context line', () => {

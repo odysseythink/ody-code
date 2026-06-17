@@ -94,13 +94,13 @@ describe('FooterComponent — background task / agent badges', () => {
     expect(out).not.toMatch(/agents? running/);
   });
 
-  it('drops the badges when terminal is too narrow to fit them', () => {
+  it('truncates the badges line when terminal is too narrow to fit them', () => {
     const footer = new FooterComponent(baseState(), darkColors);
     footer.setBackgroundCounts({ bashTasks: 4, agentTasks: 3 });
-    // Extremely narrow width: footer primary content fills the line, so leftLine wins.
+    // Extremely narrow width: line 1 is truncated, keeping the left-most content.
     const [line1] = footer.render(20);
     expect(line1).toBeDefined();
-    expect(strip(line1!)).not.toMatch(/\[4 tasks running\]/);
+    expect(strip(line1!)).toMatch(/\[4 tasks running\]…?/);
     expect(strip(line1!)).not.toMatch(/\[3 agents running\]/);
   });
 });
