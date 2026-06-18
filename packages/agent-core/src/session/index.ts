@@ -44,7 +44,7 @@ import { CheckpointCoordinator } from './checkpoint/coordinator';
 import { SessionCheckpoint } from './checkpoint/checkpoint';
 import { CheckpointIndex } from './checkpoint/checkpoint-index';
 import { SessionMarkdownExport } from './export/markdown-export';
-import { runSetupScriptIfNeeded } from './setup-script';
+import { runSetupScriptIfNeeded, writeSetupScriptTemplate } from './setup-script';
 import type { ToolServices } from '../tools/support/services';
 import {
   FileSystemOfficeHoursStateStore,
@@ -356,6 +356,11 @@ export class Session {
         variant: 'init',
       });
       await mainAgent.records.flush();
+
+      // Also generate a setup.sh template alongside AGENTS.md
+      await writeSetupScriptTemplate(mainAgent.kaos).catch((error: unknown) => {
+        this.log.error('writeSetupScriptTemplate failed', error);
+      });
     } catch (error) {
       throw new OdyError(
         ErrorCodes.SESSION_INIT_FAILED,

@@ -334,3 +334,85 @@ describe('createMain wiring contract', () => {
     expect(Agent.prototype).toBeDefined();
   });
 });
+
+// ── T5: writeSetupScriptTemplate tests ──────────────────────────────────
+
+import { writeSetupScriptTemplate } from '../../src/session/setup-script';
+
+describe('writeSetupScriptTemplate', () => {
+  function makeKaosWithDir(files: string[]) {
+    const kaos = new (LocalKaos as any)(TEST_OS_ENV) as LocalKaos & {
+      stat: any; writeText: any; mkdir: any; readText: any;
+    };
+    kaos.getcwd = () => '/fake/repo';
+    kaos.mkdir = vi.fn().mockResolvedValue(undefined);
+    kaos.writeText = vi.fn().mockResolvedValue(10);
+    kaos.normpath = (p: string) => p;
+    // stat: only succeed for files in the `files` list
+    kaos.stat = vi.fn().mockImplementation(async (path: string) => {
+      const basename = path.replace(/^.*[/\\]/, '');
+      if (files.includes(basename)) return { stMode: 0o100000 }; // regular file
+      throw Object.assign(new Error('ENOENT'), { code: 'ENOENT' });
+    });
+    kaos.readText = vi.fn().mockResolvedValue('');
+    kaos.exec = vi.fn().mockResolvedValue(undefined);
+    return kaos;
+  }
+
+  it('skips if setup.sh already exists', async () => {
+    const kaos = makeKaosWithDir([]);
+    let callCount = 0;
+    kaos.stat = vi.fn().mockImplementation(async (path: string) => {
+      callCount++;
+      if (path.endsWith('.ody-code/setup.sh')) return { stMode: 0o100000 };
+      throw Object.assign(new Error('ENOENT'), { code: 'ENOENT' });
+    });
+    await writeSetupScriptTemplate(kaos);
+    expect(kaos.writeText).not.toHaveBeenCalled();
+  });
+
+  it('generates template with pnpm install for pnpm projects', async () => {
+    const kaos = makeKaosWithDir(['pnpm-lock.yaml', 'package.json']);
+    await writeSetupScriptTemplate(kaos);
+    expect(kaos.writeText).toHaveBeenCalled();
+    const content = (kaos.writeText as any).mock.calls[0][1] as string;
+    expect(content).toContain('pnpm install');
+    expect(content).toContain('#!/usr/bin/env bash');
+  });
+
+  it('generates template with npm install for npm projects', async () => {
+    const kaos = makeKaosWithDir(['package-lock.json']);
+    await writeSetupScriptTemplate(kaos);
+    const content = (kaos.writeText as any).mock.calls[0][1] as string;
+    expect(content).toContain('npm install');
+  });
+
+  it('generates template with pip install for Python projects', async () => {
+    const kaos = makeKaosWithDir(['requirements.txt']);
+    await writeSetupScriptTemplate(kaos);
+    const content = (kaos.writeText as any).mock.calls[0][1] as string;
+    expect(content).toContain('pip install');
+  });
+
+  it('generates template with cargo build for Rust projects', async () => {
+    const kaos = makeKaosWithDir(['Cargo.toml']);
+    await writeSetupScriptTemplate(kaos);
+    const content = (kaos.writeText as any).mock.calls[0][1] as string;
+    expect(content).toContain('cargo build');
+  });
+
+  it('generates template with go mod download for Go projects', async () => {
+    const kaos = makeKaosWithDir(['go.mod']);
+    await writeSetupScriptTemplate(kaos);
+    const content = (kaos.writeText as any).mock.calls[0][1] as string;
+    expect(content).toContain('go mod download');
+  });
+
+  it('generates empty template when no known markers found', async () => {
+    const kaos = makeKaosWithDir([]);
+    await writeSetupScriptTemplate(kaos);
+    const content = (kaos.writeText as any).mock.calls[0][1] as string;
+    expect(content).toContain('#!/usr/bin/env bash');
+    expect(content).toContain('No recognized project markers');
+  });
+});
