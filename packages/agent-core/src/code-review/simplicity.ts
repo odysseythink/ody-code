@@ -129,6 +129,15 @@ function parseSimplicityLine(line: string): CodeReviewFinding | null {
   if (dotIdx < 0) return null;
   const what = body.slice(0, dotIdx).trim();
   let replacement = body.slice(dotIdx + 2).trim();
+
+  // Extract trailing [path] from audit-format findings (e.g., "Use structuredClone. [src/a.ts]")
+  let trailingPath: string | undefined;
+  const pathMatch = replacement.match(/\s*\[([^\]]+)\]$/);
+  if (pathMatch !== null) {
+    trailingPath = pathMatch[1];
+    replacement = replacement.slice(0, pathMatch.index).trim();
+  }
+
   // Strip trailing dot
   if (replacement.endsWith('.')) {
     replacement = replacement.slice(0, -1);
@@ -138,7 +147,9 @@ function parseSimplicityLine(line: string): CodeReviewFinding | null {
     ? `${file}:${lineno}`
     : lineno !== undefined
       ? `:${lineno}`
-      : undefined;
+      : trailingPath !== undefined
+        ? trailingPath
+        : undefined;
 
   return {
     severity: TAG_TO_SEVERITY[tag],

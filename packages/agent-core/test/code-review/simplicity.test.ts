@@ -73,6 +73,23 @@ describe('parseSimplicityReport', () => {
     expect(report.findings[0]!.location).toBe(':8');
   });
 
+  it('extracts trailing [path] from audit output format', () => {
+    const raw = 'stdlib: custom clone. Use structuredClone. [src/a.ts]';
+    const report: CodeReviewReport = parseSimplicityReport(raw, 'x');
+    expect(report.findings).toHaveLength(1);
+    expect(report.findings[0]!.location).toBe('src/a.ts');
+    expect(report.findings[0]!.suggestedFix).toBe('Use structuredClone');
+    expect(report.findings[0]!.detail).toBe('stdlib: custom clone. Use structuredClone.');
+  });
+
+  it('extracts trailing [path] with brackets in path', () => {
+    const raw = 'delete: dead code. Remove it. [src/utils/helper.ts]';
+    const report: CodeReviewReport = parseSimplicityReport(raw, 'x');
+    expect(report.findings).toHaveLength(1);
+    expect(report.findings[0]!.location).toBe('src/utils/helper.ts');
+    expect(report.findings[0]!.suggestedFix).toBe('Remove it');
+  });
+
   it('handles empty input as ok', () => {
     const report: CodeReviewReport = parseSimplicityReport('', 'x');
     expect(report.findings).toHaveLength(0);

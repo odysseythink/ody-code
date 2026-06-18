@@ -179,6 +179,8 @@ describe('createCodeReviewExecutor', () => {
       expect(report.ok).toBe(true);
       expect(report.findings).toHaveLength(1);
       expect(report.findings[0]!.title).toContain('[STDLIB]');
+      expect(report.findings[0]!.location).toBe('src/a.ts');
+      expect(report.findings[0]!.suggestedFix).toBe('Use structuredClone');
     });
 
     it('returns ok=false when scope=repo but auditScanner not provided', async () => {
