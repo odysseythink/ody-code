@@ -475,6 +475,12 @@ export class ToolManager {
         toolServices?.urlFetcher && new b.FetchURLTool(toolServices.urlFetcher),
         new b.RunE2ETestsTool(kaos, this.agent),
         new b.ReviewTestsTool(kaos, this.agent),
+        new b.HarvestOdyMarkersTool(
+          kaos,
+          workspace,
+          new b.GrepTool(kaos, workspace),
+          this.agent.telemetry,
+        ),
 
       ]
         .filter((tool) => !!tool)
