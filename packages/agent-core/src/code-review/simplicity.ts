@@ -192,7 +192,7 @@ export function buildSimplicityReviewPrompt(
     '- Only report unnecessary complexity — dead code, over-abstraction, things the standard library or platform already does.',
     '- Do NOT report correctness bugs, security flaws, or performance problems.',
     '- If there is nothing to simplify, output exactly: `Lean already. Ship.`',
-    '- If you find something that was deliberately kept simple and could use an `ody:` annotation, you may mention it in the detail — but do not create a finding for it.',
+    '- If you find something that was deliberately kept simple and could use an `ody:` annotation, suggest adding `// ody: <ceiling>, <upgrade trigger>` in the detail — but do not create a finding for it.',
     '',
     '## Output format',
     'Each finding on its own line:',
