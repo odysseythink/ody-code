@@ -206,6 +206,7 @@ export interface PendingExit {
 }
 
 export interface LoginProgressSpinnerHandle {
+  updateLabel(label: string): void;
   stop(opts: { ok: boolean; label: string }): void;
 }
 

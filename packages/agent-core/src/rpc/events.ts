@@ -287,6 +287,19 @@ export interface McpServerStatusPayload {
   readonly error?: string | undefined;
 }
 
+export interface CodeReviewProgressEvent {
+  readonly type: 'codeReview.progress';
+  readonly requestId: string;
+  readonly stage: 'preparing' | 'fetching-diff' | 'audit-scanning' | 'deep-review' | 'generating' | 'completed' | 'failed';
+  readonly modelAlias: string;
+  readonly detail?: string | undefined;
+  readonly meta?: {
+    readonly estimatedTokens?: number | undefined;
+    readonly filePath?: string | undefined;
+    readonly fileCount?: number | undefined;
+  } | undefined;
+}
+
 export type AgentEvent =
   | ErrorEvent
   | WarningEvent
@@ -318,6 +331,7 @@ export type AgentEvent =
   | CompactionCompletedEvent
   | BackgroundTaskStartedEvent
   | BackgroundTaskTerminatedEvent
-  | CronFiredEvent;
+  | CronFiredEvent
+  | CodeReviewProgressEvent;
 
 export type Event = AgentEvent & { agentId: string; sessionId: string };

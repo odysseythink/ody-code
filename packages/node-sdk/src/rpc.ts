@@ -1,3 +1,5 @@
+import { randomUUID } from 'node:crypto';
+
 import {
   createRPC,
   ErrorCodes,
@@ -129,6 +131,7 @@ export class SDKRpcClient {
   private readonly approvalHandlers = new Map<string, ApprovalHandler>();
   private readonly questionHandlers = new Map<string, QuestionHandler>();
   private readonly openExternalHandlers = new Map<string, OpenExternalHandler>();
+  private readonly codeReviewProgressHandlers = new Map<string, (progress: { requestId: string; stage: string; modelAlias: string; detail?: string; meta?: { estimatedTokens?: number; filePath?: string; fileCount?: number } }) => void>();
 
   constructor(options: SDKRpcClientOptions = {}) {
     const [coreRpc, sdkRpc] = createRPC<CoreAPI, SDKAPI>();
@@ -343,9 +346,25 @@ export class SDKRpcClient {
     });
   }
 
-  async requestCodeReview(input: RequestCodeReviewPayload): Promise<CodeReviewReportData> {
+  async requestCodeReview(
+    input: RequestCodeReviewPayload & {
+      readonly onProgress?: (progress: { requestId: string; stage: string; modelAlias: string; detail?: string; meta?: { estimatedTokens?: number; filePath?: string; fileCount?: number } }) => void;
+    },
+  ): Promise<CodeReviewReportData> {
     const rpc = await this.getRpc();
-    return rpc.requestCodeReview(input);
+    let requestId: string | undefined;
+    if (input.onProgress) {
+      requestId = randomUUID();
+      this.codeReviewProgressHandlers.set(requestId, input.onProgress);
+    }
+    try {
+      const { onProgress: _, ...payload } = input;
+      return await rpc.requestCodeReview({ ...payload, requestId, workDir: (payload as any).workDir ?? process.cwd() });
+    } finally {
+      if (requestId !== undefined) {
+        this.codeReviewProgressHandlers.delete(requestId);
+      }
+    }
   }
 
   async compact(input: SessionIdRpcInput & CompactOptions): Promise<void> {
@@ -582,6 +601,22 @@ export class SDKRpcClient {
   receiveEvent(event: Event): void {
     for (const listener of this.eventListeners) {
       listener(event);
+    }
+    if (event.type === 'codeReview.progress') {
+      const handler = this.codeReviewProgressHandlers.get(event.requestId);
+      if (handler) {
+        try {
+          handler({
+            requestId: event.requestId,
+            stage: event.stage,
+            modelAlias: event.modelAlias,
+            detail: event.detail,
+            meta: event.meta,
+          });
+        } catch {
+          // Silently swallow user callback errors to avoid breaking the request
+        }
+      }
     }
   }
 

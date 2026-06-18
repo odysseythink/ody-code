@@ -69,6 +69,8 @@ export type {
   CodeReviewRequestInput,
   CodeReviewReport,
   CodeReviewFinding,
+  CodeReviewProgress,
+  CodeReviewProgressStage,
 } from '@odysseythink/agent-core';
 
 export type { KimiHostIdentity, OAuthRefreshOutcome };

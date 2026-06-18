@@ -122,6 +122,77 @@ describe('createCodeReviewExecutor', () => {
     expect(report.note).toContain('Deep review is not available');
   });
 
+  it('emits progress events in correct order', async () => {
+    const stages: string[] = [];
+    const onProgress = vi.fn((p: { stage: string }) => { stages.push(p.stage); });
+    const llmText = [
+      'Strengths:\n- Good',
+      '',
+      'Findings:\nCritical:\n\nImportant:\n\nMinor:\n',
+      '',
+      'Assessment: Ready',
+    ].join('\n');
+    const executor = createCodeReviewExecutor({
+      cwd,
+      fetchDiff: vi.fn(async () => 'mock diff'),
+      generate: fakeGenerate(llmText) as any,
+      resolveProviderConfig: vi.fn(() => ({})),
+      estimateTokens: vi.fn(() => 10),
+    });
+    await executor.review({
+      source: { kind: 'working-tree' },
+      modelAlias,
+      onProgress: onProgress as any,
+    });
+    expect(onProgress).toHaveBeenCalledTimes(5); // preparing, fetching-diff, fetching-diff(meta), generating, completed
+    expect(stages[0]).toBe('preparing');
+    expect(stages[1]).toBe('fetching-diff');
+    expect(stages[2]).toBe('fetching-diff');
+    expect(stages[3]).toBe('generating');
+    expect(stages[4]).toBe('completed');
+  });
+
+  it('emits failed when diff exceeds token limit', async () => {
+    const stages: string[] = [];
+    const onProgress = vi.fn((p: { stage: string }) => { stages.push(p.stage); });
+    const executor = createCodeReviewExecutor({
+      cwd,
+      fetchDiff: vi.fn(async () => 'x'.repeat(100_000)),
+      generate: fakeGenerate('') as any,
+      resolveProviderConfig: vi.fn(() => ({})),
+      estimateTokens: vi.fn(() => 200_000),
+    });
+    const report = await executor.review({
+      source: { kind: 'working-tree' },
+      modelAlias,
+      onProgress: onProgress as any,
+    });
+    expect(report.ok).toBe(false);
+    expect(stages).toContain('failed');
+  });
+
+  it('passes signal to generate', async () => {
+    const controller = new AbortController();
+    const generate = vi.fn(async () => ({
+      message: { role: 'assistant', content: [{ type: 'text', text: 'Assessment: Ready' }] },
+    }));
+    const executor = createCodeReviewExecutor({
+      cwd,
+      fetchDiff: vi.fn(async () => 'mock diff'),
+      generate: generate as any,
+      resolveProviderConfig: vi.fn(() => ({})),
+      estimateTokens: vi.fn(() => 10),
+    });
+    await executor.review({
+      source: { kind: 'working-tree' },
+      modelAlias,
+      signal: controller.signal,
+    });
+    expect(generate).toHaveBeenCalledWith(
+      expect.objectContaining({ signal: controller.signal }),
+    );
+  });
+
   describe('simplicity focus', () => {
     const cwd = '/app';
     const modelAlias = 'reviewer';

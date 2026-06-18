@@ -205,24 +205,31 @@ export class KimiHarness {
   }
 
   /** Request an AI code review for the given source diff. */
-  async requestCodeReview(input: {
-    readonly source:
-      | { readonly kind: 'commits'; readonly base: string; readonly head: string }
-      | { readonly kind: 'pr'; readonly prUrlOrNumber: string }
-      | { readonly kind: 'working-tree' };
-    readonly modelAlias?: string | undefined;
-    readonly description?: string | undefined;
-    readonly requirements?: string | undefined;
-    readonly deep?: boolean | undefined;
-    readonly timeoutMs?: number | undefined;
-    readonly workDir?: string | undefined;
-    readonly focus?: 'correctness' | 'simplicity' | undefined;
-    readonly scope?: 'diff' | 'repo' | undefined;
-  }): Promise<CodeReviewReport> {
+  async requestCodeReview(
+    input: {
+      readonly source:
+        | { readonly kind: 'commits'; readonly base: string; readonly head: string }
+        | { readonly kind: 'pr'; readonly prUrlOrNumber: string }
+        | { readonly kind: 'working-tree' };
+      readonly modelAlias?: string | undefined;
+      readonly description?: string | undefined;
+      readonly requirements?: string | undefined;
+      readonly deep?: boolean | undefined;
+      readonly timeoutMs?: number | undefined;
+      readonly workDir?: string | undefined;
+      readonly focus?: 'correctness' | 'simplicity' | undefined;
+      readonly scope?: 'diff' | 'repo' | undefined;
+    },
+    options?: {
+      readonly signal?: AbortSignal | undefined;
+      readonly onProgress?: (progress: { requestId: string; stage: string; modelAlias: string; detail?: string; meta?: { estimatedTokens?: number; filePath?: string; fileCount?: number } }) => void;
+    },
+  ): Promise<CodeReviewReport> {
     const result = await this.rpc.requestCodeReview({
       ...input,
       workDir: input.workDir ?? process.cwd(),
-    });
+      ...(options?.onProgress !== undefined ? { onProgress: options.onProgress } : {}),
+    } as any);
     return result as unknown as CodeReviewReport;
   }
 

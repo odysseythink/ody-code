@@ -37,6 +37,10 @@ function createMockHost(overrides: Partial<SlashCommandHost> = {}): SlashCommand
     sendNormalUserInput: vi.fn(),
     requireSession: vi.fn(function (this: SlashCommandHost) { return this.session; }),
     cancelInFlight: undefined,
+    showProgressSpinner: vi.fn().mockReturnValue({
+      updateLabel: vi.fn(),
+      stop: vi.fn(),
+    }),
     deferUserMessages: false,
     ...overrides,
   } as unknown as SlashCommandHost;
@@ -73,5 +77,59 @@ describe('handleRequestCodeReviewCommand', () => {
     });
     await handleRequestCodeReviewCommand(host, '');
     expect(host.showError).toHaveBeenCalledWith('Diff too large');
+  });
+
+  it('shows progress spinner with preparing label', async () => {
+    const showProgressSpinner = vi.fn().mockReturnValue({
+      updateLabel: vi.fn(),
+      stop: vi.fn(),
+    });
+    const host = createMockHost({ showProgressSpinner } as any);
+    await handleRequestCodeReviewCommand(host, '');
+    expect(showProgressSpinner).toHaveBeenCalledWith(
+      expect.stringContaining('Code review on'),
+    );
+  });
+
+  it('updates spinner label on progress', async () => {
+    const updateLabel = vi.fn();
+    const host = createMockHost({
+      showProgressSpinner: vi.fn().mockReturnValue({ updateLabel, stop: vi.fn() }),
+    } as any);
+    (host.harness.requestCodeReview as any) = vi.fn(async (_input: any, opts: any) => {
+      opts?.onProgress?.({ requestId: 'r1', stage: 'generating', modelAlias: 'review-model' });
+      return { ok: true, reviewerAlias: 'review-model', findings: [] };
+    });
+    await handleRequestCodeReviewCommand(host, '');
+    expect(updateLabel).toHaveBeenCalledWith(
+      expect.stringContaining('Generating review'),
+    );
+  });
+
+  it('stops spinner with ok=true on success', async () => {
+    const stop = vi.fn();
+    const host = createMockHost({
+      showProgressSpinner: vi.fn().mockReturnValue({ updateLabel: vi.fn(), stop }),
+    } as any);
+    await handleRequestCodeReviewCommand(host, '');
+    expect(stop).toHaveBeenCalledWith(expect.objectContaining({ ok: true }));
+  });
+
+  it('stops spinner with ok=false on error', async () => {
+    const stop = vi.fn();
+    const host = createMockHost({
+      showProgressSpinner: vi.fn().mockReturnValue({ updateLabel: vi.fn(), stop }),
+    } as any);
+    (host.harness.requestCodeReview as any) = vi.fn(async () => {
+      throw new Error('network error');
+    });
+    await handleRequestCodeReviewCommand(host, '');
+    expect(stop).toHaveBeenCalledWith(expect.objectContaining({ ok: false }));
+  });
+
+  it('clears cancelInFlight after completion', async () => {
+    const host = createMockHost();
+    await handleRequestCodeReviewCommand(host, '');
+    expect(host.cancelInFlight).toBeUndefined();
   });
 });

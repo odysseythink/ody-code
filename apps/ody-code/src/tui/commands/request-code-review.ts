@@ -56,6 +56,36 @@ function buildDiffSource(parsed: SlashArgs) {
   return { kind: 'working-tree' as const };
 }
 
+const STAGE_MAP: Record<string, string> = {
+  'preparing': 'Preparing',
+  'fetching-diff': 'Fetching diff',
+  'audit-scanning': 'Scanning repo',
+  'deep-review': 'Deep review in progress',
+  'generating': 'Generating review',
+  'completed': 'Complete',
+  'failed': 'Failed',
+};
+
+function formatReviewProgressLabel(
+  progress: { stage: string; modelAlias: string; detail?: string; meta?: { estimatedTokens?: number; filePath?: string; fileCount?: number } },
+  elapsedSeconds: number,
+): string {
+  const stageText = STAGE_MAP[progress.stage] ?? progress.stage;
+  let base = `Code review on ${progress.modelAlias} — ${stageText}`;
+  if (progress.detail) {
+    const truncated = progress.detail.length > 40 ? progress.detail.slice(0, 37) + '…' : progress.detail;
+    base += ` (${truncated})`;
+  }
+  if (progress.meta?.estimatedTokens !== undefined) {
+    base += ` · ~${progress.meta.estimatedTokens} tokens`;
+  }
+  if (progress.meta?.filePath !== undefined) {
+    const basename = progress.meta.filePath.split('/').pop() ?? progress.meta.filePath;
+    base += ` · ${basename}`;
+  }
+  return `${base} (${elapsedSeconds}s)`;
+}
+
 export async function handleRequestCodeReviewCommand(
   host: SlashCommandHost,
   args: string,
@@ -87,9 +117,21 @@ export async function handleRequestCodeReviewCommand(
     },
   );
 
-  host.showStatus(`Running code review on ${resolvedModel}…`);
-
   const source = buildDiffSource(parsed);
+
+  // ── Progress spinner ──
+  const controller = new AbortController();
+  const cancel = () => controller.abort();
+  host.cancelInFlight = cancel;
+
+  let currentProgress: { stage: string; modelAlias: string; detail?: string; meta?: { estimatedTokens?: number; filePath?: string; fileCount?: number } } = { stage: 'preparing', modelAlias: resolvedModel };
+  const spinner = host.showProgressSpinner(formatReviewProgressLabel(currentProgress, 0));
+  let elapsed = 0;
+  const timer = setInterval(() => {
+    elapsed += 1;
+    spinner.updateLabel(formatReviewProgressLabel(currentProgress, elapsed));
+  }, 1000);
+
   try {
     const report = await host.harness.requestCodeReview({
       source,
@@ -99,18 +141,33 @@ export async function handleRequestCodeReviewCommand(
       deep: parsed.deep,
       focus: parsed.focus,
       scope: parsed.scope,
+    }, {
+      signal: controller.signal,
+      onProgress: (p) => {
+        currentProgress = p;
+        spinner.updateLabel(formatReviewProgressLabel(p, elapsed));
+      },
     });
 
     if (!report.ok) {
+      spinner.stop({ ok: false, label: report.note ?? 'Code review failed.' });
       host.showError(report.note ?? 'Code review failed.');
       return;
     }
 
     const markdown = renderCodeReviewReportToMarkdown(report);
+    spinner.stop({ ok: true, label: `Code review complete (${report.reviewerAlias}).` });
     host.sendNormalUserInput(
       `Code review complete (${report.reviewerAlias}). Findings:\n\n${markdown}\n\nPlease act on the findings.`,
     );
   } catch (error) {
-    host.showError(`Code review failed: ${error instanceof Error ? error.message : String(error)}`);
+    const message = error instanceof Error ? error.message : String(error);
+    spinner.stop({ ok: false, label: `Code review failed: ${message}` });
+    host.showError(`Code review failed: ${message}`);
+  } finally {
+    clearInterval(timer);
+    if (host.cancelInFlight === cancel) {
+      host.cancelInFlight = undefined;
+    }
   }
 }

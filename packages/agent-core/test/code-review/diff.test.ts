@@ -57,7 +57,7 @@ describe('fetchDiff (smoke)', () => {
   it('throws when gh is used but not available', async () => {
     const { fetchDiff } = await import('../../src/code-review/diff');
     await expect(
-      fetchDiff({ kind: 'pr', prUrlOrNumber: '99999' }, '/tmp', {
+      fetchDiff({ kind: 'pr', prUrlOrNumber: '99999' }, '/tmp', undefined, {
         env: { ...process.env, PATH: '/tmp/no-gh' },
       }),
     ).rejects.toThrow(/gh/);

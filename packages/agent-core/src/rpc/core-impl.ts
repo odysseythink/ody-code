@@ -105,6 +105,7 @@ import type {
 import type { ResumedAgentState, ResumeSessionResult } from './resumed';
 import type { SDKRPC } from './sdk-api';
 import { proxyWithExtraPayload } from './types';
+import type { CodeReviewProgressEvent } from './events';
 import { KaosShellNotFoundError, LocalKaos, type Kaos } from '@odysseythink/kaos';
 import type { ToolServices } from '../tools/support/services';
 import { BuiltInMcpRegistry } from '../mcp/built-in';
@@ -129,6 +130,9 @@ export interface KimiCoreOptions {
   readonly telemetry?: TelemetryClient | undefined;
   readonly appVersion?: string;
 }
+
+const CODE_REVIEW_PROGRESS_SESSION_ID = '__code_review_progress__';
+const CODE_REVIEW_PROGRESS_AGENT_ID = '__code_review_progress__';
 
 export class KimiCore implements PromisableMethods<CoreAPI> {
   readonly sdk: Promise<SDKRPC>;
@@ -485,12 +489,35 @@ export class KimiCore implements PromisableMethods<CoreAPI> {
       },
     );
 
+    // ── Progress event emission ──
+    const requestId = payload.requestId;
+    const emitProgress = (
+      stage: CodeReviewProgressEvent['stage'],
+      detail?: string,
+      meta?: CodeReviewProgressEvent['meta'],
+    ) => {
+      if (requestId === undefined) return;
+      void (async () => {
+        const sdk = await this.sdk;
+        sdk.emitEvent({
+          type: 'codeReview.progress',
+          requestId,
+          stage,
+          modelAlias: resolvedModel,
+          detail,
+          meta,
+          sessionId: CODE_REVIEW_PROGRESS_SESSION_ID,
+          agentId: CODE_REVIEW_PROGRESS_AGENT_ID,
+        });
+      })().catch(() => {});
+    };
+
     const resolvedProvider = providerManager.resolveProviderConfig(resolvedModel);
     const provider = createProvider(resolvedProvider.provider);
 
     const executor = createCodeReviewExecutor({
       cwd: payload.workDir,
-      fetchDiff: async (source) => codeReviewFetchDiff(source, payload.workDir),
+      fetchDiff: async (source, _cwd, signal) => codeReviewFetchDiff(source, payload.workDir, signal),
       auditScanner: payload.scope === 'repo'
         ? async (workspaceDir, signal) => buildAuditDigest(workspaceDir, signal)
         : undefined,
@@ -551,6 +578,8 @@ export class KimiCore implements PromisableMethods<CoreAPI> {
       timeoutMs: payload.timeoutMs,
       focus: payload.focus,
       scope: payload.scope,
+      signal: undefined,
+      onProgress: (p) => emitProgress(p.stage, p.detail, p.meta),
     });
 
     if (isSimplicity) {

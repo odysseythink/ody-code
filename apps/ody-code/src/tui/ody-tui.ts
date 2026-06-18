@@ -1494,6 +1494,9 @@ export class OdyTUI {
     this.state.transcriptContainer.addChild(spinner);
     this.state.ui.requestRender();
     return {
+      updateLabel: (newLabel: string) => {
+        spinner.setLabel(newLabel);
+      },
       stop: ({ ok, label: finalLabel }) => {
         spinner.stop();
         const tone = ok ? this.state.theme.colors.success : this.state.theme.colors.error;

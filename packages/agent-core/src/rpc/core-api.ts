@@ -355,6 +355,7 @@ export interface RequestCodeReviewPayload {
   readonly workDir: string;
   readonly focus?: 'correctness' | 'simplicity' | undefined;
   readonly scope?: 'diff' | 'repo' | undefined;
+  readonly requestId?: string | undefined;
 }
 
 export interface CodeReviewFindingData {

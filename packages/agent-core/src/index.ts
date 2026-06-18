@@ -92,6 +92,8 @@ export type {
   CodeReviewRequestInput,
   CodeReviewReport,
   CodeReviewFinding,
+  CodeReviewProgress,
+  CodeReviewProgressStage,
 } from './code-review/types';
 export {
   parseSimplicityReport,

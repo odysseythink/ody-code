@@ -36,6 +36,7 @@ export function buildDiffSource(options: {
 export async function fetchDiff(
   source: CodeReviewDiffSource,
   cwd: string,
+  _signal?: AbortSignal,
   opts?: { readonly env?: Record<string, string | undefined> },
 ): Promise<string> {
   switch (source.kind) {
