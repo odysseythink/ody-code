@@ -86,7 +86,10 @@ export class RunE2ETestsTool implements BuiltinTool<RunE2ETestsInput> {
     }
 
     const executor = new E2ETestExecutor(this.kaos, config, generator);
-    const result = await executor.execute(testFiles, projectRoot, ctx.signal);
+    const result = await executor.execute(testFiles, projectRoot, {
+      changedFiles,
+      signal: ctx.signal,
+    });
 
     if (ctx.signal.aborted) {
       return { isError: true, output: 'E2E tests cancelled.' };

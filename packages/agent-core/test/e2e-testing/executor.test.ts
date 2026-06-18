@@ -1,10 +1,14 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi, afterAll } from 'vitest';
+import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'pathe';
 import type { Kaos, KaosProcess } from '@odysseythink/kaos';
 import type { Readable, Writable } from 'node:stream';
 import { createFakeKaos } from '../tools/fixtures/fake-kaos';
 import { E2ETestExecutor } from '#/e2e-testing/executor';
 import { TypeScriptVitestGenerator } from '#/e2e-testing/generator';
-import type { E2ETestGenerator, TestFile, TestSuiteResult } from '#/e2e-testing/types';
+import { computeCacheKey } from '#/e2e-testing/result-cache';
+import type { E2ETestGenerator, TestFile, TestSuiteResult, E2EExecutionResult } from '#/e2e-testing/types';
 import type { ResolvedE2EConfig } from '#/e2e-testing/config';
 
 const tsGenerator = new TypeScriptVitestGenerator();
@@ -32,7 +36,7 @@ const defaultConfig: ResolvedE2EConfig = {
   maxConcurrency: 4, testTimeout: 30000,
   reportDir: '.ody-code/test-reports', generatedTestDir: '.ody-code/test-generated/e2e',
   recursiveAnalysisEnabled: true, maxRecursiveDepth: 3,
-  cacheEnabled: true, cacheDir: '.ody-code/e2e-cache', cacheTtlDays: 7, cacheMaxEntries: 20,
+  cacheEnabled: false, cacheDir: '.ody-code/e2e-cache', cacheTtlDays: 7, cacheMaxEntries: 20,
 };
 
 describe('E2ETestExecutor', () => {
@@ -161,6 +165,55 @@ describe('E2ETestExecutor is generator-agnostic', () => {
     expect(result.passed).toBe(1);
     expect(result.failed).toBe(1);
     expect(result.suites).toEqual(suites);
+  });
+});
+
+describe('Cache integration', () => {
+  const tempDirs: string[] = [];
+
+  afterAll(() => {
+    for (const dir of tempDirs) {
+      try { rmSync(dir, { recursive: true, force: true }); } catch { /* ignore */ }
+    }
+  });
+
+  it('short-circuits on cache hit and does not invoke test runner', async () => {
+    const cacheDir = mkdtempSync(join(tmpdir(), 'exec-cache-'));
+    tempDirs.push(cacheDir);
+    const testConfig: ResolvedE2EConfig = {
+      ...defaultConfig,
+      cacheEnabled: true,
+      cacheDir,
+    };
+    const kaos = fakeKaos();
+    const executor = new E2ETestExecutor(kaos, testConfig, tsGenerator);
+
+    // Pre-populate cache with a known key
+    const testFile: TestFile = { relativePath: 'cached.test.ts', content: 'it("x",()=>{})' };
+    const key = computeCacheKey(['src/foo.ts'], [testFile]);
+    const cachedResult: E2EExecutionResult = {
+      passed: 5, failed: 0, skipped: 0, durationMs: 1,
+      reportPath: '/tmp/cached.json', summary: 'Cached result', suites: [],
+    };
+    mkdirSync(cacheDir, { recursive: true });
+    writeFileSync(join(cacheDir, key + '.json'), JSON.stringify({
+      createdAt: new Date().toISOString(),
+      key,
+      result: cachedResult,
+    }));
+
+    // Execute with matching inputs
+    const result = await executor.execute([testFile], '/tmp', { changedFiles: ['src/foo.ts'] });
+
+    // Should return cached result
+    expect(result.passed).toBe(5);
+    expect(result.summary).toBe('Cached result');
+
+    // vitest should NOT have been called (cache hit short-circuited)
+    const vitestCalls = (kaos.exec as ReturnType<typeof vi.fn>).mock.calls.filter(
+      (call: string[]) => call[0] === 'pnpm' && call[1] === 'vitest',
+    );
+    expect(vitestCalls).toHaveLength(0);
   });
 });
 

@@ -7,6 +7,7 @@ import type {
   TestSuiteResult,
   E2EExecutionResult,
 } from './types';
+import { E2ETestResultCache, computeCacheKey } from './result-cache';
 
 function timestamp(): string {
   return new Date().toISOString().replaceAll(/[:.]/g, '-');
@@ -52,6 +53,29 @@ export class E2ETestExecutor {
   ) {}
 
   async execute(
+    testFiles: TestFile[],
+    projectRoot: string,
+    options?: { changedFiles?: string[]; signal?: AbortSignal },
+  ): Promise<E2EExecutionResult> {
+    const changedFiles = options?.changedFiles ?? [];
+
+    // --- Cache: try to short-circuit ---
+    if (this.config.cacheEnabled && testFiles.length > 0) {
+      const cache = new E2ETestResultCache(this.kaos, this.config);
+      const key = computeCacheKey(changedFiles, testFiles);
+      const cached = await cache.get(key);
+      if (cached !== null) return cached;
+
+      // Execute normally, then cache the result before returning
+      const result = await this.executeUncached(testFiles, projectRoot, options?.signal);
+      await cache.set(key, result);
+      return result;
+    }
+
+    return this.executeUncached(testFiles, projectRoot, options?.signal);
+  }
+
+  private async executeUncached(
     testFiles: TestFile[],
     projectRoot: string,
     signal?: AbortSignal,
