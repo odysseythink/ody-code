@@ -1,6 +1,7 @@
 import type { E2ETestGenerator } from './types';
 import { E2ENoMatchingGeneratorError } from './errors';
 import { TypeScriptVitestGenerator } from './generator';
+import { NodejsJestGenerator } from './generators/nodejs-jest';
 import { PythonPytestGenerator } from './generators/python-pytest';
 import { GoGenerator } from './generators/go';
 
@@ -22,5 +23,6 @@ export class E2EGeneratorRegistry {
 
 export const registry = new E2EGeneratorRegistry();
 registry.register(new TypeScriptVitestGenerator());
+registry.register(new NodejsJestGenerator());
 registry.register(new PythonPytestGenerator());
 registry.register(new GoGenerator());
