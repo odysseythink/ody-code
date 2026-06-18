@@ -55,7 +55,7 @@ export class E2EPlanEnricher {
 }
 
 function extractFilePathsFromPlan(planContent: string): string[] {
-  const regex = /(?:packages|apps)\/[a-zA-Z0-9\-_/.]+\.[jt]sx?/g;
+  const regex = /(?:packages|apps)\/[a-zA-Z0-9\-_/.]+\.(?:[jt]sx?|py)/g;
   const matches = planContent.match(regex) ?? [];
   return [...new Set(matches)];
 }
