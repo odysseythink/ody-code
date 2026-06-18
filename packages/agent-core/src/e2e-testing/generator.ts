@@ -1,5 +1,38 @@
-import type { E2ETestGenerator, Feature, ProjectStructure, TestFile } from './types';
+import type {
+  E2ETestGenerator,
+  Feature,
+  ImpactAnalysisResult,
+  ProjectStructure,
+  RunContext,
+  TestCaseResult,
+  TestFile,
+  TestSuiteResult,
+} from './types';
+import type { ResolvedE2EConfig } from './config';
+import { ImpactAnalyzer } from './impact-analyzer';
 import { dirname, join, relative } from 'pathe';
+
+function timestamp(): string {
+  return new Date().toISOString().replaceAll(/[:.]/g, '-');
+}
+
+function parseVitestJson(json: Record<string, unknown>): TestSuiteResult[] {
+  const testResults = (json['testResults'] ?? []) as Array<Record<string, unknown>>;
+  return testResults.map((suite) => {
+    const assertions = (suite['assertionResults'] ?? []) as Array<Record<string, unknown>>;
+    const tests: TestCaseResult[] = assertions.map((a) => ({
+      name: String(a['title'] ?? ''),
+      status: (a['status'] as TestCaseResult['status']) ?? 'failed',
+      failureMessages: (a['failureMessages'] as string[]) ?? [],
+    }));
+    return {
+      file: String(suite['name'] ?? ''),
+      status: (suite['status'] as TestSuiteResult['status']) ?? 'failed',
+      duration: ((suite['endTime'] as number) ?? 0) - ((suite['startTime'] as number) ?? 0),
+      tests,
+    };
+  });
+}
 
 function kebabCase(str: string): string {
   return str
@@ -46,6 +79,78 @@ export class TypeScriptVitestGenerator implements E2ETestGenerator {
       return { language: 'typescript', framework: 'nodejs', testTool: 'vitest', root };
     } catch {
       return null;
+    }
+  }
+
+  analyzeImpact(changedFiles: string[], config: ResolvedE2EConfig): ImpactAnalysisResult {
+    return ImpactAnalyzer.analyze(changedFiles, config);
+  }
+
+  resolveGeneratedTestDir(config: ResolvedE2EConfig): string {
+    return config.generatedTestDir;
+  }
+
+  async runTests(absoluteTestPaths: string[], ctx: RunContext): Promise<TestSuiteResult[]> {
+    if (absoluteTestPaths.length === 0) return [];
+    // Bound the number of concurrent vitest processes by chunking the files.
+    const chunkSize = Math.max(1, ctx.config.maxConcurrency);
+    const suites: TestSuiteResult[] = [];
+    for (let i = 0; i < absoluteTestPaths.length; i += chunkSize) {
+      suites.push(...(await this.runVitestChunk(absoluteTestPaths.slice(i, i + chunkSize), ctx)));
+    }
+    return suites;
+  }
+
+  private async runVitestChunk(files: string[], ctx: RunContext): Promise<TestSuiteResult[]> {
+    const { kaos, config, projectRoot, signal } = ctx;
+    const outputFile = join(dirname(files[0]!), `.vitest-output-${timestamp()}.json`);
+    const k = kaos.withCwd(projectRoot);
+    const proc = await k.exec(
+      'pnpm', 'vitest', 'run',
+      '--reporter=json',
+      `--outputFile=${outputFile}`,
+      `--testTimeout=${config.testTimeout}`,
+      ...files,
+    );
+
+    const onAbort = () => { void proc.kill(); };
+    if (signal?.aborted) onAbort();
+    else signal?.addEventListener('abort', onAbort, { once: true });
+
+    const stderrChunks: Buffer[] = [];
+    proc.stderr.on('data', (chunk: Buffer) => stderrChunks.push(chunk));
+
+    try {
+      await proc.wait();
+    } finally {
+      signal?.removeEventListener('abort', onAbort);
+    }
+
+    try {
+      const json = JSON.parse(await kaos.readText(outputFile)) as Record<string, unknown>;
+      const suites = parseVitestJson(json);
+      await this.tryRemove(kaos, outputFile);
+      return suites;
+    } catch {
+      await this.tryRemove(kaos, outputFile);
+      return [{
+        file: '<vitest crash>',
+        status: 'failed' as const,
+        duration: 0,
+        tests: [{
+          name: 'vitest process failed',
+          status: 'failed' as const,
+          failureMessages: [Buffer.concat(stderrChunks).toString('utf-8').slice(0, 500)],
+        }],
+      }];
+    }
+  }
+
+  private async tryRemove(kaos: RunContext['kaos'], path: string): Promise<void> {
+    try {
+      await kaos.exec('rm', path);
+    } catch {
+      // best-effort cleanup
     }
   }
 

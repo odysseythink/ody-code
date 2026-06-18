@@ -3,8 +3,11 @@ import type { Kaos, KaosProcess } from '@odysseythink/kaos';
 import type { Readable, Writable } from 'node:stream';
 import { createFakeKaos } from '../tools/fixtures/fake-kaos';
 import { E2ETestExecutor } from '#/e2e-testing/executor';
-import type { TestFile, TestSuiteResult } from '#/e2e-testing/types';
+import { TypeScriptVitestGenerator } from '#/e2e-testing/generator';
+import type { E2ETestGenerator, TestFile, TestSuiteResult } from '#/e2e-testing/types';
 import type { ResolvedE2EConfig } from '#/e2e-testing/config';
+
+const tsGenerator = new TypeScriptVitestGenerator();
 
 function fakeKaos(): Kaos {
   return createFakeKaos({
@@ -35,7 +38,7 @@ describe('E2ETestExecutor', () => {
     const kaos = fakeKaos();
     const writeText = vi.fn().mockResolvedValue(42);
     (kaos as any).writeText = writeText;
-    const executor = new E2ETestExecutor(kaos, defaultConfig);
+    const executor = new E2ETestExecutor(kaos, defaultConfig, tsGenerator);
     const result = await executor.execute([], '/tmp');
     expect(result.passed).toBe(0);
     expect(result.failed).toBe(0);
@@ -50,7 +53,7 @@ describe('E2ETestExecutor', () => {
     const kaos = fakeKaos();
     const writeText = vi.fn().mockResolvedValue(42);
     (kaos as any).writeText = writeText;
-    const executor = new E2ETestExecutor(kaos, defaultConfig);
+    const executor = new E2ETestExecutor(kaos, defaultConfig, tsGenerator);
     const testFile: TestFile = { relativePath: 'x.test.ts', content: 'it("ok", () => {})' };
     await executor.execute([testFile], '/tmp');
     expect(writeText).toHaveBeenCalled();
@@ -59,7 +62,7 @@ describe('E2ETestExecutor', () => {
 
   it('respects maxConcurrency by chunking', async () => {
     const kaos = fakeKaos();
-    const executor = new E2ETestExecutor(kaos, { ...defaultConfig, maxConcurrency: 2 });
+    const executor = new E2ETestExecutor(kaos, { ...defaultConfig, maxConcurrency: 2 }, tsGenerator);
     const files: TestFile[] = Array.from({ length: 5 }, (_, i) => ({
       relativePath: `t${i}.test.ts`,
       content: `it("test ${i}", () => {})`,
@@ -89,7 +92,7 @@ describe('E2ETestExecutor edge cases', () => {
     };
     (kaos as any).readText = vi.fn().mockResolvedValue(JSON.stringify(vitestJson));
     (kaos as any).stat = vi.fn().mockResolvedValue({ stMode: 0, stSize: 100, stMtime: 0 });
-    const executor = new E2ETestExecutor(kaos, defaultConfig);
+    const executor = new E2ETestExecutor(kaos, defaultConfig, tsGenerator);
     const tf: TestFile = { relativePath: 'f.test.ts', content: 'it("ok", () => {})' };
     const result = await executor.execute([tf], '/tmp');
     expect(typeof result.summary).toBe('string');
@@ -98,7 +101,7 @@ describe('E2ETestExecutor edge cases', () => {
   it('handles vitest crash without JSON output', async () => {
     const kaos = fakeKaos();
     (kaos as any).readText = vi.fn().mockRejectedValue(new Error('ENOENT'));
-    const executor = new E2ETestExecutor(kaos, defaultConfig);
+    const executor = new E2ETestExecutor(kaos, defaultConfig, tsGenerator);
     const tf: TestFile = { relativePath: 'crash.test.ts', content: 'bad syntax' };
     const result = await executor.execute([tf], '/tmp');
     expect(result.failed).toBeGreaterThanOrEqual(1);
@@ -114,7 +117,7 @@ describe('E2ETestExecutor edge cases', () => {
       }],
     };
     (kaos as any).readText = vi.fn().mockResolvedValue(JSON.stringify(vitestJson));
-    const executor = new E2ETestExecutor(kaos, defaultConfig);
+    const executor = new E2ETestExecutor(kaos, defaultConfig, tsGenerator);
     const tf: TestFile = { relativePath: 'ok.test.ts', content: 'it("ok", () => {})' };
     await executor.execute([tf], '/tmp');
     const rmCalls = (kaos.exec as ReturnType<typeof vi.fn>).mock.calls.filter(
@@ -124,11 +127,46 @@ describe('E2ETestExecutor edge cases', () => {
   });
 });
 
+describe('E2ETestExecutor is generator-agnostic', () => {
+  it('delegates execution to the injected generator and aggregates its suites', async () => {
+    const kaos = fakeKaos();
+    const suites: TestSuiteResult[] = [
+      {
+        file: 'pkg/api', status: 'failed', duration: 5,
+        tests: [
+          { name: 'TestA_E2E', status: 'passed', failureMessages: [] },
+          { name: 'TestB_E2E', status: 'failed', failureMessages: ['boom'] },
+        ],
+      },
+    ];
+    const runTests = vi.fn().mockResolvedValue(suites);
+    const fakeGenerator: E2ETestGenerator = {
+      id: 'fake',
+      detectProjectStructure: vi.fn(),
+      analyzeImpact: vi.fn(),
+      generateTestsForFeature: vi.fn(),
+      resolveGeneratedTestDir: () => 'e2e_generated',
+      runTests,
+    };
+    const executor = new E2ETestExecutor(kaos, defaultConfig, fakeGenerator);
+    const tf: TestFile = { relativePath: 'api_e2e_test.go', content: '// go' };
+    const result = await executor.execute([tf], '/tmp');
+
+    expect(runTests).toHaveBeenCalledTimes(1);
+    // Writes into the generator-resolved (non-dot) directory, not the config default.
+    const writtenPath = (kaos.writeText as ReturnType<typeof vi.fn>).mock.calls[0]![0] as string;
+    expect(writtenPath).toContain('/tmp/e2e_generated/');
+    expect(result.passed).toBe(1);
+    expect(result.failed).toBe(1);
+    expect(result.suites).toEqual(suites);
+  });
+});
+
 describe('parseVitestJson (via integration)', () => {
   it('parses empty testResults as empty suites', async () => {
     const kaos = fakeKaos();
     (kaos as any).readText = vi.fn().mockResolvedValue(JSON.stringify({ testResults: [] }));
-    const executor = new E2ETestExecutor(kaos, defaultConfig);
+    const executor = new E2ETestExecutor(kaos, defaultConfig, tsGenerator);
     const tf: TestFile = { relativePath: 'x.test.ts', content: 'it("ok", () => {})' };
     const result = await executor.execute([tf], '/tmp');
     expect(result.suites).toEqual([]);

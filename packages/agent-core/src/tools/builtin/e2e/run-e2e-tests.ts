@@ -7,7 +7,6 @@ import { toInputJsonSchema } from '#/tools/support/input-schema';
 import { literalRulePattern, matchesGlobRuleSubject } from '#/tools/support/rule-match';
 import { E2EConfigResolver } from '#/e2e-testing/config';
 import type { OdyConfig } from '#/config/schema';
-import { ImpactAnalyzer } from '#/e2e-testing/impact-analyzer';
 import { E2ETestExecutor } from '#/e2e-testing/executor';
 import { registry } from '#/e2e-testing/registry';
 import { parseGitStatusShort } from '#/e2e-testing/git-status';
@@ -60,7 +59,7 @@ export class RunE2ETestsTool implements BuiltinTool<RunE2ETestsInput> {
       return { output: `No E2E generator found for project at ${projectRoot}.` };
     }
 
-    const impact = ImpactAnalyzer.analyze(changedFiles, config);
+    const impact = generator.analyzeImpact(changedFiles, config);
     if (input.toolId) {
       impact.affectedTools = impact.affectedTools.filter(t => t.toolId === input.toolId);
     }
@@ -86,8 +85,8 @@ export class RunE2ETestsTool implements BuiltinTool<RunE2ETestsInput> {
       return { output: 'E2E generator produced no test files.' };
     }
 
-    const executor = new E2ETestExecutor(this.kaos, config);
-    const result = await executor.execute(testFiles, projectRoot);
+    const executor = new E2ETestExecutor(this.kaos, config, generator);
+    const result = await executor.execute(testFiles, projectRoot, ctx.signal);
 
     if (ctx.signal.aborted) {
       return { isError: true, output: 'E2E tests cancelled.' };

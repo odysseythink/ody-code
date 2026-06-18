@@ -2,32 +2,14 @@ import { dirname, isAbsolute, join } from 'pathe';
 import type { Kaos } from '@odysseythink/kaos';
 import type { ResolvedE2EConfig } from './config';
 import type {
+  E2ETestGenerator,
   TestFile,
-  TestCaseResult,
   TestSuiteResult,
   E2EExecutionResult,
 } from './types';
 
 function timestamp(): string {
   return new Date().toISOString().replaceAll(/[:.]/g, '-');
-}
-
-function parseVitestJson(json: Record<string, unknown>): TestSuiteResult[] {
-  const testResults = (json['testResults'] ?? []) as Array<Record<string, unknown>>;
-  return testResults.map((suite) => {
-    const assertions = (suite['assertionResults'] ?? []) as Array<Record<string, unknown>>;
-    const tests: TestCaseResult[] = assertions.map((a) => ({
-      name: String(a['title'] ?? ''),
-      status: (a['status'] as TestCaseResult['status']) ?? 'failed',
-      failureMessages: (a['failureMessages'] as string[]) ?? [],
-    }));
-    return {
-      file: String(suite['name'] ?? ''),
-      status: (suite['status'] as TestSuiteResult['status']) ?? 'failed',
-      duration: ((suite['endTime'] as number) ?? 0) - ((suite['startTime'] as number) ?? 0),
-      tests,
-    };
-  });
 }
 
 function renderMarkdownSummary(result: E2EExecutionResult): string {
@@ -56,15 +38,29 @@ function renderMarkdownSummary(result: E2EExecutionResult): string {
   return lines.join('\n');
 }
 
+/**
+ * Language-agnostic orchestrator: resolves directories, writes the generated
+ * test files, chunks them by `maxConcurrency`, delegates the actual run +
+ * output parsing to the per-language generator, then aggregates results,
+ * writes a JSON report and renders a markdown summary.
+ */
 export class E2ETestExecutor {
   constructor(
     private readonly kaos: Kaos,
     private readonly config: ResolvedE2EConfig,
+    private readonly generator: E2ETestGenerator,
   ) {}
 
-  async execute(testFiles: TestFile[], projectRoot: string): Promise<E2EExecutionResult> {
+  async execute(
+    testFiles: TestFile[],
+    projectRoot: string,
+    signal?: AbortSignal,
+  ): Promise<E2EExecutionResult> {
     const start = Date.now();
-    const generatedTestDir = this.absPath(this.config.generatedTestDir, projectRoot);
+    const generatedTestDir = this.absPath(
+      this.generator.resolveGeneratedTestDir(this.config),
+      projectRoot,
+    );
     const reportDir = this.absPath(this.config.reportDir, projectRoot);
 
     await this.kaos.mkdir(generatedTestDir, { parents: true, existOk: true });
@@ -86,14 +82,15 @@ export class E2ETestExecutor {
       return { passed: 0, failed: 0, skipped: 0, durationMs: Date.now() - start, reportPath, summary, suites: [] };
     }
 
-    const chunkSize = this.config.maxConcurrency;
-    const allSuites: TestSuiteResult[] = [];
-
-    for (let i = 0; i < absolutePaths.length; i += chunkSize) {
-      const chunk = absolutePaths.slice(i, i + chunkSize);
-      const result = await this.runVitestChunk(chunk, generatedTestDir, projectRoot);
-      allSuites.push(...result);
-    }
+    // The generator owns its own execution strategy (e.g. the TS generator
+    // chunks by maxConcurrency to bound parallel vitest processes; the Go
+    // generator runs each unique package dir once). Hand it the full file set.
+    const allSuites = await this.generator.runTests(absolutePaths, {
+      kaos: this.kaos,
+      config: this.config,
+      projectRoot,
+      signal,
+    });
 
     const passed = allSuites.reduce((s, suite) => s + suite.tests.filter(t => t.status === 'passed').length, 0);
     const failed = allSuites.reduce((s, suite) => s + suite.tests.filter(t => t.status === 'failed').length, 0);
@@ -110,56 +107,6 @@ export class E2ETestExecutor {
 
   private absPath(path: string, projectRoot: string): string {
     return isAbsolute(path) ? path : join(projectRoot, path);
-  }
-
-  private async runVitestChunk(
-    files: string[],
-    generatedTestDir: string,
-    projectRoot: string,
-  ): Promise<TestSuiteResult[]> {
-    const outputFile = join(generatedTestDir, `.vitest-output-${timestamp()}.json`);
-    const k = this.kaos.withCwd(projectRoot);
-    const proc = await k.exec(
-      'pnpm', 'vitest', 'run',
-      '--reporter=json',
-      `--outputFile=${outputFile}`,
-      `--testTimeout=${this.config.testTimeout}`,
-      ...files,
-    );
-
-    const stdoutChunks: Buffer[] = [];
-    const stderrChunks: Buffer[] = [];
-    proc.stdout.on('data', (chunk: Buffer) => stdoutChunks.push(chunk));
-    proc.stderr.on('data', (chunk: Buffer) => stderrChunks.push(chunk));
-
-    await proc.wait();
-
-    try {
-      const json = JSON.parse(await this.kaos.readText(outputFile)) as Record<string, unknown>;
-      const suites = parseVitestJson(json);
-      await this.tryRemove(outputFile);
-      return suites;
-    } catch {
-      await this.tryRemove(outputFile);
-      return [{
-        file: '<vitest crash>',
-        status: 'failed' as const,
-        duration: 0,
-        tests: [{
-          name: 'vitest process failed',
-          status: 'failed' as const,
-          failureMessages: [Buffer.concat(stderrChunks).toString('utf-8').slice(0, 500)],
-        }],
-      }];
-    }
-  }
-
-  private async tryRemove(path: string): Promise<void> {
-    try {
-      await this.kaos.exec('rm', path);
-    } catch {
-      // best-effort cleanup
-    }
   }
 
   private async writeReport(
