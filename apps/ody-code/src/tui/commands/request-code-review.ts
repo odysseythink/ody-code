@@ -12,6 +12,8 @@ interface SlashArgs {
   readonly description?: string;
   readonly requirements?: string;
   readonly deep?: boolean;
+  readonly focus?: 'correctness' | 'simplicity';
+  readonly scope?: 'diff' | 'repo';
 }
 
 function parseArgs(args: string): SlashArgs {
@@ -20,7 +22,7 @@ function parseArgs(args: string): SlashArgs {
   for (let i = 0; i < tokens.length; i += 1) {
     const token = tokens[i]!;
     if (token === '--base' || token === '--head' || token === '--pr' || token === '--model' ||
-        token === '--description' || token === '--requirements') {
+        token === '--description' || token === '--requirements' || token === '--focus' || token === '--scope') {
       result[camelFromFlag(token)] = tokens[i + 1];
       i += 1;
     } else if (token === '--deep') {
@@ -95,6 +97,8 @@ export async function handleRequestCodeReviewCommand(
       description: parsed.description,
       requirements: parsed.requirements,
       deep: parsed.deep,
+      focus: parsed.focus,
+      scope: parsed.scope,
     });
 
     if (!report.ok) {
