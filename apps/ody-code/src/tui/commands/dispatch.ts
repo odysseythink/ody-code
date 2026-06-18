@@ -50,6 +50,7 @@ import {
   handleTitleCommand,
 } from './session';
 import { handleUndoCommand } from './undo';
+import { handleSetupCommand } from './setup';
 import { handleMicroagentCommand } from './microagent';
 import { handleWritingPlanCommand } from './writing-plan';
 
@@ -89,6 +90,7 @@ export {
   handleInitCommand,
   handleTitleCommand,
 } from './session';
+export { handleSetupCommand } from './setup';
 export { handleUndoCommand } from './undo';
 export { handleWritingPlanCommand } from './writing-plan';
 
@@ -306,6 +308,9 @@ async function handleBuiltInSlashCommand(
       return;
     case 'init':
       await handleInitCommand(host);
+      return;
+    case 'setup':
+      await handleSetupCommand(host);
       return;
     case 'fork':
       await handleForkCommand(host, args);

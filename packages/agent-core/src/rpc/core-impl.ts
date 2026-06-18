@@ -777,6 +777,10 @@ export class KimiCore implements PromisableMethods<CoreAPI> {
     return this.sessionApi(sessionId).generateAgentsMd(payload);
   }
 
+  async runSetupScript({ sessionId }: SessionScopedPayload<EmptyPayload>): Promise<void> {
+    return this.sessionApi(sessionId).runSetupScript({});
+  }
+
   createGoal({
     sessionId,
     ...payload

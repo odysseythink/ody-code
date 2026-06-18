@@ -417,6 +417,8 @@ export interface SessionAPI extends AgentAPIWithId {
   getMcpStartupMetrics: (payload: EmptyPayload) => McpStartupMetrics;
   reconnectMcpServer: (payload: ReconnectMcpServerPayload) => void;
   generateAgentsMd: (payload: EmptyPayload) => void;
+  /** Run the repository setup script (.ody-code/setup.sh) with force=true. */
+  runSetupScript: (payload: EmptyPayload) => void;
   // Goal lifecycle (session-scoped; no agentId required). CoreAPI adds sessionId.
   createGoal: (payload: CreateGoalPayload) => GoalSnapshot;
   getGoal: (payload: EmptyPayload) => GoalToolResult;

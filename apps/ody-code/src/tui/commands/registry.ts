@@ -200,6 +200,14 @@ export const BUILTIN_SLASH_COMMANDS = [
     hiddenInModes: SPECIAL_MODE_HIDDEN,
   },
   {
+    name: 'setup',
+    aliases: [],
+    description: 'Manually run the repository setup script',
+    priority: 70,
+    availability: 'idle-only',
+    hiddenInModes: SPECIAL_MODE_HIDDEN,
+  },
+  {
     name: 'fork',
     aliases: [],
     description: 'Fork the current session',

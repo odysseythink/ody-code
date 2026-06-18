@@ -109,6 +109,12 @@ export class Session {
     await this.rpc.generateAgentsMd({ sessionId: this.id });
   }
 
+  /** Manually run the repository setup script, even if it already ran at startup. */
+  async setup(): Promise<void> {
+    this.ensureOpen();
+    await this.rpc.runSetupScript({ sessionId: this.id });
+  }
+
   async cancel(): Promise<void> {
     this.ensureOpen();
     await this.rpc.cancel({ sessionId: this.id });

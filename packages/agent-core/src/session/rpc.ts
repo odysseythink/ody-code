@@ -32,6 +32,7 @@ import type {
 import type { PromisableMethods } from '#/utils/types';
 
 import type { Session, SessionMeta } from '.';
+import { runSetupScriptIfNeeded } from './setup-script';
 import { flags } from '../flags';
 import {
   promptMetadataTextFromPayload,
@@ -110,6 +111,12 @@ export class SessionAPIImpl implements PromisableMethods<SessionAPI> {
 
   generateAgentsMd(_payload: EmptyPayload): Promise<void> {
     return this.session.generateAgentsMd();
+  }
+
+  async runSetupScript(_payload: EmptyPayload): Promise<void> {
+    const mainAgent = this.session.agents.get('main');
+    if (mainAgent === undefined) return;
+    await runSetupScriptIfNeeded(this.session, mainAgent, { force: true });
   }
 
   // --- Goal lifecycle (delegates to the session goal store) -------------

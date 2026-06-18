@@ -257,6 +257,11 @@ export class SDKRpcClient {
     return rpc.generateAgentsMd({ sessionId: input.sessionId });
   }
 
+  async runSetupScript(input: SessionIdRpcInput): Promise<void> {
+    const rpc = await this.getRpc();
+    return rpc.runSetupScript({ sessionId: input.sessionId });
+  }
+
   async cancel(input: SessionIdRpcInput): Promise<void> {
     const rpc = await this.getRpc();
     return rpc.cancel({
