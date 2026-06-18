@@ -3921,3 +3921,67 @@ function testAccesses(toolName: string, args: Record<string, unknown>) {
 function canonicalTestPath(path: string): string {
   return posixPath.isAbsolute(path) ? posixPath.normalize(path) : posixPath.resolve('/workspace', path);
 }
+
+describe('PermissionManager.requestSetupScriptApproval', () => {
+  function makePerm(mode: 'manual' | 'auto' | 'yolo', rpc?: any) {
+    const requestApproval = rpc?.requestApproval ?? vi.fn().mockResolvedValue({ decision: 'approved' });
+    const record = vi.fn();
+    const telemetryTrack = vi.fn();
+    const agent = {
+      type: 'main',
+      kaos: createFakeKaos(),
+      rpc: rpc ? { requestApproval } : undefined,
+      telemetry: { track: telemetryTrack },
+      records: { logRecord: record },
+      replayBuilder: { push: vi.fn() },
+      emitStatusUpdated: vi.fn(),
+      hooks: undefined,
+    } as unknown as Agent;
+    const pm = new PermissionManager(agent);
+    pm.setMode(mode);
+    return { pm, agent, requestApproval, telemetryTrack, record };
+  }
+
+  it('yolo mode returns approved immediately', async () => {
+    const { pm } = makePerm('yolo');
+    const result = await pm.requestSetupScriptApproval('/repo/.ody-code/setup.sh');
+    expect(result.decision).toBe('approved');
+  });
+
+  it('auto mode returns approved immediately', async () => {
+    const { pm } = makePerm('auto');
+    const result = await pm.requestSetupScriptApproval('/repo/.ody-code/setup.sh');
+    expect(result.decision).toBe('approved');
+  });
+
+  it('manual mode calls rpc.requestApproval', async () => {
+    const requestApproval = vi.fn().mockResolvedValue({ decision: 'approved' });
+    const { pm } = makePerm('manual', { requestApproval });
+    const result = await pm.requestSetupScriptApproval('/repo/.ody-code/setup.sh');
+    expect(requestApproval).toHaveBeenCalledWith(expect.objectContaining({
+      toolCallId: 'setup-script',
+      toolName: 'Setup Script',
+    }));
+    expect(result.decision).toBe('approved');
+  });
+
+  it('manual mode returns rejected when user denies', async () => {
+    const requestApproval = vi.fn().mockResolvedValue({ decision: 'rejected' });
+    const { pm } = makePerm('manual', { requestApproval });
+    const result = await pm.requestSetupScriptApproval('/repo/.ody-code/setup.sh');
+    expect(result.decision).toBe('rejected');
+  });
+
+  it('falls back to approved when rpc is undefined', async () => {
+    const { pm } = makePerm('manual', undefined);
+    const result = await pm.requestSetupScriptApproval('/repo/.ody-code/setup.sh');
+    expect(result.decision).toBe('approved');
+  });
+
+  it('falls back to approved when requestApproval throws', async () => {
+    const requestApproval = vi.fn().mockRejectedValue(new Error('RPC down'));
+    const { pm } = makePerm('manual', { requestApproval });
+    const result = await pm.requestSetupScriptApproval('/repo/.ody-code/setup.sh');
+    expect(result.decision).toBe('approved');
+  });
+});

@@ -312,4 +312,67 @@ export class PermissionManager {
     }
     return prefix;
   }
+
+  /**
+   * Request user approval for running the repository setup script.
+   * In `yolo`/`auto` modes, approves immediately.
+   * In `manual` mode, constructs an {@link ApprovalRequest} and calls
+   * `this.agent.rpc?.requestApproval`. Falls back to approved when no RPC
+   * is available (headless mode).
+   */
+  async requestSetupScriptApproval(
+    scriptPath: string,
+    signal?: AbortSignal,
+  ): Promise<{ decision: 'approved' | 'rejected' | 'cancelled' }> {
+    if (this.mode === 'yolo' || this.mode === 'auto') {
+      return { decision: 'approved' };
+    }
+
+    if (!this.agent.rpc?.requestApproval) {
+      return { decision: 'approved' };
+    }
+
+    const approvalReq = {
+      turnId: 0,
+      toolCallId: 'setup-script',
+      toolName: 'Setup Script',
+      action: `Run ${scriptPath}`,
+      display: {
+        kind: 'generic' as const,
+        summary: 'Run repository setup script',
+        detail: `The repository contains a setup script at ${scriptPath}. Running it may install dependencies and prepare the environment.`,
+      },
+    };
+
+    try {
+      const response = await this.agent.rpc.requestApproval(approvalReq);
+      // Fire telemetry + hooks consistent with existing tool-approval path
+      this.agent.telemetry.track('permission_approval_result', {
+        policy_name: 'setup_script',
+        tool_name: 'Setup Script',
+        permission_mode: this.mode,
+        result: response.decision === 'approved' ? 'approved' : response.decision,
+        approval_surface: 'generic',
+        duration_ms: 0,
+        session_cache_written: false,
+        has_feedback: false,
+      });
+      void this.agent.hooks?.fireAndForgetTrigger?.('PermissionResult', {
+        matcherValue: 'Setup Script',
+        inputData: {
+          turnId: 0,
+          toolCallId: 'setup-script',
+          toolName: 'Setup Script',
+          action: `Run ${scriptPath}`,
+          decision: response.decision,
+          scope: response.scope,
+          feedback: response.feedback,
+          selectedLabel: response.selectedLabel,
+        },
+      });
+      return response;
+    } catch {
+      return { decision: 'approved' };
+    }
+  }
 }
