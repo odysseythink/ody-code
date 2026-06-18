@@ -1,3 +1,5 @@
+import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { join, relative } from 'node:path';
 import type { CodeReviewFinding, CodeReviewReport } from './types';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -250,4 +252,98 @@ function tagDescription(tag: SimplicityTag): string {
     case 'yagni': return 'Premature abstraction or future-proofing that is not needed now.';
     case 'shrink': return 'Code that works but can be significantly shortened without losing clarity.';
   }
+}
+
+// ─── Audit Scanner ────────────────────────────────────────────────────────────
+
+const MAX_AUDIT_FILES = 200;
+const MAX_SNIPPET_BYTES = 2048;
+const MAX_SNIPPETS = 30;
+
+const EXCLUDED_DIRS = new Set([
+  '.git', 'node_modules', 'dist', 'build', '.next', '.nuxt',
+  '__pycache__', '.venv', 'venv', 'target', 'coverage',
+]);
+
+const SOURCE_EXTENSIONS = new Set([
+  '.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs',
+  '.py', '.rs', '.go', '.rb', '.java', '.kt', '.swift',
+  '.css', '.scss', '.less',
+]);
+
+export function buildAuditDigest(
+  workspaceDir: string,
+  signal?: AbortSignal,
+): RepoAuditDigest {
+  const allFiles: string[] = [];
+
+  function walk(dir: string) {
+    if (signal?.aborted) return;
+    let entries: readonly { isDirectory(): boolean; isFile(): boolean; name: string }[];
+    try {
+      entries = readdirSync(dir, { withFileTypes: true });
+    } catch {
+      return;
+    }
+    for (const entry of entries) {
+      if (signal?.aborted) return;
+      if (entry.isDirectory()) {
+        if (EXCLUDED_DIRS.has(entry.name)) continue;
+        if (entry.name.startsWith('.')) continue;
+        walk(join(dir, entry.name));
+      } else if (entry.isFile()) {
+        const ext = entry.name.includes('.') ? entry.name.slice(entry.name.lastIndexOf('.')) : '';
+        if (SOURCE_EXTENSIONS.has(ext) || entry.name === 'package.json') {
+          allFiles.push(join(dir, entry.name));
+        }
+      }
+    }
+  }
+
+  walk(workspaceDir);
+
+  allFiles.sort((a, b) => {
+    try {
+      return statSync(b).mtimeMs - statSync(a).mtimeMs;
+    } catch {
+      return 0;
+    }
+  });
+
+  const capped = allFiles.slice(0, MAX_AUDIT_FILES);
+  const relativeFiles = capped.map((f) => relative(workspaceDir, f));
+
+  const dependencies: string[] = [];
+  try {
+    const pkgPath = join(workspaceDir, 'package.json');
+    const pkgRaw = readFileSync(pkgPath, 'utf-8');
+    const pkg = JSON.parse(pkgRaw) as { dependencies?: Record<string, string>; devDependencies?: Record<string, string> };
+    for (const key of Object.keys(pkg.dependencies ?? {})) dependencies.push(key);
+    for (const key of Object.keys(pkg.devDependencies ?? {})) dependencies.push(key);
+  } catch {
+    // no package.json or unparseable — ok
+  }
+
+  const snippets: FileSnippet[] = [];
+  for (const file of capped) {
+    if (snippets.length >= MAX_SNIPPETS) break;
+    try {
+      const fd = readFileSync(file, 'utf-8');
+      const bytes = fd.slice(0, MAX_SNIPPET_BYTES);
+      const lines = bytes.split('\n').slice(0, 30).join('\n');
+      if (lines.trim().length > 0) {
+        snippets.push({ path: relative(workspaceDir, file), lines });
+      }
+    } catch {
+      // skip unreadable files
+    }
+  }
+
+  return {
+    workspaceDir,
+    fileCount: capped.length,
+    files: relativeFiles,
+    dependencies,
+    snippets,
+  };
 }

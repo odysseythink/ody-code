@@ -10,6 +10,7 @@ import { resolveWebSearchRuntime } from '#/tools/providers/web-search/runtime';
 import type { PromisableMethods } from '#/utils/types';
 import { getCoreVersion } from '#/version';
 import { fetchDiff as codeReviewFetchDiff } from '#/code-review/diff';
+import { buildAuditDigest } from '#/code-review/simplicity';
 import { createCodeReviewExecutor } from '#/code-review/executor';
 import { resolveCodeReviewModel } from '#/code-review/model-resolver';
 import { createProvider, generate, createUserMessage } from '@odysseythink/kosong';
@@ -490,6 +491,9 @@ export class KimiCore implements PromisableMethods<CoreAPI> {
     const executor = createCodeReviewExecutor({
       cwd: payload.workDir,
       fetchDiff: async (source) => codeReviewFetchDiff(source, payload.workDir),
+      auditScanner: payload.scope === 'repo'
+        ? async (workspaceDir, signal) => buildAuditDigest(workspaceDir, signal)
+        : undefined,
       generate: async (options) => {
         const doGenerate = async (auth?: ProviderRequestAuth): ReturnType<typeof generate> => {
           return generate(
@@ -519,6 +523,25 @@ export class KimiCore implements PromisableMethods<CoreAPI> {
       estimateTokens,
     });
 
+    // ── Telemetry ──
+    const isSimplicity = payload.focus === 'simplicity' || payload.scope === 'repo';
+    const isAudit = payload.scope === 'repo';
+    if (isSimplicity) {
+      if (isAudit) {
+        this.telemetry.track('simplicity_audit_started', {
+          scope: 'repo',
+          file_count: 0,
+        });
+      } else {
+        this.telemetry.track('simplicity_review_started', {
+          scope: 'diff',
+          focus: 'simplicity',
+          has_description: payload.description !== undefined,
+          has_requirements: payload.requirements !== undefined,
+        });
+      }
+    }
+
     const report = await executor.review({
       source: payload.source,
       modelAlias: resolvedModel,
@@ -526,7 +549,26 @@ export class KimiCore implements PromisableMethods<CoreAPI> {
       requirements: payload.requirements,
       deep: payload.deep,
       timeoutMs: payload.timeoutMs,
+      focus: payload.focus,
+      scope: payload.scope,
     });
+
+    if (isSimplicity) {
+      if (report.ok) {
+        const evt = isAudit ? 'simplicity_audit_completed' : 'simplicity_review_completed';
+        this.telemetry.track(evt, {
+          scope: isAudit ? 'repo' : 'diff',
+          finding_count: report.findings.length,
+          ok: true,
+        });
+      } else {
+        const evt = isAudit ? 'simplicity_audit_failed' : 'simplicity_review_failed';
+        this.telemetry.track(evt, {
+          scope: isAudit ? 'repo' : 'diff',
+          reason: report.note ?? 'unknown',
+        });
+      }
+    }
 
     return {
       ok: report.ok,

@@ -93,3 +93,14 @@ export type {
   CodeReviewReport,
   CodeReviewFinding,
 } from './code-review/types';
+export {
+  parseSimplicityReport,
+  buildSimplicityReviewPrompt,
+  buildSimplicityAuditPrompt,
+  buildAuditDigest,
+} from './code-review/simplicity';
+export type {
+  SimplicityTag,
+  RepoAuditDigest,
+  FileSnippet,
+} from './code-review/simplicity';
