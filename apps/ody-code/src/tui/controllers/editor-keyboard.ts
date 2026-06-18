@@ -122,8 +122,8 @@ export class EditorKeyboardController {
         return;
       }
       const mode = host.state.appState.sessionMode;
-      if (mode === 'office-hours') {
-        // Office-hours is a single-mode session; mode cycling is disabled.
+      if (mode === 'office-hours' || mode === 'game-design') {
+        // Restricted single-mode sessions; mode cycling is disabled.
         return;
       }
       if (mode === 'normal') {
