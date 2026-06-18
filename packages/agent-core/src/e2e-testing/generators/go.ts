@@ -12,6 +12,7 @@ import type {
   TestSuiteResult,
 } from '../types';
 import type { ResolvedE2EConfig } from '../config';
+import { RecursiveImpactAnalyzer } from '../recursive-impact-analyzer';
 
 type GoKind = 'http-server' | 'cli' | 'generic';
 
@@ -234,9 +235,17 @@ export class GoGenerator implements E2ETestGenerator {
     return { language: 'go', framework: detection.framework, testTool: 'go test', root };
   }
 
-  analyzeImpact(changedFiles: string[], config: ResolvedE2EConfig): ImpactAnalysisResult {
+  analyzeImpact(changedFiles: string[], config: ResolvedE2EConfig, projectRoot?: string): ImpactAnalysisResult {
+    const filesToAnalyze = config.recursiveAnalysisEnabled
+      ? new RecursiveImpactAnalyzer().analyze(
+          changedFiles,
+          projectRoot ?? process.cwd(),
+          'go',
+          { maxDepth: config.maxRecursiveDepth },
+        )
+      : changedFiles;
     const packages = new Set<string>();
-    for (const file of changedFiles) {
+    for (const file of filesToAnalyze) {
       const normalized = file.replace(/\\/g, '/');
       if (!normalized.endsWith('.go') || normalized.endsWith('_test.go')) continue;
       const slash = normalized.lastIndexOf('/');

@@ -422,6 +422,7 @@ export class NodejsJestGenerator implements E2ETestGenerator {
   analyzeImpact(
     changedFiles: string[],
     config: ResolvedE2EConfig,
+    _projectRoot?: string,
   ): ImpactAnalysisResult {
     const packages = new Set<string>();
     for (const file of changedFiles) {

@@ -30,7 +30,7 @@ const config: ResolvedE2EConfig = {
   enabled: true, strategy: 'smart', criticalTools: [], failurePolicy: 'warn',
   maxConcurrency: 4, testTimeout: 30000,
   reportDir: '.ody-code/test-reports', generatedTestDir: '.ody-code/test-generated/e2e',
-  recursiveAnalysisEnabled: true, maxRecursiveDepth: 3,
+  recursiveAnalysisEnabled: false, maxRecursiveDepth: 3,
   cacheEnabled: true, cacheDir: '.ody-code/e2e-cache', cacheTtlDays: 7, cacheMaxEntries: 20,
 };
 

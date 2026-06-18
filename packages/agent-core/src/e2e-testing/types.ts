@@ -48,6 +48,7 @@ export interface E2ETestGenerator {
   analyzeImpact(
     changedFiles: string[],
     config: ResolvedE2EConfig,
+    projectRoot?: string,
   ): ImpactAnalysisResult;
   generateTestsForFeature(feature: Feature, outputDir: string): Promise<TestFile[]>;
   /**

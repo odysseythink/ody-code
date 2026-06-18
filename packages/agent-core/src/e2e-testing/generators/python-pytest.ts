@@ -421,7 +421,7 @@ export class PythonPytestGenerator implements E2ETestGenerator {
     return { language: 'python', framework: detection.framework, testTool: 'pytest', root };
   }
 
-  analyzeImpact(changedFiles: string[], config: ResolvedE2EConfig): ImpactAnalysisResult {
+  analyzeImpact(changedFiles: string[], config: ResolvedE2EConfig, _projectRoot?: string): ImpactAnalysisResult {
     const packages = new Set<string>();
     for (const file of changedFiles) {
       const normalized = file.replace(/\\/g, '/');

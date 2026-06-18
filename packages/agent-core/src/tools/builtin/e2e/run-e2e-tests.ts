@@ -59,7 +59,7 @@ export class RunE2ETestsTool implements BuiltinTool<RunE2ETestsInput> {
       return { output: `No E2E generator found for project at ${projectRoot}.` };
     }
 
-    const impact = generator.analyzeImpact(changedFiles, config);
+    const impact = generator.analyzeImpact(changedFiles, config, projectRoot);
     if (input.toolId) {
       impact.affectedTools = impact.affectedTools.filter(t => t.toolId === input.toolId);
     }

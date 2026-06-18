@@ -10,6 +10,7 @@ import type {
 } from './types';
 import type { ResolvedE2EConfig } from './config';
 import { ImpactAnalyzer } from './impact-analyzer';
+import { RecursiveImpactAnalyzer } from './recursive-impact-analyzer';
 import { dirname, join, relative } from 'pathe';
 
 function timestamp(): string {
@@ -82,8 +83,16 @@ export class TypeScriptVitestGenerator implements E2ETestGenerator {
     }
   }
 
-  analyzeImpact(changedFiles: string[], config: ResolvedE2EConfig): ImpactAnalysisResult {
-    return ImpactAnalyzer.analyze(changedFiles, config);
+  analyzeImpact(changedFiles: string[], config: ResolvedE2EConfig, projectRoot?: string): ImpactAnalysisResult {
+    const filesToAnalyze = config.recursiveAnalysisEnabled
+      ? new RecursiveImpactAnalyzer().analyze(
+          changedFiles,
+          projectRoot ?? process.cwd(),
+          'typescript',
+          { maxDepth: config.maxRecursiveDepth },
+        )
+      : changedFiles;
+    return ImpactAnalyzer.analyze(filesToAnalyze, config);
   }
 
   resolveGeneratedTestDir(config: ResolvedE2EConfig): string {
