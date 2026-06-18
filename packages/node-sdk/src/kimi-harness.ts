@@ -216,6 +216,8 @@ export class KimiHarness {
     readonly deep?: boolean | undefined;
     readonly timeoutMs?: number | undefined;
     readonly workDir?: string | undefined;
+    readonly focus?: 'correctness' | 'simplicity' | undefined;
+    readonly scope?: 'diff' | 'repo' | undefined;
   }): Promise<CodeReviewReport> {
     const result = await this.rpc.requestCodeReview({
       ...input,

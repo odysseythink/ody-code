@@ -16,6 +16,8 @@ interface RequestCodeReviewCLIOptions {
   requirements?: string | undefined;
   deep?: boolean | undefined;
   timeout?: number | undefined;
+  focus?: 'correctness' | 'simplicity' | undefined;
+  scope?: 'diff' | 'repo' | undefined;
 }
 
 export interface RequestCodeReviewDeps {
@@ -32,13 +34,27 @@ export function validateRequestCodeReviewOptions(
     throw new OptionConflictError('Cannot combine --pr with --base/--head.');
   }
 
-  if (opts.pr === undefined && opts.base === undefined && opts.head === undefined) {
-    opts.base = 'HEAD~1';
-    opts.head = 'HEAD';
+  if (opts.scope === 'repo' && (opts.base !== undefined || opts.head !== undefined || opts.pr !== undefined)) {
+    throw new OptionConflictError('Cannot combine --scope repo with --base/--head/--pr.');
   }
 
-  if (opts.base !== undefined && opts.head === undefined) {
-    opts.head = 'HEAD';
+  if (opts.focus !== undefined && opts.focus !== 'correctness' && opts.focus !== 'simplicity') {
+    throw new OptionConflictError(`Invalid --focus value: ${opts.focus}. Must be 'correctness' or 'simplicity'.`);
+  }
+
+  if (opts.scope !== undefined && opts.scope !== 'diff' && opts.scope !== 'repo') {
+    throw new OptionConflictError(`Invalid --scope value: ${opts.scope}. Must be 'diff' or 'repo'.`);
+  }
+
+  if (opts.scope !== 'repo') {
+    if (opts.pr === undefined && opts.base === undefined && opts.head === undefined) {
+      opts.base = 'HEAD~1';
+      opts.head = 'HEAD';
+    }
+
+    if (opts.base !== undefined && opts.head === undefined) {
+      opts.head = 'HEAD';
+    }
   }
 
   if (opts.timeout !== undefined) {
@@ -85,6 +101,8 @@ export async function handleRequestCodeReview(
       requirements: opts.requirements,
       deep: opts.deep,
       timeoutMs: opts.timeout !== undefined ? opts.timeout * 1000 : undefined,
+      focus: opts.focus,
+      scope: opts.scope,
     });
 
     if (!report.ok) {
@@ -114,6 +132,8 @@ export function registerRequestCodeReviewCommand(parent: Command): void {
     .option('-r, --requirements <text>', 'Requirements or plan the changes should meet.')
     .option('--deep', 'Dispatch a reviewer subagent for deeper analysis.', false)
     .option('-t, --timeout <seconds>', 'Timeout for the review in seconds.', (v: string) => parseInt(v, 10))
+    .option('--focus <focus>', "Review focus: correctness (default) or simplicity (anti-over-engineering).")
+    .option('--scope <scope>', 'Review scope: diff (default) or repo (whole-workspace audit).')
     .action(async (opts: RequestCodeReviewCLIOptions) => {
       const identity = createKimiCodeHostIdentity();
       const harness = new KimiHarness({ identity });
