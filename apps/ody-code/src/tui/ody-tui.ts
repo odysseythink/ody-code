@@ -311,9 +311,14 @@ export class OdyTUI {
     const builtins = sortSlashCommands(BUILTIN_SLASH_COMMANDS)
       .filter((command) => isCommandVisibleInMode(command, mode))
       .filter((command) => isExperimentalFlagEnabled(command.experimentalFlag));
-    // Game-design and office-hours are restricted modes: only built-in /exit is exposed.
+    // Office-hours is a restricted mode: only built-in /exit is exposed.
+    // Game-design exposes only its own built-in skills as slash commands.
     const skillCommands =
-      mode === 'office-hours' || mode === 'game-design' ? [] : this.skillCommands;
+      mode === 'office-hours'
+        ? []
+        : mode === 'game-design'
+          ? this.skillCommands.filter((cmd) => cmd.name.startsWith('skill:game-design/'))
+          : this.skillCommands;
     return [...builtins, ...skillCommands];
   }
 

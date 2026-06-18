@@ -296,7 +296,7 @@ export const BUILTIN_SLASH_COMMANDS = [
     description: 'Request a code review of the current changes.',
     priority: 80,
     availability: 'idle-only',
-    hiddenInModes: ['plan', 'design', 'office-hours'],
+    hiddenInModes: ['plan', 'design', 'office-hours', 'game-design'],
   },
   {
     name: 'receive-code-review',
@@ -304,7 +304,7 @@ export const BUILTIN_SLASH_COMMANDS = [
     description: 'Enter receiving-code-review mode: switch model and load the receiving skill.',
     priority: 80,
     availability: 'idle-only',
-    hiddenInModes: ['plan', 'design', 'office-hours'],
+    hiddenInModes: ['plan', 'design', 'office-hours', 'game-design'],
   },
   {
     name: 'exit',
