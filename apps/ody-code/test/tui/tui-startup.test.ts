@@ -56,6 +56,7 @@ function makeStartupInput(
       auto: false,
       sessionMode: 'normal',
       officeHours: false,
+      gameDesign: false,
       model: undefined,
       outputFormat: undefined,
       prompt: undefined,
@@ -75,6 +76,7 @@ function makeStartupInput(
     workDir: "/tmp/proj-a",
     resolvedTheme,
     officeHours: false,
+    gameDesign: false,
   };
 }
 

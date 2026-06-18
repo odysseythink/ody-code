@@ -12,6 +12,7 @@ import { SYSTEMATIC_DEBUGGING_SKILL } from './systematic-debugging';
 import { TEST_DRIVEN_DEVELOPMENT_SKILL } from './test-driven-development';
 import { USING_GIT_WORKTREES_SKILL } from './using-git-worktrees';
 import { VERIFICATION_BEFORE_COMPLETION_SKILL } from './verification-before-completion';
+import { registerGameDesignSkills } from './game-design-skills';
 
 export function registerBuiltinSkills(registry: SkillRegistry): void {
   registry.registerBuiltinSkill(DISPATCHING_PARALLEL_AGENTS_SKILL);
@@ -27,6 +28,7 @@ export function registerBuiltinSkills(registry: SkillRegistry): void {
   registry.registerBuiltinSkill(TEST_DRIVEN_DEVELOPMENT_SKILL);
   registry.registerBuiltinSkill(USING_GIT_WORKTREES_SKILL);
   registry.registerBuiltinSkill(VERIFICATION_BEFORE_COMPLETION_SKILL);
+  registerGameDesignSkills(registry);
 }
 
 export {

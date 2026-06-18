@@ -118,6 +118,8 @@ export class KimiHarness {
       await session.setSessionMode('design');
     } else if (sessionMode === 'office-hours') {
       await session.setSessionMode('office-hours');
+    } else if (sessionMode === 'game-design') {
+      await session.setSessionMode('game-design');
     }
     this.trackSessionStarted(summary.id, false);
     this.trackSessionEvent(session.id, 'session_new');

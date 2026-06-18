@@ -80,6 +80,12 @@ export function createProgram(
     )
     .addOption(
       new Option(
+        '--game-design',
+        'Start Ody Code in Game Design mode. Guided game design workflow based on the 100 Principles of Game Design. Exits after the design doc is written.',
+      ).conflicts(['prompt', 'session', 'continue', 'sessionMode', 'yolo', 'auto', 'officeHours']),
+    )
+    .addOption(
+      new Option(
         '-L, --login <provider-type>',
         'Interactive login for a supported LLM provider (deepseek, openai, anthropic, kimi, openai_responses).',
       ),
@@ -125,6 +131,7 @@ export function createProgram(
       auto: autoValue,
       sessionMode: (raw['sessionMode'] as 'normal' | 'plan' | 'design' | 'office-hours') ?? 'normal',
       officeHours: (raw['officeHours'] as boolean) ?? false,
+      gameDesign: (raw['gameDesign'] as boolean) ?? false,
       model: raw['model'] as string | undefined,
       outputFormat: raw['outputFormat'] as CLIOptions['outputFormat'],
       prompt: raw['prompt'] as string | undefined,

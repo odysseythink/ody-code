@@ -1,0 +1,1 @@
+Record a learning insight discovered during game design: type (operational/eureka), key, insight text, and confidence score.

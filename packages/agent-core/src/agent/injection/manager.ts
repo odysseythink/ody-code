@@ -4,6 +4,7 @@ import { DesignModeInjector } from './design-mode';
 import { GoalInjector } from './goal';
 import type { DynamicInjector } from './injector';
 import { OfficeHoursInjector } from './office-hours';
+import { GameDesignInjector } from './game-design';
 import { PermissionModeInjector } from './permission-mode';
 import { PluginSessionStartInjector } from './plugin-session-start';
 import { PlanModeInjector } from './plan-mode';
@@ -26,6 +27,7 @@ export class InjectionManager {
       new PlanModeInjector(agent),
       new DesignModeInjector(agent),
       new OfficeHoursInjector(agent),
+      new GameDesignInjector(agent),
       new PermissionModeInjector(agent),
       ...(flags.enabled('repo-knowledge') ? [new KnowledgeMicroagentInjector(agent)] : []),
     ];

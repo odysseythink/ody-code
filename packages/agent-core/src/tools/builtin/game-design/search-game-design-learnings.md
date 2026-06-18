@@ -1,0 +1,1 @@
+Search past game design learnings, optionally filtered by branch. Returns the most recent entries.

@@ -1,0 +1,1 @@
+Ensure the project's AGENTS.md contains a ## Skill routing section for game-design mode. Creates or updates AGENTS.md as needed.

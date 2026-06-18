@@ -42,7 +42,7 @@ export interface SystemPromptContext {
   readonly skills?: SkillRegistry | string;
   readonly additionalDirsInfo?: string;
   readonly roleAdditional?: string;
-  readonly sessionMode?: 'normal' | 'plan' | 'design' | 'office-hours';
+  readonly sessionMode?: 'normal' | 'plan' | 'design' | 'office-hours' | 'game-design';
 }
 
 export type SystemPromptRenderer = (context: SystemPromptContext) => string;

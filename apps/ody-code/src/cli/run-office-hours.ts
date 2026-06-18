@@ -65,6 +65,7 @@ export async function runOfficeHours(opts: CLIOptions, version: string): Promise
     startupNotice: configWarning,
     resolvedTheme,
     officeHours: true,
+    gameDesign: false,
   });
 
   initializeCliTelemetry({

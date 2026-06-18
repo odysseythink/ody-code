@@ -143,6 +143,7 @@ export interface OdyTUIStartupInput {
   readonly resolvedTheme?: ResolvedTheme;
   readonly authIntent?: { readonly kind: 'login' | 'logout'; readonly providerType: string };
   readonly officeHours: boolean;
+  readonly gameDesign: boolean;
 }
 
 type EffectiveActivityPaneMode = ActivityPaneMode | 'idle' | 'session';
@@ -158,7 +159,11 @@ function createInitialAppState(input: OdyTUIStartupInput): AppState {
     workDir: input.workDir,
     sessionId: '',
     permissionMode: startupPermission,
-    sessionMode: input.officeHours ? 'office-hours' : input.cliOptions.sessionMode,
+    sessionMode: input.gameDesign
+      ? 'game-design'
+      : input.officeHours
+        ? 'office-hours'
+        : input.cliOptions.sessionMode,
     thinking: false,
     contextUsage: 0,
     contextTokens: 0,
@@ -255,6 +260,7 @@ export class OdyTUI {
         auto: startupInput.cliOptions.auto,
         sessionMode: startupInput.cliOptions.sessionMode,
         officeHours: startupInput.officeHours,
+        gameDesign: startupInput.gameDesign,
         model: startupInput.cliOptions.model,
         startupNotice: startupInput.startupNotice,
         authIntent: startupInput.authIntent,
@@ -305,8 +311,9 @@ export class OdyTUI {
     const builtins = sortSlashCommands(BUILTIN_SLASH_COMMANDS)
       .filter((command) => isCommandVisibleInMode(command, mode))
       .filter((command) => isExperimentalFlagEnabled(command.experimentalFlag));
-    // Office-hours is a restricted mode: only built-in `/exit` is exposed.
-    const skillCommands = mode === 'office-hours' ? [] : this.skillCommands;
+    // Game-design and office-hours are restricted modes: only built-in /exit is exposed.
+    const skillCommands =
+      mode === 'office-hours' || mode === 'game-design' ? [] : this.skillCommands;
     return [...builtins, ...skillCommands];
   }
 
@@ -472,11 +479,13 @@ export class OdyTUI {
       model: startup.model,
       permission: startup.auto ? 'auto' : startup.yolo ? 'yolo' : undefined,
       sessionMode:
-        startup.officeHours
-          ? 'office-hours'
-          : startup.sessionMode === 'normal'
-            ? undefined
-            : startup.sessionMode,
+        startup.gameDesign
+          ? 'game-design'
+          : startup.officeHours
+            ? 'office-hours'
+            : startup.sessionMode === 'normal'
+              ? undefined
+              : startup.sessionMode,
     };
 
     try {
@@ -535,7 +544,9 @@ export class OdyTUI {
       return false;
     }
 
-    if (session !== undefined && startup.officeHours) {
+    if (session !== undefined && startup.gameDesign) {
+      await session.setSessionMode('game-design');
+    } else if (session !== undefined && startup.officeHours) {
       await session.setSessionMode('office-hours');
     }
 
@@ -1037,13 +1048,16 @@ export class OdyTUI {
     }
 
     const isOfficeHours = this.state.appState.sessionMode === 'office-hours';
+    const isGameDesign = this.state.appState.sessionMode === 'game-design';
     this.setAppState({
       sessionId: session.id,
       model: status.model ?? '',
       thinking: status.thinkingLevel !== 'off',
       permissionMode: status.permission,
-      sessionMode: isOfficeHours ? 'office-hours' : (status.sessionMode ?? 'normal'),
-      sessionModeFilePath: isOfficeHours ? null : (sessionModeFilePath ?? null),
+      sessionMode: isOfficeHours ? 'office-hours'
+        : isGameDesign ? 'game-design'
+        : (status.sessionMode ?? 'normal'),
+      sessionModeFilePath: (isOfficeHours || isGameDesign) ? null : (sessionModeFilePath ?? null),
       contextTokens: status.contextTokens,
       maxContextTokens: status.maxContextTokens,
       contextUsage: status.contextUsage,
@@ -1739,7 +1753,8 @@ export class OdyTUI {
   showHelpPanel(): void {
     this.state.activeDialog = 'help';
     const shortcuts =
-      this.state.appState.sessionMode === 'office-hours'
+      this.state.appState.sessionMode === 'office-hours' ||
+      this.state.appState.sessionMode === 'game-design'
         ? DEFAULT_KEYBOARD_SHORTCUTS.filter((s) => !s.description.toLowerCase().includes('cycle mode'))
         : DEFAULT_KEYBOARD_SHORTCUTS;
     this.mountEditorReplacement(

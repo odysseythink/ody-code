@@ -136,6 +136,7 @@ function defaultOpts(): CLIOptions {
     auto: false,
     sessionMode: 'normal',
     officeHours: false,
+    gameDesign: false,
     model: undefined,
     outputFormat: undefined,
     prompt: undefined,

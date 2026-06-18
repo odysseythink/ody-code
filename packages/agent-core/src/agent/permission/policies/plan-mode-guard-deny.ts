@@ -14,13 +14,16 @@ export class PlanModeGuardDenyPermissionPolicy implements PermissionPolicy {
 
     const kind = this.agent.sessionMode.kind;
     const isOfficeHours = kind === 'office-hours';
+    const isGameDesign = kind === 'game-design';
     const isDesign = kind === 'design';
-    const modeLabel = isOfficeHours ? 'office-hours' : isDesign ? 'design' : 'plan';
+    const modeLabel = isOfficeHours ? 'office-hours' : isGameDesign ? 'game-design' : isDesign ? 'design' : 'plan';
     const exitTool = isOfficeHours
       ? 'ExitOfficeHoursMode'
-      : isDesign
-        ? 'ExitDesignMode'
-        : 'ExitPlanMode';
+      : isGameDesign
+        ? 'ExitGameDesignMode'
+        : isDesign
+          ? 'ExitDesignMode'
+          : 'ExitPlanMode';
     const toolName = context.toolCall.name;
 
     if (toolName === 'Write' || toolName === 'Edit') {
@@ -68,8 +71,13 @@ function writesOnlyPlanFileset(context: PermissionPolicyContext, agent: Agent): 
 }
 
 function modeWriteDeniedMessage(modeLabel: string, sessionModeFilePath: string | null): string {
-  const Mode = modeLabel.charAt(0).toUpperCase() + modeLabel.slice(1);
-  const exitTool = modeLabel === 'office-hours' ? 'ExitOfficeHoursMode' : modeLabel === 'design' ? 'ExitDesignMode' : 'ExitPlanMode';
+  const Mode = modeLabel === 'game-design'
+    ? 'Game-design'
+    : modeLabel.charAt(0).toUpperCase() + modeLabel.slice(1);
+  const exitTool = modeLabel === 'office-hours' ? 'ExitOfficeHoursMode'
+    : modeLabel === 'game-design' ? 'ExitGameDesignMode'
+    : modeLabel === 'design' ? 'ExitDesignMode'
+    : 'ExitPlanMode';
   if (sessionModeFilePath === null) {
     return (
       `${Mode} mode is active, but no ${modeLabel} file has been selected yet. ` +

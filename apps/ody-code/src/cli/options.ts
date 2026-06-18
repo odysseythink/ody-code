@@ -8,6 +8,7 @@ export interface CLIOptions {
   auto: boolean;
   sessionMode: 'normal' | 'plan' | 'design' | 'office-hours';
   officeHours: boolean;
+  gameDesign: boolean;
   model: string | undefined;
   outputFormat: PromptOutputFormat | undefined;
   prompt: string | undefined;
@@ -88,5 +89,28 @@ export function validateOptions(opts: CLIOptions): ValidatedOptions {
     }
     return { options: opts, uiMode: 'shell' };
   }
+
+  if (opts.gameDesign) {
+    if (opts.prompt !== undefined) {
+      throw new OptionConflictError('Cannot combine --game-design with --prompt.');
+    }
+    if (opts.session !== undefined) {
+      throw new OptionConflictError('Cannot combine --game-design with --session.');
+    }
+    if (opts.continue) {
+      throw new OptionConflictError('Cannot combine --game-design with --continue.');
+    }
+    if (opts.sessionMode !== 'normal') {
+      throw new OptionConflictError('Cannot combine --game-design with --session-mode.');
+    }
+    if (opts.yolo || opts.auto) {
+      throw new OptionConflictError('Permission mode is fixed to manual in game-design mode.');
+    }
+    if (opts.officeHours) {
+      throw new OptionConflictError('Cannot combine --game-design with --office-hours.');
+    }
+    return { options: opts, uiMode: 'shell' };
+  }
+
   return { options: opts, uiMode: promptMode ? 'print' : 'shell' };
 }

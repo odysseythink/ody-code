@@ -20,7 +20,7 @@ import {
  * read-only-with-one-writable-file machinery; only the prompts, the output
  * directory and the surfacing labels differ.
  */
-export type SessionModeKind = 'plan' | 'design' | 'office-hours';
+export type SessionModeKind = 'plan' | 'design' | 'office-hours' | 'game-design';
 
 export type SessionModeData = null | {
   id: string;
@@ -669,7 +669,11 @@ export class SessionMode {
   }
 
   private async resolveSessionModeDirectory(kind: SessionModeKind): Promise<{ dir: string; isProjectScoped: boolean }> {
-    const subdir = kind === 'office-hours' ? 'office-hours' : kind === 'design' ? 'designs' : 'plans';
+    const subdir =
+      kind === 'office-hours' ? 'office-hours' :
+      kind === 'game-design' ? 'game-design' :
+      kind === 'design' ? 'designs' :
+      'plans';
     const projectDir = join(this.agent.config.cwd, '.ody-code', subdir);
     try {
       await this.agent.kaos.mkdir(projectDir, { parents: true, existOk: true });

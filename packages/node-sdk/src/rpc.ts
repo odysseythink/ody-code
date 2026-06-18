@@ -98,7 +98,7 @@ export interface SetSessionPermissionRpcInput extends SessionIdRpcInput {
 }
 
 export interface SetSessionModeRpcInput extends SessionIdRpcInput {
-  readonly mode: 'plan' | 'design' | 'office-hours' | 'normal';
+  readonly mode: 'plan' | 'design' | 'office-hours' | 'game-design' | 'normal';
   readonly sourceFilePath?: string;
 }
 
@@ -436,7 +436,7 @@ export class SDKRpcClient {
     };
   }
 
-  async listSkills(input: SessionIdRpcInput & { sessionMode?: 'normal' | 'plan' | 'design' | 'office-hours' }): Promise<readonly SkillSummary[]> {
+  async listSkills(input: SessionIdRpcInput & { sessionMode?: 'normal' | 'plan' | 'design' | 'office-hours' | 'game-design' }): Promise<readonly SkillSummary[]> {
     const rpc = await this.getRpc();
     return rpc.listSkills({ sessionId: input.sessionId, sessionMode: input.sessionMode });
   }

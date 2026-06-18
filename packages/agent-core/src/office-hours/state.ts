@@ -183,3 +183,135 @@ export function selectResources(
   }
   return result;
 }
+
+// ── Game-Design State Store ──────────────────────────────────────────────
+
+export interface GameDesignProfileEntry {
+  readonly date: string;
+  readonly mode: 'startup' | 'builder';
+  readonly projectSlug: string;
+  readonly pillars: string;
+  readonly audience: string;
+  readonly platform: string;
+  readonly genre: string;
+  readonly signals: readonly string[];
+  readonly designDoc: string;
+}
+
+export type GameDesignTier = 'introduction' | 'welcome_back' | 'regular' | 'inner_circle';
+
+export interface GameDesignLearningEntry {
+  readonly ts: string;
+  readonly skill: 'game-design';
+  readonly type: 'operational' | 'eureka';
+  readonly key: string;
+  readonly insight: string;
+  readonly confidence: number;
+  readonly source: 'observed';
+  readonly branch?: string;
+}
+
+export interface GameDesignStateStore {
+  appendProfile(entry: GameDesignProfileEntry): Promise<void>;
+  readProfile(): Promise<readonly GameDesignProfileEntry[]>;
+  appendLearning(entry: GameDesignLearningEntry): Promise<void>;
+  searchLearnings(options: {
+    limit: number;
+    branch?: string;
+  }): Promise<readonly GameDesignLearningEntry[]>;
+  getSessionSummary(): Promise<{ sessionCount: number; tier: GameDesignTier }>;
+}
+
+export class FileSystemGameDesignStateStore implements GameDesignStateStore {
+  private readonly baseDir: string;
+
+  constructor(
+    private readonly kaos: Kaos,
+    projectDir: string,
+  ) {
+    this.baseDir = join(projectDir, '.ody-code', 'game-design');
+  }
+
+  private profilePath(): string {
+    return join(this.baseDir, 'builder-profile.jsonl');
+  }
+
+  private learningsPath(): string {
+    return join(this.baseDir, 'learnings.jsonl');
+  }
+
+  private async ensureDir(): Promise<void> {
+    await this.kaos.mkdir(this.baseDir, { parents: true, existOk: true });
+  }
+
+  async appendProfile(entry: GameDesignProfileEntry): Promise<void> {
+    await this.ensureDir();
+    await this.kaos.writeText(this.profilePath(), JSON.stringify(entry) + '\n', {
+      mode: 'a',
+    });
+  }
+
+  async readProfile(): Promise<readonly GameDesignProfileEntry[]> {
+    try {
+      const text = await this.kaos.readText(this.profilePath());
+      return text
+        .split('\n')
+        .filter((line) => line.trim().length > 0)
+        .map((line) => JSON.parse(line) as GameDesignProfileEntry);
+    } catch {
+      return [];
+    }
+  }
+
+  async appendLearning(entry: GameDesignLearningEntry): Promise<void> {
+    await this.ensureDir();
+    await this.kaos.writeText(this.learningsPath(), JSON.stringify(entry) + '\n', {
+      mode: 'a',
+    });
+  }
+
+  async searchLearnings(options: {
+    limit: number;
+    branch?: string;
+  }): Promise<readonly GameDesignLearningEntry[]> {
+    try {
+      const text = await this.kaos.readText(this.learningsPath());
+      let entries = text
+        .split('\n')
+        .filter((line) => line.trim().length > 0)
+        .map((line) => JSON.parse(line) as GameDesignLearningEntry);
+      if (options.branch !== undefined) {
+        entries = entries.filter((e) => e.branch === options.branch);
+      }
+      return entries.slice(-options.limit).reverse();
+    } catch {
+      return [];
+    }
+  }
+
+  async getSessionSummary(): Promise<{ sessionCount: number; tier: GameDesignTier }> {
+    const entries = await this.readProfile();
+    const sessionCount = entries.length;
+    if (sessionCount === 0) return { sessionCount, tier: 'introduction' };
+    if (sessionCount <= 3) return { sessionCount, tier: 'welcome_back' };
+    if (sessionCount <= 7) return { sessionCount, tier: 'regular' };
+    return { sessionCount, tier: 'inner_circle' };
+  }
+}
+
+export class NoopGameDesignStateStore implements GameDesignStateStore {
+  async appendProfile(_entry: GameDesignProfileEntry): Promise<void> {}
+  async readProfile(): Promise<readonly GameDesignProfileEntry[]> {
+    return [];
+  }
+  async appendLearning(_entry: GameDesignLearningEntry): Promise<void> {}
+  async searchLearnings(_options: {
+    limit: number;
+    branch?: string;
+  }): Promise<readonly GameDesignLearningEntry[]> {
+    return [];
+  }
+  async getSessionSummary(): Promise<{ sessionCount: number; tier: GameDesignTier }> {
+    return { sessionCount: 0, tier: 'introduction' };
+  }
+}

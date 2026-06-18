@@ -124,17 +124,19 @@ describe('built-in slash command registry', () => {
   });
 
   it('declares hiddenInModes for mode-specific commands', () => {
-    expect(findBuiltInSlashCommand('plan')?.hiddenInModes).toEqual(['plan', 'office-hours']);
-    expect(findBuiltInSlashCommand('design')?.hiddenInModes).toEqual(['design', 'office-hours']);
+    expect(findBuiltInSlashCommand('plan')?.hiddenInModes).toEqual(['plan', 'office-hours', 'game-design']);
+    expect(findBuiltInSlashCommand('design')?.hiddenInModes).toEqual(['design', 'office-hours', 'game-design']);
     expect(findBuiltInSlashCommand('design-review')?.hiddenInModes).toEqual([
       'plan',
       'normal',
       'office-hours',
+      'game-design',
     ]);
     expect(findBuiltInSlashCommand('plan-review')?.hiddenInModes).toEqual([
       'design',
       'normal',
       'office-hours',
+      'game-design',
     ]);
   });
 

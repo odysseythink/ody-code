@@ -64,6 +64,7 @@ function makeStartupInput(officeHours = false): OdyTUIStartupInput {
       auto: false,
       sessionMode: officeHours ? 'office-hours' : 'normal',
       officeHours,
+      gameDesign: false,
       model: undefined,
       outputFormat: undefined,
       prompt: undefined,
@@ -81,6 +82,7 @@ function makeStartupInput(officeHours = false): OdyTUIStartupInput {
     workDir: '/tmp/proj-a',
     resolvedTheme: 'dark',
     officeHours,
+    gameDesign: false,
   };
 }
 

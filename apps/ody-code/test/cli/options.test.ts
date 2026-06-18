@@ -337,6 +337,45 @@ describe('CLI options parsing', () => {
     });
   });
 
+  describe('--game-design', () => {
+    it('defaults gameDesign to false', () => {
+      expect(parse([]).gameDesign).toBe(false);
+    });
+
+    it('--game-design sets gameDesign to true', () => {
+      expect(parse(['--game-design']).gameDesign).toBe(true);
+    });
+
+    it('--game-design forces uiMode to shell', () => {
+      const opts = parse(['--game-design']);
+      expect(validateOptions(opts).uiMode).toBe('shell');
+    });
+
+    it('rejects --game-design combined with --prompt', () => {
+      expect(() => parse(['--game-design', '--prompt', 'x'])).toThrow(CommanderError);
+    });
+
+    it('rejects --game-design combined with --session', () => {
+      expect(() => parse(['--game-design', '--session', 'abc'])).toThrow(CommanderError);
+    });
+
+    it('rejects --game-design combined with --continue', () => {
+      expect(() => parse(['--game-design', '--continue'])).toThrow(CommanderError);
+    });
+
+    it('rejects --game-design combined with --session-mode', () => {
+      expect(() => parse(['--game-design', '--session-mode', 'plan'])).toThrow(CommanderError);
+    });
+
+    it('rejects --game-design combined with --yolo', () => {
+      expect(() => parse(['--game-design', '--yolo'])).toThrow(CommanderError);
+    });
+
+    it('rejects --game-design combined with --auto', () => {
+      expect(() => parse(['--game-design', '--auto'])).toThrow(CommanderError);
+    });
+  });
+
   describe('rejected flags', () => {
     it('any removed flag is unknown to Commander', () => {
       for (const arg of [

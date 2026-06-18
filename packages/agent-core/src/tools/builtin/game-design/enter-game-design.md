@@ -1,0 +1,1 @@
+Enter game-design mode to begin a guided game design session based on the 100 Principles of Game Design framework. This mode restricts operations to producing a game design document under .ody-code/game-design/.

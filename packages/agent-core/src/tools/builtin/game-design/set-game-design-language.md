@@ -1,0 +1,1 @@
+Set the user language for the game-design session to 'en' or 'zh'.

@@ -146,7 +146,7 @@ export class Session {
   }
 
   async setSessionMode(
-    mode: 'plan' | 'design' | 'office-hours' | 'normal',
+    mode: 'plan' | 'design' | 'office-hours' | 'game-design' | 'normal',
     options?: { sourceFilePath?: string },
   ): Promise<void> {
     this.ensureOpen();
@@ -225,7 +225,7 @@ export class Session {
     return this.rpc.getStatus({ sessionId: this.id });
   }
 
-  async listSkills(options?: { sessionMode?: 'normal' | 'plan' | 'design' | 'office-hours' }): Promise<readonly SkillSummary[]> {
+  async listSkills(options?: { sessionMode?: 'normal' | 'plan' | 'design' | 'office-hours' | 'game-design' }): Promise<readonly SkillSummary[]> {
     this.ensureOpen();
     return this.rpc.listSkills({ sessionId: this.id, sessionMode: options?.sessionMode });
   }

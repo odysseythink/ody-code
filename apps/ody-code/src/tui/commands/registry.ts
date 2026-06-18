@@ -3,9 +3,9 @@ import type { AutocompleteItem } from '@earendil-works/pi-tui';
 import { completeLeadingArg, type ArgCompletionSpec } from './complete-args';
 import type { KimiSlashCommand, SessionMode, SlashCommandAvailability } from './types';
 
-/** Commands hidden in office-hours mode: the mode is intentionally restricted
+/** Commands hidden in restricted modes: the mode is intentionally restricted
  *  to a single `/exit` command, so no mode toggles or general utilities appear. */
-const OFFICE_HOURS_HIDDEN: readonly SessionMode[] = ['office-hours'];
+const SPECIAL_MODE_HIDDEN: readonly SessionMode[] = ['office-hours', 'game-design'];
 
 /** Subcommands offered when autocompleting `/goal <…>`. */
 const GOAL_ARG_COMPLETIONS: readonly ArgCompletionSpec[] = [
@@ -28,7 +28,7 @@ export const BUILTIN_SLASH_COMMANDS = [
     description: 'Toggle auto-approve mode',
     priority: 100,
     availability: 'always',
-    hiddenInModes: OFFICE_HOURS_HIDDEN,
+    hiddenInModes: SPECIAL_MODE_HIDDEN,
   },
   {
     name: 'auto',
@@ -36,7 +36,7 @@ export const BUILTIN_SLASH_COMMANDS = [
     description: 'Toggle auto permission mode',
     priority: 100,
     availability: 'always',
-    hiddenInModes: OFFICE_HOURS_HIDDEN,
+    hiddenInModes: SPECIAL_MODE_HIDDEN,
   },
   {
     name: 'permission',
@@ -44,7 +44,7 @@ export const BUILTIN_SLASH_COMMANDS = [
     description: 'Select permission mode',
     priority: 100,
     availability: 'always',
-    hiddenInModes: OFFICE_HOURS_HIDDEN,
+    hiddenInModes: SPECIAL_MODE_HIDDEN,
   },
   {
     name: 'settings',
@@ -52,7 +52,7 @@ export const BUILTIN_SLASH_COMMANDS = [
     description: 'Open TUI settings',
     priority: 100,
     availability: 'always',
-    hiddenInModes: OFFICE_HOURS_HIDDEN,
+    hiddenInModes: SPECIAL_MODE_HIDDEN,
   },
   {
     name: 'plan',
@@ -60,7 +60,7 @@ export const BUILTIN_SLASH_COMMANDS = [
     description: 'Toggle plan mode',
     priority: 100,
     availability: (args) => (args.trim().toLowerCase() === 'clear' ? 'idle-only' : 'always'),
-    hiddenInModes: ['plan', ...OFFICE_HOURS_HIDDEN],
+    hiddenInModes: ['plan', ...SPECIAL_MODE_HIDDEN],
   },
   {
     name: 'design',
@@ -68,7 +68,7 @@ export const BUILTIN_SLASH_COMMANDS = [
     description: 'Toggle design mode (brainstorming / spec exploration)',
     priority: 100,
     availability: (args) => (args.trim().toLowerCase() === 'clear' ? 'idle-only' : 'always'),
-    hiddenInModes: ['design', ...OFFICE_HOURS_HIDDEN],
+    hiddenInModes: ['design', ...SPECIAL_MODE_HIDDEN],
   },
   {
     name: 'design-review',
@@ -76,7 +76,7 @@ export const BUILTIN_SLASH_COMMANDS = [
     description: 'Critique the current design with the reviewer model (second-model review)',
     priority: 95,
     availability: 'idle-only',
-    hiddenInModes: ['plan', 'normal', ...OFFICE_HOURS_HIDDEN],
+    hiddenInModes: ['plan', 'normal', ...SPECIAL_MODE_HIDDEN],
   },
   {
     name: 'plan-review',
@@ -84,7 +84,7 @@ export const BUILTIN_SLASH_COMMANDS = [
     description: 'Critique the current execution plan with the reviewer model (second-model review)',
     priority: 95,
     availability: 'idle-only',
-    hiddenInModes: ['design', 'normal', ...OFFICE_HOURS_HIDDEN],
+    hiddenInModes: ['design', 'normal', ...SPECIAL_MODE_HIDDEN],
   },
   {
     name: 'writing-plan',
@@ -92,7 +92,7 @@ export const BUILTIN_SLASH_COMMANDS = [
     description: '将指定文件转换为执行计划（仅 plan 模式，需文件参数）',
     priority: 94,
     availability: 'idle-only',
-    hiddenInModes: ['design', 'normal', ...OFFICE_HOURS_HIDDEN],
+    hiddenInModes: ['design', 'normal', ...SPECIAL_MODE_HIDDEN],
   },
   {
     name: 'model',
@@ -100,7 +100,7 @@ export const BUILTIN_SLASH_COMMANDS = [
     description: 'Switch LLM model',
     priority: 100,
     availability: 'always',
-    hiddenInModes: OFFICE_HOURS_HIDDEN,
+    hiddenInModes: SPECIAL_MODE_HIDDEN,
   },
   {
     name: 'provider',
@@ -108,7 +108,7 @@ export const BUILTIN_SLASH_COMMANDS = [
     description: 'Manage AI providers (add / delete / refresh)',
     priority: 95,
     availability: 'always',
-    hiddenInModes: OFFICE_HOURS_HIDDEN,
+    hiddenInModes: SPECIAL_MODE_HIDDEN,
   },
   {
     name: 'help',
@@ -116,21 +116,21 @@ export const BUILTIN_SLASH_COMMANDS = [
     description: 'Show available commands and shortcuts',
     priority: 80,
     availability: 'always',
-    hiddenInModes: OFFICE_HOURS_HIDDEN,
+    hiddenInModes: SPECIAL_MODE_HIDDEN,
   },
   {
     name: 'new',
     aliases: ['clear'],
     description: 'Start a fresh session in the current workspace',
     priority: 80,
-    hiddenInModes: OFFICE_HOURS_HIDDEN,
+    hiddenInModes: SPECIAL_MODE_HIDDEN,
   },
   {
     name: 'sessions',
     aliases: ['resume'],
     description: 'Browse and resume sessions',
     priority: 80,
-    hiddenInModes: OFFICE_HOURS_HIDDEN,
+    hiddenInModes: SPECIAL_MODE_HIDDEN,
   },
   {
     name: 'tasks',
@@ -138,7 +138,7 @@ export const BUILTIN_SLASH_COMMANDS = [
     description: 'Browse background tasks',
     priority: 80,
     availability: 'always',
-    hiddenInModes: OFFICE_HOURS_HIDDEN,
+    hiddenInModes: SPECIAL_MODE_HIDDEN,
   },
   {
     name: 'mcp',
@@ -146,7 +146,7 @@ export const BUILTIN_SLASH_COMMANDS = [
     description: 'Show MCP server status',
     priority: 60,
     availability: 'always',
-    hiddenInModes: OFFICE_HOURS_HIDDEN,
+    hiddenInModes: SPECIAL_MODE_HIDDEN,
   },
   {
     name: 'plugins',
@@ -154,14 +154,14 @@ export const BUILTIN_SLASH_COMMANDS = [
     description: 'Manage plugins',
     priority: 60,
     availability: 'always',
-    hiddenInModes: OFFICE_HOURS_HIDDEN,
+    hiddenInModes: SPECIAL_MODE_HIDDEN,
   },
   {
     name: 'compact',
     aliases: [],
     description: 'Compact the conversation context',
     priority: 80,
-    hiddenInModes: OFFICE_HOURS_HIDDEN,
+    hiddenInModes: SPECIAL_MODE_HIDDEN,
   },
   {
     name: 'goal',
@@ -182,7 +182,7 @@ export const BUILTIN_SLASH_COMMANDS = [
         ? 'always'
         : 'idle-only';
     },
-    hiddenInModes: OFFICE_HOURS_HIDDEN,
+    hiddenInModes: SPECIAL_MODE_HIDDEN,
   },
   {
     name: 'microagent',
@@ -191,20 +191,20 @@ export const BUILTIN_SLASH_COMMANDS = [
     priority: 80,
     availability: 'idle-only',
     experimentalFlag: 'repo-knowledge',
-    hiddenInModes: OFFICE_HOURS_HIDDEN,
+    hiddenInModes: SPECIAL_MODE_HIDDEN,
   },
   {
     name: 'init',
     aliases: [],
     description: 'Analyze the codebase and generate AGENTS.md',
-    hiddenInModes: OFFICE_HOURS_HIDDEN,
+    hiddenInModes: SPECIAL_MODE_HIDDEN,
   },
   {
     name: 'fork',
     aliases: [],
     description: 'Fork the current session',
     priority: 80,
-    hiddenInModes: OFFICE_HOURS_HIDDEN,
+    hiddenInModes: SPECIAL_MODE_HIDDEN,
   },
   {
     name: 'title',
@@ -212,7 +212,7 @@ export const BUILTIN_SLASH_COMMANDS = [
     description: 'Set or show session title',
     priority: 60,
     availability: 'always',
-    hiddenInModes: OFFICE_HOURS_HIDDEN,
+    hiddenInModes: SPECIAL_MODE_HIDDEN,
   },
   {
     name: 'usage',
@@ -220,7 +220,7 @@ export const BUILTIN_SLASH_COMMANDS = [
     description: 'Show session tokens + context window + plan quotas',
     priority: 60,
     availability: 'always',
-    hiddenInModes: OFFICE_HOURS_HIDDEN,
+    hiddenInModes: SPECIAL_MODE_HIDDEN,
   },
   {
     name: 'status',
@@ -228,7 +228,7 @@ export const BUILTIN_SLASH_COMMANDS = [
     description: 'Show current session and runtime status',
     priority: 60,
     availability: 'always',
-    hiddenInModes: OFFICE_HOURS_HIDDEN,
+    hiddenInModes: SPECIAL_MODE_HIDDEN,
   },
   {
     name: 'feedback',
@@ -236,7 +236,7 @@ export const BUILTIN_SLASH_COMMANDS = [
     description: 'Send feedback to make Ody Code better',
     priority: 60,
     availability: 'always',
-    hiddenInModes: OFFICE_HOURS_HIDDEN,
+    hiddenInModes: SPECIAL_MODE_HIDDEN,
   },
   {
     name: 'undo',
@@ -244,7 +244,7 @@ export const BUILTIN_SLASH_COMMANDS = [
     description: 'Withdraw the last prompt from the transcript',
     priority: 80,
     availability: 'idle-only',
-    hiddenInModes: OFFICE_HOURS_HIDDEN,
+    hiddenInModes: SPECIAL_MODE_HIDDEN,
   },
   {
     name: 'editor',
@@ -252,7 +252,7 @@ export const BUILTIN_SLASH_COMMANDS = [
     description: 'Set the external editor for Ctrl-G',
     priority: 60,
     availability: 'always',
-    hiddenInModes: OFFICE_HOURS_HIDDEN,
+    hiddenInModes: SPECIAL_MODE_HIDDEN,
   },
   {
     name: 'theme',
@@ -260,35 +260,35 @@ export const BUILTIN_SLASH_COMMANDS = [
     description: 'Set the terminal UI theme',
     priority: 60,
     availability: 'always',
-    hiddenInModes: OFFICE_HOURS_HIDDEN,
+    hiddenInModes: SPECIAL_MODE_HIDDEN,
   },
   {
     name: 'logout',
     aliases: ['disconnect'],
     description: 'Log out of a configured provider',
     priority: 40,
-    hiddenInModes: OFFICE_HOURS_HIDDEN,
+    hiddenInModes: SPECIAL_MODE_HIDDEN,
   },
   {
     name: 'login',
     aliases: [],
     description: 'Select a platform and authenticate',
     priority: 40,
-    hiddenInModes: OFFICE_HOURS_HIDDEN,
+    hiddenInModes: SPECIAL_MODE_HIDDEN,
   },
   {
     name: 'export-md',
     aliases: ['export'],
     description: 'Export current session as a Markdown file',
     priority: 40,
-    hiddenInModes: OFFICE_HOURS_HIDDEN,
+    hiddenInModes: SPECIAL_MODE_HIDDEN,
   },
   {
     name: 'export-debug-zip',
     aliases: [],
     description: 'Export current session as a debug ZIP archive',
     priority: 40,
-    hiddenInModes: OFFICE_HOURS_HIDDEN,
+    hiddenInModes: SPECIAL_MODE_HIDDEN,
   },
   {
     name: 'request-code-review',
@@ -318,7 +318,7 @@ export const BUILTIN_SLASH_COMMANDS = [
     description: 'Show version information',
     priority: 20,
     availability: 'always',
-    hiddenInModes: OFFICE_HOURS_HIDDEN,
+    hiddenInModes: SPECIAL_MODE_HIDDEN,
   },
 ] as const satisfies readonly KimiSlashCommand[];
 

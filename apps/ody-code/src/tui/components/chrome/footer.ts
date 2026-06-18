@@ -28,7 +28,7 @@ import { t } from '@odysseythink/ody-code-sdk';
 const MAX_CWD_SEGMENTS = 3;
 const GOAL_TIMER_INTERVAL_MS = 1_000;
 
-const EMOJIS: Record<string, string> = { normal: '⚒️', plan: '📝', design: '✏️', 'office-hours': '🏢' };
+const EMOJIS: Record<string, string> = { normal: '⚒️', plan: '📝', design: '✏️', 'office-hours': '🏢', 'game-design': '🎮' };
 
 function planFileName(path: string | null | undefined): string | null {
   if (!path) return null;
@@ -48,7 +48,7 @@ function luminance(hex: string): number {
 }
 
 function renderModeBadge(
-  mode: 'normal' | 'plan' | 'design' | 'office-hours',
+  mode: 'normal' | 'plan' | 'design' | 'office-hours' | 'game-design',
   colors: ColorPalette,
   fileName?: string,
   userLanguage?: 'en' | 'zh' | undefined,
@@ -61,7 +61,9 @@ function renderModeBadge(
         ? colors.primary
         : mode === 'office-hours'
           ? colors.warning
-          : colors.textMuted;
+          : mode === 'game-design'
+            ? colors.accent
+            : colors.textMuted;
 
   let textColor: string;
   try {
@@ -72,7 +74,9 @@ function renderModeBadge(
 
   const displayLabel = mode === 'office-hours'
     ? t('tui.footer.officeHours', userLanguage)
-    : mode;
+    : mode === 'game-design'
+      ? t('tui.footer.gameDesign', userLanguage)
+      : mode;
   const label = fileName
     ? `${emoji} ${displayLabel} · ${fileName}`
     : `${emoji} ${displayLabel}`;
@@ -112,7 +116,7 @@ export interface ToolbarTip {
 }
 
 const TOOLBAR_TIPS: readonly ToolbarTip[] = [
-  { text: 'shift+tab: cycle plan/design mode', hiddenInModes: ['office-hours'] },
+  { text: 'shift+tab: cycle plan/design mode', hiddenInModes: ['office-hours', 'game-design'] },
   { text: '/model: switch model' },
   { text: 'ctrl+s: steer mid-turn', priority: 2 },
   { text: '/compact: compact context', priority: 2 },

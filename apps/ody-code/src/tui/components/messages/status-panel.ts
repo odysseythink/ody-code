@@ -35,7 +35,7 @@ export interface StatusReportOptions {
   readonly sessionTitle: string | null;
   readonly thinking: boolean;
   readonly permissionMode: PermissionMode;
-  readonly sessionMode: 'normal' | 'plan' | 'design' | 'office-hours';
+  readonly sessionMode: 'normal' | 'plan' | 'design' | 'office-hours' | 'game-design';
   readonly contextUsage: number;
   readonly contextTokens: number;
   readonly maxContextTokens: number;
@@ -109,6 +109,7 @@ export function buildStatusReportLines(options: StatusReportOptions): string[] {
     { label: 'Plan mode', value: sessionMode === 'plan' ? 'on' : 'off' },
     { label: 'Design mode', value: sessionMode === 'design' ? 'on' : 'off' },
     { label: t('tui.statusPanel.officeHours', lang), value: sessionMode === 'office-hours' ? t('tui.statusPanel.on', lang) : t('tui.statusPanel.off', lang) },
+    { label: t('tui.statusPanel.gameDesign', lang), value: sessionMode === 'game-design' ? t('tui.statusPanel.on', lang) : t('tui.statusPanel.off', lang) },
     { label: 'Session', value: sessionId },
   ];
   const title = options.sessionTitle?.trim();

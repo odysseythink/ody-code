@@ -1,0 +1,1 @@
+Append a builder profile entry summarizing the game design session: pillars, audience, platform, genre, and design doc path.

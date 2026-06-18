@@ -1,0 +1,1 @@
+Sync the game design artifact document to persistent storage via gbrain MCP or CLI.

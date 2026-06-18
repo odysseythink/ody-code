@@ -133,6 +133,7 @@ function opts(overrides: Partial<CLIOptions> = {}): CLIOptions {
     auto: false,
     sessionMode: 'normal',
     officeHours: false,
+    gameDesign: false,
     model: undefined,
     outputFormat: undefined,
     prompt: 'say hello',

@@ -3,6 +3,7 @@ import { join } from 'pathe';
 import { SessionMode } from '../../src/agent/session-mode';
 import { stripDatePrefix } from '../../src/agent/session-mode/topic-generator';
 import type { Agent } from '../../src/agent';
+import { PlanModeGuardDenyPermissionPolicy } from '../../src/agent/permission/policies/plan-mode-guard-deny';
 
 const CWD = '/workspace/project';
 
@@ -22,7 +23,7 @@ function makeAgent(overrides: {
     replayBuilder: { push: vi.fn() },
     records: { logRecord: vi.fn() },
     context: { history: undefined },
-    contexts: { normal: { history: [] }, plan: { history: [] }, design: { history: [] } },
+    contexts: { normal: { history: [] }, plan: { history: [] }, design: { history: [] }, 'office-hours': { history: [] }, 'game-design': { history: [] } },
     kaos: {
       mkdir: vi.fn().mockResolvedValue(undefined),
       stat: vi.fn(async (p: string) => {
@@ -635,6 +636,58 @@ describe('SessionMode', () => {
       sm.exit();
 
       expect(sm.designSessions).toHaveLength(0);
+    });
+
+    it('resolves game-design directory to .ody-code/game-design/', async () => {
+      const agent = makeAgent();
+      const sm = new SessionMode(agent);
+      await sm.enter('id-gd', undefined, false, 'game-design');
+      expect(agent.kaos.mkdir).toHaveBeenCalledWith(
+        join(CWD, '.ody-code', 'game-design'),
+        { parents: true, existOk: true },
+      );
+    });
+
+    it('game-design mode is writable by isWritableSessionModePath', async () => {
+      const gdFile = join(CWD, '.ody-code', 'game-design', '2026-06-18-topic.md');
+      const existing = new Set([gdFile]);
+      const agent = makeAgent({ existingPaths: existing });
+      const sm = new SessionMode(agent);
+      // directly set state for testing isWritableSessionModePath
+      (sm as any)._sessionModeFilePath = gdFile;
+      (sm as any)._sessionModeKind = 'game-design';
+      expect(sm.isWritableSessionModePath(gdFile)).toBe(true);
+      // allow split subdirectory
+      const splitFile = join(CWD, '.ody-code', 'game-design', '2026-06-18-topic', 'appendix.md');
+      expect(sm.isWritableSessionModePath(splitFile)).toBe(true);
+      // deny unrelated paths
+      expect(sm.isWritableSessionModePath(join(CWD, 'src', 'index.ts'))).toBe(false);
+      // deny other game-design files with different stem
+      expect(sm.isWritableSessionModePath(
+        join(CWD, '.ody-code', 'game-design', 'other.md'),
+      )).toBe(false);
+    });
+
+    it('PlanModeGuardDeny allows game-design mode writes', async () => {
+      const gdFile = join(CWD, '.ody-code', 'game-design', '2026-06-18-topic.md');
+      const agent = makeAgent();
+      const sm = new SessionMode(agent);
+      (sm as any)._sessionModeFilePath = gdFile;
+      (sm as any)._sessionModeKind = 'game-design';
+      (sm as any)._isActive = true;
+      (agent as any).sessionMode = sm;
+
+      const policy = new PlanModeGuardDenyPermissionPolicy(agent as any);
+      // Write to the main file should be allowed (returns undefined = not denied)
+      const result = policy.evaluate({
+        toolCall: { name: 'Write' } as any,
+        args: { file_path: gdFile, content: 'hello' },
+        rawArgs: '{}',
+        execution: {
+          accesses: [{ kind: 'file', path: gdFile, operation: 'write' }],
+        },
+      } as any);
+      expect(result).toBeUndefined();
     });
   });
 });

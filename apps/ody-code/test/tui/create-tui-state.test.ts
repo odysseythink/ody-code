@@ -41,6 +41,7 @@ describe('createTUIState', () => {
         auto: false,
         sessionMode: 'normal',
         officeHours: false,
+        gameDesign: false,
       },
     };
     const state = createTUIState(opts);

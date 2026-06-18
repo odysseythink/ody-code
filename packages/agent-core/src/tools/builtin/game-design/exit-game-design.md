@@ -1,0 +1,1 @@
+Exit game-design mode, save the final design document, and return to normal mode.

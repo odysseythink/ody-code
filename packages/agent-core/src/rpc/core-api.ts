@@ -409,7 +409,7 @@ export interface SessionAPI extends AgentAPIWithId {
   renameSession: (payload: RenameSessionPayload) => void;
   updateSessionMetadata: (payload: UpdateSessionMetadataPayload) => void;
   getSessionMetadata: (payload: EmptyPayload) => SessionMeta;
-  listSkills: (payload: EmptyPayload & { sessionMode?: 'normal' | 'plan' | 'design' | 'office-hours' }) => readonly SkillSummary[];
+  listSkills: (payload: EmptyPayload & { sessionMode?: 'normal' | 'plan' | 'design' | 'office-hours' | 'game-design' }) => readonly SkillSummary[];
   listMcpServers: (payload: EmptyPayload) => readonly McpServerInfo[];
   getMcpStartupMetrics: (payload: EmptyPayload) => McpStartupMetrics;
   reconnectMcpServer: (payload: ReconnectMcpServerPayload) => void;

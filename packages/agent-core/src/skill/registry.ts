@@ -116,14 +116,13 @@ export class SkillRegistry {
   }
 
   listInvocableSkills(
-    sessionMode?: 'normal' | 'plan' | 'design' | 'office-hours',
+    sessionMode?: 'normal' | 'plan' | 'design' | 'office-hours' | 'game-design',
   ): readonly SkillDefinition[] {
     return this.listSkills().filter((skill) => {
       if (skill.metadata.disableModelInvocation === true) return false;
       if (!isInlineSkillType(skill.metadata.type)) return false;
       if (
         sessionMode !== undefined &&
-        sessionMode !== 'normal' &&
         Array.isArray(skill.metadata.hiddenInModes) &&
         skill.metadata.hiddenInModes.includes(sessionMode)
       ) {
@@ -150,7 +149,7 @@ export class SkillRegistry {
     return rendered.length === 0 ? 'No skills' : rendered;
   }
 
-  getModelSkillListing(sessionMode?: 'normal' | 'plan' | 'design' | 'office-hours'): string {
+  getModelSkillListing(sessionMode?: 'normal' | 'plan' | 'design' | 'office-hours' | 'game-design'): string {
     const lines = ['DISREGARD any earlier skill listings. Current available skills:'];
     const listing = renderGroupedSkills(this.listInvocableSkills(sessionMode), formatModelSkill);
     if (listing.length > 0) {

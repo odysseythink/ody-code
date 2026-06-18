@@ -87,6 +87,7 @@ export async function runShell(
     resolvedTheme,
     authIntent: runOptions.authIntent,
     officeHours: false,
+    gameDesign: false,
   });
 
   initializeCliTelemetry({
