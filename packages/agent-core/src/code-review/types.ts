@@ -10,6 +10,8 @@ export interface CodeReviewRequestInput {
   readonly requirements?: string | undefined;
   readonly deep?: boolean | undefined;
   readonly timeoutMs?: number | undefined;
+  readonly focus?: 'correctness' | 'simplicity' | undefined;
+  readonly scope?: 'diff' | 'repo' | undefined;
 }
 
 export interface CodeReviewFinding {

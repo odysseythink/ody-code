@@ -353,6 +353,8 @@ export interface RequestCodeReviewPayload {
   readonly deep?: boolean | undefined;
   readonly timeoutMs?: number | undefined;
   readonly workDir: string;
+  readonly focus?: 'correctness' | 'simplicity' | undefined;
+  readonly scope?: 'diff' | 'repo' | undefined;
 }
 
 export interface CodeReviewFindingData {
