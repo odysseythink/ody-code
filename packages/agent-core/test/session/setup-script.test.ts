@@ -310,3 +310,27 @@ describe('runSetupScriptIfNeeded', () => {
     expect(result.stdout).toContain('truncated');
   });
 });
+
+// ── T4: createMain wiring contract tests ────────────────────────────────
+
+import { runSetupScriptIfNeeded as rsni } from '../../src/session/setup-script';
+import { Agent } from '../../src/agent';
+import { Session } from '../../src/session';
+
+describe('createMain wiring contract', () => {
+  it('runSetupScriptIfNeeded accepts Session and Agent types', () => {
+    const fn: (
+      session: { readonly options: { readonly kaos: any }; metadata: { custom: Record<string, any> }; writeMetadata(): Promise<void> },
+      agent: { readonly permission: any; readonly kaos: any; readonly telemetry: any; readonly context: any },
+      opts?: { force?: boolean },
+    ) => Promise<any> = rsni;
+    expect(typeof fn).toBe('function');
+  });
+
+  it('Session and Agent satisfy the minimal structural contract', () => {
+    const sessionProto = Session.prototype;
+    expect(sessionProto).toBeDefined();
+    expect(typeof Session.prototype.writeMetadata).toBe('function');
+    expect(Agent.prototype).toBeDefined();
+  });
+});

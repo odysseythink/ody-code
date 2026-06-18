@@ -44,6 +44,7 @@ import { CheckpointCoordinator } from './checkpoint/coordinator';
 import { SessionCheckpoint } from './checkpoint/checkpoint';
 import { CheckpointIndex } from './checkpoint/checkpoint-index';
 import { SessionMarkdownExport } from './export/markdown-export';
+import { runSetupScriptIfNeeded } from './setup-script';
 import type { ToolServices } from '../tools/support/services';
 import {
   FileSystemOfficeHoursStateStore,
@@ -189,6 +190,14 @@ export class Session {
     // The main-agent audit sink now exists; flush any goal records queued before it.
     this.goals.flushPendingRecords();
     await this.triggerSessionStart('startup');
+
+    // Run repository setup script after main agent exists but before returning.
+    // Failure does not block session start; the agent will receive a system
+    // reminder with the result.
+    await runSetupScriptIfNeeded(this, agent).catch((error: unknown) => {
+      this.log.error('setup script failed', error);
+    });
+
     return agent;
   }
 

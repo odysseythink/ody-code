@@ -1,6 +1,7 @@
 import { join } from 'pathe';
 import { type Readable } from 'node:stream';
 import type { Kaos } from '@odysseythink/kaos';
+import type { TelemetryPropertyValue } from '../telemetry';
 
 const S_IFMT = 0o170000;
 const S_IFREG = 0o100000;
@@ -90,6 +91,8 @@ interface PermissionGate {
     decision: 'approved' | 'rejected' | 'cancelled';
   }>;
 }
+
+type TelemetryTrackFn = (event: string, properties?: Readonly<Record<string, TelemetryPropertyValue>>) => void;
 
 // ── Execution ───────────────────────────────────────────────────────
 
@@ -193,9 +196,9 @@ async function persistAndInject(
   },
   agent: {
     readonly permission: { readonly mode: string };
-    readonly telemetry: { track: (event: string, props: Record<string, unknown>) => void };
+    readonly telemetry: { track: TelemetryTrackFn };
     readonly context: {
-      appendSystemReminder: (content: string, origin: { kind: string; variant: string }) => void;
+      appendSystemReminder: (content: string, origin: { kind: 'injection'; variant: string }) => void;
     };
   },
   result: SetupScriptResult,
@@ -249,9 +252,9 @@ export async function runSetupScriptIfNeeded(
   agent: {
     readonly permission: PermissionGate;
     readonly kaos: Kaos;
-    readonly telemetry: { track: (event: string, props: Record<string, unknown>) => void };
+    readonly telemetry: { track: TelemetryTrackFn };
     readonly context: {
-      appendSystemReminder: (content: string, origin: { kind: string; variant: string }) => void;
+      appendSystemReminder: (content: string, origin: { kind: 'injection'; variant: string }) => void;
     };
   },
   opts: SetupScriptRunOptions = {},
