@@ -289,6 +289,12 @@ export const E2EConfigSchema = z.object({
   testTimeout: z.number().int().min(1000).default(30000),
   reportDir: z.string().default('.ody-code/test-reports'),
   generatedTestDir: z.string().default('.ody-code/test-generated/e2e'),
+  recursiveAnalysisEnabled: z.boolean().default(true),
+  maxRecursiveDepth: z.number().int().min(1).default(3),
+  cacheEnabled: z.boolean().default(true),
+  cacheDir: z.string().default('.ody-code/e2e-cache'),
+  cacheTtlDays: z.number().int().min(1).default(7),
+  cacheMaxEntries: z.number().int().min(1).default(20),
 });
 
 export type E2EConfig = z.infer<typeof E2EConfigSchema>;
