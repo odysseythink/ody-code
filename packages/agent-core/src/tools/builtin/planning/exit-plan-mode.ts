@@ -18,7 +18,7 @@ import type { ToolInputDisplay } from '../../display';
 import { toInputJsonSchema } from '../../support/input-schema';
 import { E2EPlanEnricher } from '#/e2e-testing/plan-enricher';
 import { E2EConfigResolver } from '#/e2e-testing/config';
-import { ImpactAnalyzer } from '#/e2e-testing/impact-analyzer';
+import { registry } from '#/e2e-testing/registry';
 import {
   declaredOptionLabel,
   isViaApproval,
@@ -115,12 +115,22 @@ export class ExitPlanModeTool implements BuiltinTool<ExitPlanModeInput> {
       if (modeData === null || modeData.kind !== 'plan') return;
       if (modeData.content.trim().length === 0 || modeData.path.length === 0) return;
 
-      const enricher = new E2EPlanEnricher(this.kaos, e2eConfig, ImpactAnalyzer);
-      const enriched = await enricher.enrich(
-        modeData.path,
-        modeData.content,
-        this.kaos.getcwd(),
-      );
+      // Use the project's own generator (Go, Python, TS/Vitest, …) to decide
+      // which features are affected, so user projects — not just ody-code's
+      // builtin tools — get an E2E task injected. No matching generator means
+      // we cannot generate tests for this project, so skip enrichment.
+      const projectRoot = this.kaos.getcwd();
+      let generator;
+      try {
+        generator = await registry.detectAndGet(projectRoot);
+      } catch {
+        return;
+      }
+
+      const enricher = new E2EPlanEnricher(this.kaos, e2eConfig, {
+        analyze: (files, config) => generator.analyzeImpact(files, config, projectRoot),
+      });
+      const enriched = await enricher.enrich(modeData.path, modeData.content, projectRoot);
       if (enriched !== null) {
         await this.kaos.writeText(modeData.path, enriched);
       }

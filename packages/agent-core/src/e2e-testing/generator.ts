@@ -1,4 +1,6 @@
 import type {
+  AffectedTool,
+  E2EPriority,
   E2ETestGenerator,
   Feature,
   ImpactAnalysisResult,
@@ -12,6 +14,46 @@ import type { ResolvedE2EConfig } from './config';
 import { ImpactAnalyzer } from './impact-analyzer';
 import { RecursiveImpactAnalyzer } from './recursive-impact-analyzer';
 import { dirname, join, relative } from 'pathe';
+
+/** A changed source file worth grouping into a user-project feature. */
+function isTsSourceFile(file: string): boolean {
+  if (!/\.(ts|tsx|js|jsx|mjs|cjs)$/.test(file)) return false;
+  if (/\.d\.ts$/.test(file)) return false;
+  if (/\.(test|spec|e2e)\./.test(file)) return false;
+  return true;
+}
+
+/**
+ * Group changed source files by directory — the impact model used for *user*
+ * TypeScript projects (mirrors the Go/Python/Jest generators). Distinct from
+ * ody-code's own builtin-tool map, which only makes sense when ody-code is
+ * testing itself.
+ */
+function groupTsSourcesByPackage(
+  changedFiles: string[],
+  config: ResolvedE2EConfig,
+): ImpactAnalysisResult {
+  const packages = new Set<string>();
+  for (const file of changedFiles) {
+    const normalized = file.replace(/\\/g, '/');
+    if (!isTsSourceFile(normalized)) continue;
+    const slash = normalized.lastIndexOf('/');
+    packages.add(slash === -1 ? '.' : normalized.slice(0, slash));
+  }
+
+  const affected: AffectedTool[] = [];
+  for (const pkg of packages) {
+    const priority: E2EPriority = config.criticalTools.includes(pkg) ? 'critical' : 'important';
+    if (config.strategy === 'critical-only' && priority !== 'critical') continue;
+    affected.push({ toolId: pkg, priority });
+  }
+
+  if (affected.length === 0 && config.strategy === 'always') {
+    affected.push({ toolId: 'general', priority: 'nice-to-have' });
+  }
+
+  return { affectedTools: affected };
+}
 
 function timestamp(): string {
   return new Date().toISOString().replaceAll(/[:.]/g, '-');
@@ -92,7 +134,18 @@ export class TypeScriptVitestGenerator implements E2ETestGenerator {
           { maxDepth: config.maxRecursiveDepth },
         )
       : changedFiles;
-    return ImpactAnalyzer.analyze(filesToAnalyze, config);
+
+    // ody-code self-test: when changed files hit ody-code's own builtin-tool
+    // map, keep the Phase 1 tool-based impact. Otherwise this is a *user*
+    // TypeScript project, so group changed sources by package like the other
+    // language generators. (The synthetic 'general' entry that ImpactAnalyzer
+    // injects under the 'always' strategy is not a real tool match, so we fall
+    // through to package grouping in that case.)
+    const odyImpact = ImpactAnalyzer.analyze(filesToAnalyze, config);
+    if (odyImpact.affectedTools.some((t) => t.toolId !== 'general')) {
+      return odyImpact;
+    }
+    return groupTsSourcesByPackage(filesToAnalyze, config);
   }
 
   resolveGeneratedTestDir(config: ResolvedE2EConfig): string {

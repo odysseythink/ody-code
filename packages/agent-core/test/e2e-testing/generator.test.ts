@@ -3,6 +3,15 @@ import { existsSync } from 'node:fs';
 import { dirname, join, resolve } from 'pathe';
 import { TypeScriptVitestGenerator } from '#/e2e-testing/generator';
 import type { Feature } from '#/e2e-testing/types';
+import type { ResolvedE2EConfig } from '#/e2e-testing/config';
+
+const tsConfig: ResolvedE2EConfig = {
+  enabled: true, strategy: 'smart', criticalTools: ['ExitPlanModeTool'], failurePolicy: 'warn',
+  maxConcurrency: 4, testTimeout: 30000,
+  reportDir: '.ody-code/test-reports', generatedTestDir: '.ody-code/test-generated/e2e',
+  recursiveAnalysisEnabled: false, maxRecursiveDepth: 3,
+  cacheEnabled: false, cacheDir: '.ody-code/e2e-cache', cacheTtlDays: 7, cacheMaxEntries: 20,
+};
 
 function makeFeature(toolId: string): Feature {
   return {
@@ -74,5 +83,40 @@ describe('generateTestsForFeature edge cases', () => {
       const resolved = resolve(dirname(generatedFile), imp) + '.ts';
       expect(existsSync(resolved)).toBe(true);
     }
+  });
+});
+
+describe('TypeScriptVitestGenerator.analyzeImpact', () => {
+  const gen = new TypeScriptVitestGenerator();
+
+  it('keeps ody-code self-test behavior when changed files hit the builtin-tool map', () => {
+    const result = gen.analyzeImpact(
+      ['packages/agent-core/src/tools/builtin/planning/exit-plan-mode.ts'],
+      tsConfig,
+    );
+    expect(result.affectedTools).toEqual([{ toolId: 'ExitPlanModeTool', priority: 'critical' }]);
+  });
+
+  it('groups a user TypeScript project by package directory', () => {
+    const result = gen.analyzeImpact(
+      ['src/api/handler.ts', 'src/api/router.ts', 'src/db/client.ts', 'README.md'],
+      tsConfig,
+    );
+    const ids = result.affectedTools.map(t => t.toolId).sort();
+    expect(ids).toEqual(['src/api', 'src/db']);
+    expect(result.affectedTools.every(t => t.priority === 'important')).toBe(true);
+  });
+
+  it('excludes test/spec/e2e and declaration files when grouping a user project', () => {
+    const result = gen.analyzeImpact(
+      ['src/api/handler.test.ts', 'src/api/handler.spec.ts', 'src/types.d.ts'],
+      tsConfig,
+    );
+    expect(result.affectedTools).toHaveLength(0);
+  });
+
+  it('injects general for a user project under the always strategy with no source changes', () => {
+    const result = gen.analyzeImpact(['README.md'], { ...tsConfig, strategy: 'always' });
+    expect(result.affectedTools).toEqual([{ toolId: 'general', priority: 'nice-to-have' }]);
   });
 });
