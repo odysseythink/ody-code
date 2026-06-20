@@ -9,7 +9,7 @@ import { E2EConfigResolver } from '#/e2e-testing/config';
 import type { OdyConfig } from '#/config/schema';
 import { E2ETestExecutor } from '#/e2e-testing/executor';
 import { registry } from '#/e2e-testing/registry';
-import { parseGitStatusShort } from '#/e2e-testing/git-status';
+import { detectChangedFiles } from '#/e2e-testing/git-status';
 import DESCRIPTION from './run-e2e-tests.md';
 
 const RunE2ETestsInputSchema = z.object({
@@ -105,17 +105,7 @@ export class RunE2ETestsTool implements BuiltinTool<RunE2ETestsInput> {
   }
 
   private async getChangedFiles(projectRoot: string): Promise<string[]> {
-    try {
-      const k = this.kaos.withCwd(projectRoot);
-      const proc = await k.exec('git', 'status', '--short', '--no-renames');
-      const chunks: Buffer[] = [];
-      proc.stdout.on('data', (chunk: Buffer) => chunks.push(chunk));
-      await proc.wait();
-      const output = Buffer.concat(chunks).toString('utf-8');
-      return parseGitStatusShort(output);
-    } catch {
-      return [];
-    }
+    return detectChangedFiles(this.kaos, projectRoot);
   }
 }
 

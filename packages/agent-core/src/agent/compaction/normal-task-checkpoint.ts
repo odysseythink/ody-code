@@ -16,6 +16,16 @@
 
 import type { Agent } from '..';
 import type { TodoItem } from '../../tools/builtin/state/todo-list';
+import { detectChangedFiles } from '../../e2e-testing/git-status';
+
+/** Source files whose change is worth an E2E nudge (excludes test files). */
+const CODE_FILE_RE = /\.(go|ts|tsx|js|jsx|mjs|cjs|py|rs|java|rb|kt|php|swift|scala|c|cc|cpp|h|hpp|cs)$/i;
+function isCodeFile(file: string): boolean {
+  if (!CODE_FILE_RE.test(file)) return false;
+  if (/\.(test|spec|e2e)\./.test(file)) return false;
+  if (/_test\.(go|py)$/.test(file)) return false;
+  return true;
+}
 
 /** Fraction of the model context window at which a task boundary triggers compaction. */
 export const DEFAULT_NORMAL_TASK_COMPACTION_RATIO = 0.5;
@@ -33,12 +43,15 @@ const TEST_TASK_TITLE_RE = /\btests?\b|\bspec\b|测试/i;
 export class NormalModeTaskCheckpoint {
   /** The `done` count last observed, or null when not tracking. */
   private lastDoneCount: number | null = null;
+  /** Whether an E2E nudge has already been emitted this run (fire at most once). */
+  private e2eNudged = false;
 
   constructor(private readonly agent: Agent) {}
 
   /** Forget the observed todo state (e.g. on context clear / mode transition). */
   reset(): void {
     this.lastDoneCount = null;
+    this.e2eNudged = false;
   }
 
   async beforeStep(signal: AbortSignal): Promise<void> {
@@ -76,6 +89,27 @@ export class NormalModeTaskCheckpoint {
             'The E2E task is complete. Call RunE2ETests to validate your changes.',
             { kind: 'system_trigger', name: 'e2e_reminder' },
           );
+          this.e2eNudged = true;
+        } catch {
+          // best-effort
+        }
+      }
+
+      // General E2E trigger (option C): works even when no E2E task was injected
+      // into the plan — e.g. normal-mode work, or plans that didn't name files so
+      // plan-exit enrichment had nothing to analyze. When the final task finishes,
+      // if real source changed and we haven't nudged yet, suggest running E2E once.
+      if (e2eEnabled && !this.e2eNudged && !hasWork) {
+        try {
+          const changed = await detectChangedFiles(this.agent.kaos, this.agent.kaos.getcwd());
+          if (changed.some(isCodeFile)) {
+            this.agent.context.appendSystemReminder(
+              'Implementation tasks are complete and source files changed. Call RunE2ETests to ' +
+                'generate and run E2E tests for the affected packages (it no-ops if none apply).',
+              { kind: 'system_trigger', name: 'e2e_reminder' },
+            );
+            this.e2eNudged = true;
+          }
         } catch {
           // best-effort
         }

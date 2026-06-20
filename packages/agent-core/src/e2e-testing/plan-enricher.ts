@@ -2,7 +2,7 @@ import type { Kaos } from '@odysseythink/kaos';
 import type { ResolvedE2EConfig } from './config';
 import type { ImpactAnalysisResult } from './types';
 import type { AffectedTool } from './types';
-import { parseGitStatusShort } from './git-status';
+import { detectChangedFiles } from './git-status';
 
 interface AnalyzerLike {
   analyze(changedFiles: string[], config: ResolvedE2EConfig): ImpactAnalysisResult;
@@ -34,30 +34,25 @@ export class E2EPlanEnricher {
   }
 
   private async determineChangedFiles(projectRoot: string, planContent: string): Promise<string[]> {
-    const fromGit = await this.gitStatusFiles(projectRoot);
+    // Real changes (uncommitted + committed-since-base) take priority. But at
+    // plan-exit the implementation usually hasn't been written yet, so fall back
+    // to the file paths the plan itself declares — that is the reliable signal at
+    // planning time, before any code exists.
+    const fromGit = await detectChangedFiles(this.kaos, projectRoot);
     if (fromGit.length > 0) return fromGit;
     return extractFilePathsFromPlan(planContent);
   }
-
-  private async gitStatusFiles(projectRoot: string): Promise<string[]> {
-    try {
-      const k = this.kaos.withCwd(projectRoot);
-      const proc = await k.exec('git', 'status', '--short', '--no-renames');
-      const chunks: Buffer[] = [];
-      proc.stdout.on('data', (chunk: Buffer) => chunks.push(chunk));
-      await proc.wait();
-      const output = Buffer.concat(chunks).toString('utf-8');
-      return parseGitStatusShort(output);
-    } catch {
-      return [];
-    }
-  }
 }
 
+/**
+ * Extract source-file paths a plan declares it will touch. Matches path-like
+ * tokens (must contain a `/`) ending in a known source extension, so it works
+ * for any user project language (Go, Rust, Java, …) — not just the TS monorepo.
+ */
 function extractFilePathsFromPlan(planContent: string): string[] {
-  const regex = /(?:packages|apps)\/[a-zA-Z0-9\-_/.]+\.(?:[jt]sx?|py)/g;
+  const regex = /[\w.\-/]+\.(?:go|ts|tsx|js|jsx|mjs|cjs|py|rs|java|rb|kt|php|swift|scala)\b/g;
   const matches = planContent.match(regex) ?? [];
-  return [...new Set(matches)];
+  return [...new Set(matches)].filter((p) => p.includes('/'));
 }
 
 function appendE2ETaskToMarkdown(content: string, affectedTools: readonly AffectedTool[]): string {

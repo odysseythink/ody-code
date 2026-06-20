@@ -166,6 +166,59 @@ describe('NormalModeTaskCheckpoint E2E hook', () => {
     expect(appended.length).toBeGreaterThanOrEqual(1);
     expect(appended[0]).toContain('RunE2ETests');
   });
+
+  it('nudges RunE2ETests on the final task when code changed but no e2e todo exists (option C)', async () => {
+    const appended: string[] = [];
+    const kaos = fakeKaosWithGit(['internal/api/handler.go']);
+    const agent = {
+      kimiConfig: { e2e: { enabled: true } as any },
+      sessionMode: { isActive: false },
+      kaos,
+      config: { modelCapabilities: { max_context_tokens: 100000 } },
+      context: {
+        tokenCountWithPending: 1000,
+        appendSystemReminder: ((content: string) => { appended.push(content); }) as any,
+      },
+      tools: {
+        storeData: () => ({
+          todo: [
+            { title: 'Implement handler', status: 'done' } as any,
+            { title: 'Wire routes', status: 'done' } as any,
+          ],
+        }),
+      },
+      fullCompaction: { compactCheckpoint: vi.fn() },
+    } as unknown as Agent;
+
+    const checkpoint = new NormalModeTaskCheckpoint(agent);
+    (checkpoint as any).lastDoneCount = 0;
+    await checkpoint.beforeStep(new AbortController().signal);
+
+    expect(appended.some(a => a.includes('RunE2ETests'))).toBe(true);
+  });
+
+  it('does not nudge when no source files changed', async () => {
+    const appended: string[] = [];
+    const kaos = fakeKaosWithGit(['README.md', 'docs/guide.md']);
+    const agent = {
+      kimiConfig: { e2e: { enabled: true } as any },
+      sessionMode: { isActive: false },
+      kaos,
+      config: { modelCapabilities: { max_context_tokens: 100000 } },
+      context: {
+        tokenCountWithPending: 1000,
+        appendSystemReminder: ((content: string) => { appended.push(content); }) as any,
+      },
+      tools: { storeData: () => ({ todo: [{ title: 'Update docs', status: 'done' } as any] }) },
+      fullCompaction: { compactCheckpoint: vi.fn() },
+    } as unknown as Agent;
+
+    const checkpoint = new NormalModeTaskCheckpoint(agent);
+    (checkpoint as any).lastDoneCount = 0;
+    await checkpoint.beforeStep(new AbortController().signal);
+
+    expect(appended.some(a => a.includes('RunE2ETests'))).toBe(false);
+  });
 });
 
 describe('final integration assertions', () => {

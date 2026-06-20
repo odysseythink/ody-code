@@ -135,6 +135,23 @@ describe('Plan enrichment end-to-end', () => {
     expect(enriched!).toContain('internal/search');
   });
 
+  it('enriches a Go project from files the PLAN declares when git is clean', async () => {
+    // The seargo case: at plan-exit the implementation is not written yet (and
+    // per-task commits leave the tree clean), so detection finds nothing in git
+    // and must fall back to the .go paths the plan itself names.
+    const root = makeProjectDir({ 'go.mod': 'module demo\n\ngo 1.22\n' });
+    const kaos = makeKaosWithGit([], root); // git status returns nothing
+    const planPath = join(root, '.ody-code/plans/test-plan.md');
+    const planContent = '# Plan\n\n### Task 1: Add search\n\nFiles: Create: `internal/engine/bases/extract.go`\n';
+    const agent = makeAgent(kaos, planPath, planContent);
+
+    await runExitPlanMode(agent, kaos);
+
+    const enriched = enrichmentWrite(kaos, planPath);
+    expect(enriched).toBeDefined();
+    expect(enriched!).toContain('internal/engine/bases');
+  });
+
   it('does not enrich a project with no matching generator', async () => {
     const root = makeProjectDir({ 'README.md': '# just docs\n' });
     const kaos = makeKaosWithGit(['README.md'], root);
