@@ -310,6 +310,8 @@ describe('SessionSubagentHost', () => {
       'Glob',
       'Grep',
       'Read',
+      'ReviewTests',
+      'RunE2ETests',
       'Write',
     ]);
     expect(child.llmCalls[0]?.history).toMatchObject([

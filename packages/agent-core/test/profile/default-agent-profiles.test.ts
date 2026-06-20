@@ -43,6 +43,17 @@ describe('default agent profiles', () => {
     );
   });
 
+  it('exposes the E2E + test-review tools on the implementation profiles', () => {
+    // These tools are registered as builtins, but the model only ever sees them
+    // if the active profile enables them. They were silently absent from every
+    // profile, so the auto-injected "Generate and run E2E tests" task could never
+    // be executed. Regression guard for that dead-tool bug.
+    for (const name of ['agent', 'coder']) {
+      const tools = DEFAULT_AGENT_PROFILES[name]?.tools ?? [];
+      expect(tools).toEqual(expect.arrayContaining(['RunE2ETests', 'ReviewTests']));
+    }
+  });
+
   it('fails loudly when an embedded system prompt source is missing', () => {
     expect(() =>
       loadAgentProfilesFromSources(['profile/default/agent.yaml'], {

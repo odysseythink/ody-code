@@ -15,4 +15,6 @@ tools:
   - Edit
   - WebSearch
   - FetchURL
+  - RunE2ETests
+  - ReviewTests
   - mcp__*
