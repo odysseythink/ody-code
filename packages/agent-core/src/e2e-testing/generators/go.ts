@@ -191,7 +191,15 @@ func Test_{{ident}}_E2E(t *testing.T) {
 
 \t// 4. Call the external interface and parse the JSON response.
 \tclient := &http.Client{Timeout: 5 * time.Second}
-\tresp, err := client.Get("http://" + addr + "/") // TODO: real endpoint
+\treq, err := http.NewRequest(http.MethodGet, "http://"+addr+"/", nil) // TODO: real method + path
+\tif err != nil {
+\t\tt.Fatalf("failed to build request: %v", err)
+\t}
+\t// TODO: if this endpoint requires authentication, attach a valid credential.
+\t// Obtain it the way your service expects — e.g. a test token injected into the
+\t// server via cmd.Env above, or by calling your login endpoint first, then:
+\t//   req.Header.Set("Authorization", "Bearer "+token)
+\tresp, err := client.Do(req)
 \tif err != nil {
 \t\tt.Fatalf("request failed: %v", err)
 \t}
@@ -209,6 +217,15 @@ func Test_{{ident}}_E2E(t *testing.T) {
 \t// TODO: assert on the fields your interface returns, e.g.:
 \t//   if body["status"] != "ok" { t.Fatalf("got %v", body["status"]) }
 \t_ = body
+
+\t// TODO: if the endpoint is protected, also assert the unauthorized path:
+\t//   unauth, _ := http.NewRequest(http.MethodGet, "http://"+addr+"/", nil)
+\t//   if r2, err := client.Do(unauth); err == nil {
+\t//       defer r2.Body.Close()
+\t//       if r2.StatusCode != http.StatusUnauthorized {
+\t//           t.Fatalf("want 401 without credentials, got %d", r2.StatusCode)
+\t//       }
+\t//   }
 }
 `;
 

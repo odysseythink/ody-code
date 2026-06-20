@@ -89,7 +89,11 @@ describe('GoGenerator.generateTestsForFeature', () => {
     expect(f.content).toContain('package e2e');
     expect(f.content).toContain('exec.Command("go", "build"');
     expect(f.content).toContain('exec.CommandContext');
-    expect(f.content).toContain('client.Get(');
+    expect(f.content).toContain('http.NewRequest(');
+    expect(f.content).toContain('client.Do(req)');
+    // Auth hook so protected endpoints are not silently asserted as 200.
+    expect(f.content).toContain('req.Header.Set("Authorization"');
+    expect(f.content).toContain('StatusUnauthorized');
     expect(f.content).toContain('json.NewDecoder(resp.Body).Decode');
     expect(f.content).toContain('func Test_internal_api_E2E(t *testing.T)');
     expect(f.content).toContain(JSON.stringify(root)); // moduleRoot embedded

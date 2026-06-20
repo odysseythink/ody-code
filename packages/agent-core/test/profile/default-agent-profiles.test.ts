@@ -49,6 +49,9 @@ describe('default agent profiles', () => {
     const prompt = DEFAULT_AGENT_PROFILES['agent']?.systemPrompt(promptContext) ?? '';
     expect(prompt).toContain('externally-facing interface');
     expect(prompt).toMatch(/HTTP endpoint\/handler/);
+    // Authenticated interfaces: cover both the authorized and rejected paths.
+    expect(prompt).toMatch(/authentication/i);
+    expect(prompt).toMatch(/401\/403/);
   });
 
   it('exposes the E2E + test-review tools on the implementation profiles', () => {

@@ -80,7 +80,9 @@ ${priorityText}
 
 For any externally-facing interface you changed (HTTP endpoint/handler, RPC, or
 CLI command), add a test that drives it through that interface and asserts on the
-response (status code + parsed body), then run the suite. You may also use the
+response (status code + parsed body), then run the suite. If the interface
+requires authentication, supply a valid credential so the authorized path is
+exercised and also assert the unauthorized case (401/403). You may also use the
 RunE2ETests tool to scaffold and run E2E tests.
 `;
 
