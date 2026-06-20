@@ -43,6 +43,14 @@ describe('default agent profiles', () => {
     );
   });
 
+  it('instructs the model to test externally-facing interfaces through their interface', () => {
+    // Reliability lever for "changed an HTTP endpoint → must add a handler-level
+    // test". Project-agnostic; lives in the always-in-context system prompt.
+    const prompt = DEFAULT_AGENT_PROFILES['agent']?.systemPrompt(promptContext) ?? '';
+    expect(prompt).toContain('externally-facing interface');
+    expect(prompt).toMatch(/HTTP endpoint\/handler/);
+  });
+
   it('exposes the E2E + test-review tools on the implementation profiles', () => {
     // These tools are registered as builtins, but the model only ever sees them
     // if the active profile enables them. They were silently absent from every

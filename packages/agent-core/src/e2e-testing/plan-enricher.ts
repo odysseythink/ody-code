@@ -75,10 +75,13 @@ ${E2E_ENRICHMENT_MARKER}
 
 ### Task ${newTaskNum}: Generate and run E2E tests
 
-Based on the changed files, validate the following tools:
+Based on the changed files, validate the following areas:
 ${priorityText}
 
-Use the RunE2ETests tool after completing the implementation tasks above.
+For any externally-facing interface you changed (HTTP endpoint/handler, RPC, or
+CLI command), add a test that drives it through that interface and asserts on the
+response (status code + parsed body), then run the suite. You may also use the
+RunE2ETests tool to scaffold and run E2E tests.
 `;
 
   return content.trimEnd() + section + '\n';
