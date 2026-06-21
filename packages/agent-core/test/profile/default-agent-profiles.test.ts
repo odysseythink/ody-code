@@ -65,6 +65,24 @@ describe('default agent profiles', () => {
     }
   });
 
+  it('exposes RequestCodeReview on the implementation profiles', () => {
+    for (const name of ['agent', 'coder']) {
+      const tools = DEFAULT_AGENT_PROFILES[name]?.tools ?? [];
+      expect(tools).toContain('RequestCodeReview');
+    }
+  });
+
+  it('defines a read-only reviewer subagent profile (no write tools)', () => {
+    const reviewer = DEFAULT_AGENT_PROFILES['reviewer'];
+    expect(reviewer).toBeDefined();
+    const tools = reviewer?.tools ?? [];
+    expect(tools).toEqual(expect.arrayContaining(['Read', 'Grep', 'Glob']));
+    expect(tools).not.toContain('Write');
+    expect(tools).not.toContain('Edit');
+    // The agent profile must declare it as a spawnable subagent.
+    expect(DEFAULT_AGENT_PROFILES['agent']?.subagents?.['reviewer']).toBeDefined();
+  });
+
   it('fails loudly when an embedded system prompt source is missing', () => {
     expect(() =>
       loadAgentProfilesFromSources(['profile/default/agent.yaml'], {

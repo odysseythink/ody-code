@@ -16,5 +16,6 @@ tools:
   - WebSearch
   - FetchURL
   - RunE2ETests
+  - RequestCodeReview
   - ReviewTests
   - mcp__*

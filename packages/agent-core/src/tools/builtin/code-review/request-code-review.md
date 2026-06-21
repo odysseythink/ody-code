@@ -1,0 +1,3 @@
+Request a second-model code review of changes. Spawns a read-only reviewer subagent (on a dedicated reviewer model when configured) that reads the diff AND the surrounding codebase — callers, invariants, tests, duplication — to catch issues beyond the changed lines, then returns structured findings (Critical / Important / Minor) with locations and suggested fixes.
+
+Use it after completing a task, a major feature, or before merging. By default it reviews the working-tree diff; pass `base` and `head` to review a commit range. Set the reviewer model via `model`, or configure `[mode_models] code_review = "<alias>"` to always review with a different/stronger model than the one writing the code.

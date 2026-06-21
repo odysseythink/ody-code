@@ -474,6 +474,7 @@ export class ToolManager {
         toolServices?.webSearcher && new b.WebSearchTool(toolServices.webSearcher),
         toolServices?.urlFetcher && new b.FetchURLTool(toolServices.urlFetcher),
         new b.RunE2ETestsTool(kaos, this.agent),
+        new b.RequestCodeReviewTool(kaos, this.agent),
         new b.ReviewTestsTool(kaos, this.agent),
         new b.HarvestOdyMarkersTool(
           kaos,

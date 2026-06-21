@@ -7,7 +7,12 @@ upstream: superpowers@v5.1.0
 
 # Requesting Code Review
 
-Dispatch a code reviewer subagent to catch issues before they cascade. The reviewer gets precisely crafted context for evaluation — never your session's history. This keeps the reviewer focused on the work product, not your thought process, and preserves your own context for continued work.
+Get an independent review to catch issues before they cascade. In ody-code this is
+a single tool — **`RequestCodeReview`** — that runs a read-only reviewer subagent
+on a dedicated reviewer model (when configured). The reviewer reads the diff AND
+the surrounding codebase (callers, invariants, tests, duplication), so it catches
+the high-value issues that live *outside* the changed lines, and returns
+structured findings (Critical / Important / Minor) with locations and fixes.
 
 **Core principle:** Review early, review often.
 
@@ -15,120 +20,38 @@ Dispatch a code reviewer subagent to catch issues before they cascade. The revie
 
 **Mandatory:**
 - After each task in subagent-driven development
-- After completing major feature
+- After completing a major feature
 - Before merge to main
 
 **Optional but valuable:**
 - When stuck (fresh perspective)
-- Before refactoring (baseline check)
-- After fixing complex bug
+- After fixing a complex bug
 
 ## How to Request
 
-**1. Get git SHAs:**
-```bash
-BASE_SHA=$(git rev-parse HEAD~1)  # or origin/main
-HEAD_SHA=$(git rev-parse HEAD)
-```
+Call the **`RequestCodeReview`** tool. It handles everything — choosing the
+reviewer model, fetching the diff, spawning the read-only reviewer subagent, and
+returning structured findings. You do not need to dispatch a subagent or craft a
+review prompt yourself.
 
-**2. Dispatch code reviewer subagent:**
+Parameters (all optional):
+- `description` — short summary of what you built.
+- `requirements` — what the change is supposed to do (the plan/spec).
+- `model` — override the reviewer model alias (defaults to the configured
+  `[mode_models] code_review` model, else the default model).
+- `base` + `head` — review a commit range (e.g. `origin/main`..`HEAD`). Omit both
+  to review the working tree.
+- `pr` — a GitHub PR URL/number to review instead of local changes.
 
-Use Task tool with `general-purpose` type. Use the following prompt, replacing placeholders with actual values:
+Example: `RequestCodeReview(description: "add /preferences endpoint", requirements: "GET returns the saved prefs as JSON")`.
 
-```
-You are a code reviewer. Review the changes from {BASE_SHA} to {HEAD_SHA}.
+## Act on Feedback
 
-## Context
-
-**What was built:** {DESCRIPTION}
-
-**Requirements:** {PLAN_OR_REQUIREMENTS}
-
-## Your Task
-
-1. Run `git diff {BASE_SHA} {HEAD_SHA}` to see all changes
-2. Review the code against the requirements
-3. Evaluate:
-   - **Strengths:** What's done well
-   - **Issues:**
-     - Critical: Bugs, security issues, broken functionality, missing error handling
-     - Important: Edge cases not covered, test gaps, unclear logic, API design problems
-     - Minor: Style issues, naming, documentation gaps, magic numbers
-4. **Assessment:** Ready to proceed / Needs fixes
-
-## Output Format
-
-```
-Strengths:
-- [strength 1]
-
-Issues:
-Critical:
-- [issue 1] (if any)
-
-Important:
-- [issue 1] (if any)
-
-Minor:
-- [issue 1] (if any)
-
-Assessment: [Ready to proceed / Needs fixes]
-```
-```
-
-**Placeholders:**
-- `{DESCRIPTION}` - Brief summary of what you built
-- `{PLAN_OR_REQUIREMENTS}` - What it should do
-- `{BASE_SHA}` - Starting commit
-- `{HEAD_SHA}` - Ending commit
-
-**3. Act on feedback:**
-- Fix Critical issues immediately
-- Fix Important issues before proceeding
-- Note Minor issues for later
-- Push back if reviewer is wrong (with reasoning)
-
-## Example
-
-```
-[Just completed Task 2: Add verification function]
-
-You: Let me request code review before proceeding.
-
-BASE_SHA=$(git log --oneline | grep "Task 1" | head -1 | awk '{print $1}')
-HEAD_SHA=$(git rev-parse HEAD)
-
-[Dispatch code reviewer subagent]
-  DESCRIPTION: Added verifyIndex() and repairIndex() with 4 issue types
-  PLAN_OR_REQUIREMENTS: Task 2 from $(gpowers-path project)/plans/deployment-plan.md
-  BASE_SHA: a7981ec
-  HEAD_SHA: 3df7661
-
-[Subagent returns]:
-  Strengths: Clean architecture, real tests
-  Issues:
-    Important: Missing progress indicators
-    Minor: Magic number (100) for reporting interval
-  Assessment: Ready to proceed
-
-You: [Fix progress indicators]
-[Continue to Task 3]
-```
-
-## Integration with Workflows
-
-**Subagent-Driven Development:**
-- Review after EACH task
-- Catch issues before they compound
-- Fix before moving to next task
-
-**Executing Plans:**
-- Review after each task or at natural checkpoints
-- Get feedback, apply, continue
-
-**Ad-Hoc Development:**
-- Review before merge
-- Review when stuck
+- Fix **Critical** issues immediately.
+- Fix **Important** issues before proceeding.
+- Note **Minor** issues for later.
+- Push back if the reviewer is wrong — with technical reasoning, showing the
+  code/tests that prove it.
 
 ## Red Flags
 
@@ -137,10 +60,3 @@ You: [Fix progress indicators]
 - Ignore Critical issues
 - Proceed with unfixed Important issues
 - Argue with valid technical feedback
-
-**If reviewer wrong:**
-- Push back with technical reasoning
-- Show code/tests that prove it works
-- Request clarification
-
-Use the prompt template in the "How to Request" section above.

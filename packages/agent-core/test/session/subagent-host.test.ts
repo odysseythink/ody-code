@@ -280,6 +280,53 @@ describe('SessionSubagentHost', () => {
     await expect(execution).resolves.toMatchObject({ output: 'moon-result' });
   });
 
+  it('runs a freshly spawned subagent on an explicit model override', async () => {
+    const parent = testAgent();
+    parent.configure();
+    parent.newEvents();
+    const child = testAgent();
+    child.mockNextResponse({ type: 'text', text: 'review summary' });
+    const session = fakeSession(parent.agent, child.agent);
+    const host = new SessionSubagentHost(session, 'main');
+
+    const handle = await host.spawn('reviewer', {
+      parentToolCallId: 'call_review',
+      prompt: 'Review the diff',
+      description: 'Code review',
+      runInBackground: false,
+      signal,
+      modelAlias: 'reviewer-model-x',
+    });
+
+    // The override reached the child: it attempts reviewer-model-x, which the
+    // harness has not configured — proving it did NOT inherit the parent model.
+    await expect(handle.completion).rejects.toThrow(/reviewer-model-x/);
+    expect(child.agent.config.modelAlias).toBe('reviewer-model-x');
+    expect(child.agent.config.profileName).toBe('reviewer');
+  });
+
+  it('inherits the parent model when no override is given', async () => {
+    const parent = testAgent();
+    parent.configure();
+    parent.newEvents();
+    const parentModel = parent.agent.config.modelAlias;
+    const child = testAgent();
+    child.mockNextResponse({ type: 'text', text: 'Implemented the requested change and verified it builds and the existing tests pass, returning a complete and detailed summary so the parent agent can continue confidently from here without repeating the work.' });
+    const session = fakeSession(parent.agent, child.agent);
+    const host = new SessionSubagentHost(session, 'main');
+
+    const handle = await host.spawn('coder', {
+      parentToolCallId: 'call_agent',
+      prompt: 'Implement the fix',
+      description: 'Fix bug',
+      runInBackground: false,
+      signal,
+    });
+    await handle.completion;
+
+    expect(child.agent.config.modelAlias).toBe(parentModel);
+  });
+
   it('falls back to bundled subagent profiles when the parent profile is missing', async () => {
     const parent = testAgent();
     parent.configure();
@@ -310,6 +357,7 @@ describe('SessionSubagentHost', () => {
       'Glob',
       'Grep',
       'Read',
+      'RequestCodeReview',
       'ReviewTests',
       'RunE2ETests',
       'Write',

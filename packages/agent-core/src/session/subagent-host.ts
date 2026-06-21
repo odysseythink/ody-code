@@ -32,6 +32,13 @@ type RunSubagentOptions = {
   readonly runInBackground: boolean;
   readonly origin?: PromptOrigin | undefined;
   readonly signal: AbortSignal;
+  /**
+   * Run this (freshly spawned) subagent on a specific model instead of
+   * inheriting the parent's. Used for second-model review where the reviewer
+   * should differ from the agent that wrote the code. Resume always realigns to
+   * the parent model and ignores this.
+   */
+  readonly modelAlias?: string | undefined;
 };
 
 type SubagentCompletion = {
@@ -90,7 +97,7 @@ export class SessionSubagentHost {
         ...options,
         signal: controller.signal,
       },
-      () => this.configureChild(parent, agent, profile),
+      () => this.configureChild(parent, agent, profile, options.modelAlias),
     ).finally(() => {
       unlinkAbortSignal();
       this.activeChildren.delete(id);
@@ -277,11 +284,13 @@ export class SessionSubagentHost {
     parent: Agent,
     child: Agent,
     profile: ResolvedAgentProfile,
+    modelOverride?: string,
   ): Promise<void> {
-    // A subagent always inherits the parent agent's model.
+    // A subagent inherits the parent agent's model unless the caller explicitly
+    // overrides it (e.g. second-model code review on a dedicated reviewer model).
     child.config.update({
       cwd: parent.config.cwd,
-      modelAlias: parent.config.modelAlias,
+      modelAlias: modelOverride ?? parent.config.modelAlias,
       thinkingLevel: parent.config.thinkingLevel,
     });
 

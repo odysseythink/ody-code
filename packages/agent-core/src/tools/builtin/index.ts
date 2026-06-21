@@ -26,6 +26,7 @@ export * from './state/checkpoint';
 export * from './state/todo-list';
 export * from './visual/show-design-mockup';
 export * from './e2e/run-e2e-tests';
+export * from './code-review/request-code-review';
 export * from './test-review/review-tests';
 export * from './office-hours/enter-office-hours';
 export * from './office-hours/exit-office-hours';
