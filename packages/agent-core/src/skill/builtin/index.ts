@@ -2,6 +2,8 @@ import type { SkillRegistry } from '../registry';
 import { DISPATCHING_PARALLEL_AGENTS_SKILL } from './dispatching-parallel-agents';
 import { EXECUTING_PLANS_SKILL } from './executing-plans';
 import { FINISHING_A_DEVELOPMENT_BRANCH_SKILL } from './finishing-a-development-branch';
+import { IDEA_EVALUATOR_SKILL } from './idea-evaluator';
+import { IDEA_GENERATOR_SKILL } from './idea-generator';
 import { MCP_CONFIG_SKILL } from './mcp-config';
 import { RECEIVING_CODE_REVIEW_SKILL } from './receiving-code-review';
 import { REQUESTING_CODE_REVIEW_SKILL } from './requesting-code-review';
@@ -19,6 +21,8 @@ export function registerBuiltinSkills(registry: SkillRegistry): void {
   registry.registerBuiltinSkill(DISPATCHING_PARALLEL_AGENTS_SKILL);
   registry.registerBuiltinSkill(EXECUTING_PLANS_SKILL);
   registry.registerBuiltinSkill(FINISHING_A_DEVELOPMENT_BRANCH_SKILL);
+  registry.registerBuiltinSkill(IDEA_EVALUATOR_SKILL);
+  registry.registerBuiltinSkill(IDEA_GENERATOR_SKILL);
   registry.registerBuiltinSkill(MCP_CONFIG_SKILL);
   registry.registerBuiltinSkill(RECEIVING_CODE_REVIEW_SKILL);
   registry.registerBuiltinSkill(REQUESTING_CODE_REVIEW_SKILL);
@@ -37,6 +41,8 @@ export {
   DISPATCHING_PARALLEL_AGENTS_SKILL,
   EXECUTING_PLANS_SKILL,
   FINISHING_A_DEVELOPMENT_BRANCH_SKILL,
+  IDEA_EVALUATOR_SKILL,
+  IDEA_GENERATOR_SKILL,
   MCP_CONFIG_SKILL,
   RECEIVING_CODE_REVIEW_SKILL,
   REQUESTING_CODE_REVIEW_SKILL,

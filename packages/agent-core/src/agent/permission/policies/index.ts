@@ -16,6 +16,7 @@ import { PlanModeToolApprovePermissionPolicy } from './plan-mode-tool-approve';
 import { PreToolCallHookPermissionPolicy } from './pre-tool-call-hook';
 import { SessionApprovalHistoryPermissionPolicy } from './session-approval-history';
 import { BrowserToolAskPermissionPolicy } from './browser-tool-ask';
+import { IdeaToolDirectoryApprovePermissionPolicy } from './idea-tool-directory';
 import {
   UserConfiguredAllowPermissionPolicy,
   UserConfiguredAskPermissionPolicy,
@@ -58,6 +59,8 @@ export function createPermissionDecisionPolicies(agent: Agent): readonly Permiss
     new YoloModeApprovePermissionPolicy(agent),
     // Tool is in the default-approve list (read-only / UI helpers) → approve.
     new DefaultToolApprovePermissionPolicy(),
+    // SaveIdeaReport writes under .ody-code/ideas/ → approve.
+    new IdeaToolDirectoryApprovePermissionPolicy(agent),
     // Write/Edit on POSIX paths inside cwd inside a git work tree → approve.
     new GitCwdWriteApprovePermissionPolicy(agent),
     // Nothing matched → ask.

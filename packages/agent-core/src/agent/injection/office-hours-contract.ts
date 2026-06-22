@@ -11,6 +11,7 @@
  *   Phase 1   — Context Gathering
  *   Phase 2A  — Startup Diagnostic
  *   Phase 2B  — Builder Diagnostic
+ *   Phase 2.25 — Claim & Ambiguity (critical-thinking pass)
  *   Phase 2.5 — Related Design Discovery
  *   Phase 2.75 — Landscape Awareness
  *   Phase 3   — Premise Challenge
@@ -98,6 +99,13 @@ export function officeHoursFullReminder(designFilePath: SessionModeFilePath): st
     '5. "What would you add if you had unlimited time? What is the 10x version?"',
     'Ask at most 3-4 questions from this list.',
     '',
+    '### Phase 2.25: Claim & Ambiguity (critical-thinking pass — STARTUP track, the 1-3 load-bearing demand claims ONLY)',
+    'Apply this ONLY to the core demand claim(s) — never deconstruct every sentence; that would blow the one-question-at-a-time budget. Skip this phase entirely in builder mode (it is about demand truth, not fun/coolness). For each load-bearing claim:',
+    '1. State the conclusion back. Restate the claim in one sentence — "Your claim is: <who> will <pay/use> <what>, because <why>" — and confirm it via AskUserQuestion before probing. This anchors everything that follows.',
+    '2. Pin the ambiguous words. A demand claim hides behind vague terms ("people", "need", "better", "manage", "a lot") — each can be reinterpreted after the fact, so the claim becomes unfalsifiable. Surface the multi-meaning words and pin each to a concrete definition with the user (who exactly? "better" = faster, cheaper, or fewer errors? "need" = currently pays to solve, or merely annoyed?).',
+    '3. List the load-bearing assumptions. Name the assumptions the claim REQUIRES to be true. Rank by (how load-bearing × how unverified); attack only the top 1-3 here, record the rest in the ## Assumptions chapter.',
+    '4. Assumption -> cheapest falsification, NOT debate. For each top assumption the move is "what is the cheapest test that could prove this FALSE this week?" — not a discussion. A logically airtight claim with every assumption "agreed" is still worthless if no one has paid; evidence beats argument. Feed these tests into Phase 3 and the Phase 5 "The Assignment".',
+    '',
     '### Phase 2.5: Related Design Discovery',
     'Search .ody-code/designs/ and .ody-code/products/ for related design documents. If a relevant prior design exists, mention it and ask whether to build on it.',
     '',
@@ -105,7 +113,7 @@ export function officeHoursFullReminder(designFilePath: SessionModeFilePath): st
     'If the problem space is novel or competitive, offer to search the web for context (WebSearch). Honor the user\'s privacy preference — skip if they decline.',
     '',
     '### Phase 3: Premise Challenge',
-    'List the premises you have identified. Ask the user: "Here are the premises I see. Which ones feel shaky? Which are you most confident about?" Push back gently on unquestioned assumptions.',
+    'List the premises you have identified — including the load-bearing assumptions surfaced in Phase 2.25. Ask the user: "Here are the premises I see. Which ones feel shaky? Which are you most confident about?" Push back gently on unquestioned assumptions, and for each shaky one prefer "what is the cheapest way to find out?" over an open-ended debate.',
     '',
     '### Phase 4: Alternatives Generation',
     'Generate 2-3 genuinely different approaches. For each:',

@@ -40,3 +40,4 @@ export * from './game-design';
 export * from './web/fetch-url';
 export * from './web/web-search';
 export * from './code-quality/harvest-ody-markers';
+export * from './idea/save-idea-report';

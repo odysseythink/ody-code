@@ -681,6 +681,7 @@ describe('Permission policy chain', () => {
       'cwd-outside-file-write-ask',
       'yolo-mode-approve',
       'default-tool-approve',
+      'idea-tool-directory-approve',
       'git-cwd-write-approve',
       'fallback-ask',
     ]);

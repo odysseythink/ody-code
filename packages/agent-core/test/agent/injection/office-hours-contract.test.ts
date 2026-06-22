@@ -101,6 +101,18 @@ describe('office-hours-contract', () => {
       expect(msg).toContain('MUST call AppendBuilderProfile');
       expect(msg).toContain('before moving to Phase 5 or calling ExitOfficeHoursMode');
     });
+
+    it('runs the Phase 2.25 critical-thinking pass on demand claims', () => {
+      const msg = officeHoursFullReminder(path);
+      expect(msg).toContain('Phase 2.25');
+      // state the conclusion back, then pin ambiguous words
+      expect(msg).toContain('State the conclusion back');
+      expect(msg).toContain('Pin the ambiguous words');
+      // assumptions resolve to cheapest falsification, not debate
+      expect(msg).toContain('cheapest test that could prove this FALSE');
+      // startup-only, skipped in builder mode
+      expect(msg).toContain('Skip this phase entirely in builder mode');
+    });
   });
 
   describe('officeHoursSparseReminder', () => {

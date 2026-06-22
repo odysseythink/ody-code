@@ -4,6 +4,8 @@ import {
   DISPATCHING_PARALLEL_AGENTS_SKILL,
   EXECUTING_PLANS_SKILL,
   FINISHING_A_DEVELOPMENT_BRANCH_SKILL,
+  IDEA_EVALUATOR_SKILL,
+  IDEA_GENERATOR_SKILL,
   MCP_CONFIG_SKILL,
   RECEIVING_CODE_REVIEW_SKILL,
   REQUESTING_CODE_REVIEW_SKILL,
@@ -20,6 +22,8 @@ const BUILTIN_SKILLS = [
   { skill: DISPATCHING_PARALLEL_AGENTS_SKILL, name: 'dispatching-parallel-agents' },
   { skill: EXECUTING_PLANS_SKILL, name: 'executing-plans' },
   { skill: FINISHING_A_DEVELOPMENT_BRANCH_SKILL, name: 'finishing-a-development-branch' },
+  { skill: IDEA_EVALUATOR_SKILL, name: 'idea-evaluator' },
+  { skill: IDEA_GENERATOR_SKILL, name: 'idea-generator' },
   { skill: MCP_CONFIG_SKILL, name: 'mcp-config' },
   { skill: RECEIVING_CODE_REVIEW_SKILL, name: 'receiving-code-review' },
   { skill: REQUESTING_CODE_REVIEW_SKILL, name: 'requesting-code-review' },
@@ -33,8 +37,8 @@ const BUILTIN_SKILLS = [
 ];
 
 describe('built-in skills', () => {
-  it('has exactly 13 built-in skills', () => {
-    expect(BUILTIN_SKILLS).toHaveLength(13);
+  it('has exactly 15 built-in skills', () => {
+    expect(BUILTIN_SKILLS).toHaveLength(15);
   });
 
   it.each(BUILTIN_SKILLS)('skill "$name" has correct metadata', ({ skill, name }) => {
@@ -44,6 +48,11 @@ describe('built-in skills', () => {
     expect(skill.dir).toBe(`builtin://${name}`);
     expect(skill.content.length).toBeGreaterThan(0);
     expect(skill.description.length).toBeGreaterThan(0);
+    if (name === 'idea-generator' || name === 'idea-evaluator') {
+      expect(skill.metadata.hiddenInModes).toEqual(
+        expect.arrayContaining(['plan', 'design', 'office-hours', 'game-design']),
+      );
+    }
   });
 
   it('all skills are sorted alphabetically in listSkills', () => {

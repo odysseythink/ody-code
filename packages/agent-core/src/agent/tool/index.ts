@@ -482,6 +482,7 @@ export class ToolManager {
           new b.GrepTool(kaos, workspace),
           this.agent.telemetry,
         ),
+        new b.SaveIdeaReportTool(this.agent),
 
       ]
         .filter((tool) => !!tool)

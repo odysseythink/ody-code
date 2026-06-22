@@ -13,6 +13,7 @@ import {
   stripLocators,
   buildTitlePrompt,
 } from './topic-generator';
+import { ensureGitignore } from '../../utils/gitignore';
 
 /**
  * Whether the current planning session is a regular implementation `plan`
@@ -646,7 +647,7 @@ export class SessionMode {
     try {
       content = await this.agent.kaos.readText(this._sessionModeFilePath);
     } catch (error) {
-      if (!isMissingFileError(error)) throw error;
+      if ((error as { readonly code?: unknown }).code !== 'ENOENT') throw error;
     }
     return {
       id: this._sessionModeId,
@@ -689,29 +690,7 @@ export class SessionMode {
   }
 
   private async ensureGitignore(cwd: string): Promise<void> {
-    const gitignorePath = join(cwd, '.gitignore');
-    const entry = '.ody-code/';
-    try {
-      const content = await this.agent.kaos.readText(gitignorePath);
-      if (content.trim().length === 0) {
-        await this.agent.kaos.writeText(gitignorePath, entry + '\n');
-        return;
-      }
-      const lines = content.split('\n');
-      for (const line of lines) {
-        if (line.trim() === entry) {
-          return; // already present
-        }
-      }
-      const separator = content.endsWith('\n') ? '' : '\n';
-      await this.agent.kaos.writeText(gitignorePath, content + separator + entry + '\n');
-    } catch (error) {
-      if (isMissingFileError(error)) {
-        await this.agent.kaos.writeText(gitignorePath, entry + '\n');
-      } else {
-        throw error;
-      }
-    }
+    await ensureGitignore(cwd, this.agent.kaos);
   }
 
   private async findUniqueStemInDir(dir: string, baseStem: string): Promise<string> {
@@ -762,11 +741,7 @@ export class SessionMode {
   }
 }
 
-function isMissingFileError(error: unknown): boolean {
-  if (error === null || typeof error !== 'object') return false;
-  const code = (error as { readonly code?: unknown }).code;
-  return code === 'ENOENT';
-}
+
 
 function isPermissionError(error: unknown): boolean {
   if (error === null || typeof error !== 'object') return false;
