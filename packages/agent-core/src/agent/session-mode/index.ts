@@ -670,7 +670,7 @@ export class SessionMode {
 
   private async resolveSessionModeDirectory(kind: SessionModeKind): Promise<{ dir: string; isProjectScoped: boolean }> {
     const subdir =
-      kind === 'office-hours' ? 'office-hours' :
+      kind === 'office-hours' ? 'products' :
       kind === 'game-design' ? 'game-design' :
       kind === 'design' ? 'designs' :
       'plans';

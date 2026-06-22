@@ -99,7 +99,7 @@ export function officeHoursFullReminder(designFilePath: SessionModeFilePath): st
     'Ask at most 3-4 questions from this list.',
     '',
     '### Phase 2.5: Related Design Discovery',
-    'Search .ody-code/designs/ and .ody-code/office-hours/ for related design documents. If a relevant prior design exists, mention it and ask whether to build on it.',
+    'Search .ody-code/designs/ and .ody-code/products/ for related design documents. If a relevant prior design exists, mention it and ask whether to build on it.',
     '',
     '### Phase 2.75: Landscape Awareness',
     'If the problem space is novel or competitive, offer to search the web for context (WebSearch). Honor the user\'s privacy preference — skip if they decline.',
