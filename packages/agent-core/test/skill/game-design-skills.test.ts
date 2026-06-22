@@ -32,6 +32,15 @@ describe('game-design skills', () => {
       }
     }
 
+    // Game-design skills should NOT be visible in design mode
+    const designSkills = registry.listInvocableSkills('design');
+    const designNames = new Set(designSkills.map((s) => s.name));
+    for (const name of gdNames) {
+      if (name.startsWith('game-design/')) {
+        expect(designNames.has(name)).toBe(false);
+      }
+    }
+
     // Game-design skills should NOT be visible in office-hours mode
     const ohSkills = registry.listInvocableSkills('office-hours');
     const ohNames = new Set(ohSkills.map((s) => s.name));
