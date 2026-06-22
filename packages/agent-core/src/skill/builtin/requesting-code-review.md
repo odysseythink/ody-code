@@ -29,10 +29,17 @@ structured findings (Critical / Important / Minor) with locations and fixes.
 
 ## How to Request
 
-Call the **`RequestCodeReview`** tool. It handles everything — choosing the
-reviewer model, fetching the diff, spawning the read-only reviewer subagent, and
-returning structured findings. You do not need to dispatch a subagent or craft a
-review prompt yourself.
+Call the **`RequestCodeReview`** tool **by name**. It handles everything —
+choosing the reviewer model, fetching the diff, spawning the read-only reviewer
+subagent, and returning structured findings. You do not need to dispatch a
+subagent or craft a review prompt yourself.
+
+> **Do NOT spawn the reviewer yourself.** Do not use the generic `Agent` / `Task`
+> tool with `subagent_type: reviewer` (or any hand-written review prompt) to run
+> the review. Only the `RequestCodeReview` tool resolves and applies the dedicated
+> code-review model (`[mode_models] code_review`); the generic `Agent` path makes
+> the reviewer inherit *your* model, silently defeating second-model review. If you
+> find yourself writing a review prompt, stop and call `RequestCodeReview` instead.
 
 Parameters (all optional):
 - `description` — short summary of what you built.
@@ -57,6 +64,7 @@ Example: `RequestCodeReview(description: "add /preferences endpoint", requiremen
 
 **Never:**
 - Skip review because "it's simple"
+- Spawn the reviewer via the generic `Agent` / `Task` tool — always call `RequestCodeReview`
 - Ignore Critical issues
 - Proceed with unfixed Important issues
 - Argue with valid technical feedback
