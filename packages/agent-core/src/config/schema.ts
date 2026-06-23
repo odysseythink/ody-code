@@ -341,6 +341,8 @@ export const OdyConfigSchema = z.object({
   modeModels: z.object({
     plan: z.string().optional(),
     design: z.string().optional(),
+    officeHours: z.string().optional(),
+    gameDesign: z.string().optional(),
     review: z.string().optional(),
     testReview: z.string().optional(),
     codeReview: z.string().optional(),
@@ -397,7 +399,10 @@ export const OdyConfigPatchSchema = z
     modeModels: z.object({
       plan: z.string().optional(),
       design: z.string().optional(),
+      officeHours: z.string().optional(),
+      gameDesign: z.string().optional(),
       review: z.string().optional(),
+      testReview: z.string().optional(),
       codeReview: z.string().optional(),
       codeReviewRequest: z.string().optional(),
       codeReviewReceive: z.string().optional(),

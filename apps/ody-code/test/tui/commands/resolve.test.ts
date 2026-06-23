@@ -246,12 +246,13 @@ describe('mode visibility blocking', () => {
     });
   });
 
+  it('allows /model in office-hours mode (per-mode model switching)', () => {
+    const result = resolve('/model', { sessionMode: 'office-hours' });
+    expect(result.kind).toBe('builtin');
+    expect((result as { name?: string }).name).toBe('model');
+  });
+
   it('blocks non-exit commands in office-hours mode', () => {
-    expect(resolve('/model', { sessionMode: 'office-hours' })).toEqual({
-      kind: 'blocked',
-      commandName: 'model',
-      reason: 'mode-unavailable',
-    });
     expect(resolve('/help', { sessionMode: 'office-hours' })).toEqual({
       kind: 'blocked',
       commandName: 'help',

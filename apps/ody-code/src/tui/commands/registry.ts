@@ -95,12 +95,15 @@ export const BUILTIN_SLASH_COMMANDS = [
     hiddenInModes: ['design', 'normal', ...SPECIAL_MODE_HIDDEN],
   },
   {
+    // `/model` is exempt from the special-mode lockdown: office-hours and
+    // game-design can be pinned to their own model (modeModels.officeHours /
+    // gameDesign), so the user must be able to switch models from inside the
+    // mode. Visible and runnable in every mode.
     name: 'model',
     aliases: [],
     description: 'Switch LLM model',
     priority: 100,
     availability: 'always',
-    hiddenInModes: SPECIAL_MODE_HIDDEN,
   },
   {
     name: 'provider',

@@ -38,6 +38,26 @@ tools:
   - RequestCodeReview
   - ReviewTests
   - SaveIdeaReport
+  # Office-hours session-mode tools. The host activates the mode (setSessionMode),
+  # but the in-mode operations are model-driven, so the model must be able to see
+  # them — otherwise the contract orders calls to tools that aren't in its tool set.
+  - SetOfficeHoursLanguage
+  - EnterOfficeHoursMode
+  - ExitOfficeHoursMode
+  - AppendBuilderProfile
+  - AppendLearning
+  - SearchLearnings
+  - EnsureClaudeMdRouting
+  - SyncOfficeHoursArtifact
+  # Game-design session-mode tools (same rationale as office-hours).
+  - SetGameDesignLanguage
+  - EnterGameDesignMode
+  - ExitGameDesignMode
+  - AppendGameDesignProfile
+  - AppendGameDesignLearning
+  - SearchGameDesignLearnings
+  - EnsureGameDesignRouting
+  - SyncGameDesignArtifact
   - mcp__*
 
 subagents:

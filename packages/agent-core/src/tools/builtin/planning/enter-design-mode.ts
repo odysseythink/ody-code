@@ -35,12 +35,25 @@ export class EnterDesignModeTool implements BuiltinTool<EnterDesignModeInput> {
       description: 'Requesting to enter design mode',
       approvalRule: this.name,
       execute: async () => {
-        // Guard: already in plan/design mode
+        // Guard: already in a session mode. Name the ACTUAL active mode and its
+        // exit tool — a blanket "Plan mode is already active" lie sends the model
+        // down the wrong recovery path (looking for a plan file, calling
+        // ExitPlanMode) when it is really in office-hours/game-design.
         if (this.agent.sessionMode.isActive) {
-          const active = this.agent.sessionMode.kind === 'design' ? 'Design' : 'Plan';
+          const kind = this.agent.sessionMode.kind;
+          const active =
+            kind === 'design' ? 'Design' :
+            kind === 'office-hours' ? 'Office-hours' :
+            kind === 'game-design' ? 'Game-design' :
+            'Plan';
+          const exitTool =
+            kind === 'design' ? 'ExitDesignMode' :
+            kind === 'office-hours' ? 'ExitOfficeHoursMode' :
+            kind === 'game-design' ? 'ExitGameDesignMode' :
+            'ExitPlanMode';
           return {
             isError: true,
-            output: `${active} mode is already active. Use ExitDesignMode when the design is ready, or exit first.`,
+            output: `${active} mode is already active. Use ${exitTool} when you are ready to exit ${active.toLowerCase()} mode; do not try to enter another mode on top of it.`,
           };
         }
 

@@ -140,10 +140,12 @@ describe('built-in slash command registry', () => {
     ]);
   });
 
-  it('hides universal commands in office-hours mode except exit', () => {
+  it('hides universal commands in office-hours mode except exit and model', () => {
     expect(findBuiltInSlashCommand('help')?.hiddenInModes).toContain('office-hours');
-    expect(findBuiltInSlashCommand('model')?.hiddenInModes).toContain('office-hours');
     expect(findBuiltInSlashCommand('version')?.hiddenInModes).toContain('office-hours');
     expect(findBuiltInSlashCommand('exit')?.hiddenInModes).toBeUndefined();
+    // /model is exempt: special modes can be pinned to their own model, so the
+    // user must be able to switch models from inside the mode.
+    expect(findBuiltInSlashCommand('model')?.hiddenInModes).toBeUndefined();
   });
 });

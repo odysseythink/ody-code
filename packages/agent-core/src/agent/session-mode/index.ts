@@ -94,8 +94,16 @@ export class SessionMode {
       this.startDesignSession(id);
     }
 
-    if (kind === 'plan' || kind === 'design') {
-      const modeModel = this.agent.kimiConfig?.modeModels?.[kind];
+    // Each writing/diagnostic mode can be pinned to its own model via
+    // modeModels. The config keys are camelCase, so kebab kinds map across.
+    const modeModelKey =
+      kind === 'plan' ? 'plan' :
+      kind === 'design' ? 'design' :
+      kind === 'office-hours' ? 'officeHours' :
+      kind === 'game-design' ? 'gameDesign' :
+      undefined;
+    if (modeModelKey !== undefined) {
+      const modeModel = this.agent.kimiConfig?.modeModels?.[modeModelKey];
       if (modeModel !== undefined) {
         let resolved: ResolvedRuntimeProvider | undefined;
         let usable = false;
@@ -103,7 +111,7 @@ export class SessionMode {
           resolved = this.agent.modelProvider?.resolveProviderConfig(modeModel);
           usable = resolved === undefined || this.modelAliasHasUsableAuth(modeModel, resolved);
         } catch {
-          this.agent.log?.warn(`modeModels.${kind} "${modeModel}" not found, keeping current model`);
+          this.agent.log?.warn(`modeModels.${modeModelKey} "${modeModel}" not found, keeping current model`);
           this._preModeModelAlias = null;
         }
         if (usable) {
@@ -119,7 +127,7 @@ export class SessionMode {
           }
         } else if (resolved !== undefined) {
           this.agent.log?.warn(
-            `modeModels.${kind} "${modeModel}" has no configured API key or OAuth login; keeping current model`,
+            `modeModels.${modeModelKey} "${modeModel}" has no configured API key or OAuth login; keeping current model`,
           );
           this._preModeModelAlias = null;
         }

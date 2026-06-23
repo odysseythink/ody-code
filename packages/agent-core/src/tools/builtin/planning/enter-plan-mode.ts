@@ -31,11 +31,24 @@ export class EnterPlanModeTool implements BuiltinTool<EnterPlanModeInput> {
       description: 'Requesting to enter plan mode',
       approvalRule: this.name,
       execute: async () => {
-        // Guard: already in plan mode
+        // Guard: already in a session mode. Name the ACTUAL active mode and its
+        // exit tool so the model doesn't think it is in plan mode when it is
+        // really in office-hours/game-design/design.
         if (this.agent.sessionMode.isActive) {
+          const kind = this.agent.sessionMode.kind;
+          const active =
+            kind === 'design' ? 'Design' :
+            kind === 'office-hours' ? 'Office-hours' :
+            kind === 'game-design' ? 'Game-design' :
+            'Plan';
+          const exitTool =
+            kind === 'design' ? 'ExitDesignMode' :
+            kind === 'office-hours' ? 'ExitOfficeHoursMode' :
+            kind === 'game-design' ? 'ExitGameDesignMode' :
+            'ExitPlanMode';
           return {
             isError: true,
-            output: 'Plan mode is already active. Use ExitPlanMode when the plan is ready.',
+            output: `${active} mode is already active. Use ${exitTool} when you are ready to exit ${active.toLowerCase()} mode; do not try to enter another mode on top of it.`,
           };
         }
 
