@@ -50,16 +50,16 @@ describe('SessionMode office-hours', () => {
     expect(mode.isActive).toBe(false);
   });
 
-  it('resolveSessionModeDirectory uses office-hours subdirectory', async () => {
+  it('resolveSessionModeDirectory uses the products subdirectory', async () => {
     const mkdirSpy = vi.fn().mockResolvedValue(undefined);
     const agent = mockAgent({ kaos: { ...mockAgent().kaos, mkdir: mkdirSpy } });
     const mode = new SessionMode(agent);
     await mode.enter('id-1', false, false, 'office-hours');
     const calls = mkdirSpy.mock.calls;
-    const officeHoursCall = calls.find((c: unknown[]) =>
-      typeof c[0] === 'string' && c[0].includes('office-hours'),
+    const productsCall = calls.find((c: unknown[]) =>
+      typeof c[0] === 'string' && c[0].includes('products'),
     );
-    expect(officeHoursCall).toBeDefined();
-    expect(officeHoursCall![0]).toContain(join('.ody-code', 'office-hours'));
+    expect(productsCall).toBeDefined();
+    expect(productsCall![0]).toContain(join('.ody-code', 'products'));
   });
 });

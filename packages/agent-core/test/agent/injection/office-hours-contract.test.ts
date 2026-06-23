@@ -113,6 +113,37 @@ describe('office-hours-contract', () => {
       // startup-only, skipped in builder mode
       expect(msg).toContain('Skip this phase entirely in builder mode');
     });
+
+    it('confirms the subject before detail questions (both tracks)', () => {
+      const msg = officeHoursFullReminder(path);
+      expect(msg).toContain('CONFIRM THE SUBJECT');
+      expect(msg).toContain('is a GUESS until confirmed');
+    });
+
+    it('locks the startup/builder track early and routes phases', () => {
+      const msg = officeHoursFullReminder(path);
+      expect(msg).toContain('LOCK THE TRACK');
+      // builder track skips startup-only diagnostics and forced distribution
+      expect(msg).toContain('SKIP Phase 2A and Phase 2.25');
+      expect(msg).toContain('do NOT invent an acquisition channel');
+    });
+
+    it('enforces question economy (infer over ask)', () => {
+      const msg = officeHoursFullReminder(path);
+      expect(msg).toContain('Question economy');
+    });
+
+    it('gives the premise challenge teeth (cheapest falsification, not rubber-stamp)', () => {
+      const msg = officeHoursFullReminder(path);
+      expect(msg).toContain('cheapest test that could prove it FALSE');
+      expect(msg).toContain('is NOT validated');
+    });
+
+    it('tells the model how to emit the doc and not to enter other modes', () => {
+      const msg = officeHoursFullReminder(path);
+      expect(msg).toContain('.ody-code/products/');
+      expect(msg).toContain('do NOT call EnterDesignMode or EnterPlanMode');
+    });
   });
 
   describe('officeHoursSparseReminder', () => {
