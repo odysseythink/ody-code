@@ -300,7 +300,7 @@ export const BUILTIN_SLASH_COMMANDS = [
   },
   {
     name: 'request-code-review',
-    aliases: [],
+    aliases: ['requesting-code-review'],
     description: 'Request a code review of the current changes.',
     priority: 80,
     availability: 'idle-only',

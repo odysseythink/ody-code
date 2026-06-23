@@ -189,6 +189,13 @@ async function executeSlashCommand(host: SlashCommandHost, input: string): Promi
         command: intent.commandName,
         skill_name: intent.skillName,
       });
+      // Core code-review skill can run without the RequestCodeReview tool being
+      // exposed in the active profile: dispatch to the direct harness path so
+      // /skill:requesting-code-review behaves identically to /request-code-review.
+      if (intent.skillName === 'requesting-code-review') {
+        await handleRequestCodeReviewCommand(host, intent.args);
+        return;
+      }
       host.sendSkillActivation(session, intent.skillName, intent.args);
       return;
     }
@@ -211,6 +218,10 @@ async function executeSlashCommand(host: SlashCommandHost, input: string): Promi
       } catch (error) {
         host.showError(formatErrorMessage(error));
       }
+      return;
+    case 'invalid':
+      host.track('input_command_invalid', { reason: intent.reason, command: intent.commandName });
+      host.showError(intent.reason);
       return;
   }
 }
