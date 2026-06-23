@@ -354,7 +354,7 @@ export class OdyTUI {
     let skills;
     try {
       const mode = this.state.appState.sessionMode;
-      skills = await session.listSkills(mode && mode !== 'normal' ? { sessionMode: mode } : undefined);
+      skills = await session.listSkills({ sessionMode: mode });
     } catch {
       return;
     }
