@@ -25,7 +25,10 @@ export type StreamDelta =
 
 // ── RPC payloads ────────────────────────────────────────────────────
 
-/** Request to initialise a chat stream on the main thread. */
+/**
+ * Request to initialise a chat stream on the main thread.
+ * All fields must be structuredClone-serializable.
+ */
 export interface ChatStreamRequest {
   readonly modelName: string;
   readonly systemPrompt: string;
