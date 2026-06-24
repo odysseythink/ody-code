@@ -5,6 +5,7 @@ import { ErrorCodes, OdyError, makeErrorPayload } from '#/errors';
 import { log } from '#/logging/logger';
 import type { Logger } from '#/logging/types';
 import type { AgentAPI, AgentEvent, OdyConfig, SDKAgentRPC, UsageStatus } from '#/rpc';
+import type { LLM, LLMFactoryConfig } from '#/loop/llm';
 import {
   generate,
   type ChatProvider,
@@ -76,6 +77,7 @@ import type { SupportedLanguage } from '#/i18n';
 export type { AgentRecord, AgentRecordPersistence } from './records';
 export type { BuiltinTool, ToolInfo, ToolSource, UserToolRegistration } from './tool';
 export { buildGoalCompletionMessage } from './goal/completion';
+export type { LLM, LLMFactoryConfig } from '#/loop/llm';
 
 export type AgentType = 'main' | 'sub' | 'independent';
 export type ModeKey = 'normal' | 'plan' | 'design' | 'office-hours' | 'game-design';
@@ -108,6 +110,7 @@ export interface AgentOptions {
   readonly userLanguage?: SupportedLanguage | undefined;
   /** Callback for Agent to persist a detected language change back to Session. */
   readonly setUserLanguage?: ((lang: SupportedLanguage) => void) | undefined;
+  readonly llmFactory?: ((rpc: Partial<SDKAgentRPC>, config: LLMFactoryConfig) => LLM) | undefined;
 }
 
 export class Agent {
@@ -167,9 +170,10 @@ export class Agent {
   userLanguage?: SupportedLanguage;
   private readonly _setUserLanguageCallback?: ((lang: SupportedLanguage) => void) | undefined;
   checkpointCoordinator?: CheckpointCoordinator;
+  private readonly llmFactory?: ((rpc: Partial<SDKAgentRPC>, config: LLMFactoryConfig) => LLM) | undefined;
 
   private lastLlmConfigLogSignature?: string;
-  private _llm: KosongLLM | undefined;
+  private _llm: LLM | undefined;
 
   constructor(options: AgentOptions) {
     this.type = options.type ?? 'main';
@@ -245,6 +249,7 @@ export class Agent {
     this.gameDesignStateStore = options.gameDesignStateStore ?? new NoopGameDesignStateStore();
     this.userLanguage = options.userLanguage;
     this._setUserLanguageCallback = options.setUserLanguage;
+    this.llmFactory = options.llmFactory;
 
     // Fire-and-forget: load Wasm compute hotspots in the background.
     // globMatch already falls back to JS while Wasm is loading or if it fails,
@@ -345,11 +350,27 @@ export class Agent {
     this._llm = undefined;
   }
 
-  get llm(): KosongLLM {
+  get llm(): LLM {
     if (this._llm !== undefined) {
       return this._llm;
     }
     const model = this.config.model;
+    const systemPrompt = this.config.systemPrompt;
+    const loopControl = this.kimiConfig?.loopControl;
+    const completionBudgetConfig = resolveCompletionBudget({
+      reservedContextSize: loopControl?.reservedContextSize,
+    });
+
+    if (this.llmFactory !== undefined) {
+      this._llm = this.llmFactory(this.rpc ?? {}, {
+        modelName: model,
+        systemPrompt,
+        capability: this.config.modelCapabilities,
+        completionBudgetConfig,
+      });
+      return this._llm;
+    }
+
     const provider = this.config.provider.withThinking(this.config.thinkingLevel);
     this.log?.debug('agent.llm created', {
       modelAlias: this.config.modelAlias,
@@ -357,14 +378,10 @@ export class Agent {
       providerName: provider.name,
       providerModel: provider.modelName,
     });
-    const loopControl = this.kimiConfig?.loopControl;
-    const completionBudgetConfig = resolveCompletionBudget({
-      reservedContextSize: loopControl?.reservedContextSize,
-    });
     this._llm = new KosongLLM({
       provider,
       modelName: model,
-      systemPrompt: this.config.systemPrompt,
+      systemPrompt,
       capability: this.config.modelCapabilities,
       generate: this.generate,
       completionBudgetConfig,
@@ -818,3 +835,5 @@ function fingerprint(content: string): string {
 function requestLogContext(options: Parameters<typeof generate>[5]) {
   return (options as GenerateOptionsWithRequestLog | undefined)?.[GENERATE_REQUEST_LOG_CONTEXT];
 }
+
+export { RemoteKosongLLM, remoteLLMStreamRegistry } from './turn/remote-kosong-llm';
