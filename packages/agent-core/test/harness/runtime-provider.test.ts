@@ -228,6 +228,73 @@ describe('resolveRuntimeProvider model metadata', () => {
       }),
     ).toThrow(/max_context_size/);
   });
+
+  describe('resolveRuntimeProvider max_output_tokens overlay', () => {
+    it('uses alias.maxOutputSize when configured', () => {
+      const resolved = resolveRuntimeProvider({
+        config: {
+          ...BASE_CONFIG,
+          providers: {
+            ...BASE_CONFIG.providers,
+            openai: { type: 'openai', apiKey: 'sk-openai' },
+          },
+          models: {
+            ...BASE_CONFIG.models!,
+            'gpt-alias': {
+              provider: 'openai',
+              model: 'gpt-4o',
+              maxContextSize: 200000,
+              maxOutputSize: 8192,
+            },
+          },
+        },
+        model: 'gpt-alias',
+      });
+
+      expect(resolved.modelCapabilities.max_output_tokens).toBe(8192);
+    });
+
+    it('falls back to provider-detected max_output_tokens when alias has none', () => {
+      const resolved = resolveRuntimeProvider({
+        config: {
+          ...BASE_CONFIG,
+          providers: {
+            ...BASE_CONFIG.providers,
+            openai: { type: 'openai', apiKey: 'sk-openai' },
+          },
+          models: {
+            ...BASE_CONFIG.models!,
+            'gpt-alias': {
+              provider: 'openai',
+              model: 'gpt-4o',
+              maxContextSize: 200000,
+            },
+          },
+        },
+        model: 'gpt-alias',
+      });
+
+      expect(resolved.modelCapabilities.max_output_tokens).toBe(16_384);
+    });
+
+    it('keeps max_output_tokens at 0 when neither alias nor provider knows it', () => {
+      const resolved = resolveRuntimeProvider({
+        config: {
+          ...BASE_CONFIG,
+          models: {
+            ...BASE_CONFIG.models!,
+            'kimi-code/kimi-for-coding': {
+              provider: 'managed:ody-code',
+              model: 'kimi-for-coding',
+              maxContextSize: 1_000_000,
+            },
+          },
+        },
+      });
+
+      expect(resolved.modelCapabilities.max_output_tokens).toBe(0);
+    });
+  });
 });
 
 describe('resolveRuntimeProvider maxOutputSize forwarding', () => {

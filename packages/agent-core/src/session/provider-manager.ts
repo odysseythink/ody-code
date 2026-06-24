@@ -204,7 +204,7 @@ function resolveModelCapabilities(
     thinking: declared.has('thinking') || declared.has('always_thinking') || detected.thinking,
     tool_use: declared.has('tool_use') || detected.tool_use,
     max_context_tokens: alias.maxContextSize,
-    max_output_tokens: detected.max_output_tokens,
+    max_output_tokens: alias.maxOutputSize ?? detected.max_output_tokens,
   };
 }
 
