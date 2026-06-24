@@ -1,6 +1,6 @@
 import { fileURLToPath } from 'node:url';
 
-import { loadWasmModule, type WasmFlagId } from './wasm-loader';
+import { loadWasmModule, wrapWithFallback, type WasmFlagId } from './wasm-loader';
 import { callWasmStringFunction } from './wasm-string';
 import type { LoadContext } from './wasm-loader';
 
@@ -25,9 +25,17 @@ export async function loadWasmDiffModule(wasmBytes?: Uint8Array, context?: LoadC
       },
       flagId: DIFF_FLAG,
       factory: (exports) => ({
-        computeTextDiff: (oldText: string, newText: string) =>
-          callWasmStringFunction(exports, 'compute_diff', oldText, newText),
-        formatGitDiff: (rawDiff: string) => callWasmStringFunction(exports, 'format_git_diff', rawDiff),
+        computeTextDiff: wrapWithFallback(
+          (oldText: string, newText: string) =>
+            callWasmStringFunction(exports, 'compute_diff', oldText, newText),
+          computeTextDiffJs,
+          DIFF_FLAG,
+        ),
+        formatGitDiff: wrapWithFallback(
+          (rawDiff: string) => callWasmStringFunction(exports, 'format_git_diff', rawDiff),
+          formatGitDiffJs,
+          DIFF_FLAG,
+        ),
       }),
     },
     wasmBytes,

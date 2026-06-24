@@ -50,7 +50,7 @@ export const FLAG_DEFINITIONS = [
   {
     id: 'wasm-glob',
     env: 'ODY_CODE_EXPERIMENTAL_WASM_GLOB',
-    default: true,
+    default: false,
     surface: 'core',
   },
 ] as const satisfies readonly FlagDefinitionInput[];

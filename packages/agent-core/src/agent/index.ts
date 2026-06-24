@@ -26,6 +26,7 @@ import {
   estimateTokensForMessages,
   estimateTokensForTools,
 } from '../utils/tokens';
+import { initGlobWasm } from '../utils/wasm-glob';
 import type { PromisableMethods } from '../utils/types';
 import { BackgroundManager, BackgroundTaskPersistence } from './background';
 import {
@@ -244,6 +245,13 @@ export class Agent {
     this.gameDesignStateStore = options.gameDesignStateStore ?? new NoopGameDesignStateStore();
     this.userLanguage = options.userLanguage;
     this._setUserLanguageCallback = options.setUserLanguage;
+
+    // Fire-and-forget: load Wasm compute hotspots in the background.
+    // globMatch already falls back to JS while Wasm is loading or if it fails,
+    // so this never blocks construction and never breaks standalone usage.
+    void initGlobWasm().catch(() => {
+      /* fallback is automatic */
+    });
   }
 
   /** Active partition's conversation history — routes to the current mode. */
