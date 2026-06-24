@@ -1,34 +1,7 @@
-//! PoC: a single hot-path function (token estimation) reimplemented in Rust,
-//! compiled to `wasm32-unknown-unknown` with NO wasm-bindgen.
-//!
-//! The ABI is deliberately raw so the JS<->Wasm boundary cost is explicit and
-//! measurable: the caller allocates a buffer via `alloc`, copies UTF-8 bytes
-//! into linear memory, calls `estimate_tokens(ptr, len)`, then frees via
-//! `dealloc`. This is exactly the cost we want to benchmark against pure JS.
+//! PoC: hot-path functions in Rust compiled to `wasm32-unknown-unknown` with NO wasm-bindgen.
 
-use std::alloc::{alloc as sys_alloc, dealloc as sys_dealloc, Layout};
-
-/// Allocate `len` bytes in wasm linear memory and return a pointer the JS side
-/// can write UTF-8 into. Memory is leaked here and reclaimed by `dealloc`.
-#[no_mangle]
-pub extern "C" fn alloc(len: usize) -> *mut u8 {
-    if len == 0 {
-        return std::ptr::null_mut();
-    }
-    // 1-byte alignment is fine for a UTF-8 byte buffer.
-    let layout = Layout::from_size_align(len, 1).unwrap();
-    unsafe { sys_alloc(layout) }
-}
-
-/// Free a buffer previously returned by `alloc`.
-#[no_mangle]
-pub extern "C" fn dealloc(ptr: *mut u8, len: usize) {
-    if ptr.is_null() || len == 0 {
-        return;
-    }
-    let layout = Layout::from_size_align(len, 1).unwrap();
-    unsafe { sys_dealloc(ptr, layout) }
-}
+pub mod abi;
+pub use abi::*;
 
 /// Estimate token count from UTF-8 text in `[ptr, ptr+len)`.
 ///
@@ -42,8 +15,6 @@ pub extern "C" fn estimate_tokens(ptr: *const u8, len: usize) -> u32 {
         return 0;
     }
     let bytes = unsafe { std::slice::from_raw_parts(ptr, len) };
-    // Invalid UTF-8 is treated leniently: lossy decode keeps the PoC robust
-    // without diverging from JS, which also never throws here.
     let text = match std::str::from_utf8(bytes) {
         Ok(s) => s,
         Err(_) => return estimate_lossy(bytes),
