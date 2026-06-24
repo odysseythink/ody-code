@@ -23,9 +23,9 @@ describe('loadWasmModule', () => {
   it('returns fallback when flag is disabled by env', async () => {
     const fallback = () => 'js';
     const fn = await loadWasmModule(
-      makeConfig({ fallback, flagId: 'wasm-tokenizer', factory: () => () => 'wasm' }),
+      makeConfig({ fallback, flagId: 'wasm-diff', factory: () => () => 'wasm' }),
       await realWasmBytes(),
-      { ODY_CODE_EXPERIMENTAL_WASM_TOKENIZER: '0' },
+      { ODY_CODE_EXPERIMENTAL_WASM_DIFF: '0' },
     );
     expect(fn()).toBe('js');
   });
@@ -35,7 +35,7 @@ describe('loadWasmModule', () => {
     const fn = await loadWasmModule({
       wasmPath: '/definitely/missing.wasm',
       fallback,
-      flagId: 'wasm-tokenizer',
+      flagId: 'wasm-diff',
       factory: () => () => 'wasm',
     });
     expect(fn()).toBe('js');
@@ -44,7 +44,7 @@ describe('loadWasmModule', () => {
   it('returns wasm result when everything works', async () => {
     const fallback = () => 'js';
     const fn = await loadWasmModule(
-      makeConfig({ fallback, flagId: 'wasm-tokenizer', factory: () => () => 'wasm' }),
+      makeConfig({ fallback, flagId: 'wasm-diff', factory: () => () => 'wasm' }),
       await realWasmBytes(),
     );
     expect(fn()).toBe('wasm');
@@ -55,7 +55,7 @@ describe('loadWasmModule', () => {
     const fn = await loadWasmModule(
       makeConfig({
         fallback,
-        flagId: 'wasm-tokenizer',
+        flagId: 'wasm-diff',
         factory: () => () => {
           throw new Error('wasm panic');
         },
@@ -71,7 +71,7 @@ describe('wrapWithFallback', () => {
     const fn = wrapWithFallback(
       (x: number) => x * 2,
       (x: number) => x + 1,
-      'wasm-tokenizer',
+      'wasm-diff',
     );
     expect(fn(5)).toBe(10);
   });
@@ -82,7 +82,7 @@ describe('wrapWithFallback', () => {
         throw new Error('boom');
       },
       () => 'ok',
-      'wasm-tokenizer',
+      'wasm-diff',
     );
     expect(fn()).toBe('ok');
   });
