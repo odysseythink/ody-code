@@ -44,8 +44,18 @@ export async function loadWasmModule<T>(
   try {
     const bytes = wasmBytes ?? new Uint8Array(await readFile(config.wasmPath));
     const { instance } = await WebAssembly.instantiate(bytes, {});
-    const wasmFn = config.factory(instance.exports as unknown as WasmExports);
-    return wrapWithFallback(wasmFn, config.fallback, config.flagId);
+    const wasmResult = config.factory(instance.exports as unknown as WasmExports);
+    // When the factory returns a function (tokenizer, glob), wrap it so runtime
+    // errors fall back to the JS implementation. Object-type factories (diff)
+    // are returned as-is.
+    if (typeof wasmResult === 'function') {
+      return wrapWithFallback(
+        wasmResult as (...args: any[]) => any,
+        config.fallback as (...args: any[]) => any,
+        config.flagId,
+      ) as unknown as T;
+    }
+    return wasmResult;
   } catch {
     return config.fallback;
   }
