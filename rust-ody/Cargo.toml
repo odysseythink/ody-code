@@ -9,6 +9,11 @@ license = "MIT"
 # cdylib -> produces a standalone .wasm with no wasm-bindgen glue.
 crate-type = ["cdylib"]
 
+[dependencies]
+tiktoken-rs = "0.5.5"
+similar = "2.6.0"
+globset = "0.4.14"
+
 [profile.release]
 opt-level = 3
 lto = true
