@@ -1,9 +1,11 @@
 import { mkdir, mkdtemp } from 'node:fs/promises';
 import { createServer, createConnection, type AddressInfo } from 'node:net';
+import { PassThrough } from 'node:stream';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
+import { ErrorCodes } from '@odysseythink/agent-core-shared';
 import {
   createRPCEndpoint,
   createStreamTransport,
@@ -59,5 +61,34 @@ describe('createCoreServer', () => {
     clientTransport.close?.();
     clientSocket.end();
     server.close();
+  });
+});
+
+describe('createCoreServer options and lifecycle', () => {
+  it('exposes homeDir and configPath from options', async () => {
+    const tmpDir = await mkdtemp(join(tmpdir(), 'ody-core-server-'));
+    const input = new PassThrough();
+    const output = new PassThrough();
+
+    const server = createCoreServer(
+      (dispatch) => createStreamTransport(input, output, dispatch, { framing: 'length-prefixed' }),
+      { homeDir: tmpDir, configPath: join(tmpDir, 'config.toml') },
+    );
+
+    expect(server.close).toBeDefined();
+    server.close();
+  });
+
+  it('closes transport and rejects pending calls', async () => {
+    const tmpDir = await mkdtemp(join(tmpdir(), 'ody-core-server-'));
+    const input = new PassThrough();
+    const output = new PassThrough();
+
+    const server = createCoreServer(
+      (dispatch) => createStreamTransport(input, output, dispatch, { framing: 'length-prefixed' }),
+      { homeDir: tmpDir },
+    );
+
+    expect(() => server.close()).not.toThrow();
   });
 });
