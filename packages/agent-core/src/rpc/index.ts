@@ -5,3 +5,12 @@ export * from './resumed';
 export * from './sdk-api';
 export * from './events';
 export * from './types';
+export {
+  createInProcessTransportPair,
+  decodeJson,
+  encodeJson,
+  type CreateRPCOptions,
+  type Dispatch,
+  type Transport,
+  type TransportPair,
+} from './transport';
