@@ -73,3 +73,29 @@ export function callWasmStringFunction(
     }
   }
 }
+
+/**
+ * Call a Wasm function that takes N UTF-8 strings and returns a u32 scalar.
+ * Input allocations are always freed; output is a plain number.
+ */
+export function callWasmU32Function(
+  exports: WasmExports,
+  fnName: string,
+  ...inputStrings: string[]
+): number {
+  const allocations: StringAllocation[] = [];
+  try {
+    for (const str of inputStrings) {
+      allocations.push(writeString(exports, str));
+    }
+    const args = allocations.flatMap(({ ptr, len }) => [ptr, len]);
+    const wasmFn = (exports as unknown as Record<string, unknown>)[fnName] as (...args: number[]) => number;
+    return wasmFn(...args);
+  } finally {
+    for (const { ptr, len } of allocations) {
+      if (ptr !== 0) {
+        exports.dealloc(ptr, len);
+      }
+    }
+  }
+}

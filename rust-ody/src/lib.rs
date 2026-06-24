@@ -139,6 +139,112 @@ fn format_git_diff_impl(raw: &str) -> String {
     result
 }
 
+// ---------------------------------------------------------------------------
+// Glob: glob matching via globset
+// ---------------------------------------------------------------------------
+
+use globset::GlobBuilder;
+
+const GLOB_ERROR: u32 = u32::MAX;
+
+/// Match a glob pattern against a value.
+///
+/// `options` is a UTF-8 string: "true" for case-insensitive, anything else for
+/// case-sensitive. Returns 1 on match, 0 on no-match, and GLOB_ERROR when the
+/// pattern cannot be handled by the Rust subset (caller should fall back to
+/// picomatch).
+#[no_mangle]
+pub extern "C" fn glob_match(
+    value_ptr: *const u8,
+    value_len: usize,
+    pattern_ptr: *const u8,
+    pattern_len: usize,
+    opts_ptr: *const u8,
+    opts_len: usize,
+) -> u32 {
+    let value = match unsafe { decode_utf8(value_ptr, value_len) } {
+        Ok(s) => s,
+        Err(_) => return GLOB_ERROR,
+    };
+    let pattern = match unsafe { decode_utf8(pattern_ptr, pattern_len) } {
+        Ok(s) => s,
+        Err(_) => return GLOB_ERROR,
+    };
+    let opts = match unsafe { decode_utf8(opts_ptr, opts_len) } {
+        Ok(s) => s,
+        Err(_) => return GLOB_ERROR,
+    };
+    let nocase = opts == "true";
+    glob_match_impl(&value, &pattern, nocase)
+}
+
+fn glob_match_impl(value: &str, pattern: &str, nocase: bool) -> u32 {
+    let patterns = match expand_braces(pattern) {
+        Some(ps) => ps,
+        None => return GLOB_ERROR,
+    };
+
+    for p in patterns {
+        let glob = match GlobBuilder::new(&p)
+            .literal_separator(true)
+            .backslash_escape(true)
+            .case_insensitive(nocase)
+            .build()
+        {
+            Ok(g) => g,
+            Err(_) => return GLOB_ERROR,
+        };
+        if glob.compile_matcher().is_match(value) {
+            return 1;
+        }
+    }
+    0
+}
+
+/// One-level brace expansion. Returns None if the pattern contains braces that
+/// cannot be expanded safely (nested braces, braces inside unclosed character
+/// classes, etc.), signalling a fall-back to picomatch.
+fn expand_braces(pattern: &str) -> Option<Vec<String>> {
+    let bytes = pattern.as_bytes();
+    let mut bracket_depth: i32 = 0;
+    let mut brace_start: Option<usize> = None;
+
+    for (i, &b) in bytes.iter().enumerate() {
+        match b {
+            b'[' => bracket_depth += 1,
+            b']' => bracket_depth = (bracket_depth - 1).max(0),
+            b'{' if bracket_depth == 0 => {
+                if brace_start.is_some() {
+                    return None;
+                }
+                brace_start = Some(i);
+            }
+            b'}' if bracket_depth == 0 => {
+                let start = brace_start?;
+                let inner = &pattern[start + 1..i];
+                if inner.is_empty() || inner.contains('{') || inner.contains('}') {
+                    return None;
+                }
+                let prefix = &pattern[..start];
+                let suffix = &pattern[i + 1..];
+                let choices: Vec<&str> = inner.split(',').collect();
+                return Some(
+                    choices
+                        .iter()
+                        .map(|c| format!("{}{}{}", prefix, c, suffix))
+                        .collect(),
+                );
+            }
+            _ => {}
+        }
+    }
+
+    if brace_start.is_some() {
+        return None;
+    }
+    Some(vec![pattern.to_string()])
+}
+
 #[cfg(test)]
 mod estimate_tests {
     use super::*;
@@ -214,5 +320,60 @@ mod diff_tests {
             dealloc(ptr, len + 1);
             s
         }
+    }
+}
+
+#[cfg(test)]
+mod glob_tests {
+    use super::*;
+
+    #[test]
+    fn glob_match_star() {
+        assert_eq!(call_glob("main.ts", "*.ts", "false"), 1);
+        assert_eq!(call_glob("src/main.ts", "*.ts", "false"), 0);
+    }
+
+    #[test]
+    fn glob_match_double_star() {
+        assert_eq!(call_glob("src/deep/main.ts", "src/**/*.ts", "false"), 1);
+        assert_eq!(call_glob("main.ts", "src/**/*.ts", "false"), 0);
+    }
+
+    #[test]
+    fn glob_match_brace() {
+        assert_eq!(call_glob("a/b.ts", "a/{b,c}.ts", "false"), 1);
+        assert_eq!(call_glob("a/c.ts", "a/{b,c}.ts", "false"), 1);
+        assert_eq!(call_glob("a/d.ts", "a/{b,c}.ts", "false"), 0);
+    }
+
+    #[test]
+    fn glob_match_nocase() {
+        assert_eq!(call_glob("MAIN.TS", "*.ts", "true"), 1);
+        assert_eq!(call_glob("MAIN.TS", "*.ts", "false"), 0);
+    }
+
+    #[test]
+    fn glob_match_escaped_special_and_question() {
+        assert_eq!(call_glob("a*b", "a\\*b", "false"), 1);
+        assert_eq!(call_glob("aXb", "a?b", "false"), 1);
+        assert_eq!(call_glob("a/b", "a?b", "false"), 0);
+    }
+
+    #[test]
+    fn glob_match_character_class() {
+        assert_eq!(call_glob("abc", "a[bc]c", "false"), 1);
+        assert_eq!(call_glob("adc", "a[bc]c", "false"), 0);
+    }
+
+    #[test]
+    fn glob_match_unsupported_returns_error() {
+        assert_eq!(call_glob("a/c.ts", "a/{b,{c,d}}.ts", "false"), GLOB_ERROR);
+    }
+
+    fn call_glob(value: &str, pattern: &str, opts: &str) -> u32 {
+        let v = value.as_bytes();
+        let p = pattern.as_bytes();
+        let o = opts.as_bytes();
+        glob_match(v.as_ptr(), v.len(), p.as_ptr(), p.len(), o.as_ptr(), o.len())
     }
 }
