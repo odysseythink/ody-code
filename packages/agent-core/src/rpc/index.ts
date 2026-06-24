@@ -19,3 +19,8 @@ export {
 export {
   createMessagePortTransport,
 } from './transports/message-port';
+export {
+  createStreamTransport,
+  type Framing,
+  type StreamTransportOptions,
+} from './transports/stream';
