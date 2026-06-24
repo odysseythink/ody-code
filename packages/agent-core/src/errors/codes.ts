@@ -76,6 +76,10 @@ export const ErrorCodes = {
 
   SHELL_GIT_BASH_NOT_FOUND: 'shell.git_bash_not_found',
 
+  WORKER_SPAWN_FAILED: 'worker.spawn_failed',
+  WORKER_EXITED: 'worker.exited',
+  TRANSPORT_CLOSED: 'transport.closed',
+
   NOT_IMPLEMENTED: 'not_implemented',
   INTERNAL: 'internal',
 } as const;
@@ -434,6 +438,25 @@ export const ODY_ERROR_INFO = {
     retryable: false,
     public: true,
     action: 'Install Git for Windows from https://gitforwindows.org/ or set ODY_SHELL_PATH to a bash.exe.',
+  },
+
+  'worker.spawn_failed': {
+    title: 'Core worker spawn failed',
+    retryable: false,
+    public: true,
+    action: 'Check the worker entry path or set transport to inproc.',
+  },
+  'worker.exited': {
+    title: 'Core worker exited unexpectedly',
+    retryable: false,
+    public: true,
+    action: 'Create a new session.',
+  },
+  'transport.closed': {
+    title: 'Transport closed',
+    retryable: false,
+    public: true,
+    action: 'The worker connection was closed; create a new session.',
   },
 
   not_implemented: {
