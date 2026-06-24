@@ -6,6 +6,7 @@ import type { CLIOptions } from './options';
 import { registerExportCommand } from './sub/export';
 import { registerProviderCommand } from './sub/provider';
 import { registerRequestCodeReviewCommand } from './sub/request-code-review';
+import { registerServeCommand } from './sub/serve';
 
 export type MainCommandHandler = (opts: CLIOptions) => void;
 export type PluginNodeRunnerHandler = (entry: string, args: readonly string[]) => void;
@@ -100,6 +101,7 @@ export function createProgram(
   registerExportCommand(program);
   registerProviderCommand(program);
   registerRequestCodeReviewCommand(program);
+  registerServeCommand(program, version);
   program
     .command('upgrade')
     .description('Upgrade Ody Code to the latest version.')
