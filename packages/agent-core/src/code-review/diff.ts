@@ -1,5 +1,6 @@
 import { spawn } from 'node:child_process';
 import type { CodeReviewDiffSource } from './types';
+import { formatGitDiff } from '../utils/wasm-diff';
 
 const GH_PR_REGEX = /^https?:\/\/github\.com\/([^/]+)\/([^/]+)\/pull\/(\d+)$/i;
 
@@ -39,14 +40,19 @@ export async function fetchDiff(
   _signal?: AbortSignal,
   opts?: { readonly env?: Record<string, string | undefined> },
 ): Promise<string> {
+  let raw: string;
   switch (source.kind) {
     case 'commits':
-      return runGitDiff(['diff', source.base, source.head], cwd, opts);
+      raw = await runGitDiff(['diff', source.base, source.head], cwd, opts);
+      break;
     case 'working-tree':
-      return runGitDiff(['diff'], cwd, opts);
+      raw = await runGitDiff(['diff'], cwd, opts);
+      break;
     case 'pr':
-      return runGhPrDiff(parsePrNumber(source.prUrlOrNumber), cwd, opts);
+      raw = await runGhPrDiff(parsePrNumber(source.prUrlOrNumber), cwd, opts);
+      break;
   }
+  return formatGitDiff(raw);
 }
 
 async function runGitDiff(
