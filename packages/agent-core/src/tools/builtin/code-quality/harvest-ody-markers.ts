@@ -4,7 +4,7 @@ import type { BuiltinTool } from '#/agent/tool';
 import type { ExecutableToolContext, ExecutableToolResult, RunnableToolExecution, ToolExecution } from '#/loop/types';
 import type { TelemetryClient } from '#/telemetry';
 import { resolvePathAccessPath } from '#/tools/policies/path-access';
-import { toInputJsonSchema } from '#/tools/support/input-schema';
+import { toInputJsonSchema } from '@odysseythink/agent-core-shared';
 import { literalRulePattern } from '#/tools/support/rule-match';
 import type { WorkspaceConfig } from '#/tools/support/workspace';
 import { GrepInputSchema, GrepTool } from '#/tools/builtin/file/grep';

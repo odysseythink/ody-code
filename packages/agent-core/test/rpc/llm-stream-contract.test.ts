@@ -15,6 +15,7 @@ describe('llm stream contract', () => {
       tools: [],
       capability: { thinking: true, image_in: false, video_in: false, audio_in: false, tool_use: false, max_context_tokens: 0, max_output_tokens: 0 },
       requestLogContext: { turnId: 't1', step: 1 },
+      provider: { type: 'openai', model: 'fake-model', apiKey: 'fake-key' },
     };
     const json = JSON.stringify(request);
     expect(JSON.parse(json)).toEqual(request);

@@ -15,7 +15,7 @@
 
 import type { ContentPart } from '@odysseythink/kosong';
 
-import type { Logger } from '#/logging/types';
+import type { Logger } from '@odysseythink/agent-core-shared';
 import {
   compileToolArgsValidator,
   validateToolArgs,

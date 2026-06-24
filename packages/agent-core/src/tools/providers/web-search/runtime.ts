@@ -1,5 +1,5 @@
 import { resolveWebSearchConfig } from '../../../config/web-search';
-import type { OdyConfig } from '../../../config/schema';
+import type { OdyConfig } from '@odysseythink/agent-core-shared';
 import type { Logger } from '../../../logging/types';
 import { FallbackWebSearchProvider } from './fallback';
 import { createDefaultRegistry, type ProviderFactoryDeps } from './registry';

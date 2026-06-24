@@ -12,7 +12,7 @@
  * available state.
  */
 
-import type { Logger } from '#/logging/types';
+import type { Logger } from '@odysseythink/agent-core-shared';
 import { CheckpointBackupStore } from './backup-store';
 import type { CheckpointIndexData, CheckpointVersion } from './checkpoint-index';
 import { SessionCheckpoint } from './checkpoint';

@@ -1,13 +1,14 @@
-import { ErrorCodes, OdyError } from '#/errors';
-import { parseBooleanEnv } from './resolve';
 import {
+  ErrorCodes,
+  OdyError,
   validateConfig,
   type OdyConfig,
   type ModelAlias,
   type ProviderConfig,
   type ProviderType,
   type ThinkingConfig,
-} from './schema';
+} from '@odysseythink/agent-core-shared';
+import { parseBooleanEnv } from './resolve';
 
 /** Reserved keys for the env-driven synthetic provider / model alias. */
 export const ENV_MODEL_PROVIDER_KEY = '__kimi_env__';

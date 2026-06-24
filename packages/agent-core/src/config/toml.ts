@@ -2,29 +2,30 @@ import { existsSync, readFileSync } from 'node:fs';
 import { mkdir, open } from 'node:fs/promises';
 import { dirname } from 'pathe';
 
-import { ErrorCodes, OdyError } from '#/errors';
-import { applyEnvModelConfig, stripEnvModelConfig } from './env-model';
 import {
+  ErrorCodes,
+  OdyError,
   OdyConfigSchema,
   formatConfigValidationError,
   getDefaultConfig,
+  validateConfig,
   type BackgroundConfig,
   type BrowserConfig,
   type HookDefConfig,
   type MicroagentBudgetConfig,
-  type OdyConfig,
   type LoopControl,
   type ModelAlias,
   type MoonshotServiceConfig,
   type OAuthRef,
+  type OdyConfig,
   type PermissionConfig,
   type ProviderConfig,
   type ServicesConfig,
   type ThinkingConfig,
   type WebSearchConfig,
   type WebSearchProviderConfig,
-  validateConfig,
-} from '#/config/schema';
+} from '@odysseythink/agent-core-shared';
+import { applyEnvModelConfig, stripEnvModelConfig } from './env-model';
 import { atomicWrite } from '#/utils/fs';
 import { parse as parseToml, stringify as stringifyToml } from 'smol-toml';
 

@@ -5,9 +5,9 @@ import {
   WebSearchConfigSchema,
   WebSearchProviderConfigSchema,
   WebSearchProviderNameSchema,
-} from '../../src/config/schema';
+  type OdyConfig,
+} from '@odysseythink/agent-core-shared';
 import { resolveWebSearchConfig } from '../../src/config/web-search';
-import type { OdyConfig } from '../../src/config/schema';
 
 describe('WebSearchConfigSchema', () => {
   it('accepts a minimal primary config', () => {

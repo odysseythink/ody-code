@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 
-import { ErrorCodes, OdyError } from '#/errors';
+import { ErrorCodes, OdyError } from '@odysseythink/agent-core-shared';
 import type { AgentRecord } from '../agent/records/types';
 import {
   noopTelemetryClient,

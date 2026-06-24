@@ -3,7 +3,7 @@ import { dirname, isAbsolute, join, relative } from 'pathe';
 
 import { z } from 'zod';
 
-import { ErrorCodes, OdyError } from '#/errors';
+import { ErrorCodes, OdyError } from '@odysseythink/agent-core-shared';
 import type { SessionIndexEntry } from '#/session/store/session-index';
 import { appendSessionIndexEntry, readSessionIndex } from '#/session/store/session-index';
 import { encodeWorkDirKey, normalizeWorkDir } from '#/session/store/workdir-key';

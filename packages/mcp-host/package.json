@@ -1,0 +1,35 @@
+{
+  "name": "@odysseythink/mcp-host",
+  "version": "0.1.0",
+  "private": true,
+  "description": "MCP host subsystem extracted from agent-core",
+  "license": "MIT",
+  "type": "module",
+  "imports": {
+    "#/*": ["./src/*.ts", "./src/*/index.ts"],
+    "#/built-in/*": ["./src/built-in/*.ts", "./src/built-in/*/index.ts"],
+    "#/oauth/*": ["./src/oauth/*.ts", "./src/oauth/*/index.ts"],
+    "#/oauth": "./src/oauth/index.ts",
+    "#/built-in": "./src/built-in/index.ts"
+  },
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsdown",
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@odysseythink/agent-core-shared": "workspace:^",
+    "@odysseythink/kaos": "workspace:^",
+    "@odysseythink/kosong": "workspace:^",
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "pathe": "^2.0.3",
+    "zod": "catalog:"
+  }
+}

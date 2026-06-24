@@ -5,9 +5,11 @@ import {
   remoteLLMStreamRegistry,
 } from '../../../src/agent/turn/remote-kosong-llm';
 import { ErrorCodes, OdyError } from '../../../src/errors';
-import { toOdyErrorPayload } from '../../../src/errors/serialize';
+import { toOdyErrorPayload } from '@odysseythink/agent-core-shared';
 import type { LLMChatParams } from '../../../src/loop/llm';
 import type { SDKAgentRPC } from '../../../src/rpc';
+
+const fakeProvider = { type: 'openai', model: 'fake-model', apiKey: 'fake-key' } as const;
 
 describe('RemoteKosongLLM', () => {
   it('forwards deltas and resolves with the streamed result', async () => {
@@ -15,7 +17,7 @@ describe('RemoteKosongLLM', () => {
       chatStreamInit: vi.fn(async () => ({ streamId: 's1' })),
       chatStreamCancel: vi.fn(),
     } as unknown as SDKAgentRPC;
-    const llm = new RemoteKosongLLM({ sdk, modelName: 'm', systemPrompt: 's' });
+    const llm = new RemoteKosongLLM({ sdk, modelName: 'm', systemPrompt: 's', provider: fakeProvider });
     const onTextDelta = vi.fn();
     const onThinkDelta = vi.fn();
     const params: LLMChatParams = {
@@ -51,7 +53,7 @@ describe('RemoteKosongLLM', () => {
       chatStreamInit: vi.fn(async () => ({ streamId: 's2' })),
       chatStreamCancel: vi.fn(),
     } as unknown as SDKAgentRPC;
-    const llm = new RemoteKosongLLM({ sdk, modelName: 'm', systemPrompt: 's' });
+    const llm = new RemoteKosongLLM({ sdk, modelName: 'm', systemPrompt: 's', provider: fakeProvider });
     const controller = new AbortController();
     const chatPromise = llm.chat({ messages: [], tools: [], signal: controller.signal });
 
@@ -67,7 +69,7 @@ describe('RemoteKosongLLM', () => {
       chatStreamInit: vi.fn(async () => ({ streamId: 's3' })),
       chatStreamCancel: vi.fn(),
     } as unknown as SDKAgentRPC;
-    const llm = new RemoteKosongLLM({ sdk, modelName: 'm', systemPrompt: 's' });
+    const llm = new RemoteKosongLLM({ sdk, modelName: 'm', systemPrompt: 's', provider: fakeProvider });
     const chatPromise = llm.chat({ messages: [], tools: [], signal: new AbortController().signal });
 
     await new Promise((resolve) => setTimeout(resolve, 0));

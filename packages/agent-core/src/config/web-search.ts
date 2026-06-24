@@ -1,4 +1,4 @@
-import type { OdyConfig, WebSearchConfig } from './schema';
+import type { OdyConfig, WebSearchConfig } from '@odysseythink/agent-core-shared';
 
 export function resolveWebSearchConfig(config: OdyConfig): WebSearchConfig | undefined {
   if (config.services?.webSearch !== undefined) {

@@ -3,13 +3,13 @@ import type { Kaos } from '@odysseythink/kaos';
 import type { Agent } from '#/agent';
 import type { BuiltinTool } from '#/agent/tool';
 import type { ExecutableToolResult, ToolExecution } from '#/loop/types';
-import { toInputJsonSchema } from '#/tools/support/input-schema';
+import { toInputJsonSchema } from '@odysseythink/agent-core-shared';
 import { literalRulePattern, matchesGlobRuleSubject } from '#/tools/support/rule-match';
-import { E2EConfigResolver } from '#/e2e-testing/config';
-import type { OdyConfig } from '#/config/schema';
-import { E2ETestExecutor } from '#/e2e-testing/executor';
-import { registry } from '#/e2e-testing/registry';
-import { detectChangedFiles } from '#/e2e-testing/git-status';
+import { E2EConfigResolver } from '@odysseythink/e2e-testing';
+import type { OdyConfig } from '@odysseythink/agent-core-shared';
+import { E2ETestExecutor } from '@odysseythink/e2e-testing';
+import { registry } from '@odysseythink/e2e-testing';
+import { detectChangedFiles } from '@odysseythink/e2e-testing';
 import DESCRIPTION from './run-e2e-tests.md';
 
 const RunE2ETestsInputSchema = z.object({

@@ -2,7 +2,7 @@ import { EventEmitter } from 'node:events';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import type { Agent } from '../../../../src/agent';
-import type { OdyConfig } from '../../../../src/config/schema';
+import type { OdyConfig } from '@odysseythink/agent-core-shared';
 import {
   AdvancedSessionReviewer,
   type AdvancedSessionReviewResult,

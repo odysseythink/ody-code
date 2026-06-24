@@ -6,7 +6,7 @@
  * surfaced immediately.
  */
 
-import type { Logger } from '#/logging/types';
+import type { Logger } from '@odysseythink/agent-core-shared';
 
 export interface CheckpointSaveRetryOptions {
   /** Number of cleanup/retry attempts after a disk-full error (default 1). */

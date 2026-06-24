@@ -1,17 +1,28 @@
 import { randomUUID } from 'node:crypto';
+import { existsSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { MessageChannel, Worker, type MessagePort } from 'node:worker_threads';
 
 import {
+  createMessagePortTransport,
+  createRPCEndpoint,
   createRPC,
   ErrorCodes,
   KimiCore,
+  KosongLLM,
   makeErrorPayload,
   resolveOdyHome,
+  toOdyErrorPayload,
   type AgentContextData,
   type ApprovalRequest,
   type ApprovalResponse,
   type ChatStreamCancelPayload,
+  type ChatStreamDeltaPayload,
+  type ChatStreamEndPayload,
+  type ChatStreamErrorPayload,
   type ChatStreamInitPayload,
   type ChatStreamInitResponse,
+  type ChatStreamResult,
   type CodeReviewReportData,
   type CoreAPI,
   type DesignReviewData,
@@ -29,7 +40,9 @@ import {
   type ToolCallRequest,
   type ToolCallResponse,
 } from '@odysseythink/agent-core';
+import { createProvider } from '@odysseythink/kosong';
 import { createKimiDefaultHeaders } from '@odysseythink/kimi-code-oauth';
+import type { CoreWorkerBootPayload } from '#/core-worker';
 
 import type { ApprovalHandler, OpenExternalHandler, QuestionHandler } from '#/events';
 import type {
@@ -148,23 +161,121 @@ export class SDKRpcClient {
   private readonly codeReviewProgressHandlers = new Map<string, (progress: { requestId: string; stage: string; modelAlias: string; detail?: string; meta?: { estimatedTokens?: number; filePath?: string; fileCount?: number } }) => void>();
 
   constructor(options: SDKRpcClientOptions = {}) {
-    const [coreRpc, sdkRpc] = createRPC<CoreAPI, SDKAPI>();
+    const useWorker = options.worker ?? process.env['ODY_CORE_TRANSPORT'] === 'worker';
     const homeDir = resolveOdyHome(options.homeDir);
+    const configPath = options.configPath;
     const kimiRequestHeaders =
       options.identity === undefined
         ? undefined
         : createKimiDefaultHeaders({ homeDir, ...options.identity });
-    this.core = new KimiCore(coreRpc, {
+    const coreOptions = {
       homeDir: options.homeDir,
-      configPath: options.configPath,
+      configPath,
       kimiRequestHeaders,
       resolveOAuthTokenProvider: options.resolveOAuthTokenProvider,
       skillDirs: options.skillDirs,
       telemetry: options.telemetry,
       appVersion: options.identity?.version,
+    };
+
+    if (!useWorker) {
+      const [coreRpc, sdkRpc] = createRPC<CoreAPI, SDKAPI>();
+      this.core = new KimiCore(coreRpc, coreOptions);
+      this.ready = sdkRpc(new ClientAPI(this, () => this.getRpc())).then((rpc) => {
+        this.rpc = rpc;
+      });
+      return;
+    }
+
+    // Worker mode: Core runs in a dedicated worker thread.
+    const { port1, port2 } = new MessageChannel();
+    const endpoint = createRPCEndpoint<SDKAPI, CoreAPI>();
+    const bootPayload: CoreWorkerBootPayload = {
+      homeDir: options.homeDir,
+      configPath,
+      skillDirs: options.skillDirs,
+      appVersion: options.identity?.version,
+    };
+    const worker = this.spawnCoreWorker(port2, options.workerScriptPath, bootPayload);
+
+    const transport = createMessagePortTransport(port1, endpoint.dispatch, {
+      onError: (error) => {
+        worker.terminate().catch(() => {});
+        throw error;
+      },
     });
-    this.ready = sdkRpc(new ClientAPI(this)).then((rpc) => {
-      this.rpc = rpc;
+    endpoint.setTransport(transport);
+
+    // In worker mode the real CoreAPI implementation lives in the worker; the local
+    // `core` field is only exposed for `homeDir`/`configPath` getters.
+    this.core = { homeDir, configPath } as KimiCore;
+
+    const clientApi = new ClientAPI(this, () => this.getRpc());
+    this.ready = Promise.all([
+      this.waitForWorkerReady(port1, worker),
+      endpoint.client(clientApi).then((rpc) => {
+        this.rpc = rpc;
+      }),
+    ]).then(() => undefined);
+  }
+
+  private spawnCoreWorker(
+    port: MessagePort,
+    workerScriptPath: string | undefined,
+    bootPayload: CoreWorkerBootPayload,
+  ): Worker {
+    const workerData = { port, ...bootPayload };
+    if (workerScriptPath !== undefined) {
+      return new Worker(workerScriptPath, { workerData, transferList: [port] });
+    }
+
+    // Prefer the built worker entry in production/CI; fall back to tsx in development.
+    const distWorkerPath = fileURLToPath(
+      new URL('../dist/core-worker.mjs', import.meta.url),
+    );
+    if (existsSync(distWorkerPath)) {
+      return new Worker(distWorkerPath, { workerData, transferList: [port] });
+    }
+
+    const srcWorkerPath = fileURLToPath(new URL('./core-worker.ts', import.meta.url));
+    return new Worker(srcWorkerPath, {
+      workerData,
+      transferList: [port],
+      execArgv: ['--import', 'tsx/esm'],
+    });
+  }
+
+  private waitForWorkerReady(port: MessagePort, worker: Worker): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const cleanup = (): void => {
+        worker.off('error', onError);
+        worker.off('exit', onExit);
+        port.off('message', onMessage);
+      };
+      const onError = (error: Error): void => {
+        cleanup();
+        reject(error);
+      };
+      const onExit = (code: number): void => {
+        if (code !== 0) {
+          cleanup();
+          reject(new Error(`Core worker exited with code ${code}`));
+        }
+      };
+      const onMessage = (msg: unknown): void => {
+        if (typeof msg !== 'object' || msg === null) return;
+        const typed = msg as { type?: string; error?: string };
+        if (typed.type === 'ready') {
+          cleanup();
+          resolve();
+        } else if (typed.type === 'error') {
+          cleanup();
+          reject(new Error(typed.error ?? 'Core worker failed to start'));
+        }
+      };
+      worker.on('error', onError);
+      worker.on('exit', onExit);
+      port.on('message', onMessage);
     });
   }
 
@@ -747,7 +858,12 @@ export class SDKRpcClient {
 }
 
 export class ClientAPI implements SDKAPI {
-  constructor(readonly client: SDKRpcClient) {}
+  private readonly activeStreams = new Map<string, AbortController>();
+
+  constructor(
+    readonly client: SDKRpcClient,
+    private readonly getRpc: () => Promise<ResolvedCoreAPI>,
+  ) {}
 
   emitEvent(event: Event): void {
     this.client.receiveEvent(event);
@@ -778,19 +894,82 @@ export class ClientAPI implements SDKAPI {
   async chatStreamInit(
     payload: ChatStreamInitPayload & { sessionId: string; agentId: string },
   ): Promise<ChatStreamInitResponse> {
-    void payload;
     const streamId = randomUUID();
-    // In worker mode, this would create a KosongLLM and stream deltas back.
-    // For now, register the stream as pending and return the streamId.
-    // The actual LLM proxy will be wired when the full worker transport is active.
+    const { request } = payload;
+    const abortController = new AbortController();
+    this.activeStreams.set(streamId, abortController);
+
+    const rpc = await this.getRpc();
+    const provider = createProvider(request.provider);
+    const llm = new KosongLLM({
+      provider,
+      modelName: request.modelName,
+      systemPrompt: request.systemPrompt,
+      capability: request.capability,
+      completionBudgetConfig: request.completionBudgetConfig,
+    });
+
+    void (async (): Promise<void> => {
+      try {
+        const response = await llm.chat({
+          messages: [...request.messages],
+          tools: [...request.tools],
+          signal: abortController.signal,
+          requestLogContext: request.requestLogContext,
+          onTextDelta: (text): void => {
+            this.dispatchDelta(rpc, { streamId, delta: { type: 'text', text } });
+          },
+          onThinkDelta: (think): void => {
+            this.dispatchDelta(rpc, { streamId, delta: { type: 'think', think } });
+          },
+          onToolCallDelta: (delta): void => {
+            this.dispatchDelta(rpc, {
+              streamId,
+              delta: {
+                type: 'tool_call_part',
+                toolCallId: delta.toolCallId,
+                name: delta.name,
+                argumentsPart: delta.argumentsPart,
+              },
+            });
+          },
+        });
+
+        const result: ChatStreamResult = {
+          toolCalls: response.toolCalls,
+          providerFinishReason: response.providerFinishReason,
+          rawFinishReason: response.rawFinishReason,
+          usage: response.usage,
+          streamTiming: response.streamTiming,
+        };
+        this.dispatchEnd(rpc, { streamId, result });
+      } catch (error) {
+        this.dispatchError(rpc, { streamId, error: toOdyErrorPayload(error) });
+      } finally {
+        this.activeStreams.delete(streamId);
+      }
+    })();
+
     return { streamId };
   }
 
   chatStreamCancel(
     payload: ChatStreamCancelPayload & { sessionId: string; agentId: string },
   ): void {
-    void payload;
-    // No-op for now; will cancel the active stream in the full implementation.
+    this.activeStreams.get(payload.streamId)?.abort();
+    this.activeStreams.delete(payload.streamId);
+  }
+
+  private dispatchDelta(rpc: ResolvedCoreAPI, payload: ChatStreamDeltaPayload): void {
+    rpc.chatStreamDelta(payload).catch(() => {});
+  }
+
+  private dispatchEnd(rpc: ResolvedCoreAPI, payload: ChatStreamEndPayload): void {
+    rpc.chatStreamEnd(payload).catch(() => {});
+  }
+
+  private dispatchError(rpc: ResolvedCoreAPI, payload: ChatStreamErrorPayload): void {
+    rpc.chatStreamError(payload).catch(() => {});
   }
 }
 

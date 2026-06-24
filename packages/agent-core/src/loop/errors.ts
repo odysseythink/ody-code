@@ -2,7 +2,7 @@
  * Loop-local error helpers.
  */
 
-import { ErrorCodes, OdyError, isOdyError } from '#/errors';
+import { ErrorCodes, OdyError, isOdyError } from '@odysseythink/agent-core-shared';
 
 export function createMaxStepsExceededError(maxSteps: number, message?: string): OdyError {
   return new OdyError(ErrorCodes.LOOP_MAX_STEPS_EXCEEDED, message ?? `Turn exceeded maxSteps=${maxSteps}`, {

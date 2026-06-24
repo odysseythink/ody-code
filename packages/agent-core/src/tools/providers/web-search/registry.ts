@@ -2,7 +2,7 @@ import type {
   OAuthRef,
   WebSearchProviderConfig,
   WebSearchProviderName,
-} from '../../../config/schema';
+} from '@odysseythink/agent-core-shared';
 import {
   BaiduOptionsSchema,
   BingOptionsSchema,
@@ -15,7 +15,7 @@ import {
   SerpApiOptionsSchema,
   SerplyOptionsSchema,
   TavilyOptionsSchema,
-} from '../../../config/schema';
+} from '@odysseythink/agent-core-shared';
 import { BaiduProvider } from './baidu';
 import { BingProvider } from './bing';
 import { DuckDuckGoProvider } from './duckduckgo';

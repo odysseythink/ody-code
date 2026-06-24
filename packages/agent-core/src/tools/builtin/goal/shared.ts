@@ -1,5 +1,5 @@
 import type { Agent } from '#/agent';
-import { isOdyError } from '#/errors';
+import { isOdyError } from '@odysseythink/agent-core-shared';
 
 import type { ExecutableToolErrorResult } from '../../../loop/types';
 import type { SessionGoalStore } from '../../../session/goal';

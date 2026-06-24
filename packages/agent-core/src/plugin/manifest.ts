@@ -1,7 +1,7 @@
 import { realpath, readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
 
-import { McpServerConfigSchema, type McpServerConfig } from '../config/schema';
+import { McpServerConfigSchema, type McpServerConfig } from '@odysseythink/agent-core-shared';
 import {
   PLUGIN_NAME_REGEX,
   type PluginDiagnostic,

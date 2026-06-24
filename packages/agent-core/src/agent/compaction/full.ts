@@ -4,7 +4,7 @@ import {
   isOdyError,
   makeErrorPayload,
   toOdyErrorPayload,
-} from '#/errors';
+} from '@odysseythink/agent-core-shared';
 import {
   APIEmptyResponseError,
   isRetryableGenerateError,

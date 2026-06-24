@@ -5,7 +5,7 @@ import type { BackgroundTaskInfo } from '#/agent/background';
 import type { PermissionData, PermissionMode } from '#/agent/permission';
 import type { SessionModeData, SessionModeKind } from '#/agent/session-mode';
 import type { ToolInfo } from '#/agent/tool';
-import type { OdyConfig, OdyConfigPatch } from '#/config';
+import type { OdyConfig, OdyConfigPatch } from '@odysseythink/agent-core-shared';
 import type { ExperimentalFlagMap } from '#/flags';
 import type { ResumeSessionResult } from '#/rpc/resumed';
 import type { SupportedLanguage } from '#/i18n';
@@ -22,7 +22,7 @@ import type {
 } from '#/session/goal';
 import type { ContentPart } from '@odysseythink/kosong';
 
-import type { CodeReviewDiffSource } from '#/code-review/types';
+import type { CodeReviewDiffSource } from '@odysseythink/code-review';
 import type { PluginInfo, PluginSummary, ReloadSummary } from '#/plugin';
 import type { UsageStatus } from './events';
 import type {

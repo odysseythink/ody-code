@@ -18,47 +18,6 @@ import type { LLM } from './llm';
 
 export type { ToolCall };
 
-export type LoopMessageBuilder = () => Message[] | Promise<Message[]>;
-
-/**
- * Stop reason for one completed model step.
- *
- * `tool_use` is a loop-control signal: the loop executes the requested tools and
- * continues with another step. The other values are terminal for the current
- * turn unless a host hook explicitly asks the loop to continue.
- */
-export type LoopStepStopReason =
-  | 'end_turn'
-  | 'max_tokens'
-  | 'tool_use'
-  | 'filtered'
-  | 'paused'
-  | 'unknown';
-
-export type LoopTerminalStepStopReason = Exclude<LoopStepStopReason, 'tool_use'>;
-
-/**
- * Stop reasons that can be returned in a normal `TurnResult`.
- *
- * `tool_use` is intentionally absent because it cannot be the final result of a
- * completed turn. Errors and max-step exhaustion are represented by thrown
- * errors, not by this union. Compaction is a host-level retry concern rather
- * than a stop reason.
- */
-export type LoopTurnStopReason = LoopTerminalStepStopReason | 'aborted';
-
-/**
- * @deprecated Legacy umbrella union. Use `LoopStepStopReason` for per-step
- * model responses and `LoopTurnStopReason` for `TurnResult`.
- */
-export type StopReason = LoopStepStopReason | 'aborted';
-
-export interface TurnResult {
-  stopReason: LoopTurnStopReason;
-  steps: number;
-  usage: TokenUsage;
-}
-
 export type ExecutableToolOutput = string | ContentPart[];
 
 export interface ExecutableToolSuccessResult {
@@ -135,6 +94,47 @@ export type ToolExecution = RunnableToolExecution | ExecutableToolErrorResult;
 
 export interface ExecutableTool<Input = unknown> extends Tool {
   resolveExecution(input: Input): ToolExecution | Promise<ToolExecution>;
+}
+
+export type LoopMessageBuilder = () => Message[] | Promise<Message[]>;
+
+/**
+ * Stop reason for one completed model step.
+ *
+ * `tool_use` is a loop-control signal: the loop executes the requested tools and
+ * continues with another step. The other values are terminal for the current
+ * turn unless a host hook explicitly asks the loop to continue.
+ */
+export type LoopStepStopReason =
+  | 'end_turn'
+  | 'max_tokens'
+  | 'tool_use'
+  | 'filtered'
+  | 'paused'
+  | 'unknown';
+
+export type LoopTerminalStepStopReason = Exclude<LoopStepStopReason, 'tool_use'>;
+
+/**
+ * Stop reasons that can be returned in a normal `TurnResult`.
+ *
+ * `tool_use` is intentionally absent because it cannot be the final result of a
+ * completed turn. Errors and max-step exhaustion are represented by thrown
+ * errors, not by this union. Compaction is a host-level retry concern rather
+ * than a stop reason.
+ */
+export type LoopTurnStopReason = LoopTerminalStepStopReason | 'aborted';
+
+/**
+ * @deprecated Legacy umbrella union. Use `LoopStepStopReason` for per-step
+ * model responses and `LoopTurnStopReason` for `TurnResult`.
+ */
+export type StopReason = LoopStepStopReason | 'aborted';
+
+export interface TurnResult {
+  stopReason: LoopTurnStopReason;
+  steps: number;
+  usage: TokenUsage;
 }
 
 /**

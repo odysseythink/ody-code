@@ -1,4 +1,4 @@
-import type { McpServerConfig } from '../config/schema';
+import type { McpServerConfig } from '@odysseythink/agent-core-shared';
 
 export type PluginDiagnosticSeverity = 'error' | 'warn' | 'info';
 

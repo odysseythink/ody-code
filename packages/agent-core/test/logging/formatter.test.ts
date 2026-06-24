@@ -9,7 +9,7 @@ import {
   formatEntry,
   redactCtx,
 } from '#/logging/formatter';
-import type { LogEntry } from '#/logging/types';
+import type { LogEntry } from '@odysseythink/agent-core-shared';
 
 const FIXED_TIME = Date.UTC(2026, 4, 19, 10, 12, 30, 123);
 

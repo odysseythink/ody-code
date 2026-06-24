@@ -65,3 +65,8 @@ dev:
 
 vis:
 	pnpm run vis
+
+## Circular dependencies
+
+madge:circular:
+	pnpm run madge:circular

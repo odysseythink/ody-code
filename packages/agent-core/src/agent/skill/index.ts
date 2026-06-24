@@ -4,7 +4,7 @@ import type { ActivateSkillPayload } from '#/rpc';
 import type { ContentPart } from '@odysseythink/kosong';
 
 import type { Agent } from '..';
-import { ErrorCodes, OdyError } from '#/errors';
+import { ErrorCodes, OdyError } from '@odysseythink/agent-core-shared';
 import { isUserActivatableSkillType, type SkillRegistry } from '../../skill';
 import { escapeXml } from '#/utils/xml-escape';
 import type { SkillActivationOrigin } from '../context';

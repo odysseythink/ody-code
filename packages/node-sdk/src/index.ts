@@ -77,7 +77,7 @@ export { t, isSupportedLanguage, normalizeLanguage } from '@odysseythink/agent-c
 export type { SupportedLanguage, MessageKey } from '@odysseythink/agent-core';
 
 // Code review report markdown renderer
-export { renderCodeReviewReportToMarkdown } from '@odysseythink/agent-core';
+export { renderCodeReviewReportToMarkdown } from '@odysseythink/code-review';
 // Code review model resolver
-export { resolveCodeReviewModel } from '@odysseythink/agent-core';
-export type { ResolveModelOverrides } from '@odysseythink/agent-core';
+export { resolveCodeReviewModel } from '@odysseythink/code-review';
+export type { ResolveModelOverrides } from '@odysseythink/code-review';

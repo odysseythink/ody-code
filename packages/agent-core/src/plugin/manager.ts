@@ -2,7 +2,7 @@ import { cp, mkdir, mkdtemp, realpath, rename, rm, stat } from 'node:fs/promises
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
-import type { McpServerConfig } from '../config/schema';
+import type { McpServerConfig } from '@odysseythink/agent-core-shared';
 import { discoverSkills, type SkillRoot } from '../skill';
 import { downloadZip, extractZip } from './archive';
 import { resolveGithubSource } from './github-resolver';

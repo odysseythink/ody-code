@@ -44,6 +44,10 @@
     "./session/store": {
       "types": "./src/session/store/index.ts",
       "default": "./src/session/store/index.ts"
+    },
+    "./test/helpers": {
+      "types": "./test/helpers/index.ts",
+      "default": "./test/helpers/index.ts"
     }
   },
   "scripts": {
@@ -55,9 +59,12 @@
   },
   "dependencies": {
     "@antfu/utils": "^9.3.0",
-    "@modelcontextprotocol/sdk": "^1.29.0",
+    "@odysseythink/agent-core-shared": "workspace:^",
+    "@odysseythink/code-review": "workspace:^",
+    "@odysseythink/e2e-testing": "workspace:^",
     "@odysseythink/kaos": "workspace:^",
     "@odysseythink/kosong": "workspace:^",
+    "@odysseythink/mcp-host": "workspace:^",
     "@mozilla/readability": "^0.6.0",
     "ajv": "^8.18.0",
     "ajv-formats": "^3.0.1",
@@ -76,6 +83,7 @@
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "@types/js-yaml": "^4.0.9",
     "@types/nunjucks": "^3.2.6",
     "@types/picomatch": "^4.0.3",

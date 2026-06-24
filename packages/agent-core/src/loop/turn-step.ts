@@ -10,7 +10,7 @@
 import { randomUUID } from 'node:crypto';
 
 import type { TokenUsage } from '@odysseythink/kosong';
-import type { Logger } from '#/logging/types';
+import type { Logger } from '@odysseythink/agent-core-shared';
 
 import type { LoopEventDispatcher } from './events';
 import type { LLM, LLMChatParams, LLMChatResponse } from './llm';

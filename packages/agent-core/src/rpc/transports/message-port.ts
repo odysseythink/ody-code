@@ -13,7 +13,8 @@ interface WireRequest {
 interface WireResponse {
   readonly kind: 'response';
   readonly reqId: string;
-  readonly bytes: Uint8Array;
+  readonly bytes?: Uint8Array;
+  readonly error?: { readonly message: string; readonly code?: string };
 }
 
 type WireMessage = WireRequest | WireResponse;
@@ -69,13 +70,22 @@ export function createMessagePortTransport(
         const responseBytes = await dispatch(msg.bytes);
         port.postMessage({ kind: 'response', reqId: msg.reqId, bytes: responseBytes });
       } catch (error) {
-        onError(error instanceof Error ? error : new Error(String(error)));
+        const message = error instanceof Error ? error.message : String(error);
+        port.postMessage({
+          kind: 'response',
+          reqId: msg.reqId,
+          error: { message },
+        });
       }
     } else if (msg.kind === 'response') {
       const deferred = pending.get(msg.reqId);
       if (deferred === undefined) return;
       pending.delete(msg.reqId);
-      deferred.resolve(msg.bytes);
+      if (msg.error !== undefined) {
+        deferred.reject(new OdyError(ErrorCodes.INTERNAL, msg.error.message));
+      } else {
+        deferred.resolve(msg.bytes!);
+      }
     }
   }
 

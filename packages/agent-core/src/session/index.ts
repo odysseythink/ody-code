@@ -2,9 +2,9 @@ import { homedir } from 'node:os';
 import { join } from 'pathe';
 import type { Kaos } from '@odysseythink/kaos';
 
-import { ErrorCodes, OdyError } from '#/errors';
+import { ErrorCodes, OdyError } from '@odysseythink/agent-core-shared';
 import { getRootLogger, log } from '#/logging/logger';
-import type { Logger, SessionLogHandle } from '#/logging/types';
+import type { Logger, SessionLogHandle } from '@odysseythink/agent-core-shared';
 import type { OdyConfig, SDKAgentRPC, SDKSessionRPC } from '#/rpc';
 import { proxyWithExtraPayload } from '#/rpc/types';
 import type { LLM, LLMFactoryConfig } from '../loop/llm';
@@ -15,12 +15,13 @@ import { HookEngine, type HookDef } from './hooks';
 import type { PermissionManagerOptions, PermissionRule } from '../agent/permission';
 import { parseBooleanEnv, resolveConfigValue, resolveOdyHome, type BackgroundConfig } from '../config';
 import { makeErrorPayload } from '../errors';
+import { getCoreVersion } from '#/version';
 import {
   McpConnectionManager,
   McpOAuthService,
   type McpServerEntry,
   type SessionMcpConfig,
-} from '../mcp';
+} from '@odysseythink/mcp-host';
 import type { EnabledPluginSessionStart } from '../plugin';
 import {
   DEFAULT_AGENT_PROFILES,
@@ -170,6 +171,7 @@ export class Session {
     this.mcp = new McpConnectionManager({
       oauthService: new McpOAuthService({ kimiHomeDir: options.kimiHomeDir }),
       log: this.log,
+      clientVersion: options.appVersion ?? getCoreVersion(),
     });
     this.mcp.onStatusChange((entry) => {
       this.onMcpServerStatusChange(entry);

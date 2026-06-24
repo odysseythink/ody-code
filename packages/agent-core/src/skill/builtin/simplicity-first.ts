@@ -1,5 +1,4 @@
-import { ErrorCodes } from '../../errors/codes';
-import { OdyError } from '../../errors/classes';
+import { ErrorCodes, OdyError } from '@odysseythink/agent-core-shared';
 import { parseSkillText } from '../parser';
 import type { SkillDefinition } from '../types';
 import SIMPLICITY_FIRST_BODY from './simplicity-first.md';

@@ -22,7 +22,7 @@ import {
   isOdyError,
   makeErrorPayload,
   toOdyErrorPayload,
-} from '#/errors';
+} from '@odysseythink/agent-core-shared';
 import { isAbortError, isMaxStepsExceededError } from '../../loop/errors';
 import {
   createLoopEventDispatcher,

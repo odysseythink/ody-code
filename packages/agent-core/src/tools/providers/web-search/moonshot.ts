@@ -1,4 +1,4 @@
-import type { OAuthRef, WebSearchProviderConfig } from '../../../config/schema';
+import type { OAuthRef, WebSearchProviderConfig } from '@odysseythink/agent-core-shared';
 import { MoonshotWebSearchProvider } from '../moonshot-web-search';
 import type { WebSearchProvider } from './types';
 

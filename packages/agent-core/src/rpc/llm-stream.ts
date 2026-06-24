@@ -2,12 +2,13 @@ import type {
   FinishReason,
   Message,
   ModelCapability,
+  ProviderConfig,
   Tool,
   ToolCall,
   TokenUsage,
 } from '@odysseythink/kosong';
 
-import type { OdyErrorPayload } from '#/errors/serialize';
+import type { OdyErrorPayload } from '@odysseythink/agent-core-shared';
 import type { LLMRequestLogContext, LLMStreamTiming } from '#/loop/llm';
 import type { CompletionBudgetConfig } from '#/utils/completion-budget';
 
@@ -37,6 +38,8 @@ export interface ChatStreamRequest {
   readonly capability?: ModelCapability | undefined;
   readonly completionBudgetConfig?: CompletionBudgetConfig | undefined;
   readonly requestLogContext?: LLMRequestLogContext | undefined;
+  /** Provider configuration used by the host thread to recreate the LLM provider. Must be structuredClone-serializable. */
+  readonly provider: ProviderConfig;
 }
 
 /** Response from chatStreamInit — the stream ID to reference in subsequent deltas. */

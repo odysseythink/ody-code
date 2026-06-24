@@ -27,11 +27,16 @@ export function coreWorkerMain(port: MessagePort, options: CoreWorkerBootPayload
     configPath: options.configPath,
     skillDirs: options.skillDirs,
     appVersion: options.appVersion,
-    llmFactory: (rpc, config) =>
-      new RemoteKosongLLM({
+    llmFactory: (rpc, config) => {
+      if (config.provider === undefined) {
+        throw new Error('Provider config is required for worker-mode LLM proxy');
+      }
+      return new RemoteKosongLLM({
         sdk: rpc as SDKAgentRPC,
         ...config,
-      }),
+        provider: config.provider,
+      });
+    },
   });
 
   // WorkerCoreAPI + endpoint begin handling RPC requests from the main thread.

@@ -71,7 +71,7 @@ export type {
   CodeReviewFinding,
   CodeReviewProgress,
   CodeReviewProgressStage,
-} from '@odysseythink/agent-core';
+} from '@odysseythink/code-review';
 
 export type { KimiHostIdentity, OAuthRefreshOutcome };
 export type { TelemetryClient, TelemetryContextPatch, TelemetryProperties };

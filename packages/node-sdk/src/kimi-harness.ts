@@ -8,12 +8,12 @@ import {
   resolveOdyHome,
   resolveLoggingConfig,
   withTelemetryContext,
-  type CodeReviewReport,
   type ExperimentalFlagMap,
   type TelemetryClient,
   type TelemetryContextPatch,
   type TelemetryProperties,
 } from '@odysseythink/agent-core';
+import type { CodeReviewReport } from '@odysseythink/code-review';
 import { assertKimiHostIdentity } from '@odysseythink/kimi-code-oauth';
 
 import { KimiAuthFacade } from '#/auth';

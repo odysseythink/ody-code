@@ -1,11 +1,12 @@
-import { ErrorCodes, OdyError } from '#/errors';
 import {
+  ErrorCodes,
+  OdyError,
   OdyConfigPatchSchema,
   formatConfigValidationError,
+  validateConfig,
   type OdyConfig,
   type OdyConfigPatch,
-  validateConfig,
-} from '#/config/schema';
+} from '@odysseythink/agent-core-shared';
 
 export function mergeConfigPatch(config: OdyConfig, patch: OdyConfigPatch): OdyConfig {
   const base = validateConfig(config);

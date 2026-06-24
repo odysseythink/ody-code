@@ -67,6 +67,8 @@
   },
   "devDependencies": {
     "@odysseythink/agent-core": "workspace:^",
+    "@odysseythink/agent-core-shared": "workspace:^",
+    "@odysseythink/code-review": "workspace:^",
     "@odysseythink/kaos": "workspace:^",
     "@odysseythink/kimi-code-oauth": "workspace:^",
     "@odysseythink/kosong": "workspace:^",

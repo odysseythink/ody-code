@@ -4,14 +4,14 @@ import type { Agent } from '#/agent';
 import type { BuiltinTool } from '#/agent/tool';
 import type { ExecutableToolResult, ToolExecution } from '#/loop/types';
 import type { SessionSubagentHost } from '#/session/subagent-host';
-import { toInputJsonSchema } from '#/tools/support/input-schema';
+import { toInputJsonSchema } from '@odysseythink/agent-core-shared';
 import { literalRulePattern, matchesGlobRuleSubject } from '#/tools/support/rule-match';
-import { createDeadlineAbortSignal } from '#/utils/abort';
-import { fetchDiff } from '#/code-review/diff';
-import { buildReviewPrompt, parseReviewReport } from '#/code-review/prompt';
-import { resolveCodeReviewModel } from '#/code-review/model-resolver';
-import { renderCodeReviewReportToMarkdown } from '#/code-review/report';
-import type { CodeReviewDiffSource, CodeReviewReport } from '#/code-review/types';
+import { createDeadlineAbortSignal } from '@odysseythink/agent-core-shared';
+import { fetchDiff } from '@odysseythink/code-review';
+import { buildReviewPrompt, parseReviewReport } from '@odysseythink/code-review';
+import { resolveCodeReviewModel } from '@odysseythink/code-review';
+import { renderCodeReviewReportToMarkdown } from '@odysseythink/code-review';
+import type { CodeReviewDiffSource, CodeReviewReport } from '@odysseythink/code-review';
 import DESCRIPTION from './request-code-review.md';
 
 const RequestCodeReviewInputSchema = z.object({

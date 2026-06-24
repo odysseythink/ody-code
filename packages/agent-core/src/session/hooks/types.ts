@@ -1,24 +1,8 @@
 import type { ContentPart } from '@odysseythink/kosong';
 
-export const HOOK_EVENT_TYPES = [
-  'PreToolUse',
-  'PostToolUse',
-  'PostToolUseFailure',
-  'PermissionRequest',
-  'PermissionResult',
-  'UserPromptSubmit',
-  'Stop',
-  'StopFailure',
-  'SessionStart',
-  'SessionEnd',
-  'SubagentStart',
-  'SubagentStop',
-  'PreCompact',
-  'PostCompact',
-  'Notification',
-] as const;
+import { HOOK_EVENT_TYPES, type HookEventType } from '@odysseythink/agent-core-shared';
 
-export type HookEventType = (typeof HOOK_EVENT_TYPES)[number];
+export { HOOK_EVENT_TYPES, type HookEventType } from '@odysseythink/agent-core-shared';
 
 export interface HookDef {
   readonly event: HookEventType;

@@ -10,6 +10,7 @@ import type {
   FinishReason,
   Message,
   ModelCapability,
+  ProviderConfig,
   TextPart,
   ThinkPart,
   TokenUsage,
@@ -74,6 +75,8 @@ export interface LLMFactoryConfig {
   readonly systemPrompt: string;
   readonly capability?: ModelCapability | undefined;
   readonly completionBudgetConfig?: CompletionBudgetConfig | undefined;
+  /** Provider configuration used by worker-mode LLM proxies to recreate the provider on the host thread. */
+  readonly provider?: ProviderConfig | undefined;
 }
 
 export interface LLM {

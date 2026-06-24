@@ -18,7 +18,7 @@ import { join } from 'pathe';
 
 import type { Agent } from '#/agent';
 import type { AgentRecord } from '#/agent/records';
-import type { Logger } from '#/logging/types';
+import type { Logger } from '@odysseythink/agent-core-shared';
 import type { Session } from '..';
 import type { SessionMarkdownExport } from '../export/markdown-export';
 import { CheckpointBackupStore } from './backup-store';

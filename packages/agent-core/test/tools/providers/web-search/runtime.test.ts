@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { resolveWebSearchRuntime } from '../../../../src/tools/providers/web-search/runtime';
-import type { OdyConfig } from '../../../../src/config/schema';
+import type { OdyConfig } from '@odysseythink/agent-core-shared';
 
 describe('resolveWebSearchRuntime', () => {
   it('returns undefined when no search config exists', () => {

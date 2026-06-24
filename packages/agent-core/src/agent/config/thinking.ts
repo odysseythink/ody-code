@@ -1,6 +1,6 @@
 import type { ThinkingEffort } from '@odysseythink/kosong';
 
-import type { ThinkingConfig } from '../../config/schema';
+import type { ThinkingConfig } from '@odysseythink/agent-core-shared';
 
 export type { ThinkingEffort };
 

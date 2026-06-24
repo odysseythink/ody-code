@@ -10,7 +10,7 @@ import type {
 // Event union plus shared fields/payloads used across event families.
 export type { OdyErrorPayload, Event } from '@odysseythink/agent-core';
 
-export { MCP_OAUTH_AUTHORIZATION_URL_TOOL_UPDATE } from '@odysseythink/agent-core';
+export { MCP_OAUTH_AUTHORIZATION_URL_TOOL_UPDATE } from '@odysseythink/agent-core-shared';
 
 // Session lifecycle/status events and their status payload.
 export type {

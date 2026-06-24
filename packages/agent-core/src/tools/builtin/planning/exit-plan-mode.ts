@@ -7,7 +7,7 @@
  */
 
 import type { Agent } from '#/agent';
-import type { OdyConfig } from '#/config/schema';
+import type { OdyConfig } from '@odysseythink/agent-core-shared';
 import type { SessionModeData } from '#/agent/session-mode';
 import type { Kaos } from '@odysseythink/kaos';
 import { z } from 'zod';
@@ -16,9 +16,11 @@ import type { BuiltinTool } from '../../../agent/tool';
 import type { ExecutableToolResult, ToolExecution } from '../../../loop/types';
 import type { ToolInputDisplay } from '../../display';
 import { toInputJsonSchema } from '../../support/input-schema';
-import { E2EPlanEnricher } from '#/e2e-testing/plan-enricher';
-import { E2EConfigResolver } from '#/e2e-testing/config';
-import { registry } from '#/e2e-testing/registry';
+import {
+  E2EPlanEnricher,
+  E2EConfigResolver,
+  registry,
+} from '@odysseythink/e2e-testing';
 import {
   declaredOptionLabel,
   isViaApproval,

@@ -26,12 +26,10 @@ export interface ToolUpdate {
   readonly customData?: unknown;
 }
 
-export const MCP_OAUTH_AUTHORIZATION_URL_TOOL_UPDATE = 'mcp.oauth.authorization_url';
-
-export interface McpOAuthAuthorizationUrlUpdateData {
-  readonly serverName: string;
-  readonly authorizationUrl: string;
-}
+export {
+  MCP_OAUTH_AUTHORIZATION_URL_TOOL_UPDATE,
+  type McpOAuthAuthorizationUrlUpdateData,
+} from '@odysseythink/agent-core-shared';
 
 export interface CompactionResult {
   readonly summary: string;

@@ -1,4 +1,4 @@
-import type { Logger } from '#/logging/types';
+import type { Logger } from '@odysseythink/agent-core-shared';
 import type { ProviderConfig as KosongProviderConfig, ModelCapability, ProviderRequestAuth } from '@odysseythink/kosong';
 import { APIStatusError, createProvider, UNKNOWN_CAPABILITY } from '@odysseythink/kosong';
 import type { OdyConfig, ModelAlias, OAuthRef, ProviderConfig } from '../config';

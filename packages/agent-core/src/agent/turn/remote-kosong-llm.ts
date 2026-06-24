@@ -1,6 +1,6 @@
-import { isRetryableGenerateError, type ModelCapability } from '@odysseythink/kosong';
+import { isRetryableGenerateError, type ModelCapability, type ProviderConfig } from '@odysseythink/kosong';
 
-import { ErrorCodes, fromOdyErrorPayload, OdyError } from '#/errors';
+import { ErrorCodes, fromOdyErrorPayload, OdyError } from '@odysseythink/agent-core-shared';
 import type {
   LLM,
   LLMChatParams,
@@ -24,6 +24,7 @@ export interface RemoteKosongLLMConfig {
   readonly systemPrompt: string;
   readonly capability?: ModelCapability | undefined;
   readonly completionBudgetConfig?: CompletionBudgetConfig | undefined;
+  readonly provider: ProviderConfig;
 }
 
 interface StreamHandlers {
@@ -71,6 +72,7 @@ export class RemoteKosongLLM implements LLM {
 
   private readonly sdk: SDKAgentRPC;
   private readonly completionBudgetConfig: CompletionBudgetConfig | undefined;
+  private readonly provider: ProviderConfig;
 
   constructor(config: RemoteKosongLLMConfig) {
     this.sdk = config.sdk;
@@ -78,6 +80,7 @@ export class RemoteKosongLLM implements LLM {
     this.systemPrompt = config.systemPrompt;
     this.capability = config.capability;
     this.completionBudgetConfig = config.completionBudgetConfig;
+    this.provider = config.provider;
   }
 
   async chat(params: LLMChatParams): Promise<LLMChatResponse> {
@@ -126,6 +129,7 @@ export class RemoteKosongLLM implements LLM {
       capability: this.capability,
       completionBudgetConfig: this.completionBudgetConfig,
       requestLogContext: params.requestLogContext,
+      provider: this.provider,
     };
   }
 

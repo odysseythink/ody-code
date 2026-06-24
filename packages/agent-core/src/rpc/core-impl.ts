@@ -1,18 +1,20 @@
 import { randomUUID } from 'node:crypto';
 import { homedir } from 'node:os';
 
-import { ErrorCodes, OdyError } from '#/errors';
+import { ErrorCodes, OdyError } from '@odysseythink/agent-core-shared';
 import { getRootLogger, log } from '#/logging/logger';
 import { PluginManager } from '#/plugin';
 import { LocalFetchURLProvider } from '#/tools/providers/local-fetch-url';
 import { MoonshotFetchURLProvider } from '#/tools/providers/moonshot-fetch-url';
 import { resolveWebSearchRuntime } from '#/tools/providers/web-search/runtime';
 import type { PromisableMethods } from '#/utils/types';
-import { getCoreVersion } from '#/version';
-import { fetchDiff as codeReviewFetchDiff } from '#/code-review/diff';
-import { buildAuditDigest } from '#/code-review/simplicity';
-import { createCodeReviewExecutor } from '#/code-review/executor';
-import { resolveCodeReviewModel } from '#/code-review/model-resolver';
+import { getCoreVersion } from '@odysseythink/agent-core-shared';
+import {
+  buildAuditDigest,
+  createCodeReviewExecutor,
+  fetchDiff as codeReviewFetchDiff,
+  resolveCodeReviewModel,
+} from '@odysseythink/code-review';
 import { createProvider, generate, createUserMessage } from '@odysseythink/kosong';
 import type { ProviderRequestAuth } from '@odysseythink/kosong';
 import { estimateTokens } from '#/utils/tokens';
@@ -36,7 +38,7 @@ import {
   type FlagId,
 } from '../flags';
 import type { Logger } from '../logging/types';
-import { resolveSessionMcpConfig, type SessionMcpConfig } from '../mcp';
+import { resolveSessionMcpConfig, type SessionMcpConfig } from '@odysseythink/mcp-host';
 import { Session, type SessionMeta, type SessionSkillConfig } from '../session';
 import { exportSessionDirectory } from '../session/export';
 import {
@@ -114,9 +116,7 @@ import { proxyWithExtraPayload } from './types';
 import type { CodeReviewProgressEvent } from './events';
 import { KaosShellNotFoundError, LocalKaos, type Kaos } from '@odysseythink/kaos';
 import type { ToolServices } from '../tools/support/services';
-import { BuiltInMcpRegistry } from '../mcp/built-in';
-import { createChromeDevToolsServerDefinition } from '../mcp/built-in/chrome-devtools';
-import { BuiltInRootNotFoundError } from '../mcp/built-in/resolve-root';
+import { BuiltInMcpRegistry, createChromeDevToolsServerDefinition, BuiltInRootNotFoundError } from '@odysseythink/mcp-host';
 
 const ODY_CODE_PROVIDER_NAME = 'managed:ody-code';
 

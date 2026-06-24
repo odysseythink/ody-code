@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'pathe';
 
-import { ErrorCodes, OdyError } from '#/errors';
+import { ErrorCodes, OdyError } from '@odysseythink/agent-core-shared';
 import { resolveGlobalLogPath } from '#/logging/logger';
 import { buildExportManifest } from '#/session/export/manifest';
 import { scanSessionWire } from '#/session/export/wire-scan';

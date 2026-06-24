@@ -42,7 +42,7 @@ describe('llmFactory injection', () => {
       config: getDefaultConfig(),
       modelProvider: new SingleModelProvider(
         { type: 'kimi', apiKey: 'test-key', model: 'mock-model' },
-        { max_context_tokens: 1_000_000 },
+        { image_in: false, video_in: false, audio_in: false, thinking: false, tool_use: true, max_context_tokens: 1_000_000, max_output_tokens: 0 },
       ),
     });
 

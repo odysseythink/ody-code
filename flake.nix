@@ -63,8 +63,13 @@
       # -------------------------------------------------------------------
       workspacePaths = [
         ./packages/agent-core
+        ./packages/agent-core-shared
+        ./packages/code-review
+        ./packages/e2e-testing
+        ./packages/integration-tests
         ./packages/kaos
         ./packages/kosong
+        ./packages/mcp-host
         ./packages/node-sdk
         ./packages/oauth
         ./packages/telemetry
@@ -77,8 +82,13 @@
 
       workspaceNames = [
         "@odysseythink/agent-core"
+        "@odysseythink/agent-core-shared"
+        "@odysseythink/code-review"
+        "@odysseythink/e2e-testing"
+        "@odysseythink/integration-tests"
         "@odysseythink/kaos"
         "@odysseythink/kosong"
+        "@odysseythink/mcp-host"
         "@odysseythink/ody-code-sdk"
         "@odysseythink/kimi-code-oauth"
         "@odysseythink/ody-telemetry"

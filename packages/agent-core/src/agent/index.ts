@@ -1,9 +1,9 @@
 import { createHash } from 'node:crypto';
 import { basename, dirname, isAbsolute, join } from 'pathe';
 
-import { ErrorCodes, OdyError, makeErrorPayload } from '#/errors';
+import { ErrorCodes, OdyError, makeErrorPayload } from '@odysseythink/agent-core-shared';
 import { log } from '#/logging/logger';
-import type { Logger } from '#/logging/types';
+import type { Logger } from '@odysseythink/agent-core-shared';
 import type { AgentAPI, AgentEvent, OdyConfig, SDKAgentRPC, UsageStatus } from '#/rpc';
 import type { LLM, LLMFactoryConfig } from '#/loop/llm';
 import {
@@ -15,7 +15,7 @@ import {
 
 import type { EnabledPluginSessionStart } from '#/plugin';
 
-import type { McpConnectionManager } from '../mcp';
+import type { McpConnectionManager } from '@odysseythink/mcp-host';
 import type { PreparedSystemPromptContext, ResolvedAgentProfile } from '../profile';
 import type { ModelProvider } from '../session/provider-manager';
 import type { SessionGoalStore } from '../session/goal';
@@ -367,6 +367,7 @@ export class Agent {
         systemPrompt,
         capability: this.config.modelCapabilities,
         completionBudgetConfig,
+        provider: this.modelProvider !== undefined ? this.config.providerConfig : undefined,
       });
       return this._llm;
     }

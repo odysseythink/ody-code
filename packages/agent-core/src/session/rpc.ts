@@ -1,4 +1,4 @@
-import { ErrorCodes, OdyError } from '#/errors';
+import { ErrorCodes, OdyError } from '@odysseythink/agent-core-shared';
 import type {
   ActivateSkillPayload,
   AgentAPI,

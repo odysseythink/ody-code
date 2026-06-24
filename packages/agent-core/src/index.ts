@@ -45,13 +45,20 @@ export type {
   QuestionBackgroundTaskInfo,
 } from './agent/background';
 export type { ToolServices } from './tools/support/services';
-export { SingleModelProvider } from './session/provider-manager';
+export { SingleModelProvider, ProviderManager } from './session/provider-manager';
 export type {
   BearerTokenProvider,
   ModelProvider,
   OAuthTokenProviderResolver,
   ResolvedRuntimeProvider,
 } from './session/provider-manager';
+
+// ─── Test support exports (used by @odysseythink/integration-tests) ────────
+export { ToolManager } from './agent/tool/index';
+export { NormalModeTaskCheckpoint } from './agent/compaction/normal-task-checkpoint';
+export { SessionAPIImpl } from './session/rpc';
+export { ExitPlanModeTool } from './tools/builtin/planning/exit-plan-mode';
+export { RunE2ETestsTool, derivePackageRoot } from './tools/builtin/e2e/run-e2e-tests';
 
 // ─── Wire records (for in-monorepo consumers like apps/vis) ────────────────
 export type {
@@ -83,26 +90,7 @@ export type {
   ExecutableToolErrorResult,
 } from './loop/types';
 
-// ─── Code Review ───────────────────────────────────────────────────────────
-export { renderCodeReviewReportToMarkdown } from './code-review/report';
-export { resolveCodeReviewModel } from './code-review/model-resolver';
-export type { ResolveModelOverrides } from './code-review/model-resolver';
-export type {
-  CodeReviewDiffSource,
-  CodeReviewRequestInput,
-  CodeReviewReport,
-  CodeReviewFinding,
-  CodeReviewProgress,
-  CodeReviewProgressStage,
-} from './code-review/types';
-export {
-  parseSimplicityReport,
-  buildSimplicityReviewPrompt,
-  buildSimplicityAuditPrompt,
-  buildAuditDigest,
-} from './code-review/simplicity';
-export type {
-  SimplicityTag,
-  RepoAuditDigest,
-  FileSnippet,
-} from './code-review/simplicity';
+// Worker-mode LLM proxy support (used by @odysseythink/ody-code-sdk to host the
+// provider on the main thread while the core runs in a worker).
+export { KosongLLM } from './agent/turn/kosong-llm';
+

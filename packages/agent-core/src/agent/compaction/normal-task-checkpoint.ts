@@ -16,7 +16,7 @@
 
 import type { Agent } from '..';
 import type { TodoItem } from '../../tools/builtin/state/todo-list';
-import { detectChangedFiles } from '../../e2e-testing/git-status';
+import { detectChangedFiles } from '@odysseythink/e2e-testing';
 
 /** Source files whose change is worth an E2E nudge (excludes test files). */
 const CODE_FILE_RE = /\.(go|ts|tsx|js|jsx|mjs|cjs|py|rs|java|rb|kt|php|swift|scala|c|cc|cpp|h|hpp|cs)$/i;
