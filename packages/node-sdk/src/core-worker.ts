@@ -36,6 +36,9 @@ export function coreWorkerMain(port: MessagePort, options: CoreWorkerBootPayload
 
   // WorkerCoreAPI + endpoint begin handling RPC requests from the main thread.
   void core;
+
+  // Signal to the main thread that the worker is ready
+  port.postMessage({ type: 'ready' });
 }
 
 if (!isMainThread && parentPort !== null && workerData !== undefined) {
