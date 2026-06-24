@@ -4,12 +4,12 @@ import type { ChatProvider, ModelCapability } from '@odysseythink/kosong';
 export interface CompletionBudgetConfig {
   /** Explicit user-configured maximum. */
   readonly hardCap?: number;
-  /** Conservative cap for providers/models whose context window is unknown. */
+  /** Conservative cap for providers/models whose output ceiling is unknown. */
   readonly fallback?: number;
 }
 
 const MIN_FLOOR = 1;
-const DEFAULT_UNKNOWN_CONTEXT_FALLBACK = 32000;
+const DEFAULT_UNKNOWN_OUTPUT_FALLBACK = 32000;
 
 /**
  * Resolve configured completion budget. Env values are explicit hard caps;
@@ -31,7 +31,7 @@ export function resolveCompletionBudget(args: {
   if (args.reservedContextSize !== undefined && args.reservedContextSize > 0) {
     return { fallback: args.reservedContextSize };
   }
-  return { fallback: DEFAULT_UNKNOWN_CONTEXT_FALLBACK };
+  return { fallback: DEFAULT_UNKNOWN_OUTPUT_FALLBACK };
 }
 
 type EnvBudget = number | 'disabled' | 'absent';
@@ -51,13 +51,10 @@ export function computeCompletionBudgetCap(args: {
   readonly budget: CompletionBudgetConfig;
   readonly capability: ModelCapability | undefined;
 }): number {
-  const maxCtx = args.capability?.max_context_tokens ?? 0;
-  // The provider backend computes the safe request-specific value from the
-  // serialized prompt. Locally using the largest cap avoids cutting off
-  // thinking before the model produces a summary.
+  const maxOutput = args.capability?.max_output_tokens ?? 0;
   const cap =
     args.budget.hardCap ??
-    (maxCtx > 0 ? maxCtx : args.budget.fallback ?? DEFAULT_UNKNOWN_CONTEXT_FALLBACK);
+    (maxOutput > 0 ? maxOutput : args.budget.fallback ?? DEFAULT_UNKNOWN_OUTPUT_FALLBACK);
   return Math.max(MIN_FLOOR, cap);
 }
 

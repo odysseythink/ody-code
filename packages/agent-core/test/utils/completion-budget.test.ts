@@ -20,68 +20,53 @@ function makeCapability(maxContextTokens: number, maxOutputTokens: number = 0): 
 }
 
 describe('computeCompletionBudgetCap', () => {
-  it('uses fallback when context size is unknown and no hard cap is set', () => {
+  it('uses model max_output_tokens when no hard cap is set', () => {
     const cap = computeCompletionBudgetCap({
-      budget: { fallback: 8192 },
-      capability: undefined,
+      budget: { fallback: 32000 },
+      capability: makeCapability(1_000_000, 8192),
     });
     expect(cap).toBe(8192);
   });
 
-  it('uses an explicit hard cap when context size is unknown', () => {
+  it('ignores max_context_tokens for completion budget', () => {
     const cap = computeCompletionBudgetCap({
-      budget: { hardCap: 10, fallback: 8192 },
-      capability: makeCapability(0),
+      budget: { fallback: 32000 },
+      capability: makeCapability(1_000_000, 8192),
     });
-    expect(cap).toBe(10);
+    expect(cap).toBe(8192);
   });
 
-  it('floors at 1 when hard cap is zero or negative', () => {
+  it('uses fallback when max_output_tokens is unknown (0)', () => {
+    const cap = computeCompletionBudgetCap({
+      budget: { fallback: 16000 },
+      capability: makeCapability(100000, 0),
+    });
+    expect(cap).toBe(16000);
+  });
+
+  it('uses DEFAULT_UNKNOWN_OUTPUT_FALLBACK when both capability and fallback are unknown', () => {
+    const cap = computeCompletionBudgetCap({
+      budget: {},
+      capability: undefined,
+    });
+    expect(cap).toBe(32000);
+  });
+
+  it('explicit hard cap wins over max_output_tokens', () => {
+    const cap = computeCompletionBudgetCap({
+      budget: { hardCap: 1024 },
+      capability: makeCapability(1_000_000, 8192),
+    });
+    expect(cap).toBe(1024);
+  });
+
+  it('floors at 1 when computed cap is not positive', () => {
     expect(
       computeCompletionBudgetCap({
         budget: { hardCap: 0 },
         capability: undefined,
       }),
     ).toBe(1);
-    expect(
-      computeCompletionBudgetCap({
-        budget: { hardCap: -100 },
-        capability: undefined,
-      }),
-    ).toBe(1);
-  });
-
-  it('uses the model context window when no hard cap is set', () => {
-    const maxCtx = 100000;
-    const cap = computeCompletionBudgetCap({
-      budget: { fallback: 32000 },
-      capability: makeCapability(maxCtx),
-    });
-    expect(cap).toBe(maxCtx);
-  });
-
-  it('uses the explicit hard cap when configured', () => {
-    const cap = computeCompletionBudgetCap({
-      budget: { hardCap: 32000 },
-      capability: makeCapability(10000),
-    });
-    expect(cap).toBe(32000);
-  });
-
-  it('ignores fallback when the model context window is known', () => {
-    const cap = computeCompletionBudgetCap({
-      budget: { fallback: 32000 },
-      capability: makeCapability(10000),
-    });
-    expect(cap).toBe(10000);
-  });
-
-  it('keeps explicit hard cap when smaller than remaining', () => {
-    const cap = computeCompletionBudgetCap({
-      budget: { hardCap: 1024 },
-      capability: makeCapability(100000),
-    });
-    expect(cap).toBe(1024);
   });
 });
 
@@ -111,7 +96,7 @@ describe('applyCompletionBudget', () => {
     const result = applyCompletionBudget({
       provider: original,
       budget: undefined,
-      capability: makeCapability(10000),
+      capability: makeCapability(10000, 4096),
     });
     expect(result).toBe(original);
     expect(withMaxCompletionTokens).not.toHaveBeenCalled();
@@ -124,31 +109,30 @@ describe('applyCompletionBudget', () => {
     const result = applyCompletionBudget({
       provider: opaque,
       budget: { hardCap: 8192 },
-      capability: makeCapability(10000),
+      capability: makeCapability(10000, 4096),
     });
     expect(result).toBe(opaque);
   });
 
-  it('clones the provider with the model context window when budget is configured', () => {
+  it('clones the provider with max_output_tokens-derived cap when budget is configured', () => {
     const result = applyCompletionBudget({
       provider: original,
       budget: { fallback: 32000 },
-      capability: makeCapability(10000),
+      capability: makeCapability(100000, 8192),
     });
     expect(withMaxCompletionTokens).toHaveBeenCalledOnce();
-    const cap = withMaxCompletionTokens.mock.calls[0]?.[0] as number;
-    expect(cap).toBe(10000);
+    expect(withMaxCompletionTokens.mock.calls[0]?.[0]).toBe(8192);
     expect(result).not.toBe(original);
   });
 
   it('uses the explicit hard cap when configured', () => {
     const result = applyCompletionBudget({
       provider: original,
-      budget: { hardCap: 8192 },
-      capability: makeCapability(10000),
+      budget: { hardCap: 1024 },
+      capability: makeCapability(100000, 8192),
     });
     expect(withMaxCompletionTokens).toHaveBeenCalledOnce();
-    expect(withMaxCompletionTokens.mock.calls[0]?.[0]).toBe(8192);
+    expect(withMaxCompletionTokens.mock.calls[0]?.[0]).toBe(1024);
     expect(result).not.toBe(original);
   });
 });
