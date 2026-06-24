@@ -132,7 +132,7 @@ describe('KosongLLM stream timing', () => {
 });
 
 describe('KosongLLM completion budget', () => {
-  it('applies the model context window as the completion cap', async () => {
+  it('applies the model output ceiling as the completion cap', async () => {
     let appliedCap: number | undefined;
     let generatedProvider: ChatProvider | undefined;
     const providerWithBudget: ChatProvider = {
@@ -156,7 +156,7 @@ describe('KosongLLM completion budget', () => {
       provider: providerWithBudget,
       modelName: 'test-model',
       systemPrompt: 'system',
-      capability: makeCapability(10000),
+      capability: makeCapability(10000, 10000),
       completionBudgetConfig: { fallback: 32000 },
       generate,
     });
