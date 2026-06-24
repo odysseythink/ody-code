@@ -16,3 +16,6 @@ export {
   type Transport,
   type TransportPair,
 } from './transport';
+export {
+  createMessagePortTransport,
+} from './transports/message-port';

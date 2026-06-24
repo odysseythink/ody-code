@@ -36,6 +36,10 @@
     ".": {
       "types": "./src/index.ts",
       "default": "./src/index.ts"
+    },
+    "./core-worker": {
+      "types": "./src/core-worker.ts",
+      "default": "./src/core-worker.ts"
     }
   },
   "publishConfig": {
