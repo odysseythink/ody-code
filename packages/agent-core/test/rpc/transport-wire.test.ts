@@ -56,10 +56,10 @@ describe('transport wire behavior', () => {
     await hostProxy.requestApproval({ requestId: 'wire-1', toolName: 'Bash' });
 
     expect(wire).toHaveLength(2);
-    expect(wire[0].direction).toBe('send');
-    expect(wire[0].json).toEqual({ method: 'requestApproval', args: [{ requestId: 'wire-1', toolName: 'Bash' }] });
-    expect(wire[1].direction).toBe('recv');
-    expect(wire[1].json).toEqual({ ok: true, value: { decision: 'approved:Bash' } });
+    expect(wire[0]!.direction).toBe('send');
+    expect(wire[0]!.json).toEqual({ method: 'requestApproval', args: [{ requestId: 'wire-1', toolName: 'Bash' }] });
+    expect(wire[1]!.direction).toBe('recv');
+    expect(wire[1]!.json).toEqual({ ok: true, value: { decision: 'approved:Bash' } });
   });
 
   it('propagates a rejected send to the caller', async () => {
