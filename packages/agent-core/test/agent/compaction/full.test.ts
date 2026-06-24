@@ -35,6 +35,7 @@ const CATALOGUED_MODEL_CAPABILITIES = {
   thinking: true,
   tool_use: true,
   max_context_tokens: 256_000,
+  max_output_tokens: 0,
 } as const;
 const MICRO_COMPACTION_FLAG_ENV = getMicroCompactionFlagEnv();
 

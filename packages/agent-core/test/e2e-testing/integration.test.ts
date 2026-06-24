@@ -144,7 +144,7 @@ describe('NormalModeTaskCheckpoint E2E hook', () => {
     const agent = {
       kimiConfig: { e2e: { enabled: true } as any },
       sessionMode: { isActive: false },
-      config: { modelCapabilities: { max_context_tokens: 100000 } },
+      config: { modelCapabilities: { max_context_tokens: 100000, max_output_tokens: 0 } },
       context: {
         tokenCountWithPending: 1000,
         appendSystemReminder: ((content: string) => { appended.push(content); }) as any,
@@ -174,7 +174,7 @@ describe('NormalModeTaskCheckpoint E2E hook', () => {
       kimiConfig: { e2e: { enabled: true } as any },
       sessionMode: { isActive: false },
       kaos,
-      config: { modelCapabilities: { max_context_tokens: 100000 } },
+      config: { modelCapabilities: { max_context_tokens: 100000, max_output_tokens: 0 } },
       context: {
         tokenCountWithPending: 1000,
         appendSystemReminder: ((content: string) => { appended.push(content); }) as any,
@@ -204,7 +204,7 @@ describe('NormalModeTaskCheckpoint E2E hook', () => {
       kimiConfig: { e2e: { enabled: true } as any },
       sessionMode: { isActive: false },
       kaos,
-      config: { modelCapabilities: { max_context_tokens: 100000 } },
+      config: { modelCapabilities: { max_context_tokens: 100000, max_output_tokens: 0 } },
       context: {
         tokenCountWithPending: 1000,
         appendSystemReminder: ((content: string) => { appended.push(content); }) as any,

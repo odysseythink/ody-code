@@ -38,6 +38,7 @@ describe('ConfigState model capabilities', () => {
       thinking: true,
       tool_use: true,
       max_context_tokens: 1_000_000,
+      max_output_tokens: 0,
     });
   });
 
@@ -70,6 +71,7 @@ describe('ConfigState model capabilities', () => {
       video_in: false,
       audio_in: false,
       max_context_tokens: 128_000,
+      max_output_tokens: 0,
     });
   });
 

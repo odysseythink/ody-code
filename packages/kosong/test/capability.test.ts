@@ -20,7 +20,11 @@ describe('ModelCapability / UNKNOWN_CAPABILITY', () => {
     expect(UNKNOWN_CAPABILITY.max_context_tokens).toBe(0);
   });
 
-  it('accepts a well-formed ModelCapability literal (type guard)', () => {
+  it('UNKNOWN_CAPABILITY.max_output_tokens is 0 (unknown)', () => {
+    expect(UNKNOWN_CAPABILITY.max_output_tokens).toBe(0);
+  });
+
+  it('accepts a well-formed ModelCapability literal with max_output_tokens', () => {
     const cap: ModelCapability = {
       image_in: true,
       video_in: false,
@@ -28,9 +32,11 @@ describe('ModelCapability / UNKNOWN_CAPABILITY', () => {
       thinking: true,
       tool_use: true,
       max_context_tokens: 128_000,
+      max_output_tokens: 16_384,
     };
     expect(cap.image_in).toBe(true);
     expect(cap.max_context_tokens).toBe(128_000);
+    expect(cap.max_output_tokens).toBe(16_384);
   });
 
   it('UNKNOWN_CAPABILITY is read-only (frozen or otherwise immutable)', () => {
@@ -56,6 +62,7 @@ describe('ModelCapability / UNKNOWN_CAPABILITY', () => {
       thinking: false,
       tool_use: false,
       max_context_tokens: 0,
+      max_output_tokens: 0,
     };
     expect(isUnknownCapability(UNKNOWN_CAPABILITY)).toBe(true);
     expect(isUnknownCapability(copiedUnknown)).toBe(true);

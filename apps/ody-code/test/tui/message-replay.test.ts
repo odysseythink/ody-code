@@ -106,6 +106,7 @@ function baseAgentState(
         thinking: false,
         tool_use: true,
         max_context_tokens: 100,
+        max_output_tokens: 0,
       },
       thinkingLevel: 'off',
       systemPrompt: '',

@@ -38,7 +38,7 @@ function makeAgent(opts: MockOptions): MockAgent {
     kimiConfig:
       opts.ratio === undefined ? {} : { loopControl: { splitPlanCompactionRatio: opts.ratio } },
     sessionMode,
-    config: { modelCapabilities: { max_context_tokens: opts.maxContextTokens ?? 1000 } },
+    config: { modelCapabilities: { max_context_tokens: opts.maxContextTokens ?? 1000, max_output_tokens: 0 } },
     context: { tokenCountWithPending: opts.tokenCountWithPending ?? 0 },
     fullCompaction: { compactCheckpoint },
   } as unknown as Agent;

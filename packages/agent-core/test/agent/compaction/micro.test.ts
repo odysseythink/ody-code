@@ -23,6 +23,7 @@ const CATALOGUED_MODEL_CAPABILITIES = {
   thinking: true,
   tool_use: true,
   max_context_tokens: 256_000,
+  max_output_tokens: 0,
 } as const;
 
 const MINUTE = 60 * 1000;
@@ -691,6 +692,7 @@ describe('MicroCompaction', () => {
         thinking: true,
         tool_use: true,
         max_context_tokens: 100,
+        max_output_tokens: 0,
       },
     });
 

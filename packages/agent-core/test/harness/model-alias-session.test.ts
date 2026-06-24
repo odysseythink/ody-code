@@ -131,7 +131,7 @@ describe('HarnessAPI session model aliases', () => {
       models: {
         'gpt-alias': {
           provider: 'openai',
-          model: 'gpt-runtime',
+          model: 'gpt-4o',
           maxContextSize: 200000,
           capabilities: ['tool_use'],
         },
@@ -154,13 +154,14 @@ describe('HarnessAPI session model aliases', () => {
     expect(config.modelAlias).toBe('gpt-alias');
     expect(config.provider).toMatchObject({
       type: 'openai',
-      model: 'gpt-runtime',
+      model: 'gpt-4o',
       apiKey: 'sk-openai',
       baseUrl: 'https://openai.example/v1',
     });
     expect(config.modelCapabilities).toMatchObject({
       tool_use: true,
       max_context_tokens: 200000,
+      max_output_tokens: 16_384,
     });
   });
 

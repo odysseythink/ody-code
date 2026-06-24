@@ -220,7 +220,7 @@ function stripStreamIndex(toolCall: ToolCall): ToolCall {
   return rest;
 }
 
-function makeCapability(maxContextTokens: number): ModelCapability {
+function makeCapability(maxContextTokens: number, maxOutputTokens: number = 0): ModelCapability {
   return {
     image_in: false,
     video_in: false,
@@ -228,5 +228,6 @@ function makeCapability(maxContextTokens: number): ModelCapability {
     thinking: false,
     tool_use: true,
     max_context_tokens: maxContextTokens,
+    max_output_tokens: maxOutputTokens,
   };
 }

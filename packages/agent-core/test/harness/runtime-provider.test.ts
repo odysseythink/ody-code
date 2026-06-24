@@ -66,6 +66,7 @@ describe('resolveRuntimeProvider model metadata', () => {
       thinking: true,
       tool_use: true,
       max_context_tokens: 1_000_000,
+      max_output_tokens: 0,
     });
     expect(resolved.provider.model).toBe('kimi-for-coding');
   });
@@ -105,6 +106,7 @@ describe('resolveRuntimeProvider model metadata', () => {
     expect(resolved.modelCapabilities).toMatchObject({
       tool_use: true,
       max_context_tokens: 200000,
+      max_output_tokens: 0,
     });
   });
 
@@ -129,6 +131,7 @@ describe('resolveRuntimeProvider model metadata', () => {
       thinking: true,
       tool_use: true,
       max_context_tokens: 1_000_000,
+      max_output_tokens: 0,
     });
   });
 
@@ -152,6 +155,7 @@ describe('resolveRuntimeProvider model metadata', () => {
       thinking: false,
       tool_use: false,
       max_context_tokens: 1_000_000,
+      max_output_tokens: 0,
     });
   });
 

@@ -43,7 +43,7 @@ function makeAgent(opts: MockOptions): {
   const agent = {
     kimiConfig,
     sessionMode: { isActive: opts.sessionModeActive ?? false },
-    config: { modelCapabilities: { max_context_tokens: opts.maxContextTokens ?? 1000 } },
+    config: { modelCapabilities: { max_context_tokens: opts.maxContextTokens ?? 1000, max_output_tokens: 0 } },
     context: { tokenCountWithPending: opts.tokenCountWithPending ?? 0, appendSystemReminder },
     tools: {
       storeData: vi.fn(() =>

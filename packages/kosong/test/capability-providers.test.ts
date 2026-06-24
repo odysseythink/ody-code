@@ -33,6 +33,7 @@ describe('KimiChatProvider.getCapability', () => {
         thinking: true,
         tool_use: true,
         max_context_tokens: 0,
+        max_output_tokens: 0,
       });
     }
     for (const model of ['kimi-for-coding', 'kimi-code', 'kimi-thinking-preview']) {

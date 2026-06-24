@@ -52,6 +52,7 @@ const OPENAI_REASONING_CAPABILITY: ModelCapability = Object.freeze({
   thinking: true,
   tool_use: true,
   max_context_tokens: 0,
+  max_output_tokens: 16_384,
 });
 
 const OPENAI_VISION_TOOL_CAPABILITY: ModelCapability = Object.freeze({
@@ -61,6 +62,7 @@ const OPENAI_VISION_TOOL_CAPABILITY: ModelCapability = Object.freeze({
   thinking: false,
   tool_use: true,
   max_context_tokens: 0,
+  max_output_tokens: 16_384,
 });
 
 const OPENAI_TEXT_TOOL_CAPABILITY: ModelCapability = Object.freeze({
@@ -70,6 +72,7 @@ const OPENAI_TEXT_TOOL_CAPABILITY: ModelCapability = Object.freeze({
   thinking: false,
   tool_use: true,
   max_context_tokens: 0,
+  max_output_tokens: 16_384,
 });
 
 const ANTHROPIC_VISION_TOOL_CAPABILITY: ModelCapability = Object.freeze({
@@ -79,6 +82,7 @@ const ANTHROPIC_VISION_TOOL_CAPABILITY: ModelCapability = Object.freeze({
   thinking: false,
   tool_use: true,
   max_context_tokens: 0,
+  max_output_tokens: 8_192,
 });
 
 const ANTHROPIC_THINKING_VISION_TOOL_CAPABILITY: ModelCapability = Object.freeze({
@@ -88,6 +92,7 @@ const ANTHROPIC_THINKING_VISION_TOOL_CAPABILITY: ModelCapability = Object.freeze
   thinking: true,
   tool_use: true,
   max_context_tokens: 0,
+  max_output_tokens: 8_192,
 });
 
 const GEMINI_MULTIMODAL_TOOL_CAPABILITY: ModelCapability = Object.freeze({
@@ -97,6 +102,7 @@ const GEMINI_MULTIMODAL_TOOL_CAPABILITY: ModelCapability = Object.freeze({
   thinking: false,
   tool_use: true,
   max_context_tokens: 0,
+  max_output_tokens: 8_192,
 });
 
 const GEMINI_THINKING_MULTIMODAL_TOOL_CAPABILITY: ModelCapability = Object.freeze({
@@ -106,6 +112,7 @@ const GEMINI_THINKING_MULTIMODAL_TOOL_CAPABILITY: ModelCapability = Object.freez
   thinking: true,
   tool_use: true,
   max_context_tokens: 0,
+  max_output_tokens: 8_192,
 });
 
 const OPENAI_LEGACY_CAPABILITY_CATALOG: readonly CapabilityCatalogEntry[] = [

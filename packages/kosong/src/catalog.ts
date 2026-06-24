@@ -140,6 +140,7 @@ export function catalogModelToCapability(model: CatalogModelEntry): CatalogModel
       thinking: Boolean(model.reasoning),
       tool_use: model.tool_call ?? true,
       max_context_tokens: context,
+      max_output_tokens: typeof output === 'number' && output > 0 ? output : 0,
     },
   };
 }

@@ -30,6 +30,7 @@ const DEEPSEEK_REASONER_CAPABILITY: ModelCapability = Object.freeze({
   thinking: true,
   tool_use: false,
   max_context_tokens: 0,
+  max_output_tokens: 0,
 });
 
 const DEEPSEEK_CHAT_CAPABILITY: ModelCapability = Object.freeze({
@@ -39,6 +40,7 @@ const DEEPSEEK_CHAT_CAPABILITY: ModelCapability = Object.freeze({
   thinking: false,
   tool_use: true,
   max_context_tokens: 0,
+  max_output_tokens: 0,
 });
 
 const DEEPSEEK_V4_CAPABILITY: ModelCapability = Object.freeze({
@@ -48,6 +50,7 @@ const DEEPSEEK_V4_CAPABILITY: ModelCapability = Object.freeze({
   thinking: true,
   tool_use: true,
   max_context_tokens: 1_000_000,
+  max_output_tokens: 384_000,
 });
 
 export class DeepSeekChatProvider implements ChatProvider {

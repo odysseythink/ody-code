@@ -89,6 +89,7 @@ const KIMI_K2_CAPABILITY: ModelCapability = Object.freeze({
   thinking: true,
   tool_use: true,
   max_context_tokens: 0,
+  max_output_tokens: 0,
 });
 
 const KIMI_TOOL_CALL_ID_POLICY: ToolCallIdPolicy = {

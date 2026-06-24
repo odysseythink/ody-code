@@ -1473,6 +1473,7 @@ function mediaCapabilities(): ModelCapability {
     thinking: false,
     tool_use: true,
     max_context_tokens: 1_000_000,
+    max_output_tokens: 0,
   };
 }
 
