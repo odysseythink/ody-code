@@ -1,49 +1,21 @@
 import { isMainThread, parentPort, workerData, type MessagePort } from 'node:worker_threads';
 
-import {
-  createMessagePortTransport,
-  createRPCEndpoint,
-  WorkerCoreAPI,
-  type CoreAPI,
-  type SDKAPI,
-  type SDKAgentRPC,
-} from '@odysseythink/agent-core';
-import { RemoteKosongLLM } from '@odysseythink/agent-core';
+import { createMessagePortTransport } from '@odysseythink/agent-core';
 
-export interface CoreWorkerBootPayload {
-  readonly homeDir?: string | undefined;
-  readonly configPath?: string | undefined;
-  readonly skillDirs?: readonly string[];
-  readonly appVersion?: string | undefined;
-}
+import { createCoreServer, type CoreServerOptions } from './core-server';
+
+export type CoreWorkerBootPayload = CoreServerOptions;
 
 export function coreWorkerMain(port: MessagePort, options: CoreWorkerBootPayload): void {
-  const endpoint = createRPCEndpoint<CoreAPI, SDKAPI>();
-  const transport = createMessagePortTransport(port, endpoint.dispatch);
-  endpoint.setTransport(transport);
-
-  const core = new WorkerCoreAPI(endpoint.client, {
-    homeDir: options.homeDir,
-    configPath: options.configPath,
-    skillDirs: options.skillDirs,
-    appVersion: options.appVersion,
-    llmFactory: (rpc, config) => {
-      if (config.provider === undefined) {
-        throw new Error('Provider config is required for worker-mode LLM proxy');
-      }
-      return new RemoteKosongLLM({
-        sdk: rpc as SDKAgentRPC,
-        ...config,
-        provider: config.provider,
-      });
-    },
-  });
-
-  // WorkerCoreAPI + endpoint begin handling RPC requests from the main thread.
-  void core;
+  const server = createCoreServer(
+    (dispatch) => createMessagePortTransport(port, dispatch),
+    options,
+  );
 
   // Signal to the main thread that the worker is ready
   port.postMessage({ type: 'ready' });
+
+  void server;
 }
 
 if (!isMainThread && parentPort !== null && workerData !== undefined) {

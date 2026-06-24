@@ -72,6 +72,10 @@ export type * from '#/types';
 // Core-worker bootstrap — exposed for custom worker thread integration
 export type { CoreWorkerBootPayload } from '#/core-worker';
 
+// Core server — headless server entry for external transports
+export { createCoreServer } from '#/core-server';
+export type { CoreServerOptions } from '#/core-server';
+
 // i18n for office-hours language adaptation
 export { t, isSupportedLanguage, normalizeLanguage } from '@odysseythink/agent-core';
 export type { SupportedLanguage, MessageKey } from '@odysseythink/agent-core';
