@@ -7,6 +7,8 @@
  *
  * `max_context_tokens: 0` means "unknown"; callers that do not gate on
  * context length can ignore the field.
+ * `max_output_tokens: 0` means "unknown"; callers that do not gate on
+ * output length can ignore the field.
  */
 export interface ModelCapability {
   readonly image_in: boolean;
@@ -15,7 +17,11 @@ export interface ModelCapability {
   readonly thinking: boolean;
   readonly tool_use: boolean;
   readonly max_context_tokens: number;
-  readonly max_output_tokens: number; // >0 = known output ceiling, 0 = unknown
+  /**
+   * Maximum number of tokens the model is expected to emit in a single
+   * completion. `0` means the ceiling is unknown.
+   */
+  readonly max_output_tokens: number;
 }
 
 const UNKNOWN_CAPABILITY_MARKER = Symbol.for('moonshot-ai.kosong.UNKNOWN_CAPABILITY');

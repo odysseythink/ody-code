@@ -45,6 +45,9 @@ const GEMINI_CATALOGUED_PREFIXES = [
   'gemini-2.5-flash',
 ] as const;
 
+// The output-token ceilings below are conservative defaults for the model
+// families covered by this registry. Version-specific models may support
+// higher limits; callers can override the ceiling via alias configuration.
 const OPENAI_REASONING_CAPABILITY: ModelCapability = Object.freeze({
   image_in: false,
   video_in: false,
