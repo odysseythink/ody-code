@@ -10,7 +10,9 @@ license = "MIT"
 crate-type = ["cdylib"]
 
 [dependencies]
-tiktoken-rs = "0.5.5"
+# tiktoken-rs removed — BPE rank data (~5MB) bloats Wasm beyond the 2MB threshold.
+# Tokenizer will keep the JS heuristic path; revisit if a runtime-loaded encoder is added.
+# tiktoken-rs = "0.5.5"
 similar = "2.6.0"
 globset = "0.4.14"
 

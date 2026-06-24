@@ -38,7 +38,7 @@ export const FLAG_DEFINITIONS = [
   {
     id: 'wasm-tokenizer',
     env: 'ODY_CODE_EXPERIMENTAL_WASM_TOKENIZER',
-    default: true,
+    default: false,
     surface: 'core',
   },
   {
