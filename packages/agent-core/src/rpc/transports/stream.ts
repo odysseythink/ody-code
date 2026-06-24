@@ -219,6 +219,7 @@ export function createStreamTransport(
     if (frame.kind === 'request') {
       try {
         const responseBytes = await dispatch(frame.bytes);
+        options?.onWire?.('recv', responseBytes);
         sendResponse(frame.reqId, responseBytes);
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
@@ -228,6 +229,7 @@ export function createStreamTransport(
       const deferred = pending.get(frame.reqId);
       if (deferred === undefined) return;
       pending.delete(frame.reqId);
+      options?.onWire?.('recv', frame.bytes ?? new Uint8Array());
       if (frame.error !== undefined) {
         deferred.reject(new OdyError(ErrorCodes.INTERNAL, frame.error.message));
       } else {

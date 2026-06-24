@@ -113,3 +113,66 @@ describe('stream transport', () => {
     await expect(pending).rejects.toMatchObject({ code: ErrorCodes.TRANSPORT_CLOSED });
   });
 });
+
+describe('stream transport advanced', () => {
+  it('correlates concurrent requests by reqId', async () => {
+    const [left, right] = createStreamTransportPair(
+      async () => encodeJson('unused'),
+      async (bytes) => {
+        const delay = decodeJson(bytes) as number;
+        await new Promise((resolve) => setTimeout(resolve, delay));
+        return encodeJson(`pong:${delay}`);
+      },
+    );
+
+    const [a, b] = await Promise.all([left.send(encodeJson(30)), left.send(encodeJson(10))]);
+    expect(decodeJson(a)).toBe('pong:30');
+    expect(decodeJson(b)).toBe('pong:10');
+    left.close?.();
+    right.close?.();
+  });
+
+  it('calls onWire for send and recv', async () => {
+    const wire: { direction: 'send' | 'recv'; json: unknown }[] = [];
+    const leftToRight = new PassThrough();
+    const rightToLeft = new PassThrough();
+
+    const left = createStreamTransport(
+      rightToLeft as unknown as ReadableLike,
+      leftToRight as unknown as WritableLike,
+      async () => encodeJson('unused'),
+      {
+        framing: 'length-prefixed',
+        onWire: (direction, bytes) => wire.push({ direction, json: decodeJson(bytes) }),
+      },
+    );
+    const right = createStreamTransport(
+      leftToRight as unknown as ReadableLike,
+      rightToLeft as unknown as WritableLike,
+      async (bytes) => encodeJson(`echo:${decodeJson(bytes)}`),
+      { framing: 'length-prefixed' },
+    );
+
+    await left.send(encodeJson('ping'));
+    expect(wire.length).toBeGreaterThanOrEqual(2);
+    expect(wire[0]).toEqual({ direction: 'send', json: 'ping' });
+
+    left.close?.();
+    right.close?.();
+  });
+
+  it('preserves ndjson frame boundaries with escaped newlines in payload', async () => {
+    const [left, right] = createStreamTransportPair(
+      async () => encodeJson('unused'),
+      async (bytes) => bytes,
+      { framing: 'ndjson' },
+    );
+
+    const payload = encodeJson({ text: 'line1\nline2' });
+    const response = await left.send(payload);
+    expect(decodeJson(response)).toEqual({ text: 'line1\nline2' });
+
+    left.close?.();
+    right.close?.();
+  });
+});
