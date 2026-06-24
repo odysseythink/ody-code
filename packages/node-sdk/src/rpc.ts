@@ -9,6 +9,9 @@ import {
   type AgentContextData,
   type ApprovalRequest,
   type ApprovalResponse,
+  type ChatStreamCancelPayload,
+  type ChatStreamInitPayload,
+  type ChatStreamInitResponse,
   type CodeReviewReportData,
   type CoreAPI,
   type DesignReviewData,
@@ -71,6 +74,17 @@ export interface SDKRpcClientOptions {
   readonly resolveOAuthTokenProvider?: OAuthTokenProviderResolver | undefined;
   readonly skillDirs?: readonly string[];
   readonly telemetry?: TelemetryClient | undefined;
+
+  /**
+   * Run the core in a dedicated Worker thread instead of the current process.
+   * Defaults to false unless environment variable ODY_CORE_TRANSPORT=worker is set.
+   */
+  readonly worker?: boolean | undefined;
+
+  /**
+   * Absolute path to the worker entry script. Defaults to the package's `./core-worker` export.
+   */
+  readonly workerScriptPath?: string | undefined;
 }
 
 export interface SessionPromptRpcInput {
@@ -759,6 +773,24 @@ export class ClientAPI implements SDKAPI {
 
   toolCall(request: ToolCallRequest): Promise<ToolCallResponse> {
     return this.client.toolCall(request);
+  }
+
+  async chatStreamInit(
+    payload: ChatStreamInitPayload & { sessionId: string; agentId: string },
+  ): Promise<ChatStreamInitResponse> {
+    void payload;
+    const streamId = randomUUID();
+    // In worker mode, this would create a KosongLLM and stream deltas back.
+    // For now, register the stream as pending and return the streamId.
+    // The actual LLM proxy will be wired when the full worker transport is active.
+    return { streamId };
+  }
+
+  chatStreamCancel(
+    payload: ChatStreamCancelPayload & { sessionId: string; agentId: string },
+  ): void {
+    void payload;
+    // No-op for now; will cancel the active stream in the full implementation.
   }
 }
 
