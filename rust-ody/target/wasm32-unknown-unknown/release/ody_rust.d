@@ -1,0 +1,1 @@
+/Users/ranwei/workspace/ody-code/rust-ody/target/wasm32-unknown-unknown/release/ody_rust.wasm: /Users/ranwei/workspace/ody-code/rust-ody/src/lib.rs
