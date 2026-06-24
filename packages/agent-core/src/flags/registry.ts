@@ -35,6 +35,24 @@ export const FLAG_DEFINITIONS = [
     default: false,
     surface: 'core',
   },
+  {
+    id: 'wasm-tokenizer',
+    env: 'ODY_CODE_EXPERIMENTAL_WASM_TOKENIZER',
+    default: true,
+    surface: 'core',
+  },
+  {
+    id: 'wasm-diff',
+    env: 'ODY_CODE_EXPERIMENTAL_WASM_DIFF',
+    default: true,
+    surface: 'core',
+  },
+  {
+    id: 'wasm-glob',
+    env: 'ODY_CODE_EXPERIMENTAL_WASM_GLOB',
+    default: true,
+    surface: 'core',
+  },
 ] as const satisfies readonly FlagDefinitionInput[];
 
 /** Literal union of registered flag ids. */
