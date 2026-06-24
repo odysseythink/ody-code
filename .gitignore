@@ -48,6 +48,7 @@ Desktop.ini
 .claude
 .conductor
 .ody-stash-dir
+.worktrees/
 plugins/cdn/
 superpowers
 ody-export-session_*.md
