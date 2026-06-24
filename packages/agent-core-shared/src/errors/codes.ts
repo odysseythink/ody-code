@@ -79,6 +79,9 @@ export const ErrorCodes = {
   WORKER_SPAWN_FAILED: 'worker.spawn_failed',
   WORKER_EXITED: 'worker.exited',
   TRANSPORT_CLOSED: 'transport.closed',
+  TRANSPORT_UNAUTHORIZED: 'transport.unauthorized',
+  TRANSPORT_INVALID_FRAMING: 'transport.invalid_framing',
+  TRANSPORT_ALREADY_CONNECTED: 'transport.already_connected',
 
   NOT_IMPLEMENTED: 'not_implemented',
   INTERNAL: 'internal',
@@ -457,6 +460,24 @@ export const ODY_ERROR_INFO = {
     retryable: false,
     public: true,
     action: 'The worker connection was closed; create a new session.',
+  },
+  'transport.unauthorized': {
+    title: 'Transport unauthorized',
+    retryable: false,
+    public: true,
+    action: 'Check the token passed in the handshake or use a UDS/socket transport.',
+  },
+  'transport.invalid_framing': {
+    title: 'Invalid transport framing',
+    retryable: false,
+    public: true,
+    action: 'Ensure the handshake declares length-prefixed or ndjson framing and frames are well-formed.',
+  },
+  'transport.already_connected': {
+    title: 'Transport already connected',
+    retryable: false,
+    public: true,
+    action: 'This server only accepts one client at a time; disconnect the existing client first.',
   },
 
   not_implemented: {
