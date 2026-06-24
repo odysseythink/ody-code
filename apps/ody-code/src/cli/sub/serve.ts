@@ -1,12 +1,15 @@
 import { mkdirSync, rmSync } from 'node:fs';
 import { randomBytes } from 'node:crypto';
+import http from 'node:http';
 import { join } from 'node:path';
 import { createServer, type AddressInfo, type Server, type Socket } from 'node:net';
 import { once } from 'node:events';
 import type { Command } from 'commander';
+import { WebSocketServer, type WebSocket } from 'ws';
 
 import {
   createStreamTransport,
+  createWebSocketTransport,
   type Dispatch,
 } from '@odysseythink/agent-core';
 import {
@@ -135,6 +138,11 @@ function generateToken(): string {
   return `ody_${randomBytes(32).toString('base64url')}`;
 }
 
+function looksLikeHttp(byte: number): boolean {
+  // HTTP method names start with an uppercase letter (G, E, P, D, H, O, T, C...)
+  return byte >= 0x41 && byte <= 0x5a;
+}
+
 function startTcpServer(
   deps: ServeDeps,
   host: string,
@@ -145,20 +153,76 @@ function startTcpServer(
   let connected = false;
   let currentCore: { close(): void } | undefined;
 
+  const httpServer = http.createServer((_req, res) => {
+    res.writeHead(426, { 'Content-Type': 'text/plain' });
+    res.end('Upgrade required');
+  });
+  const wss = new WebSocketServer({ server: httpServer });
+
+  wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
+    if (connected) {
+      ws.close();
+      return;
+    }
+
+    const url = new URL(req.url ?? '/', `http://${host}:${port}`);
+    if (url.searchParams.get('token') !== token) {
+      ws.close();
+      return;
+    }
+
+    connected = true;
+    const adapted = {
+      send: (data: string) => ws.send(data),
+      close: () => ws.close(),
+      onmessage: null as ((event: { data: string | Uint8Array }) => void) | null,
+      onerror: null as ((event: { type: string }) => void) | null,
+      onclose: null as ((event: { type: string }) => void) | null,
+    };
+    ws.on('message', (data: Buffer) => {
+      adapted.onmessage?.({ data: new Uint8Array(data) });
+    });
+    ws.on('error', () => adapted.onerror?.({ type: 'error' }));
+    ws.on('close', () => adapted.onclose?.({ type: 'close' }));
+    currentCore = deps.createCoreServer(
+      (dispatch: Dispatch) => createWebSocketTransport(adapted, dispatch),
+      coreOptions,
+    );
+    ws.once('close', () => {
+      currentCore?.close();
+      connected = false;
+    });
+  });
+
   const server = deps.createServer((socket: Socket) => {
     if (connected) {
       socket.destroy();
       return;
     }
-    connected = true;
-    currentCore = deps.createCoreServer(
-      (dispatch: Dispatch) =>
-        createStreamTransport(socket, socket, dispatch, { requiredToken: token }),
-      coreOptions,
-    );
-    socket.once('close', () => {
-      currentCore?.close();
-      connected = false;
+    socket.once('data', (chunk: Uint8Array) => {
+      socket.pause();
+      if (looksLikeHttp(chunk[0] ?? 0)) {
+        socket.unshift(chunk);
+        httpServer.emit('connection', socket);
+      } else {
+        socket.unshift(chunk);
+        if (connected) {
+          socket.destroy();
+          socket.resume();
+          return;
+        }
+        connected = true;
+        currentCore = deps.createCoreServer(
+          (dispatch: Dispatch) =>
+            createStreamTransport(socket, socket, dispatch, { requiredToken: token }),
+          coreOptions,
+        );
+        socket.once('close', () => {
+          currentCore?.close();
+          connected = false;
+        });
+      }
+      socket.resume();
     });
   });
 
@@ -175,6 +239,8 @@ function startTcpServer(
       resolve({
         close: async () => {
           server.close();
+          httpServer.close();
+          wss.close();
           currentCore?.close();
           await once(server, 'close');
         },

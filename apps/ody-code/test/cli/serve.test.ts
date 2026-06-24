@@ -149,8 +149,11 @@ describe('ody serve TCP mode', () => {
 
     // First connection should succeed and trigger createCoreServer
     // Keep it open so connected=true for the second connection test
+    // The server now waits for data before calling createCoreServer (to detect HTTP vs TCP),
+    // so we need to send some data to trigger it
     const client = createConnection(ready.port, ready.host);
     await once(client, 'connect');
+    client.write(Buffer.from([0x00])); // trigger the server's data handler
     await new Promise((resolve) => setTimeout(resolve, 50));
     expect(mocks.createCoreServer).toHaveBeenCalledOnce();
 
@@ -164,6 +167,44 @@ describe('ody serve TCP mode', () => {
     await expect(second).resolves.toBe(true);
 
     client.end();
+    await controller.close();
+  });
+});
+
+describe('ody serve WebSocket sharing', () => {
+  it('accepts WebSocket on the same TCP port and rejects a second client', async () => {
+    const deps = makeDeps();
+
+    const controller = await handleServe(deps, { host: '127.0.0.1', port: 0 });
+
+    const ready = lastReady(deps) as {
+      host: string;
+      port: number;
+      token: string;
+    };
+
+    // Use raw TCP to verify the ws module handles the HTTP upgrade
+    const url = `ws://${ready.host}:${ready.port}?token=${encodeURIComponent(ready.token)}`;
+
+    // First WebSocket connection should succeed
+    const { default: WebSocket } = await import('ws');
+    const ws = new WebSocket(url);
+    await new Promise<void>((resolve, reject) => {
+      ws.on('open', resolve);
+      ws.on('error', reject);
+    });
+    expect(mocks.createCoreServer).toHaveBeenCalledOnce();
+
+    // Second WebSocket connection should be rejected (single-client policy)
+    const second = new Promise<boolean>((resolve) => {
+      const ws2 = new WebSocket(url);
+      ws2.on('close', () => resolve(true));
+      ws2.on('error', () => resolve(true));
+      setTimeout(() => resolve(false), 2000);
+    });
+    await expect(second).resolves.toBe(true);
+
+    ws.close();
     await controller.close();
   });
 });
