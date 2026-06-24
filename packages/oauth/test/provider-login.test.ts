@@ -137,6 +137,21 @@ describe('fetchProviderModels (kimi overrides)', () => {
     expect(models[0]!.supportsReasoning).toBe(true);
     expect(models[1]!.supportsReasoning).toBe(true);
   });
+
+  it('overrides kimi-for-coding to 32K max output', async () => {
+    const fetchMock = vi.fn(async () =>
+      new Response(
+        JSON.stringify({
+          data: [{ id: 'kimi-for-coding', context_length: 262144 }],
+        }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } },
+      ),
+    );
+    const def = getProviderLoginDefinition('kimi')!;
+    const models = await fetchProviderModels(def, 'sk-test', fetchMock as unknown as typeof fetch);
+    expect(models).toHaveLength(1);
+    expect(models[0]!.maxOutputSize).toBe(32_768);
+  });
 });
 
 describe('fetchProviderModels (glm overrides)', () => {

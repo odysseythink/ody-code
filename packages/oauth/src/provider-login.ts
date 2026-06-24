@@ -184,6 +184,11 @@ function applyGLMModelOverrides(model: ProviderModelInfo): ProviderModelInfo {
 
 function applyKimiModelOverrides(model: ProviderModelInfo): ProviderModelInfo {
   const id = model.id.toLowerCase();
+  // kimi-for-coding is documented at 32K output tokens; the provider's model
+  // list does not always report this, so apply a known-good override.
+  if (id === 'kimi-for-coding') {
+    return { ...model, maxOutputSize: 32_768 };
+  }
   // Kimi k2 series supports thinking (e.g. kimi-k2.5, kimi-k2-turbo-preview)
   if (id.startsWith('kimi-k2')) {
     return { ...model, supportsReasoning: true };
