@@ -76,6 +76,13 @@ export type { CoreWorkerBootPayload } from '#/core-worker';
 export { createCoreServer } from '#/core-server';
 export type { CoreServerOptions } from '#/core-server';
 
+// SDK RPC client — in-process and external transport client
+export { SDKRpcClient } from '#/rpc';
+export type {
+  SDKRpcClientConnectOptions,
+  SDKRpcClientOptions,
+} from '#/rpc';
+
 // i18n for office-hours language adaptation
 export { t, isSupportedLanguage, normalizeLanguage } from '@odysseythink/agent-core';
 export type { SupportedLanguage, MessageKey } from '@odysseythink/agent-core';

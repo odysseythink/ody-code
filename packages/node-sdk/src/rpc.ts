@@ -1,12 +1,16 @@
 import { randomUUID } from 'node:crypto';
 import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import { connect as connectNet, type Socket } from 'node:net';
+import { once } from 'node:events';
 import { MessageChannel, Worker, type MessagePort } from 'node:worker_threads';
 
 import {
   createMessagePortTransport,
   createRPCEndpoint,
   createRPC,
+  createStreamTransport,
+  createWebSocketTransport,
   ErrorCodes,
   KimiCore,
   KosongLLM,
@@ -26,6 +30,7 @@ import {
   type CodeReviewReportData,
   type CoreAPI,
   type DesignReviewData,
+  type Dispatch,
   type Event,
   type ExperimentalFlagMap,
   type OAuthTokenProviderResolver,
@@ -39,6 +44,7 @@ import {
   type TelemetryClient,
   type ToolCallRequest,
   type ToolCallResponse,
+  type Transport,
 } from '@odysseythink/agent-core';
 import { createProvider } from '@odysseythink/kosong';
 import { createKimiDefaultHeaders } from '@odysseythink/kimi-code-oauth';
@@ -100,6 +106,27 @@ export interface SDKRpcClientOptions {
   readonly workerScriptPath?: string | undefined;
 }
 
+export interface SDKRpcClientConnectOptions {
+  readonly transport:
+    | 'stdio'
+    | { readonly socketPath: string }
+    | { readonly host: string; readonly port: number; readonly webSocket?: boolean };
+  readonly token?: string;
+  readonly homeDir?: string;
+  readonly configPath?: string;
+  readonly skillDirs?: readonly string[];
+  readonly telemetry?: TelemetryClient;
+}
+
+interface ReadyMessage {
+  readonly type: 'ready';
+  readonly token?: string;
+  readonly socketPath?: string;
+  readonly host?: string;
+  readonly port?: number;
+  readonly stdio: boolean;
+}
+
 export interface SessionPromptRpcInput {
   readonly sessionId: string;
   readonly input: PromptInput;
@@ -149,6 +176,75 @@ export interface ReviewDesignRpcInput extends SessionIdRpcInput {
 
 type ResolvedCoreAPI = Awaited<ReturnType<SDKRPCClient>>;
 
+async function createExternalTransport(
+  options: SDKRpcClientConnectOptions,
+  dispatch: Dispatch,
+): Promise<Transport> {
+  if (options.transport === 'stdio') {
+    const { spawn } = await import('node:child_process');
+    const proc = spawn('ody', ['serve', '--stdio'], {
+      stdio: ['pipe', 'pipe', 'pipe'],
+    });
+
+    await new Promise<ReadyMessage>((resolve, reject) => {
+      const onData = (chunk: Buffer): void => {
+        const lines = chunk.toString('utf8').split('\n');
+        for (const line of lines) {
+          if (!line.trim()) continue;
+          try {
+            const msg = JSON.parse(line) as ReadyMessage;
+            if (msg.type === 'ready' && msg.stdio) {
+              proc.stderr.off('data', onData);
+              resolve(msg);
+              return;
+            }
+          } catch {
+            // ignore non-JSON stderr lines
+          }
+        }
+      };
+      proc.stderr.on('data', onData);
+      proc.once('error', reject);
+      proc.once('exit', (code) => reject(new Error(`ody serve exited with ${String(code)}`)));
+    });
+
+    return createStreamTransport(proc.stdout, proc.stdin, dispatch, { framing: 'length-prefixed' });
+  }
+
+  if ('socketPath' in options.transport) {
+    const socket: Socket = connectNet(options.transport.socketPath);
+    await once(socket, 'connect');
+    return createStreamTransport(socket, socket, dispatch, { framing: 'length-prefixed' });
+  }
+
+  const { host, port, webSocket } = options.transport;
+
+  if (webSocket) {
+    const ws = new WebSocket(`ws://${host}:${port}`);
+    await new Promise<void>((resolve, reject) => {
+      ws.onopen = () => resolve();
+      ws.onerror = () => reject(new Error('WebSocket connection failed'));
+    });
+    const adapted = {
+      send: (data: string) => ws.send(data),
+      close: () => ws.close(),
+      onmessage: null as ((event: { data: string | Uint8Array }) => void) | null,
+      onerror: null as ((event: { type: string }) => void) | null,
+      onclose: null as ((event: { type: string }) => void) | null,
+    };
+    ws.onmessage = (event: MessageEvent) => {
+      adapted.onmessage?.({ data: typeof event.data === 'string' ? event.data : new Uint8Array(event.data) });
+    };
+    ws.onerror = () => adapted.onerror?.({ type: 'error' });
+    ws.onclose = () => adapted.onclose?.({ type: 'close' });
+    return createWebSocketTransport(adapted, dispatch);
+  }
+
+  const socket: Socket = connectNet(port, host);
+  await once(socket, 'connect');
+  return createStreamTransport(socket, socket, dispatch, { token: options.token, framing: 'length-prefixed' });
+}
+
 export class SDKRpcClient {
   readonly core: KimiCore;
   interactiveAgentId = MAIN_AGENT_ID;
@@ -160,7 +256,19 @@ export class SDKRpcClient {
   private readonly openExternalHandlers = new Map<string, OpenExternalHandler>();
   private readonly codeReviewProgressHandlers = new Map<string, (progress: { requestId: string; stage: string; modelAlias: string; detail?: string; meta?: { estimatedTokens?: number; filePath?: string; fileCount?: number } }) => void>();
 
-  constructor(options: SDKRpcClientOptions = {}) {
+  constructor(options: SDKRpcClientOptions = {}, _external?: boolean) {
+    if (_external) {
+      const homeDir = resolveOdyHome(options.homeDir);
+      const configPath = options.configPath;
+      this.core = { homeDir, configPath } as KimiCore;
+      this.ready = Promise.resolve();
+      this.eventListeners = new Set();
+      this.approvalHandlers = new Map();
+      this.questionHandlers = new Map();
+      this.openExternalHandlers = new Map();
+      this.codeReviewProgressHandlers = new Map();
+      return;
+    }
     const useWorker = options.worker ?? process.env['ODY_CORE_TRANSPORT'] === 'worker';
     const homeDir = resolveOdyHome(options.homeDir);
     const configPath = options.configPath;
@@ -277,6 +385,27 @@ export class SDKRpcClient {
       worker.on('exit', onExit);
       port.on('message', onMessage);
     });
+  }
+
+  static async connect(options: SDKRpcClientConnectOptions): Promise<SDKRpcClient> {
+    const instance = new SDKRpcClient(
+      {
+        homeDir: options.homeDir,
+        configPath: options.configPath,
+        skillDirs: options.skillDirs,
+        telemetry: options.telemetry,
+      },
+      true,
+    );
+
+    const endpoint = createRPCEndpoint<SDKAPI, CoreAPI>();
+    const transport = await createExternalTransport(options, endpoint.dispatch);
+    endpoint.setTransport(transport);
+
+    const clientApi = new ClientAPI(instance, () => instance.getRpc());
+    const rpc = await endpoint.client(clientApi);
+    Object.assign(instance, { rpc, ready: Promise.resolve() });
+    return instance;
   }
 
   get homeDir(): string {
