@@ -242,7 +242,10 @@ async function createExternalTransport(
 
   const socket: Socket = connectNet(port, host);
   await once(socket, 'connect');
-  return createStreamTransport(socket, socket, dispatch, { token: options.token, framing: 'length-prefixed' });
+  return createStreamTransport(socket, socket, dispatch, {
+    framing: options.token === undefined ? 'length-prefixed' : undefined,
+    token: options.token,
+  });
 }
 
 export class SDKRpcClient {

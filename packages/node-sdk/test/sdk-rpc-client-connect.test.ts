@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp } from 'node:fs/promises';
+import { mkdir, mkdtemp, unlink } from 'node:fs/promises';
 import { createServer, createConnection, type AddressInfo } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -36,5 +36,29 @@ describe('SDKRpcClient.connect', () => {
     expect(session.id).toBe('sdk-connect-session');
 
     server.close();
+  });
+});
+
+describe('SDKRpcClient.connect transport variants', () => {
+  it('connects over UDS and creates a session', async () => {
+    const tmpDir = await mkdtemp(join(tmpdir(), 'ody-sdk-connect-'));
+    await mkdir(join(tmpDir, 'sessions'), { recursive: true });
+    const socketPath = join(tmpDir, 'test.sock');
+
+    const server = createServer((socket) => {
+      createCoreServer(
+        (dispatch) => createStreamTransport(socket, socket, dispatch, { framing: 'length-prefixed' }),
+        { homeDir: tmpDir },
+      );
+    });
+
+    await new Promise<void>((resolve) => server.listen(socketPath, resolve));
+
+    const client = await SDKRpcClient.connect({ transport: { socketPath }, homeDir: tmpDir });
+    const session = await client.createSession({ workDir: tmpDir, id: 'uds-session' });
+    expect(session.id).toBe('uds-session');
+
+    server.close();
+    await unlink(socketPath).catch(() => {});
   });
 });
