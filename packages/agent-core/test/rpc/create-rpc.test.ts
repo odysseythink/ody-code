@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { ErrorCodes, OdyError } from '../../src/errors';
 import { createRPC } from '../../src/rpc';
+import { createInProcessTransportPair } from '../../src/rpc/transport';
 
 interface CoreSide {
   getConfig(payload: { sessionId: string }): { model: string };
@@ -199,5 +200,60 @@ describe('createRPC', () => {
       message: 'not an error object',
     });
     await expect(remoteProxy.misbehave({})).rejects.toBeInstanceOf(OdyError);
+  });
+
+  it('works with an explicit InProcessTransport factory', async () => {
+    const [connectCore, connectHost] = createRPC<CoreSide, HostSide>({
+      transport: createInProcessTransportPair,
+    });
+    const hostImpl = {
+      emitEvent: vi.fn(),
+      requestApproval: vi.fn(async (request: { requestId: string; toolName: string }) => ({
+        decision: `approved:${request.toolName}`,
+      })),
+      fail: vi.fn(async () => {}),
+    };
+
+    const hostProxyPromise = connectCore({
+      getConfig: ({ sessionId }) => ({ model: `model-for:${sessionId}` }),
+    });
+    const coreProxy = await connectHost(hostImpl);
+    const hostProxy = await hostProxyPromise;
+
+    await hostProxy.emitEvent({ type: 'agent.status.updated', payload: { value: 1 } });
+    await expect(
+      hostProxy.requestApproval({ requestId: 'approval-explicit', toolName: 'Bash' }),
+    ).resolves.toEqual({ decision: 'approved:Bash' });
+    await expect(coreProxy.getConfig({ sessionId: 'session-explicit' })).resolves.toEqual({
+      model: 'model-for:session-explicit',
+    });
+    expect(hostImpl.emitEvent).toHaveBeenCalledWith({
+      type: 'agent.status.updated',
+      payload: { value: 1 },
+    });
+  });
+
+  it('respects AbortSignal on the caller side', async () => {
+    const [connectCore, connectHost] = createRPC<CoreSide, HostSide>();
+    const hostImpl = {
+      emitEvent: vi.fn(),
+      requestApproval: vi.fn(async (_request: { requestId: string; toolName: string }) => {
+        await new Promise((resolve) => setTimeout(resolve, 50));
+        return { decision: 'approved' };
+      }),
+      fail: vi.fn(async () => {}),
+    };
+
+    const hostProxyPromise = connectCore({
+      getConfig: ({ sessionId }) => ({ model: `model-for:${sessionId}` }),
+    });
+    await connectHost(hostImpl);
+    const hostProxy = await hostProxyPromise;
+
+    const controller = new AbortController();
+    const callPromise = hostProxy.requestApproval({ requestId: 'abort-1', toolName: 'Bash' }, { signal: controller.signal });
+    controller.abort();
+
+    await expect(callPromise).rejects.toThrow('Aborted');
   });
 });

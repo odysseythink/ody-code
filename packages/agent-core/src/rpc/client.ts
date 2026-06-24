@@ -2,13 +2,26 @@ import type { PromisableMethods, Promisify } from '#/utils/types';
 import { createControlledPromise, objectMap } from '@antfu/utils';
 
 import {
+  ErrorCodes,
   fromOdyErrorPayload,
+  OdyError,
   type OdyErrorPayload,
   toOdyErrorPayload,
 } from '../errors';
 import { abortable } from '../utils/abort';
 import type { CoreAPI } from './core-api';
 import type { SDKAPI } from './sdk-api';
+import {
+  createInProcessTransportPair,
+  decodeJson,
+  encodeJson,
+  type CreateRPCOptions,
+  type Dispatch,
+  type Transport,
+  type TransportPair,
+} from './transport';
+
+export type { CreateRPCOptions, Transport, TransportPair } from './transport';
 
 export interface RPCCallOptions {
   signal?: AbortSignal;
@@ -28,42 +41,107 @@ export type RPCClient<Self extends Record<string, any>, Other extends Record<str
   self: PromisableMethods<Self>,
 ) => Promise<RPCMethods<Other>>;
 
-export function createRPC<Left extends Record<string, any>, Right extends Record<string, any>>(): [
-  RPCClient<Left, Right>,
-  RPCClient<Right, Left>,
-] {
-  const left = createControlledPromise<PromisableMethods<Left>>();
-  const right = createControlledPromise<PromisableMethods<Right>>();
+export function createRPC<Left extends Record<string, any>, Right extends Record<string, any>>(
+  options?: CreateRPCOptions,
+): [RPCClient<Left, Right>, RPCClient<Right, Left>] {
+  const leftReady = createControlledPromise<PromisableMethods<Left>>();
+  const rightReady = createControlledPromise<PromisableMethods<Right>>();
 
-  function simulateNetwork<T>(data: T): Promise<T> {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const serialized = JSON.stringify(data);
-        resolve(serialized === undefined ? (undefined as T) : JSON.parse(serialized));
-      }, 0);
-    });
+  interface PendingDeferred<T> {
+    promise: Promise<T>;
+    resolve(value: T): void;
+    reject(reason: unknown): void;
   }
+
+  function createDeferred<T>(): PendingDeferred<T> {
+    let resolve!: (value: T) => void;
+    let reject!: (reason: unknown) => void;
+    const promise = new Promise<T>((res, rej) => {
+      resolve = res;
+      reject = rej;
+    });
+    return { promise, resolve, reject };
+  }
+
+  const pending = new Set<PendingDeferred<Uint8Array>>();
+
+  function attachTransportErrorHandling(transport: Transport): void {
+    const originalOnError = transport.onError;
+    transport.onError = (error: Error) => {
+      const errorToThrow =
+        error instanceof OdyError ? error : new OdyError(ErrorCodes.INTERNAL, error.message);
+      for (const deferred of pending) {
+        deferred.reject(errorToThrow);
+      }
+      pending.clear();
+      originalOnError?.(error);
+    };
+  }
+
+  async function dispatchLeft(bytes: Uint8Array): Promise<Uint8Array> {
+    const payload = decodeJson(bytes) as { method: string; args: unknown[] };
+    const boundSelf = await leftReady;
+    return handleRpcCall(boundSelf, payload);
+  }
+
+  async function dispatchRight(bytes: Uint8Array): Promise<Uint8Array> {
+    const payload = decodeJson(bytes) as { method: string; args: unknown[] };
+    const boundSelf = await rightReady;
+    return handleRpcCall(boundSelf, payload);
+  }
+
+  const transportPair: TransportPair =
+    typeof options?.transport === 'function'
+      ? options.transport(dispatchLeft, dispatchRight)
+      : options?.transport ?? createInProcessTransportPair(dispatchLeft, dispatchRight);
+
+  const [leftTransport, rightTransport] = transportPair;
+
+  attachTransportErrorHandling(leftTransport);
+  attachTransportErrorHandling(rightTransport);
 
   function abortableRpc<T>(promise: Promise<T>, signal?: AbortSignal): Promise<T> {
     return signal === undefined ? promise : abortable(promise, signal);
   }
 
-  function mapRpcFunction(fn: Function): Function {
+  async function handleRpcCall(
+    boundSelf: PromisableMethods<Left | Right>,
+    payload: { method: string; args: unknown[] },
+  ): Promise<Uint8Array> {
+    const fn = (boundSelf as Record<string, unknown>)[payload.method] as Function | undefined;
+    if (typeof fn !== 'function') {
+      return encodeJson({
+        ok: false,
+        error: toOdyErrorPayload(new Error(`RPC method not found: ${payload.method}`)),
+      });
+    }
+    try {
+      const value = await abortableRpc(Promise.resolve(fn(...payload.args)));
+      return encodeJson({ ok: true, value });
+    } catch (error) {
+      return encodeJson({ ok: false, error: toOdyErrorPayload(error) });
+    }
+  }
+
+  function mapRpcFunction(methodName: string, fn: Function, transport: Transport): Function {
     return async (payload: any, options?: RPCCallOptions) => {
       const signal = options?.signal;
-      const rpcPayload = await simulateNetwork(payload);
       signal?.throwIfAborted();
-      let response: RpcResponse;
-      try {
-        const value = await abortableRpc(Promise.resolve(fn(rpcPayload)), signal);
-        response = { ok: true, value };
-      } catch (error) {
-        signal?.throwIfAborted();
-        response = { ok: false, error: toOdyErrorPayload(error) };
-      }
-      const remoteResponse = await simulateNetwork(response);
-      if (remoteResponse.ok) return remoteResponse.value;
-      throw fromOdyErrorPayload(remoteResponse.error);
+      const requestBytes = encodeJson({ method: methodName, args: [payload] });
+      transport.onWire?.('send', requestBytes);
+
+      const deferred = createDeferred<Uint8Array>();
+      pending.add(deferred);
+      transport.send(requestBytes).then(deferred.resolve, deferred.reject).finally(() => {
+        pending.delete(deferred);
+      });
+
+      const responseBytes = await abortableRpc(deferred.promise, signal);
+      transport.onWire?.('recv', responseBytes);
+      const response = decodeJson(responseBytes) as RpcResponse;
+      signal?.throwIfAborted();
+      if (response.ok) return response.value;
+      throw fromOdyErrorPayload(response.error);
     };
   }
 
@@ -90,13 +168,13 @@ export function createRPC<Left extends Record<string, any>, Right extends Record
   }
 
   async function leftClient(self: PromisableMethods<Left>): Promise<RPCMethods<Right>> {
-    left.resolve(bindAllFunctions(self));
-    return objectMap(await right, (key, fn) => [key, mapRpcFunction(fn)]) as RPCMethods<Right>;
+    leftReady.resolve(bindAllFunctions(self));
+    return objectMap(await rightReady, (key, fn) => [key, mapRpcFunction(key, fn, leftTransport)]) as RPCMethods<Right>;
   }
 
   async function rightClient(self: PromisableMethods<Right>): Promise<RPCMethods<Left>> {
-    right.resolve(bindAllFunctions(self));
-    return objectMap(await left, (key, fn) => [key, mapRpcFunction(fn)]) as RPCMethods<Left>;
+    rightReady.resolve(bindAllFunctions(self));
+    return objectMap(await leftReady, (key, fn) => [key, mapRpcFunction(key, fn, rightTransport)]) as RPCMethods<Left>;
   }
 
   return [leftClient, rightClient];
