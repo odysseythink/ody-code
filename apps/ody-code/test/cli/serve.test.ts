@@ -1,7 +1,7 @@
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createConnection, createServer } from 'node:net';
+import { createConnection, createServer, type AddressInfo } from 'node:net';
 import { PassThrough } from 'node:stream';
 import { once } from 'node:events';
 
@@ -96,10 +96,10 @@ describe('ody serve', () => {
     expect(ready.stdio).toBe(false);
 
     // First connection should succeed and trigger createCoreServer
+    // Keep it open so connected=true for the second connection test
     const client = createConnection(socketPath);
     await once(client, 'connect');
     expect(mocks.createCoreServer).toHaveBeenCalledOnce();
-    client.end();
 
     // Second connection should be immediately destroyed (single-client policy)
     const second = new Promise<boolean>((resolve) => {
@@ -110,6 +110,7 @@ describe('ody serve', () => {
     });
     await expect(second).resolves.toBe(true);
 
+    client.end();
     await controller.close();
   });
 
@@ -123,6 +124,46 @@ describe('ody serve', () => {
     expect(ready.stdio).toBe(true);
     expect(mocks.createCoreServer).toHaveBeenCalledOnce();
 
+    await controller.close();
+  });
+});
+
+describe('ody serve TCP mode', () => {
+  it('starts a TCP server with a bearer token and rejects a second client', async () => {
+    const deps = makeDeps();
+
+    const controller = await handleServe(deps, { host: '127.0.0.1', port: 0 });
+
+    const ready = lastReady(deps) as {
+      type: string;
+      host: string;
+      port: number;
+      token: string;
+      stdio: boolean;
+    };
+    expect(ready.type).toBe('ready');
+    expect(ready.host).toBe('127.0.0.1');
+    expect(typeof ready.port).toBe('number');
+    expect(ready.token).toMatch(/^ody_[A-Za-z0-9_-]+$/);
+    expect(ready.stdio).toBe(false);
+
+    // First connection should succeed and trigger createCoreServer
+    // Keep it open so connected=true for the second connection test
+    const client = createConnection(ready.port, ready.host);
+    await once(client, 'connect');
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(mocks.createCoreServer).toHaveBeenCalledOnce();
+
+    // Second connection should be immediately destroyed (single-client policy)
+    const second = new Promise<boolean>((resolve) => {
+      const sock = createConnection(ready.port, ready.host);
+      sock.on('close', () => resolve(true));
+      sock.on('error', () => resolve(true));
+      setTimeout(() => resolve(false), 2000);
+    });
+    await expect(second).resolves.toBe(true);
+
+    client.end();
     await controller.close();
   });
 });

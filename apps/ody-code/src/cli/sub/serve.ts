@@ -1,6 +1,7 @@
 import { mkdirSync, rmSync } from 'node:fs';
+import { randomBytes } from 'node:crypto';
 import { join } from 'node:path';
-import { createServer, type Server, type Socket } from 'node:net';
+import { createServer, type AddressInfo, type Server, type Socket } from 'node:net';
 import { once } from 'node:events';
 import type { Command } from 'commander';
 
@@ -130,6 +131,59 @@ function startUnixServer(
   });
 }
 
+function generateToken(): string {
+  return `ody_${randomBytes(32).toString('base64url')}`;
+}
+
+function startTcpServer(
+  deps: ServeDeps,
+  host: string,
+  port: number,
+  coreOptions: CoreServerOptions,
+): Promise<{ close(): Promise<void> }> {
+  const token = generateToken();
+  let connected = false;
+  let currentCore: { close(): void } | undefined;
+
+  const server = deps.createServer((socket: Socket) => {
+    if (connected) {
+      socket.destroy();
+      return;
+    }
+    connected = true;
+    currentCore = deps.createCoreServer(
+      (dispatch: Dispatch) =>
+        createStreamTransport(socket, socket, dispatch, { requiredToken: token }),
+      coreOptions,
+    );
+    socket.once('close', () => {
+      currentCore?.close();
+      connected = false;
+    });
+  });
+
+  return new Promise((resolve, reject) => {
+    server.listen(port, host, () => {
+      const address = server.address() as AddressInfo;
+      emitReady(deps.stderr, {
+        type: 'ready',
+        stdio: false,
+        host: address.address,
+        port: address.port,
+        token,
+      });
+      resolve({
+        close: async () => {
+          server.close();
+          currentCore?.close();
+          await once(server, 'close');
+        },
+      });
+    });
+    server.once('error', reject);
+  });
+}
+
 export async function handleServe(
   deps: ServeDeps,
   options: ServeCommandOptions,
@@ -138,6 +192,12 @@ export async function handleServe(
 
   if (options.stdio) {
     return startStdioServer(deps, coreOptions);
+  }
+
+  if (options.host !== undefined || options.port !== undefined) {
+    const host = options.host ?? '127.0.0.1';
+    const port = options.port ?? 0;
+    return startTcpServer(deps, host, port, coreOptions);
   }
 
   if (options.socket !== undefined) {
