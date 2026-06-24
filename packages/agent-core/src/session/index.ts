@@ -5,8 +5,9 @@ import type { Kaos } from '@odysseythink/kaos';
 import { ErrorCodes, OdyError } from '#/errors';
 import { getRootLogger, log } from '#/logging/logger';
 import type { Logger, SessionLogHandle } from '#/logging/types';
-import type { OdyConfig, SDKSessionRPC } from '#/rpc';
+import type { OdyConfig, SDKAgentRPC, SDKSessionRPC } from '#/rpc';
 import { proxyWithExtraPayload } from '#/rpc/types';
+import type { LLM, LLMFactoryConfig } from '../loop/llm';
 
 import { Agent, type AgentOptions, type AgentType } from '../agent';
 import { SessionGoalStore, type SessionGoalState } from './goal';
@@ -69,6 +70,7 @@ export interface SessionOptions {
   readonly telemetry?: TelemetryClient | undefined;
   readonly pluginSessionStarts?: readonly EnabledPluginSessionStart[];
   readonly appVersion?: string;
+  readonly llmFactory?: ((rpc: Partial<SDKAgentRPC>, config: LLMFactoryConfig) => LLM) | undefined;
 }
 
 export interface SessionSkillConfig {
@@ -528,6 +530,7 @@ export class Session {
           this.log.warn('failed to persist user language metadata', error);
         });
       },
+      llmFactory: this.options.llmFactory,
     });
   }
 

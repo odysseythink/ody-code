@@ -64,6 +64,8 @@ custom_headers = { "X-Test" = "1" }
       requestApproval: vi.fn(async (): Promise<ApprovalResponse> => ({ decision: 'rejected' })),
       requestQuestion: vi.fn(async () => null),
       openExternal: vi.fn(async () => ({ opened: false })),
+      chatStreamInit: vi.fn(async () => ({ streamId: '' })),
+      chatStreamCancel: vi.fn(),
       toolCall: vi.fn(async () => ({ output: '' })),
     });
 
@@ -116,6 +118,8 @@ max_context_size = 100000
       requestApproval: vi.fn(async (): Promise<ApprovalResponse> => ({ decision: 'rejected' })),
       requestQuestion: vi.fn(async () => null),
       openExternal: vi.fn(async () => ({ opened: false })),
+      chatStreamInit: vi.fn(async () => ({ streamId: '' })),
+      chatStreamCancel: vi.fn(),
       toolCall: vi.fn(async () => ({ output: '' })),
     });
 
@@ -147,6 +151,8 @@ provider = "duckduckgo"
       requestApproval: vi.fn(async (): Promise<ApprovalResponse> => ({ decision: 'rejected' })),
       requestQuestion: vi.fn(async () => null),
       openExternal: vi.fn(async () => ({ opened: false })),
+      chatStreamInit: vi.fn(async () => ({ streamId: '' })),
+      chatStreamCancel: vi.fn(),
       toolCall: vi.fn(async () => ({ output: '' })),
     });
 
@@ -184,6 +190,8 @@ api_key = "sk-legacy"
       requestApproval: vi.fn(async (): Promise<ApprovalResponse> => ({ decision: 'rejected' })),
       requestQuestion: vi.fn(async () => null),
       openExternal: vi.fn(async () => ({ opened: false })),
+      chatStreamInit: vi.fn(async () => ({ streamId: '' })),
+      chatStreamCancel: vi.fn(),
       toolCall: vi.fn(async () => ({ output: '' })),
     });
 

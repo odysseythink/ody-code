@@ -36,11 +36,11 @@ describe('RemoteKosongLLM', () => {
     remoteLLMStreamRegistry.dispatchDelta({ streamId: 's1', delta: { type: 'think', think: '<think>' } });
     remoteLLMStreamRegistry.dispatchEnd({
       streamId: 's1',
-      result: { toolCalls: [], usage: { totalTokens: 2 } as any },
+      result: { toolCalls: [], usage: { inputOther: 0, output: 2, inputCacheRead: 0, inputCacheCreation: 0 } } as any,
     });
 
     const response = await chatPromise;
-    expect(response.usage.totalTokens).toBe(2);
+    expect(response.usage.output).toBe(2);
     expect(onTextDelta).toHaveBeenCalledWith('hello');
     expect(onThinkDelta).toHaveBeenCalledWith('<think>');
     expect(sdk.chatStreamCancel).not.toHaveBeenCalled();

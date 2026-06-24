@@ -46,6 +46,7 @@ import {
 import { SessionAPIImpl } from '../session/rpc';
 import { normalizeWorkDir, SessionStore } from '../session/store';
 import { noopTelemetryClient, withTelemetryContext, type TelemetryClient } from '../telemetry';
+import type { LLM, LLMFactoryConfig } from '../loop/llm';
 import type { CoreRPCClient } from './client';
 import type {
   ActivateSkillPayload,
@@ -102,8 +103,13 @@ import type {
   UnregisterToolPayload,
   UpdateSessionMetadataPayload,
 } from './core-api';
+import type {
+  ChatStreamDeltaPayload,
+  ChatStreamEndPayload,
+  ChatStreamErrorPayload,
+} from './llm-stream';
 import type { ResumedAgentState, ResumeSessionResult } from './resumed';
-import type { SDKRPC } from './sdk-api';
+import type { SDKAgentRPC, SDKRPC } from './sdk-api';
 import { proxyWithExtraPayload } from './types';
 import type { CodeReviewProgressEvent } from './events';
 import { KaosShellNotFoundError, LocalKaos, type Kaos } from '@odysseythink/kaos';
@@ -129,6 +135,7 @@ export interface KimiCoreOptions {
   readonly skillDirs?: readonly string[];
   readonly telemetry?: TelemetryClient | undefined;
   readonly appVersion?: string;
+  readonly llmFactory?: ((rpc: Partial<SDKAgentRPC>, config: LLMFactoryConfig) => LLM) | undefined;
 }
 
 const CODE_REVIEW_PROGRESS_SESSION_ID = '__code_review_progress__';
@@ -148,6 +155,7 @@ export class KimiCore implements PromisableMethods<CoreAPI> {
   private readonly kimiRequestHeaders: Record<string, string> | undefined;
   private readonly resolveOAuthTokenProvider: OAuthTokenProviderResolver | undefined;
   private readonly skillDirs: readonly string[];
+  private readonly llmFactory: ((rpc: Partial<SDKAgentRPC>, config: LLMFactoryConfig) => LLM) | undefined;
   private readonly sessionStore: SessionStore;
   readonly plugins: PluginManager;
   private pluginsReady: Promise<void>;
@@ -175,6 +183,7 @@ export class KimiCore implements PromisableMethods<CoreAPI> {
     this.kimiRequestHeaders = options.kimiRequestHeaders;
     this.resolveOAuthTokenProvider = options.resolveOAuthTokenProvider;
     this.skillDirs = options.skillDirs ?? [];
+    this.llmFactory = options.llmFactory;
     this.telemetry = options.telemetry ?? noopTelemetryClient;
     this.appVersion = options.appVersion;
     ensureOdyHome(this.homeDir);
@@ -250,6 +259,7 @@ export class KimiCore implements PromisableMethods<CoreAPI> {
       telemetry: withTelemetryContext(this.telemetry, { sessionId: summary.id }),
       pluginSessionStarts,
       appVersion: this.appVersion,
+      llmFactory: this.llmFactory,
     });
     try {
       session.metadata = {
@@ -339,6 +349,7 @@ export class KimiCore implements PromisableMethods<CoreAPI> {
       initializeMainAgent: false,
       pluginSessionStarts,
       appVersion: this.appVersion,
+      llmFactory: this.llmFactory,
     });
     let warning: string | undefined;
     try {
@@ -612,6 +623,18 @@ export class KimiCore implements PromisableMethods<CoreAPI> {
       })),
       note: report.note,
     };
+  }
+
+  chatStreamDelta(_payload: ChatStreamDeltaPayload): void {
+    // no-op in the non-worker host
+  }
+
+  chatStreamEnd(_payload: ChatStreamEndPayload): void {
+    // no-op in the non-worker host
+  }
+
+  chatStreamError(_payload: ChatStreamErrorPayload): void {
+    // no-op in the non-worker host
   }
 
   prompt({ sessionId, ...payload }: SessionAgentPayload<PromptPayload>) {

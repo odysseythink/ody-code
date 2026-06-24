@@ -36,6 +36,8 @@ describe('Built-in chrome-devtools MCP integration', () => {
       ),
       requestQuestion: vi.fn(async () => null),
       openExternal: vi.fn(async () => ({ opened: false })),
+      chatStreamInit: vi.fn(async () => ({ streamId: '' })),
+      chatStreamCancel: vi.fn(),
       toolCall: vi.fn(async () => ({ output: '' })),
     });
 
@@ -82,6 +84,8 @@ describe('Built-in chrome-devtools MCP integration', () => {
       ),
       requestQuestion: vi.fn(async () => null),
       openExternal: vi.fn(async () => ({ opened: false })),
+      chatStreamInit: vi.fn(async () => ({ streamId: '' })),
+      chatStreamCancel: vi.fn(),
       toolCall: vi.fn(async () => ({ output: '' })),
     });
 

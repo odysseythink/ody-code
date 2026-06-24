@@ -25,6 +25,11 @@ import type { ContentPart } from '@odysseythink/kosong';
 import type { CodeReviewDiffSource } from '#/code-review/types';
 import type { PluginInfo, PluginSummary, ReloadSummary } from '#/plugin';
 import type { UsageStatus } from './events';
+import type {
+  ChatStreamDeltaPayload,
+  ChatStreamEndPayload,
+  ChatStreamErrorPayload,
+} from './llm-stream';
 import type { WithAgentId, WithSessionId } from './types';
 
 export type JsonPrimitive = string | number | boolean | null;
@@ -449,4 +454,8 @@ export interface CoreAPI extends SessionAPIWithId {
   reloadPlugins: (payload: EmptyPayload) => ReloadPluginsResult;
   getPluginInfo: (payload: GetPluginInfoPayload) => PluginInfo;
   requestCodeReview: (payload: RequestCodeReviewPayload) => Promise<CodeReviewReportData>;
+
+  chatStreamDelta: (payload: ChatStreamDeltaPayload) => void;
+  chatStreamEnd: (payload: ChatStreamEndPayload) => void;
+  chatStreamError: (payload: ChatStreamErrorPayload) => void;
 }

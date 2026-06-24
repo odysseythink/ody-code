@@ -46,7 +46,7 @@ describe('message-port transport', () => {
     );
 
     const pending = left.send(encodeJson('hang'));
-    left.close();
+    left.close?.();
 
     await expect(pending).rejects.toMatchObject({ code: 'transport.closed' });
   });

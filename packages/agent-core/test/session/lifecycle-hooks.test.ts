@@ -209,6 +209,8 @@ function createSessionRpc(): SDKSessionRPC {
     requestApproval: vi.fn(async () => ({ decision: 'cancelled' })),
     requestQuestion: vi.fn(async () => null),
     openExternal: vi.fn(async () => ({ opened: false })),
+    chatStreamInit: vi.fn(async () => ({ streamId: '' })),
+    chatStreamCancel: vi.fn(),
     toolCall: vi.fn(async () => ({
       output: 'custom tools are not supported in this test',
       isError: true,

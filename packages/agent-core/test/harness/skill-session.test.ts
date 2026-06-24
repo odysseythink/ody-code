@@ -570,6 +570,8 @@ describe('HarnessAPI session skills', () => {
       requestApproval: vi.fn(async (): Promise<ApprovalResponse> => ({ decision: 'rejected' })),
       requestQuestion: vi.fn(async () => null),
       openExternal: vi.fn(async () => ({ opened: false })),
+      chatStreamInit: vi.fn(async () => ({ streamId: '' })),
+      chatStreamCancel: vi.fn(),
       toolCall: vi.fn(async () => ({ output: '' })),
     });
     return { core, events, rpc };

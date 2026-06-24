@@ -2,6 +2,11 @@ import type { ContentPart } from '@odysseythink/kosong';
 
 import type { RPCMethods } from './client';
 import type { AgentEvent, ToolInputDisplay } from './events';
+import type {
+  ChatStreamCancelPayload,
+  ChatStreamInitPayload,
+  ChatStreamInitResponse,
+} from './llm-stream';
 import type { WithAgentId, WithSessionId } from './types';
 
 export type ApprovalDecision = 'approved' | 'rejected' | 'cancelled';
@@ -90,6 +95,9 @@ export interface SDKAgentAPI {
    * `agent.rpc?.openExternal`, so the ShowDesignMockup tool stays gated.
    */
   openExternal: (request: OpenExternalRequest) => Promise<OpenExternalResponse>;
+
+  chatStreamInit: (payload: ChatStreamInitPayload) => Promise<ChatStreamInitResponse>;
+  chatStreamCancel: (payload: ChatStreamCancelPayload) => void;
 }
 export type SDKAgentRPC = RPCMethods<SDKAgentAPI>;
 

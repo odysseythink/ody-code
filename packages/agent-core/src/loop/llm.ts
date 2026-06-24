@@ -16,6 +16,7 @@ import type {
   Tool,
   ToolCall,
 } from '@odysseythink/kosong';
+import type { CompletionBudgetConfig } from '../utils/completion-budget';
 
 export interface ToolCallDelta {
   readonly toolCallId: string;
@@ -66,6 +67,13 @@ export interface LLMChatResponse {
   rawFinishReason?: string;
   usage: TokenUsage;
   streamTiming?: LLMStreamTiming;
+}
+
+export interface LLMFactoryConfig {
+  readonly modelName: string;
+  readonly systemPrompt: string;
+  readonly capability?: ModelCapability | undefined;
+  readonly completionBudgetConfig?: CompletionBudgetConfig | undefined;
 }
 
 export interface LLM {
