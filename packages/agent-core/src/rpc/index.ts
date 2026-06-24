@@ -24,3 +24,7 @@ export {
   type Framing,
   type StreamTransportOptions,
 } from './transports/stream';
+export {
+  createWebSocketTransport,
+  type WebSocketTransportOptions,
+} from './transports/websocket';
