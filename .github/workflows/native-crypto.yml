@@ -1,0 +1,72 @@
+name: Native Crypto / SEA Smoke
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  native-sea-smoke:
+    name: ${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: darwin-arm64
+            os: macos-14
+          - target: darwin-x64
+            os: macos-13
+          - target: linux-x64
+            os: ubuntu-24.04
+          - target: win32-x64
+            os: windows-2022
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.0
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build workspace packages
+        run: pnpm run build:packages
+
+      - name: Build ody-crypto native module
+        run: pnpm run build:native:crypto -- --target ${{ matrix.target }}
+        shell: bash
+
+      - name: Build SEA
+        run: pnpm --filter ody-code run build:native:sea
+        env:
+          ODY_CODE_BUILD_TARGET: ${{ matrix.target }}
+        shell: bash
+
+      - name: Native smoke
+        run: pnpm --filter ody-code run test:native:smoke
+        env:
+          ODY_CODE_BUILD_TARGET: ${{ matrix.target }}
+        shell: bash
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ody-${{ matrix.target }}
+          path: apps/ody-code/dist-native/bin/${{ matrix.target }}/
+          if-no-files-found: error
