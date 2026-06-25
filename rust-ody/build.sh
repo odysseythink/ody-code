@@ -10,7 +10,7 @@ echo "==> native unit tests"
 cargo test --quiet
 
 echo "==> building wasm (release)"
-cargo build --release --target wasm32-unknown-unknown
+cargo build -p ody-rust --release --target wasm32-unknown-unknown
 ls -la target/wasm32-unknown-unknown/release/ody_rust.wasm
 
 # The repo pins node >=24.15 via engines; pnpm refuses lower. Pick a 24.x if the

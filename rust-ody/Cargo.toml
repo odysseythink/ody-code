@@ -1,20 +1,6 @@
-[package]
-name = "ody-rust"
-version = "0.1.0"
-edition = "2021"
-description = "PoC: hot-path logic in Rust compiled to Wasm for ody-code"
-license = "MIT"
-
-[lib]
-# cdylib -> produces a standalone .wasm with no wasm-bindgen glue.
-crate-type = ["cdylib"]
-
-[dependencies]
-# tiktoken-rs removed — BPE rank data (~5MB) bloats Wasm beyond the 2MB threshold.
-# Tokenizer will keep the JS heuristic path; revisit if a runtime-loaded encoder is added.
-# tiktoken-rs = "0.5.5"
-similar = "2.6.0"
-globset = "0.4.14"
+[workspace]
+members = ["crates/ody-rust", "crates/ody-crypto"]
+resolver = "2"
 
 [profile.release]
 opt-level = 3
