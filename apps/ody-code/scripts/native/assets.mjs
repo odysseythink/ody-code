@@ -7,6 +7,7 @@ import { pathToFileURL } from 'node:url';
 
 import { NATIVE_ASSET_MANIFEST_VERSION, buildManifestKey } from './manifest.mjs';
 import { resolveTargetDeps, SUPPORTED_TARGETS } from './native-deps.mjs';
+import { hostBinaryAssetKey, hostBinaryName, resolveHostBinaryPath } from './host-binary.mjs';
 
 export { NATIVE_ASSET_MANIFEST_VERSION };
 
@@ -260,6 +261,30 @@ export async function collectNativeAssets({ appRoot, target }) {
     });
     manifestPackages.push(result.packageManifest);
     Object.assign(assets, result.assets);
+  }
+
+  // Collect host binary (not an npm package — resolved from repo build output).
+  const hostBinaryPath = resolveHostBinaryPath(target);
+  if (existsSync(hostBinaryPath)) {
+    const hostName = 'ody-host';
+    const root = `node_modules/${hostName}`;
+    const relativePath = `${root}/${hostBinaryName()}`;
+    const assetKey = hostBinaryAssetKey(target);
+    const sourceBytes = await readFile(hostBinaryPath);
+    manifestPackages.push({
+      name: hostName,
+      root,
+      files: [{
+        assetKey,
+        relativePath,
+        sha256: sha256(sourceBytes),
+        mode: 0o755,
+      }],
+    });
+    assets[assetKey] = hostBinaryPath;
+    console.log(`Collected host binary: ${hostBinaryPath} -> ${assetKey}`);
+  } else {
+    console.warn(`Host binary not found at ${hostBinaryPath}; SEA will fall back to PATH lookup.`);
   }
 
   const manifest = {

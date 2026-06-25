@@ -261,6 +261,16 @@ export function hasNativePackage(packageName: string, manifest: NativeAssetManif
   return manifest.packages.some((pkg) => pkg.name === packageName);
 }
 
+function hostExecutableName(platform: NodeJS.Platform): string {
+  return platform === 'win32' ? 'ody-host.exe' : 'ody-host';
+}
+
+export function getHostBinaryPath(options: NativeAssetOptions = {}): string | null {
+  const packageRoot = getNativePackageRoot('ody-host', options);
+  if (packageRoot === null) return null;
+  return join(packageRoot, hostExecutableName(process.platform));
+}
+
 export function nativeAssetCacheExists(
   packageName: string,
   options: NativeAssetOptions = {},

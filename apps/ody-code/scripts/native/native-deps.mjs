@@ -104,6 +104,12 @@ export const nativeDeps = Object.freeze([
     collect: 'native-files',
     parent: 'ody-crypto-host',
   },
+  {
+    id: 'ody-host',
+    name: () => 'ody-host',
+    collect: 'virtual',
+    parent: null,
+  },
 ]);
 
 /**
