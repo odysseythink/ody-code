@@ -33,21 +33,22 @@ Cons:
 
 | Criterion | Result | Notes |
 |---|---|---|
-| `cargo test -p ody-host` | PASS | 1 unit test passed |
+| `cargo test -p ody-host` | PASS | 29 unit tests passed, 0 failed |
 | Cross-language RPC test | N/A | `packages/node-sdk/test/rust-host-connect.test.ts` not yet created |
-| TUI stdio smoke | PENDING | Requires D7 verification |
-| TUI socket smoke | PENDING | Requires D7 verification |
+| TUI stdio smoke | PENDING | Interactive — requires manual `pnpm run proto:rust-host` |
+| TUI socket smoke | PENDING | Interactive — requires manual socket test |
 | SEA bundle size | ~3.4 MB | Release binary (stripped, LTO) |
 
 ### Build & Packaging
 
 | Criterion | Result | Notes |
 |---|---|---|
-| `pnpm run build:host` | PASS | Builds `rust-ody/target/release/ody-host` |
-| `pnpm run test:host` | PASS | 1 unit test passed |
+| `pnpm run build:host` | PASS | Produces `rust-ody/target/release/ody-host` |
+| `pnpm run test:host` | PASS | 29 unit tests + 1 binary existence test passed |
 | SEA host binary collection | PASS | `collectNativeAssets` includes `host/darwin-arm64/ody-host` |
 | SEA full build | BLOCKED | Unresolved `#/host` import in `run-shell.ts` blocks bundle check |
-| CI workflow | CREATED | `.github/workflows/rust-host.yml` — untested in GH Actions |
+| `ody-host --help` | PASS | Prints usage with `--stdio`, `--socket-path`, `--tcp-host`, `--tcp-port`, `--config`, `--home` |
+| CI workflow | CREATED | `.github/workflows/rust-host.yml` — YAML validated, GH Actions run untested |
 
 ## Recommendation
 
