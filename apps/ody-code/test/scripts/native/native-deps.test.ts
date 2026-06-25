@@ -88,3 +88,32 @@ describe('nativeDeps registry shape', () => {
     expect(koffi?.parent).toBe('pi-tui');
   });
 });
+
+describe('ody-crypto native deps', () => {
+  it('resolves ody-crypto host and target for darwin-arm64', () => {
+    const names = resolveTargetDeps('darwin-arm64').map((d) => d.resolvedName);
+    expect(names).toContain('@odysseythink/ody-crypto');
+    expect(names).toContain('@odysseythink/ody-crypto-darwin-arm64');
+  });
+
+  it('picks the right ody-crypto subpackage per target', () => {
+    expect(
+      resolveTargetDeps('linux-x64').map((d) => d.resolvedName),
+    ).toContain('@odysseythink/ody-crypto-linux-x64');
+    expect(
+      resolveTargetDeps('win32-x64').map((d) => d.resolvedName),
+    ).toContain('@odysseythink/ody-crypto-win32-x64');
+  });
+
+  it('has ody-crypto-host (collect=js-only)', () => {
+    const host = nativeDeps.find((d) => d.id === 'ody-crypto-host');
+    expect(host?.collect).toBe('js-only');
+    expect(host?.parent).toBe(null);
+  });
+
+  it('has ody-crypto-target (collect=native-files, parent=ody-crypto-host)', () => {
+    const target = nativeDeps.find((d) => d.id === 'ody-crypto-target');
+    expect(target?.collect).toBe('native-files');
+    expect(target?.parent).toBe('ody-crypto-host');
+  });
+});

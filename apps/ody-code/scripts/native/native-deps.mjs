@@ -36,6 +36,15 @@ const koffiTripletByTarget = Object.freeze({
   'win32-x64': 'win32_x64',
 });
 
+const odyCryptoSubpackageByTarget = Object.freeze({
+  'darwin-arm64': '@odysseythink/ody-crypto-darwin-arm64',
+  'darwin-x64': '@odysseythink/ody-crypto-darwin-x64',
+  'linux-arm64': '@odysseythink/ody-crypto-linux-arm64',
+  'linux-x64': '@odysseythink/ody-crypto-linux-x64',
+  'win32-arm64': '@odysseythink/ody-crypto-win32-arm64',
+  'win32-x64': '@odysseythink/ody-crypto-win32-x64',
+});
+
 export function isSupportedTarget(target) {
   return SUPPORTED_TARGETS.includes(target);
 }
@@ -82,6 +91,18 @@ export const nativeDeps = Object.freeze([
     collect: 'js-and-native-file',
     parent: 'pi-tui',
     nativeFileRelatives: (target) => [`build/koffi/${koffiTripletByTarget[target]}/koffi.node`],
+  },
+  {
+    id: 'ody-crypto-host',
+    name: () => '@odysseythink/ody-crypto',
+    collect: 'js-only',
+    parent: null,
+  },
+  {
+    id: 'ody-crypto-target',
+    name: (target) => odyCryptoSubpackageByTarget[target],
+    collect: 'native-files',
+    parent: 'ody-crypto-host',
   },
 ]);
 
