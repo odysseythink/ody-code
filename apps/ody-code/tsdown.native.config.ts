@@ -6,6 +6,7 @@ import { defineConfig } from 'tsdown';
 
 import { rawTextPlugin } from '../../build/raw-text-plugin.mjs';
 import { BUILT_IN_CATALOG_DEFINE, builtInCatalogDefine } from './scripts/built-in-catalog.mjs';
+import { resolveSubpathImportsPlugin } from './scripts/resolve-subpath-imports.mjs';
 
 const appRoot = import.meta.dirname;
 const packageJson = JSON.parse(
@@ -39,7 +40,7 @@ export default defineConfig({
   platform: 'node',
   target: 'node24',
   banner: { js: '#!/usr/bin/env node' },
-  plugins: [rawTextPlugin()],
+  plugins: [rawTextPlugin(), resolveSubpathImportsPlugin()],
   alias: {
     '@': resolve(appRoot, 'src'),
   },

@@ -1,7 +1,11 @@
 import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 
+import { appRoot } from './paths.mjs';
+
 const HOST_BINARY_ENV = 'ODY_HOST_BINARY';
+
+const repoRoot = resolve(appRoot, '..', '..');
 
 export function hostBinaryName(platform = process.platform) {
   return platform === 'win32' ? 'ody-host.exe' : 'ody-host';
@@ -10,7 +14,7 @@ export function hostBinaryName(platform = process.platform) {
 export function defaultHostBinaryPath(target, platform = process.platform) {
   // Development fallback: repo-relative target/release binary.
   return resolve(
-    process.cwd(),
+    repoRoot,
     'rust-ody',
     'target',
     target.endsWith('-debug') ? 'debug' : 'release',

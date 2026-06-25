@@ -98,9 +98,45 @@ pnpm run test
 
 # 5. 代码检查
 pnpm run lint
+```
 
+### Rust Host 与 SEA 单二进制打包
 
-pnpm -C apps/ody-code run build:native:sea
+构建包含 Rust host 的 Node.js SEA（Single Executable Application）单二进制文件：
+
+```bash
+# 切换到 Node 24.15.0（.nvmrc 要求）
+nvm use 24.15.0
+
+# 1. 安装依赖
+pnpm install --frozen-lockfile
+
+# 2. 编译 Rust host
+pnpm run build:host
+
+# 3. 编译 TypeScript packages
+pnpm run build:packages
+
+# 4.（可选）编译 native crypto 模块
+pnpm run build:native:crypto -- --target darwin-arm64
+
+# 5. SEA 打包成单二进制
+pnpm --filter ody-code run build:native:sea
+
+# 6. 验证 smoke
+pnpm --filter ody-code run test:native:smoke
+```
+
+产物位置：
+
+```text
+apps/ody-code/dist-native/bin/<target>/ody
+```
+
+本地默认 target 为 `darwin-arm64`，可通过环境变量覆盖：
+
+```bash
+ODY_CODE_BUILD_TARGET=linux-x64 pnpm --filter ody-code run build:native:sea
 ```
 
 ### 使用 Nix 构建（可选）

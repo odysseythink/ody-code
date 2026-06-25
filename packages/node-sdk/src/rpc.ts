@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { connect as connectNet } from 'node:net';
+import { connect as connectNet, type Socket } from 'node:net';
 import { MessageChannel, Worker, type MessagePort } from 'node:worker_threads';
 
 import {
