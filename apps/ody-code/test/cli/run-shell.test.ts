@@ -4,6 +4,7 @@ import type { createKimiDeviceId as createKimiDeviceIdFn } from '@odysseythink/k
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { runShell } from '#/cli/run-shell';
+import type { CLIOptions } from '#/cli/options';
 
 import { captureProcessWrite, ExitCalled, mockProcessExit } from '../helpers/process';
 
@@ -165,7 +166,7 @@ describe('runShell', () => {
     mocks.tuiGetStartupMcpMs.mockResolvedValue(47);
     mocks.tuiGetCurrentSessionId.mockReturnValue('ses-startup');
 
-    const cliOptions = {
+    const cliOptions: CLIOptions = {
       session: undefined,
       continue: false,
       yolo: true,
@@ -178,6 +179,11 @@ describe('runShell', () => {
       prompt: undefined,
       skillsDirs: [],
       loginProvider: undefined,
+      host: 'inproc',
+      hostStdio: false,
+      hostSocket: undefined,
+      hostTcp: undefined,
+      hostBinary: undefined,
       logoutProvider: undefined,
     };
 
@@ -271,6 +277,11 @@ describe('runShell', () => {
         prompt: undefined,
         skillsDirs: [],
       loginProvider: undefined,
+    host: 'inproc',
+    hostStdio: false,
+    hostSocket: undefined,
+    hostTcp: undefined,
+    hostBinary: undefined,
       logoutProvider: undefined,
       },
       '1.2.3-test',
@@ -315,6 +326,11 @@ describe('runShell', () => {
         prompt: undefined,
         skillsDirs: [],
       loginProvider: undefined,
+    host: 'inproc',
+    hostStdio: false,
+    hostSocket: undefined,
+    hostTcp: undefined,
+    hostBinary: undefined,
       logoutProvider: undefined,
       },
       '1.2.3-test',
@@ -357,6 +373,11 @@ describe('runShell', () => {
         prompt: undefined,
         skillsDirs: [],
       loginProvider: undefined,
+    host: 'inproc',
+    hostStdio: false,
+    hostSocket: undefined,
+    hostTcp: undefined,
+    hostBinary: undefined,
       logoutProvider: undefined,
       },
       '1.2.3-test',
@@ -399,6 +420,11 @@ describe('runShell', () => {
         prompt: undefined,
         skillsDirs: [],
       loginProvider: undefined,
+    host: 'inproc',
+    hostStdio: false,
+    hostSocket: undefined,
+    hostTcp: undefined,
+    hostBinary: undefined,
       logoutProvider: undefined,
       },
       '1.2.3-test',
@@ -436,6 +462,11 @@ describe('runShell', () => {
         prompt: undefined,
         skillsDirs: [],
       loginProvider: undefined,
+    host: 'inproc',
+    hostStdio: false,
+    hostSocket: undefined,
+    hostTcp: undefined,
+    hostBinary: undefined,
       logoutProvider: undefined,
       },
       '1.2.3-test',
@@ -491,6 +522,11 @@ describe('runShell', () => {
         prompt: undefined,
         skillsDirs: [],
       loginProvider: undefined,
+    host: 'inproc',
+    hostStdio: false,
+    hostSocket: undefined,
+    hostTcp: undefined,
+    hostBinary: undefined,
       logoutProvider: undefined,
       },
       '1.2.3-test',
@@ -532,6 +568,11 @@ describe('runShell', () => {
           prompt: undefined,
           skillsDirs: [],
       loginProvider: undefined,
+    host: 'inproc',
+    hostStdio: false,
+    hostSocket: undefined,
+    hostTcp: undefined,
+    hostBinary: undefined,
       logoutProvider: undefined,
         },
         '1.2.3-test',
@@ -573,6 +614,11 @@ describe('runShell', () => {
           prompt: undefined,
           skillsDirs: [],
       loginProvider: undefined,
+    host: 'inproc',
+    hostStdio: false,
+    hostSocket: undefined,
+    hostTcp: undefined,
+    hostBinary: undefined,
       logoutProvider: undefined,
         },
         '1.2.3-test',

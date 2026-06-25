@@ -139,6 +139,11 @@ function opts(overrides: Partial<CLIOptions> = {}): CLIOptions {
     prompt: 'say hello',
     skillsDirs: [],
     loginProvider: undefined,
+    host: 'inproc',
+    hostStdio: false,
+    hostSocket: undefined,
+    hostTcp: undefined,
+    hostBinary: undefined,
     logoutProvider: undefined,
     ...overrides,
   };

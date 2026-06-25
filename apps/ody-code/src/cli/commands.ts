@@ -96,7 +96,12 @@ export function createProgram(
         '-O, --logout <provider-type>',
         'Interactive logout for providers of the given type.',
       ),
-    );
+    )
+    .addOption(new Option('--host <mode>', 'Run core in-process (inproc) or in external Rust host (rust).').choices(['inproc', 'rust']).default('inproc'))
+    .option('--host-stdio', 'Launch Rust host in stdio mode.', false)
+    .addOption(new Option('--host-socket <path>', 'Launch Rust host listening on a Unix socket.'))
+    .addOption(new Option('--host-tcp <host:port>', 'Launch Rust host listening on TCP.'))
+    .addOption(new Option('--host-binary <path>', 'Path to the Rust host executable (defaults to ody-host on PATH).'));
 
   registerExportCommand(program);
   registerProviderCommand(program);
@@ -140,6 +145,11 @@ export function createProgram(
       skillsDirs: raw['skillsDir'] as string[],
       loginProvider: raw['login'] as string | undefined,
       logoutProvider: raw['logout'] as string | undefined,
+      host: (raw['host'] as CLIOptions['host']) ?? 'inproc',
+      hostStdio: (raw['hostStdio'] as boolean) ?? false,
+      hostSocket: raw['hostSocket'] as string | undefined,
+      hostTcp: raw['hostTcp'] as string | undefined,
+      hostBinary: raw['hostBinary'] as string | undefined,
     };
 
     onMain(opts);

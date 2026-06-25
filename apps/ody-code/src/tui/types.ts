@@ -212,3 +212,63 @@ export interface LoginProgressSpinnerHandle {
 }
 
 export type ProgressSpinnerHandle = LoginProgressSpinnerHandle;
+
+// ---------------------------------------------------------------------------
+// Harness abstraction for OdyTUI (supports both in-proc KimiHarness and external Rust host)
+// ---------------------------------------------------------------------------
+
+import type {
+  CreateSessionOptions,
+  ExportSessionInput,
+  ExportSessionResult,
+  ForkSessionInput,
+  GetConfigOptions,
+  ListSessionsOptions,
+  OdyConfig,
+  OdyConfigPatch,
+  RenameSessionInput,
+  SessionSummary,
+} from '@odysseythink/ody-code-sdk';
+import type { ExperimentalFlagMap } from '@odysseythink/agent-core';
+
+type TelemetryContextPatch = import('@odysseythink/agent-core').TelemetryContextPatch;
+
+export interface OdyHarness {
+  readonly homeDir: string;
+  readonly configPath: string;
+  interactiveAgentId: string;
+
+  track(event: string, properties?: Record<string, unknown>): void;
+  setTelemetryContext(patch: TelemetryContextPatch): void;
+
+  ensureConfigFile(): Promise<void>;
+  getConfig(options?: GetConfigOptions): Promise<OdyConfig>;
+  setConfig(patch: OdyConfigPatch): Promise<OdyConfig>;
+  removeProvider(providerId: string): Promise<OdyConfig>;
+  getExperimentalFlags(): Promise<ExperimentalFlagMap>;
+
+  createSession(options: CreateSessionOptions): Promise<import('@odysseythink/ody-code-sdk').Session>;
+  resumeSession(input: { readonly id: string }): Promise<import('@odysseythink/ody-code-sdk').Session>;
+  forkSession(input: ForkSessionInput): Promise<import('@odysseythink/ody-code-sdk').Session>;
+  listSessions(options?: ListSessionsOptions): Promise<readonly SessionSummary[]>;
+  renameSession(input: RenameSessionInput): Promise<void>;
+  exportSession(input: ExportSessionInput): Promise<ExportSessionResult>;
+  closeSession(id: string): Promise<void>;
+
+  requestCodeReview(
+    input: Record<string, unknown>,
+    options?: Record<string, unknown>,
+  ): Promise<any>;
+
+  close(): Promise<void>;
+
+  readonly auth: {
+    resolveOAuthTokenProvider(providerName: string, oauthRef?: unknown): unknown;
+    status(providerName?: string): Promise<any>;
+    login(providerName?: string, options?: any): Promise<any>;
+    logout(providerName?: string): Promise<any>;
+    submitFeedback(input: any, providerName?: string): Promise<any>;
+    getManagedUsage(providerName?: string): Promise<any>;
+    getCachedAccessToken(providerName?: string): Promise<string | undefined>;
+  };
+}

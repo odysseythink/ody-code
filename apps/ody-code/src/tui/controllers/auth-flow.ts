@@ -1,16 +1,16 @@
-import type { KimiHarness, Session } from '@odysseythink/ody-code-sdk';
+import type { Session } from '@odysseythink/ody-code-sdk';
 import type { SkillListSession } from '../commands';
 
 import { OAUTH_LOGIN_REQUIRED_STARTUP_NOTICE } from '../constant/ody-tui';
 import { refreshAllProviderModels } from '../utils/refresh-providers';
 import type { SessionEventHandler } from './session-event-handler';
-import type { AppState, OdyTUIOptions } from '../types';
+import type { AppState, OdyHarness, OdyTUIOptions } from '../types';
 import type { TUIState } from '../tui-state';
 
 export interface AuthFlowHost {
   state: TUIState;
   session: Session | undefined;
-  readonly harness: KimiHarness;
+  readonly harness: OdyHarness;
   readonly options: OdyTUIOptions;
 
   setAppState(patch: Partial<AppState>): void;
@@ -158,7 +158,7 @@ export class AuthFlowController {
       removeProvider: (id) => host.harness.removeProvider(id),
       setConfig: (patch) => host.harness.setConfig(patch),
       resolveOAuthToken: async (providerName, oauthRef) => {
-        const tokenProvider = host.harness.auth.resolveOAuthTokenProvider(providerName, oauthRef);
+        const tokenProvider = host.harness.auth.resolveOAuthTokenProvider(providerName, oauthRef) as { getAccessToken(): Promise<string> };
         return tokenProvider.getAccessToken();
       },
     });

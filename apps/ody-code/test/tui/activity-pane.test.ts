@@ -22,6 +22,11 @@ function makeStartupInput(): OdyTUIStartupInput {
       prompt: undefined,
       skillsDirs: [],
       loginProvider: undefined,
+    host: 'inproc',
+    hostStdio: false,
+    hostSocket: undefined,
+    hostTcp: undefined,
+    hostBinary: undefined,
       logoutProvider: undefined,
     },
     tuiConfig: {

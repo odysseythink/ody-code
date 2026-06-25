@@ -91,7 +91,7 @@ async function handleLegacyLoginCommand(host: SlashCommandHost): Promise<void> {
 async function handleKimiCodeOAuthLogin(host: SlashCommandHost): Promise<void> {
   const status = await host.harness.auth.status(DEFAULT_OAUTH_PROVIDER_NAME);
   const alreadyLoggedIn = status.providers.some(
-    (provider) => provider.providerName === DEFAULT_OAUTH_PROVIDER_NAME && provider.hasToken,
+    (provider: any) => provider.providerName === DEFAULT_OAUTH_PROVIDER_NAME && provider.hasToken,
   );
 
   let spinner: LoginProgressSpinnerHandle | undefined;
@@ -103,7 +103,7 @@ async function handleKimiCodeOAuthLogin(host: SlashCommandHost): Promise<void> {
   try {
     await host.harness.auth.login(DEFAULT_OAUTH_PROVIDER_NAME, {
       signal: controller.signal,
-      onDeviceCode: (data) => {
+      onDeviceCode: (data: any) => {
         spinner = host.showLoginAuthorizationPrompt(data);
       },
     });
@@ -326,7 +326,7 @@ export async function handleLogoutCommand(
 ): Promise<void> {
   const oauthStatus = await host.harness.auth.status(DEFAULT_OAUTH_PROVIDER_NAME);
   const hasOAuthToken = oauthStatus.providers.some(
-    (p) => p.providerName === DEFAULT_OAUTH_PROVIDER_NAME && p.hasToken,
+    (p: any) => p.providerName === DEFAULT_OAUTH_PROVIDER_NAME && p.hasToken,
   );
   const config = await host.harness.getConfig();
   const hasManagedRemnant =
