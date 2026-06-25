@@ -41,7 +41,6 @@ export interface AgentRecordEvents {
   'session_mode.enter': {
     id: string;
     kind?: SessionModeKind;
-    fileStem?: string;
     path?: string;
   };
   'session_mode.cancel': {

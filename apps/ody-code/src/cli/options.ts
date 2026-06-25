@@ -128,6 +128,12 @@ export function validateOptions(opts: CLIOptions): ValidatedOptions {
     if (opts.officeHours || opts.gameDesign) {
       throw new OptionConflictError('Cannot combine --host=rust with --office-hours or --game-design.');
     }
+    if (opts.hostStdio && opts.hostSocket !== undefined) {
+      throw new OptionConflictError('Cannot combine --host-stdio with --host-socket.');
+    }
+    if (opts.hostStdio && opts.hostTcp !== undefined) {
+      throw new OptionConflictError('Cannot combine --host-stdio with --host-tcp.');
+    }
     if (opts.hostSocket !== undefined && opts.hostTcp !== undefined) {
       throw new OptionConflictError('Cannot combine --host-socket with --host-tcp.');
     }

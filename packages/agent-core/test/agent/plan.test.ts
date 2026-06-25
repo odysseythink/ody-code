@@ -838,8 +838,8 @@ function seedPrompt(ctx: { agent: { context: { history: unknown } } }, text: str
   });
 }
 
-describe('lazy file path resolution', () => {
-  it('defers the path when entered before any user prompt and creates no file', async () => {
+describe('plan mode entry', () => {
+  it('enters plan mode without starting a model turn and prepares the plan directory', async () => {
     const mkdir = vi.fn().mockResolvedValue(undefined);
     const writeText = vi.fn().mockResolvedValue(0);
     const ctx = testAgent({
@@ -850,8 +850,12 @@ describe('lazy file path resolution', () => {
     expect(ctx.agent.sessionMode.isActive).toBe(true);
     // No prompt to name from yet → naming deferred (null), not locked to "untitled".
     expect(ctx.agent.sessionMode.sessionModeFilePath).toBeNull();
+    expect(mkdir).toHaveBeenCalledWith('/workspace/.ody-code/plans', { parents: true, existOk: true });
     expect(writeText).not.toHaveBeenCalled();
+    expect(ctx.allEvents.some((event) => event.event === 'turn.started')).toBe(false);
+    expect(ctx.llmCalls).toHaveLength(0);
   });
+});
 
   it('defers naming when the mode is entered BEFORE the first prompt (regression)', async () => {
     // Reproduces the ecopower bug: session launches already in design mode, so
@@ -1098,7 +1102,6 @@ describe('lazy file path resolution', () => {
 
     expect(path).toBe('/workspace/.ody-code/plans/existing.md');
   });
-});
 
 describe('isWritableSessionModePath subdirectory model', () => {
   it('allows the main session mode file', async () => {

@@ -1,0 +1,31 @@
+[package]
+name = "ody-host"
+version = "0.1.0"
+edition = "2021"
+description = "Standalone Rust host for ody-code CoreAPI/SDKAPI prototype"
+license = "MIT"
+
+[[bin]]
+name = "ody-host"
+path = "src/main.rs"
+
+[dependencies]
+tokio = { workspace = true }
+reqwest = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+clap = { version = "4", features = ["derive"] }
+toml = "0.8"
+uuid = { version = "1", features = ["v4", "v7", "serde"] }
+sha2 = "0.10"
+regex = "1"
+dirs = "5"
+async-trait = "0.1"
+futures-util = { version = "0.3", default-features = false, features = ["std"] }
+
+[dev-dependencies]
+tokio-test = "0.4"
+httptest = "0.16"
+tempfile = "3"

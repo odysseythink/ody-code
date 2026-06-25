@@ -2,8 +2,6 @@ import type { Component, Focusable } from '@earendil-works/pi-tui';
 import type { DeviceAuthorization } from '@odysseythink/kimi-code-oauth';
 import type { Session } from '@odysseythink/ody-code-sdk';
 
-import type { OdyHarness } from '../types';
-
 import type { Theme } from '../theme';
 import type { ResolvedTheme } from '../theme/colors';
 import {
@@ -19,7 +17,7 @@ import type { BuiltinSlashCommandName } from './registry';
 import type { AuthFlowController } from '../controllers/auth-flow';
 import type { StreamingUIController } from '../controllers/streaming-ui';
 import type { TasksBrowserController } from '../controllers/tasks-browser';
-import type { AppState, LoginProgressSpinnerHandle, QueuedMessage } from '../types';
+import type { AppState, LoginProgressSpinnerHandle, OdyHarness, QueuedMessage } from '../types';
 import type { TUIState } from '../tui-state';
 
 import { handleLoginCommand, handleLogoutCommand } from './auth';

@@ -61,6 +61,11 @@ function makeStartupInput(mode: EffectiveMode = 'normal'): OdyTUIStartupInput {
     hostTcp: undefined,
     hostBinary: undefined,
       logoutProvider: undefined,
+      host: 'inproc',
+            hostStdio: false,
+            hostSocket: undefined,
+            hostTcp: undefined,
+            hostBinary: undefined,
     },
     tuiConfig: {
       theme: 'dark',

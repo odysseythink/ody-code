@@ -60,6 +60,10 @@ const mocks = vi.hoisted(() => {
     harnessCreatesDeviceIdOnConstruction: false,
     execSync: vi.fn(),
     TuiConfigParseError,
+    rustHostConnectorOnDisconnect: vi.fn(),
+    rustHostConnectorConnect: vi.fn(),
+    rustHostConnectorConstructor: vi.fn(),
+    rustHostHarnessConstructor: vi.fn(),
   };
 });
 
@@ -138,6 +142,30 @@ vi.mock('node:child_process', () => ({
   execSync: mocks.execSync,
 }));
 
+vi.mock('#/host', () => ({
+  RustHostConnector: class {
+    onDisconnect = mocks.rustHostConnectorOnDisconnect;
+    connect = mocks.rustHostConnectorConnect;
+
+    constructor(...args: unknown[]) {
+      mocks.rustHostConnectorConstructor(...args);
+    }
+  },
+  RustHostHarness: class {
+    homeDir = '/tmp/rust-host-home';
+    configPath = '/tmp/rust-host-home/config.toml';
+    auth = {};
+    ensureConfigFile = mocks.harnessEnsureConfigFile;
+    getConfig = mocks.harnessGetConfig;
+    close = mocks.harnessClose;
+    track = mocks.harnessTrack;
+
+    constructor(...args: unknown[]) {
+      mocks.rustHostHarnessConstructor(...args);
+    }
+  },
+}));
+
 describe('runShell', () => {
   afterEach(() => {
     vi.clearAllMocks();
@@ -185,6 +213,11 @@ describe('runShell', () => {
       hostTcp: undefined,
       hostBinary: undefined,
       logoutProvider: undefined,
+      host: 'inproc' as const,
+            hostStdio: false,
+            hostSocket: undefined,
+            hostTcp: undefined,
+            hostBinary: undefined,
     };
 
     await runShell(cliOptions, '1.2.3-test');
@@ -250,6 +283,51 @@ describe('runShell', () => {
     });
   });
 
+  it('constructs RustHostHarness when --host=rust', async () => {
+    mocks.loadTuiConfig.mockResolvedValue({
+      theme: 'dark',
+      editorCommand: null,
+      notifications: { enabled: true, condition: 'unfocused' },
+    });
+    mocks.tuiStart.mockResolvedValue(undefined);
+    const fakeClient = { homeDir: '/tmp/rust-host-home', configPath: '/tmp/rust-host-home/config.toml' };
+    mocks.rustHostConnectorConnect.mockResolvedValue(fakeClient);
+
+    await runShell(
+      {
+        session: undefined,
+        continue: false,
+        yolo: false,
+        auto: false,
+        sessionMode: 'normal',
+        officeHours: false,
+        gameDesign: false,
+        model: undefined,
+        outputFormat: undefined,
+        prompt: undefined,
+        skillsDirs: [],
+        loginProvider: undefined,
+        logoutProvider: undefined,
+        host: 'rust' as const,
+        hostStdio: true,
+        hostSocket: undefined,
+        hostTcp: undefined,
+        hostBinary: undefined,
+      },
+      '1.2.3-test',
+    );
+
+    expect(mocks.kimiHarnessConstructor).not.toHaveBeenCalled();
+    expect(mocks.rustHostConnectorConstructor).toHaveBeenCalledTimes(1);
+    expect(mocks.rustHostConnectorOnDisconnect).toHaveBeenCalledTimes(1);
+    expect(mocks.rustHostConnectorConnect).toHaveBeenCalledWith(
+      expect.objectContaining({ mode: 'stdio', binaryPath: 'ody-host' }),
+    );
+    expect(mocks.rustHostHarnessConstructor).toHaveBeenCalledWith(
+      expect.objectContaining({ client: fakeClient }),
+    );
+  });
+
   it('tracks first launch when device id creation reports first launch', async () => {
     mocks.loadTuiConfig.mockResolvedValue({
       theme: 'dark',
@@ -283,6 +361,11 @@ describe('runShell', () => {
     hostTcp: undefined,
     hostBinary: undefined,
       logoutProvider: undefined,
+        host: 'inproc' as const,
+              hostStdio: false,
+              hostSocket: undefined,
+              hostTcp: undefined,
+              hostBinary: undefined,
       },
       '1.2.3-test',
     );
@@ -332,6 +415,11 @@ describe('runShell', () => {
     hostTcp: undefined,
     hostBinary: undefined,
       logoutProvider: undefined,
+        host: 'inproc' as const,
+              hostStdio: false,
+              hostSocket: undefined,
+              hostTcp: undefined,
+              hostBinary: undefined,
       },
       '1.2.3-test',
     );
@@ -379,6 +467,11 @@ describe('runShell', () => {
     hostTcp: undefined,
     hostBinary: undefined,
       logoutProvider: undefined,
+        host: 'inproc' as const,
+              hostStdio: false,
+              hostSocket: undefined,
+              hostTcp: undefined,
+              hostBinary: undefined,
       },
       '1.2.3-test',
     );
@@ -426,6 +519,11 @@ describe('runShell', () => {
     hostTcp: undefined,
     hostBinary: undefined,
       logoutProvider: undefined,
+        host: 'inproc' as const,
+              hostStdio: false,
+              hostSocket: undefined,
+              hostTcp: undefined,
+              hostBinary: undefined,
       },
       '1.2.3-test',
     );
@@ -468,6 +566,11 @@ describe('runShell', () => {
     hostTcp: undefined,
     hostBinary: undefined,
       logoutProvider: undefined,
+        host: 'inproc' as const,
+              hostStdio: false,
+              hostSocket: undefined,
+              hostTcp: undefined,
+              hostBinary: undefined,
       },
       '1.2.3-test',
     );
@@ -528,6 +631,11 @@ describe('runShell', () => {
     hostTcp: undefined,
     hostBinary: undefined,
       logoutProvider: undefined,
+        host: 'inproc' as const,
+              hostStdio: false,
+              hostSocket: undefined,
+              hostTcp: undefined,
+              hostBinary: undefined,
       },
       '1.2.3-test',
     );
@@ -574,6 +682,11 @@ describe('runShell', () => {
     hostTcp: undefined,
     hostBinary: undefined,
       logoutProvider: undefined,
+          host: 'inproc' as const,
+                hostStdio: false,
+                hostSocket: undefined,
+                hostTcp: undefined,
+                hostBinary: undefined,
         },
         '1.2.3-test',
       ),
@@ -620,6 +733,11 @@ describe('runShell', () => {
     hostTcp: undefined,
     hostBinary: undefined,
       logoutProvider: undefined,
+          host: 'inproc' as const,
+                hostStdio: false,
+                hostSocket: undefined,
+                hostTcp: undefined,
+                hostBinary: undefined,
         },
         '1.2.3-test',
       );

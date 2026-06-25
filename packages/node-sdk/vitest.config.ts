@@ -16,6 +16,6 @@ export default defineConfig({
   },
   test: {
     name: 'kimi-sdk',
-    include: ['test/**/*.test.ts'],
+    include: ['test/**/*.test.ts', 'src/__tests__/**/*.test.ts'],
   },
 });

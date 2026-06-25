@@ -314,6 +314,24 @@ describe('main entry command handling', () => {
     expect(mocks.harness.close).toHaveBeenCalledTimes(1);
   });
 
+  it('rejects --login with --host=rust', async () => {
+    const opts = { ...defaultOpts(), loginProvider: 'openai', host: 'rust' as const };
+    mocks.validateOptions.mockReturnValue({ options: opts, uiMode: 'shell' });
+    mocks.runUpdatePreflight.mockResolvedValue('continue');
+    const code = await runHandleMainCommand(opts);
+    expect(code).toBe(1);
+    expect(mocks.runShell).not.toHaveBeenCalled();
+  });
+
+  it('rejects --logout with --host=rust', async () => {
+    const opts = { ...defaultOpts(), logoutProvider: 'openai', host: 'rust' as const };
+    mocks.validateOptions.mockReturnValue({ options: opts, uiMode: 'shell' });
+    mocks.runUpdatePreflight.mockResolvedValue('continue');
+    const code = await runHandleMainCommand(opts);
+    expect(code).toBe(1);
+    expect(mocks.runShell).not.toHaveBeenCalled();
+  });
+
   it('formats Kimi startup errors with structured fields', () => {
     const error = new OdyError(
       ErrorCodes.SHELL_GIT_BASH_NOT_FOUND,

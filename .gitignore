@@ -5,6 +5,7 @@ node_modules/
 dist/
 dist-native/
 apps/ody-code/dist-native/
+rust-ody/target/
 
 # TypeScript
 coverage/
@@ -55,4 +56,3 @@ ody-export-session_*.md
 .ody-code/
 session_*.zip
 test-tmp/
-

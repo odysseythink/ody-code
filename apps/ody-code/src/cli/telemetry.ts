@@ -1,6 +1,6 @@
 import { createKimiDeviceId, ODY_CODE_PROVIDER_NAME } from '@odysseythink/kimi-code-oauth';
 import { initializeTelemetry } from '@odysseythink/ody-telemetry';
-import { resolveOdyHome, type OdyConfig } from '@odysseythink/ody-code-sdk';
+import { resolveOdyHome, type KimiHarness, type OdyConfig } from '@odysseythink/ody-code-sdk';
 
 import { CLI_USER_AGENT_PRODUCT } from '#/constant/app';
 import type { OdyHarness } from '#/tui/types';
@@ -18,6 +18,7 @@ export interface InitializeCliTelemetryOptions {
   readonly version: string;
   readonly uiMode: string;
   readonly model?: string;
+  readonly getAccessToken?: () => Promise<string | null>;
 }
 
 export function createCliTelemetryBootstrap(): CliTelemetryBootstrap {
@@ -40,8 +41,12 @@ export function initializeCliTelemetry(options: InitializeCliTelemetryOptions): 
     version: options.version,
     uiMode: options.uiMode,
     model: options.model ?? options.config.defaultModel,
-    getAccessToken: async () =>
-      (await options.harness.auth.getCachedAccessToken(ODY_CODE_PROVIDER_NAME)) ?? null,
+    getAccessToken:
+      options.getAccessToken ??
+      (async () => {
+        const harness = options.harness as KimiHarness;
+        return (await harness.auth.getCachedAccessToken(ODY_CODE_PROVIDER_NAME)) ?? null;
+      }),
   });
   if (options.bootstrap.firstLaunch) {
     options.harness.track('first_launch');

@@ -1,8 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { connect as connectNet, type Socket } from 'node:net';
-import { once } from 'node:events';
+import { connect as connectNet } from 'node:net';
 import { MessageChannel, Worker, type MessagePort } from 'node:worker_threads';
 
 import {
@@ -219,7 +218,10 @@ async function createExternalTransport(
       await waitForReadyMessage(proc.stderr!, (msg) => msg.socketPath === socketPath);
     }
     const socket: Socket = connectNet(socketPath);
-    await once(socket, 'connect');
+    await new Promise<void>((resolve, reject) => {
+      socket.on('connect', resolve);
+      socket.on('error', reject);
+    });
     return {
       transport: createStreamTransport(socket, socket, dispatch, { framing: 'length-prefixed' }),
       proc,
@@ -259,7 +261,10 @@ async function createExternalTransport(
   }
 
   const socket: Socket = connectNet(port, host);
-  await once(socket, 'connect');
+  await new Promise<void>((resolve, reject) => {
+    socket.on('connect', resolve);
+    socket.on('error', reject);
+  });
   return {
     transport: createStreamTransport(socket, socket, dispatch, {
       framing: options.token === undefined ? 'length-prefixed' : undefined,

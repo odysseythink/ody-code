@@ -190,7 +190,16 @@ describe('CLI options parsing', () => {
     });
     it('rejects invalid mode in validateOptions', () => {
       const opts = parse(['--session-mode', 'invalid']);
-      expect(() => validateOptions(opts)).toThrow(OptionConflictError);
+      let thrown: Error | undefined;
+      expect(() => {
+        try {
+          validateOptions(opts);
+        } catch (e) {
+          thrown = e as Error;
+          throw e;
+        }
+      }).toThrow(OptionConflictError);
+      expect(thrown?.message).toContain('invalid');
     });
   });
 
@@ -358,6 +367,10 @@ describe('CLI options parsing', () => {
     it('rejects --office-hours combined with --auto', () => {
       expect(() => parse(['--office-hours', '--auto'])).toThrow(CommanderError);
     });
+
+    it('rejects --office-hours combined with --game-design', () => {
+      expect(() => parse(['--office-hours', '--game-design'])).toThrow(CommanderError);
+    });
   });
 
   describe('--game-design', () => {
@@ -449,6 +462,17 @@ describe('CLI options parsing', () => {
       expect(() =>
         validateOptions({ ...base(), host: 'rust', hostSocket: '/tmp/ody.sock', hostTcp: '127.0.0.1:9000' }),
       ).toThrow('Cannot combine --host-socket with --host-tcp.');
+    });
+    it('rejects combining host stdio and socket', () => {
+      expect(() =>
+        validateOptions({ ...base(), host: 'rust', hostStdio: true, hostSocket: '/tmp/ody.sock' }),
+      ).toThrow('Cannot combine --host-stdio with --host-socket.');
+    });
+
+    it('rejects combining host stdio and tcp', () => {
+      expect(() =>
+        validateOptions({ ...base(), host: 'rust', hostStdio: true, hostTcp: '127.0.0.1:9000' }),
+      ).toThrow('Cannot combine --host-stdio with --host-tcp.');
     });
   });
 });

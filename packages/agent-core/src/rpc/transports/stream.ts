@@ -230,7 +230,7 @@ export function createStreamTransport(
       if (deferred === undefined) return;
       pending.delete(frame.reqId);
       options?.onWire?.('recv', frame.bytes ?? new Uint8Array());
-      if (frame.error !== undefined) {
+      if (frame.error != null) {
         deferred.reject(new OdyError(ErrorCodes.INTERNAL, frame.error.message));
       } else {
         deferred.resolve(frame.bytes!);

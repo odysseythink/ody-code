@@ -8,6 +8,8 @@ import {
   withTelemetryContext,
 } from '@odysseythink/ody-telemetry';
 import { KimiHarness, log, type TelemetryClient } from '@odysseythink/ody-code-sdk';
+import type { OdyHarness } from '#/tui/types';
+import { RustHostConnector, RustHostHarness } from '#/host';
 
 import { CLI_SHUTDOWN_TIMEOUT_MS, CLI_UI_MODE } from '#/constant/app';
 import type { TuiConfig } from '#/tui/config';
@@ -17,12 +19,79 @@ import { OdyTUI } from '#/tui/index';
 import { detectTerminalTheme } from '#/tui/theme/detect';
 
 import type { CLIOptions } from './options';
+import { OptionConflictError } from './options';
 import { createCliTelemetryBootstrap, initializeCliTelemetry } from './telemetry';
 import { createKimiCodeHostIdentity } from './version';
 
 export interface AuthIntent {
   readonly kind: 'login' | 'logout';
   readonly providerType: string;
+}
+
+function parseHostTcp(value: string): { host: string; port: number } {
+  const lastColon = value.lastIndexOf(':');
+  if (lastColon === -1) {
+    throw new OptionConflictError(`Invalid --host-tcp value: ${value}. Expected host:port.`);
+  }
+  const host = value.slice(0, lastColon);
+  const port = Number(value.slice(lastColon + 1));
+  if (!Number.isInteger(port) || port < 1 || port > 65535) {
+    throw new OptionConflictError(`Invalid --host-tcp port: ${value}. Expected host:port.`);
+  }
+  return { host, port };
+}
+
+function createKimiHarness(telemetryBootstrap: { homeDir: string }, telemetryClient: TelemetryClient, version: string): KimiHarness {
+  return new KimiHarness({
+    homeDir: telemetryBootstrap.homeDir,
+    identity: createKimiCodeHostIdentity(version),
+    telemetry: telemetryClient,
+    onOAuthRefresh: (outcome) => {
+      if (outcome.success) {
+        track('oauth_refresh', { success: true });
+        return;
+      }
+      track('oauth_refresh', {
+        success: false,
+        reason: outcome.reason,
+      });
+    },
+  });
+}
+
+async function createRustHarness(
+  opts: CLIOptions,
+  telemetryClient: TelemetryClient,
+  homeDir: string,
+): Promise<RustHostHarness> {
+  const connector = new RustHostConnector();
+  let connectorOptions: import('#/host').RustHostConnectorOptions = {
+    mode: 'stdio',
+    binaryPath: opts.hostBinary ?? 'ody-host',
+    homeDir,
+  };
+  if (opts.hostSocket !== undefined) {
+    connectorOptions = {
+      ...connectorOptions,
+      mode: 'socket',
+      socketPath: opts.hostSocket,
+    };
+  } else if (opts.hostTcp !== undefined) {
+    const { host, port } = parseHostTcp(opts.hostTcp);
+    connectorOptions = {
+      ...connectorOptions,
+      mode: 'tcp',
+      host,
+      port,
+    };
+  }
+  connector.onDisconnect((error) => {
+    log.error('rust host disconnected', { error: error.message });
+    process.stderr.write(`error: rust host disconnected: ${error.message}\n`);
+    process.exit(1);
+  });
+  const client = await connector.connect(connectorOptions);
+  return new RustHostHarness({ client, telemetry: telemetryClient });
 }
 
 export async function runShell(
@@ -53,27 +122,17 @@ export async function runShell(
     withContext: withTelemetryContext,
     setContext: setTelemetryContext,
   };
-  const harness = new KimiHarness({
-    homeDir: telemetryBootstrap.homeDir,
-    identity: createKimiCodeHostIdentity(version),
-    telemetry: telemetryClient,
-    onOAuthRefresh: (outcome) => {
-      if (outcome.success) {
-        track('oauth_refresh', { success: true });
-        return;
-      }
-      track('oauth_refresh', {
-        success: false,
-        reason: outcome.reason,
-      });
-    },
-  });
+  const harness: OdyHarness =
+    opts.host === 'rust'
+      ? await createRustHarness(opts, telemetryClient, telemetryBootstrap.homeDir)
+      : createKimiHarness(telemetryBootstrap, telemetryClient, version);
   log.info('kimi-code starting', {
     version,
     uiMode: CLI_UI_MODE,
     nodeVersion: process.version,
     platform: `${process.platform}/${process.arch}`,
     workDir,
+    host: opts.host,
   });
   await harness.ensureConfigFile();
   const config = await harness.getConfig();
@@ -96,6 +155,8 @@ export async function runShell(
     config,
     version,
     uiMode: CLI_UI_MODE,
+    getAccessToken:
+      opts.host === 'rust' ? async () => null : undefined,
   });
   setCrashPhase('runtime');
 
@@ -103,7 +164,7 @@ export async function runShell(
   const trackLifecycleForSession = (
     sessionId: string,
     event: string,
-    properties?: Parameters<KimiHarness['track']>[1],
+    properties?: Parameters<OdyHarness['track']>[1],
   ) => {
     if (sessionId.length === 0) {
       harness.track(event, properties);
@@ -111,7 +172,7 @@ export async function runShell(
     }
     withTelemetryContext({ sessionId }).track(event, properties);
   };
-  const trackLifecycle = (event: string, properties?: Parameters<KimiHarness['track']>[1]) => {
+  const trackLifecycle = (event: string, properties?: Parameters<OdyHarness['track']>[1]) => {
     trackLifecycleForSession(tui.getCurrentSessionId(), event, properties);
   };
 

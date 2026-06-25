@@ -8,6 +8,15 @@ import type {
   ToolInputDisplay,
 } from '@odysseythink/ody-code-sdk';
 
+import type {
+  AuthManagedUsageResult,
+  AuthStatus,
+  BearerTokenProvider,
+  FetchSubmitFeedbackResult,
+} from '@odysseythink/kimi-code-oauth';
+
+import type { ExperimentalFlagMap } from '@odysseythink/agent-core';
+
 import type { NotificationsConfig, UpgradePreferences } from './config';
 import type { PendingApproval, PendingQuestion } from './reverse-rpc/types';
 import type { Theme } from './theme';
@@ -214,61 +223,67 @@ export interface LoginProgressSpinnerHandle {
 export type ProgressSpinnerHandle = LoginProgressSpinnerHandle;
 
 // ---------------------------------------------------------------------------
-// Harness abstraction for OdyTUI (supports both in-proc KimiHarness and external Rust host)
+// OdyHarness — abstract host interface for OdyTUI
 // ---------------------------------------------------------------------------
-
-import type {
-  CreateSessionOptions,
-  ExportSessionInput,
-  ExportSessionResult,
-  ForkSessionInput,
-  GetConfigOptions,
-  ListSessionsOptions,
-  OdyConfig,
-  OdyConfigPatch,
-  RenameSessionInput,
-  SessionSummary,
-} from '@odysseythink/ody-code-sdk';
-import type { ExperimentalFlagMap } from '@odysseythink/agent-core';
-
-type TelemetryContextPatch = import('@odysseythink/agent-core').TelemetryContextPatch;
 
 export interface OdyHarness {
   readonly homeDir: string;
   readonly configPath: string;
   interactiveAgentId: string;
 
-  track(event: string, properties?: Record<string, unknown>): void;
-  setTelemetryContext(patch: TelemetryContextPatch): void;
+  track(event: string, properties?: import('@odysseythink/agent-core').TelemetryProperties): void;
+  setTelemetryContext(patch: import('@odysseythink/agent-core').TelemetryContextPatch): void;
 
   ensureConfigFile(): Promise<void>;
-  getConfig(options?: GetConfigOptions): Promise<OdyConfig>;
-  setConfig(patch: OdyConfigPatch): Promise<OdyConfig>;
-  removeProvider(providerId: string): Promise<OdyConfig>;
+  getConfig(options?: import('@odysseythink/ody-code-sdk').GetConfigOptions): Promise<import('@odysseythink/ody-code-sdk').OdyConfig>;
+  setConfig(patch: import('@odysseythink/ody-code-sdk').OdyConfigPatch): Promise<import('@odysseythink/ody-code-sdk').OdyConfig>;
+  removeProvider(providerId: string): Promise<import('@odysseythink/ody-code-sdk').OdyConfig>;
   getExperimentalFlags(): Promise<ExperimentalFlagMap>;
 
-  createSession(options: CreateSessionOptions): Promise<import('@odysseythink/ody-code-sdk').Session>;
+  createSession(options: import('@odysseythink/ody-code-sdk').CreateSessionOptions & { sessionMode?: string }): Promise<import('@odysseythink/ody-code-sdk').Session>;
   resumeSession(input: { readonly id: string }): Promise<import('@odysseythink/ody-code-sdk').Session>;
-  forkSession(input: ForkSessionInput): Promise<import('@odysseythink/ody-code-sdk').Session>;
-  listSessions(options?: ListSessionsOptions): Promise<readonly SessionSummary[]>;
-  renameSession(input: RenameSessionInput): Promise<void>;
-  exportSession(input: ExportSessionInput): Promise<ExportSessionResult>;
+  listSessions(options?: import('@odysseythink/ody-code-sdk').ListSessionsOptions): Promise<readonly import('@odysseythink/ody-code-sdk').SessionSummary[]>;
   closeSession(id: string): Promise<void>;
 
+  renameSession(input: import('@odysseythink/ody-code-sdk').RenameSessionInput): Promise<void>;
+  forkSession(input: import('@odysseythink/ody-code-sdk').ForkSessionInput): Promise<import('@odysseythink/ody-code-sdk').Session>;
+  exportSession(input: import('@odysseythink/ody-code-sdk').ExportSessionInput): Promise<import('@odysseythink/ody-code-sdk').ExportSessionResult>;
+
   requestCodeReview(
-    input: Record<string, unknown>,
-    options?: Record<string, unknown>,
-  ): Promise<any>;
+    input: {
+      readonly source:
+        | { readonly kind: 'commits'; readonly base: string; readonly head: string }
+        | { readonly kind: 'pr'; readonly prUrlOrNumber: string }
+        | { readonly kind: 'working-tree' };
+      readonly modelAlias?: string | undefined;
+      readonly description?: string | undefined;
+      readonly requirements?: string | undefined;
+      readonly deep?: boolean | undefined;
+      readonly timeoutMs?: number | undefined;
+      readonly workDir?: string | undefined;
+      readonly focus?: 'correctness' | 'simplicity' | undefined;
+      readonly scope?: 'diff' | 'repo' | undefined;
+    },
+    options?: {
+      readonly signal?: AbortSignal | undefined;
+      readonly onProgress?: (progress: { requestId: string; stage: string; modelAlias: string; detail?: string; meta?: { estimatedTokens?: number; filePath?: string; fileCount?: number } }) => void;
+    },
+  ): Promise<import('@odysseythink/ody-code-sdk').CodeReviewReport>;
 
   close(): Promise<void>;
 
   readonly auth: {
-    resolveOAuthTokenProvider(providerName: string, oauthRef?: unknown): unknown;
-    status(providerName?: string): Promise<any>;
-    login(providerName?: string, options?: any): Promise<any>;
-    logout(providerName?: string): Promise<any>;
-    submitFeedback(input: any, providerName?: string): Promise<any>;
-    getManagedUsage(providerName?: string): Promise<any>;
-    getCachedAccessToken(providerName?: string): Promise<string | undefined>;
+    status(providerName?: string | undefined): Promise<AuthStatus>;
+    login(
+      providerName?: string | undefined,
+      options?: import('@odysseythink/kimi-code-oauth').KimiOAuthLoginOptions | undefined,
+    ): Promise<import('@odysseythink/ody-code-sdk').KimiAuthLoginResult>;
+    logout(providerName?: string | undefined): Promise<import('@odysseythink/ody-code-sdk').KimiAuthLogoutResult>;
+    submitFeedback(
+      input: import('@odysseythink/ody-code-sdk').KimiAuthSubmitFeedbackInput,
+      providerName?: string | undefined,
+    ): Promise<FetchSubmitFeedbackResult>;
+    getManagedUsage(providerName?: string | undefined): Promise<AuthManagedUsageResult>;
+    resolveOAuthTokenProvider(providerName: string, oauthRef: unknown): BearerTokenProvider;
   };
 }

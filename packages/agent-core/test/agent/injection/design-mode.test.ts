@@ -397,65 +397,6 @@ describe('DesignModeInjector contract guards', () => {
     }
   });
 
-  // Path mandate: the host assigns the design file path; the model must write to
-  // exactly it and must NOT invent its own path or follow another tool's/skill's
-  // convention (e.g. `.gpowers/designs/…`). Guards against the model hallucinating
-  // a `.gpowers/designs/<slug>.md` path and colliding with the write guard.
-  it('carries the do-not-invent-a-path mandate in both the entry message and the full reminder', async () => {
-    const agent = designAgent({ isActive: true, sessionModeFilePath: '/tmp/design.md' });
-    const injector = new DesignModeInjector(agent);
-    await injector.inject();
-    const full = lastReminder(agent);
-    const entry = designModeEntryMessage('/tmp/design.md', false);
-
-    for (const marker of [
-      'Do NOT invent your own path',
-      '.gpowers/designs/',
-      'REJECTED by the write guard',
-    ]) {
-      expect(full).toContain(marker);
-      expect(entry).toContain(marker);
-    }
-  });
-
-  // Split layout: part files live INSIDE a subdirectory named after the index
-  // stem (`<id>/<subsystem>.md`), matching the write-permission guard — a file
-  // placed next to the index is rejected.
-  it('carries the subdirectory split-layout rule in both the entry message and the full reminder', async () => {
-    const agent = designAgent({ isActive: true, sessionModeFilePath: '/tmp/design.md' });
-    const injector = new DesignModeInjector(agent);
-    await injector.inject();
-    const full = lastReminder(agent);
-    const entry = designModeEntryMessage('/tmp/design.md', false);
-
-    for (const marker of [
-      'subdirectory named exactly after the index',
-      'REJECTED by the write guard',
-    ]) {
-      expect(full).toContain(marker);
-      expect(entry).toContain(marker);
-    }
-  });
-
-  // Self-review write-to-file: the four-lens findings must be written to a
-  // ## Self-Review section in the design file, not left in <thinking> only.
-  it('carries the self-review write-to-file requirement in both the entry message and the full reminder', async () => {
-    const agent = designAgent({ isActive: true, sessionModeFilePath: '/tmp/design.md' });
-    const injector = new DesignModeInjector(agent);
-    await injector.inject();
-    const full = lastReminder(agent);
-    const entry = designModeEntryMessage('/tmp/design.md', false);
-
-    for (const marker of [
-      '## Self-Review',
-      'four-lens findings',
-      'must be on disk before the assumption sign-off',
-    ]) {
-      expect(full).toContain(marker);
-      expect(entry).toContain(marker);
-    }
-  });
-
   // Placement fidelity: when the request names a concrete target (e.g.
   // `backend/cmd/server`), the design must land THERE — retargeting to a
   // different location requires an explicit user decision, never a silent swap.

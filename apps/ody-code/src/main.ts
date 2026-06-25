@@ -66,6 +66,10 @@ export async function handleMainCommand(opts: CLIOptions, version: string): Prom
       process.stderr.write('error: --login and --logout require interactive shell mode.\n');
       process.exit(1);
     }
+    if (validated.options.host === 'rust') {
+      process.stderr.write('error: --login and --logout are not supported with --host=rust.\n');
+      process.exit(1);
+    }
     await runShell(validated.options, version, {
       authIntent: opts.loginProvider !== undefined
         ? { kind: 'login', providerType: opts.loginProvider }

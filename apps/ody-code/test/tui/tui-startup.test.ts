@@ -68,6 +68,11 @@ function makeStartupInput(
     hostTcp: undefined,
     hostBinary: undefined,
       logoutProvider: undefined,
+      host: 'inproc',
+      hostStdio: false,
+      hostSocket: undefined,
+      hostTcp: undefined,
+      hostBinary: undefined,
       ...cliOptions,
     },
     tuiConfig: {
