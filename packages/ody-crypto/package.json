@@ -17,6 +17,7 @@
   },
   "scripts": {
     "build": "tsdown",
+    "build:native": "./scripts/build-native.sh",
     "test": "vitest run",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
