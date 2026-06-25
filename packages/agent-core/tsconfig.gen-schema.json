@@ -1,0 +1,14 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "strict": false,
+    "noUncheckedIndexedAccess": false,
+    "noImplicitOverride": false,
+    "noPropertyAccessFromIndexSignature": false,
+    "noFallthroughCasesInSwitch": false,
+    "forceConsistentCasingInFileNames": false,
+    "verbatimModuleSyntax": false,
+    "isolatedModules": false
+  },
+  "include": ["src/rpc/core-api.ts", "src/rpc/sdk-api.ts"]
+}

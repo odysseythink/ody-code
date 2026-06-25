@@ -459,3 +459,10 @@ export interface CoreAPI extends SessionAPIWithId {
   chatStreamEnd: (payload: ChatStreamEndPayload) => void;
   chatStreamError: (payload: ChatStreamErrorPayload) => void;
 }
+
+export type CoreAPIProtocol = {
+  [K in keyof CoreAPI]: {
+    payload: Parameters<CoreAPI[K]>[0];
+    returns: Awaited<ReturnType<CoreAPI[K]>>;
+  };
+};

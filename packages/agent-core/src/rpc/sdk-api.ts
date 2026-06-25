@@ -106,3 +106,10 @@ export type SDKSessionRPC = RPCMethods<SDKSessionAPI>;
 
 export type SDKAPI = WithSessionId<SDKSessionAPI>;
 export type SDKRPC = RPCMethods<SDKAPI>;
+
+export type SDKAPIProtocol = {
+  [K in keyof SDKAPI]: {
+    payload: Parameters<SDKAPI[K]>[0];
+    returns: Awaited<ReturnType<SDKAPI[K]>>;
+  };
+};
