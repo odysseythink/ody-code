@@ -9,7 +9,7 @@ license = "MIT"
 crate-type = ["cdylib"]
 
 [dependencies]
-napi = "3"
+napi = { version = "3", features = ["napi4", "serde-json"] }
 napi-derive = "3"
 rand = "0.8"
 sha2 = "0.10"
