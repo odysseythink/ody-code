@@ -20,7 +20,7 @@ function pkceChallenge(length = 43): PkceChallenge {
   let verifier = '';
   const bytes = randomBytes(length);
   for (let i = 0; i < length; i++) {
-    verifier += PKCE_ALPHABET[bytes[i] % PKCE_ALPHABET.length];
+    verifier += PKCE_ALPHABET[bytes[i]! % PKCE_ALPHABET.length];
   }
   const challenge = createHash('sha256').update(verifier).digest('base64url');
   return { codeVerifier: verifier, codeChallenge: challenge };

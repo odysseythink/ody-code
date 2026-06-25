@@ -72,6 +72,12 @@
         ./packages/mcp-host
         ./packages/node-sdk
         ./packages/oauth
+        ./packages/ody-crypto
+        ./packages/ody-crypto-darwin-arm64
+        ./packages/ody-crypto-darwin-x64
+        ./packages/ody-crypto-linux-arm64
+        ./packages/ody-crypto-linux-x64
+        ./packages/ody-crypto-win32-x64
         ./packages/telemetry
         ./apps/ody-code
         ./apps/vis
@@ -90,6 +96,12 @@
         "@odysseythink/kosong"
         "@odysseythink/mcp-host"
         "@odysseythink/ody-code-sdk"
+        "@odysseythink/ody-crypto"
+        "@odysseythink/ody-crypto-darwin-arm64"
+        "@odysseythink/ody-crypto-darwin-x64"
+        "@odysseythink/ody-crypto-linux-arm64"
+        "@odysseythink/ody-crypto-linux-x64"
+        "@odysseythink/ody-crypto-win32-x64"
         "@odysseythink/kimi-code-oauth"
         "@odysseythink/ody-telemetry"
         "ody-code"

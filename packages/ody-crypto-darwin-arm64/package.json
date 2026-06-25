@@ -1,0 +1,11 @@
+{
+  "name": "@odysseythink/ody-crypto-darwin-arm64",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Native ody-crypto binary for darwin-arm64",
+  "license": "MIT",
+  "main": "ody-crypto.node",
+  "files": ["ody-crypto.node"],
+  "os": ["darwin"],
+  "cpu": ["arm64"]
+}
