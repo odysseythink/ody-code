@@ -24,9 +24,13 @@ import { renderPrompt } from '../../utils/render-prompt';
 import {
   estimateTokens,
   estimateTokensForMessages,
+  estimateTokensForTools,
 } from '../../utils/tokens';
 import {
   applyCompletionBudget,
+  computeCompletionBudgetCap,
+  DEFAULT_UNKNOWN_OUTPUT_FALLBACK,
+  MIN_FLOOR,
   resolveCompletionBudget,
 } from '../../utils/completion-budget';
 import compactionInstructionTemplate from './compaction-instruction.md';
@@ -271,12 +275,11 @@ export class FullCompaction {
       await this.triggerPreCompactHook(data, tokensBefore, signal);
 
       const model = this.agent.config.model;
-      const provider = applyCompletionBudget({
-        provider: this.agent.config.provider,
-        budget: resolveCompletionBudget({
-          reservedContextSize: this.agent.kimiConfig?.loopControl?.reservedContextSize,
-        }),
-        capability: this.agent.config.modelCapabilities,
+      const systemPrompt = this.agent.config.systemPrompt;
+      const loopTools = [...this.agent.tools.loopTools];
+      const capability = this.agent.config.modelCapabilities;
+      let budget = resolveCompletionBudget({
+        reservedContextSize: this.agent.kimiConfig?.loopControl?.reservedContextSize,
       });
 
       const delays = retryBackoffDelays(MAX_COMPACTION_RETRY_ATTEMPTS);
@@ -297,11 +300,24 @@ export class FullCompaction {
             toolCalls: [],
           } satisfies Message,
         ];
+
+        const estimatedInputTokens =
+          estimateTokens(systemPrompt) +
+          estimateTokensForMessages(messages) +
+          estimateTokensForTools(loopTools);
+        const effectiveBudget = budget ?? { fallback: DEFAULT_UNKNOWN_OUTPUT_FALLBACK };
+        const provider = applyCompletionBudget({
+          provider: this.agent.config.provider,
+          budget,
+          capability,
+          inputTokens: estimatedInputTokens,
+        });
+
         try {
           const response = await this.agent.generate(
             provider,
-            this.agent.config.systemPrompt,
-            [...this.agent.tools.loopTools],
+            systemPrompt,
+            loopTools,
             messages,
             undefined,
             { signal },
@@ -314,9 +330,24 @@ export class FullCompaction {
           break;
         } catch (error) {
           if (error instanceof APIContextOverflowError || error instanceof CompactionTruncatedError) {
-            compactedCount = this.strategy.reduceCompactOnOverflow(messagesToCompact);
-          }
-          else if (!isRetryableGenerateError(error)) {
+            const reducedCount = this.strategy.reduceCompactOnOverflow(messagesToCompact);
+            if (reducedCount < compactedCount) {
+              compactedCount = reducedCount;
+            } else {
+              // The prefix cannot be shortened any further. Shrink the
+              // completion budget for the next attempt so an oversized output
+              // reservation does not keep pushing the request over the window.
+              const effectiveCap = computeCompletionBudgetCap({
+                budget: effectiveBudget,
+                capability,
+                inputTokens: estimatedInputTokens,
+              });
+              if (effectiveCap <= MIN_FLOOR) {
+                throw error;
+              }
+              budget = { hardCap: Math.floor(effectiveCap / 2) };
+            }
+          } else if (!isRetryableGenerateError(error)) {
             throw error;
           }
           if (retryCount + 1 >= MAX_COMPACTION_RETRY_ATTEMPTS) {

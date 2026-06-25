@@ -156,7 +156,7 @@ describe('KosongLLM completion budget', () => {
       provider: providerWithBudget,
       modelName: 'test-model',
       systemPrompt: 'system',
-      capability: makeCapability(10000, 10000),
+      capability: makeCapability(1_000_000, 10000),
       completionBudgetConfig: { fallback: 32000 },
       generate,
     });

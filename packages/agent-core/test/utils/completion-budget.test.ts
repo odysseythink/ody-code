@@ -28,12 +28,67 @@ describe('computeCompletionBudgetCap', () => {
     expect(cap).toBe(8192);
   });
 
-  it('ignores max_context_tokens for completion budget', () => {
+  it('caps completion budget to a fraction of max_context_tokens', () => {
     const cap = computeCompletionBudgetCap({
       budget: { fallback: 32000 },
-      capability: makeCapability(1_000_000, 8192),
+      capability: makeCapability(1_000_000, 500_000),
     });
-    expect(cap).toBe(8192);
+    expect(cap).toBe(250_000);
+  });
+
+  it('limits completion budget when inputTokens leave little room', () => {
+    const cap = computeCompletionBudgetCap({
+      budget: { fallback: 32000 },
+      capability: makeCapability(1_000_000, 384_000),
+      inputTokens: 900_000,
+    });
+    // 1_000_000 - 900_000 - 8192 = 91_808, floored at 1 -> 91_808
+    // also capped by 25% of context = 250_000
+    expect(cap).toBe(91_808);
+  });
+
+  it('falls back to the context-ratio cap when inputTokens are unknown', () => {
+    const cap = computeCompletionBudgetCap({
+      budget: { fallback: 32000 },
+      capability: makeCapability(1_000_000, 384_000),
+    });
+    expect(cap).toBe(250_000);
+  });
+
+  it('lets an explicit hardCap override the context-derived cap', () => {
+    const cap = computeCompletionBudgetCap({
+      budget: { hardCap: 200_000 },
+      capability: makeCapability(1_000_000, 384_000),
+      inputTokens: 100_000,
+    });
+    expect(cap).toBe(200_000);
+  });
+
+  it('floors the context-derived cap when inputTokens already exceed the window', () => {
+    const cap = computeCompletionBudgetCap({
+      budget: { fallback: 32000 },
+      capability: makeCapability(100_000, 8192),
+      inputTokens: 200_000,
+    });
+    expect(cap).toBe(1);
+  });
+
+  it('ignores context capping when max_context_tokens is unknown', () => {
+    const cap = computeCompletionBudgetCap({
+      budget: { fallback: 32000 },
+      capability: makeCapability(0, 384_000),
+      inputTokens: 900_000,
+    });
+    expect(cap).toBe(384_000);
+  });
+
+  it('lets an explicit hardCap win when max_context_tokens is unknown', () => {
+    const cap = computeCompletionBudgetCap({
+      budget: { hardCap: 1000 },
+      capability: makeCapability(0, 384_000),
+      inputTokens: 900_000,
+    });
+    expect(cap).toBe(1000);
   });
 
   it('uses fallback when max_output_tokens is unknown (0)', () => {
@@ -134,6 +189,18 @@ describe('applyCompletionBudget', () => {
     expect(withMaxCompletionTokens).toHaveBeenCalledOnce();
     expect(withMaxCompletionTokens.mock.calls[0]?.[0]).toBe(1024);
     expect(result).not.toBe(original);
+  });
+
+  it('passes inputTokens through to cap the effective completion budget', () => {
+    applyCompletionBudget({
+      provider: original,
+      budget: { fallback: 32000 },
+      capability: makeCapability(100000, 8192),
+      inputTokens: 95_000,
+    });
+    expect(withMaxCompletionTokens).toHaveBeenCalledOnce();
+    // 100000 - 95000 - 8192 = -3192 -> floored to 1
+    expect(withMaxCompletionTokens.mock.calls[0]?.[0]).toBe(1);
   });
 });
 

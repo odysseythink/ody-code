@@ -1777,6 +1777,91 @@ describe('FullCompaction', () => {
     });
     await ctx.expectResumeMatches();
   });
+
+  it('reduces completion budget when compaction input consumes most of the context window', async () => {
+    const maxCompletionTokens: unknown[] = [];
+    const generate: GenerateFn = async (provider, _system, _tools, _history, callbacks) => {
+      maxCompletionTokens.push(providerMaxCompletionTokens(provider));
+      await callbacks?.onMessagePart?.({ type: 'text', text: 'Compacted summary.' });
+      return textResult('Compacted summary.');
+    };
+    const ctx = testAgent({ generate });
+    ctx.configure({
+      provider: CATALOGUED_PROVIDER,
+      modelCapabilities: {
+        ...CATALOGUED_MODEL_CAPABILITIES,
+        max_context_tokens: 100_000,
+        max_output_tokens: 50_000,
+      },
+    });
+
+    // ~90k tokens of history, with a safe split point after the first exchange
+    const longText = 'x'.repeat(360_000);
+    ctx.agent.context.appendUserMessage([{ type: 'text', text: 'first user' }]);
+    ctx.agent.context.appendMessage({
+      role: 'assistant',
+      content: [{ type: 'text', text: 'first assistant' }],
+      toolCalls: [],
+    });
+    ctx.agent.context.appendUserMessage([{ type: 'text', text: longText }]);
+    ctx.agent.context.appendMessage({
+      role: 'assistant',
+      content: [{ type: 'text', text: 'acknowledged' }],
+      toolCalls: [],
+    });
+
+    const compacted = ctx.once('context.apply_compaction');
+    await ctx.rpc.beginCompaction({});
+    await compacted;
+
+    expect(maxCompletionTokens.length).toBe(1);
+    // Without input-aware capping the cap would be 50_000; with it the
+    // remaining window after ~90k input is only a few thousand tokens.
+    expect(maxCompletionTokens[0]).toBeLessThan(50_000);
+  });
+
+  it('gives up when the completion budget is exhausted during overflow retries', async () => {
+    let callCount = 0;
+    const generate: GenerateFn = async () => {
+      callCount += 1;
+      throw new APIContextOverflowError(400, 'Context length exceeded', 'req-exhausted');
+    };
+    const ctx = testAgent({
+      generate,
+      compactionStrategy: alwaysCompactOnce,
+    });
+    ctx.configure({
+      provider: CATALOGUED_PROVIDER,
+      modelCapabilities: {
+        ...CATALOGUED_MODEL_CAPABILITIES,
+        max_context_tokens: 10_000,
+        max_output_tokens: 50_000,
+      },
+    });
+
+    // ~8k tokens of history. With a 10k context window the remaining budget is
+    // already below the floor, so the first overflow retry sees effectiveCap === 1.
+    const longText = 'x'.repeat(32_000);
+    ctx.agent.context.appendUserMessage([{ type: 'text', text: longText }]);
+    ctx.agent.context.appendMessage({
+      role: 'assistant',
+      content: [{ type: 'text', text: 'acknowledged' }],
+      toolCalls: [],
+    });
+    ctx.newEvents();
+
+    const outcome = ctx.onceAny(['context.apply_compaction', 'error']);
+    await ctx.rpc.beginCompaction({});
+
+    expect(await outcome).toBe('error');
+    expect(callCount).toBe(1);
+    expect(ctx.newEvents()).toContainEqual(
+      expect.objectContaining({
+        event: 'error',
+        args: expect.objectContaining({ code: 'compaction.failed' }),
+      }),
+    );
+  });
 });
 
 afterEach(() => {

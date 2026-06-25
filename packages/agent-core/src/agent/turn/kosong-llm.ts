@@ -38,6 +38,11 @@ import {
   applyCompletionBudget,
   type CompletionBudgetConfig,
 } from '../../utils/completion-budget';
+import {
+  estimateTokens,
+  estimateTokensForMessages,
+  estimateTokensForTools,
+} from '../../utils/tokens';
 
 export const GENERATE_REQUEST_LOG_CONTEXT = '__kimiRequestLogContext';
 
@@ -104,10 +109,15 @@ export class KosongLLM implements LLM {
     // throwaway shallow clone. `effectiveProvider` is local to this call
     // and never written back to `this.provider`, so retries (handled at
     // a higher layer) keep using the same long-lived provider/client.
+    const estimatedInputTokens =
+      estimateTokens(this.systemPrompt) +
+      estimateTokensForMessages(params.messages) +
+      estimateTokensForTools(params.tools);
     const effectiveProvider = applyCompletionBudget({
       provider: this.provider,
       budget: this.completionBudgetConfig,
       capability: this.capability,
+      inputTokens: estimatedInputTokens,
     });
 
     const result = await this.generate(

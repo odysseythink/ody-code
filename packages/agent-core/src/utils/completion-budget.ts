@@ -8,8 +8,24 @@ export interface CompletionBudgetConfig {
   readonly fallback?: number;
 }
 
-const MIN_FLOOR = 1;
-const DEFAULT_UNKNOWN_OUTPUT_FALLBACK = 32000;
+export const MIN_FLOOR = 1;
+export const DEFAULT_UNKNOWN_OUTPUT_FALLBACK = 32000;
+
+/**
+ * Safety margin subtracted from the remaining context window when deriving a
+ * completion cap from the current input. Accounts for tokenizer differences,
+ * tool schema serialization, and message-formatting overhead that local
+ * heuristics do not capture.
+ */
+const CONTEXT_WINDOW_OVERHEAD_TOKENS = 8192;
+
+/**
+ * Maximum share of the context window we are willing to reserve for a single
+ * completion when we do not have an accurate input-token estimate. This keeps
+ * long-context models from requesting an output budget that leaves no room for
+ * the prompt itself.
+ */
+const MAX_CONTEXT_COMPLETION_RATIO = 0.25;
 
 /**
  * Resolve configured completion budget. Env values are explicit hard caps;
@@ -46,15 +62,33 @@ function parseEnvBudget(raw: string | undefined): EnvBudget {
 
 /**
  * Compute the effective `max_completion_tokens` cap.
+ *
+ * The cap is the most restrictive of:
+ *   - the explicit user hard cap
+ *   - the model's declared max_output_tokens
+ *   - the remaining context window after `inputTokens`
+ *   - a fraction of the total context window
  */
 export function computeCompletionBudgetCap(args: {
   readonly budget: CompletionBudgetConfig;
   readonly capability: ModelCapability | undefined;
+  /** Estimated tokens already consumed by system prompt + messages + tools. */
+  readonly inputTokens?: number;
 }): number {
   const maxOutput = args.capability?.max_output_tokens ?? 0;
-  const cap =
+  const maxContext = args.capability?.max_context_tokens ?? 0;
+  let cap =
     args.budget.hardCap ??
     (maxOutput > 0 ? maxOutput : args.budget.fallback ?? DEFAULT_UNKNOWN_OUTPUT_FALLBACK);
+
+  if (maxContext > 0) {
+    if (args.inputTokens !== undefined && args.inputTokens > 0) {
+      const remaining = maxContext - args.inputTokens - CONTEXT_WINDOW_OVERHEAD_TOKENS;
+      cap = Math.min(cap, Math.max(MIN_FLOOR, remaining));
+    }
+    cap = Math.min(cap, Math.floor(maxContext * MAX_CONTEXT_COMPLETION_RATIO));
+  }
+
   return Math.max(MIN_FLOOR, cap);
 }
 
@@ -72,12 +106,15 @@ export function applyCompletionBudget(args: {
   readonly provider: ChatProvider;
   readonly budget: CompletionBudgetConfig | undefined;
   readonly capability: ModelCapability | undefined;
+  /** Estimated tokens already consumed by system prompt + messages + tools. */
+  readonly inputTokens?: number;
 }): ChatProvider {
   if (args.budget === undefined) return args.provider;
   if (args.provider.withMaxCompletionTokens === undefined) return args.provider;
   const cap = computeCompletionBudgetCap({
     budget: args.budget,
     capability: args.capability,
+    inputTokens: args.inputTokens,
   });
   return args.provider.withMaxCompletionTokens(cap);
 }
