@@ -137,3 +137,132 @@ describe('McpOAuthService.beginAuthorization', () => {
     await expect(flow.complete()).rejects.toThrow(/state mismatch/i);
   });
 });
+
+import jwt from 'jsonwebtoken';
+import { generateKeyPairSync } from 'node:crypto';
+
+function makeIdToken(overrides: { exp?: number; aud?: string } = {}): { idToken: string; jwk: Record<string, unknown> } {
+  const { privateKey, publicKey } = generateKeyPairSync('rsa', { modulusLength: 2048 });
+  const now = Math.floor(Date.now() / 1000);
+  const kid = 'key-1';
+  const idToken = jwt.sign(
+    {
+      sub: 'user-42',
+      iss: 'https://auth.example/',
+      aud: overrides.aud ?? 'client-123',
+      exp: overrides.exp ?? now + 3600,
+      iat: now,
+    },
+    privateKey,
+    { algorithm: 'RS256', keyid: kid },
+  );
+  const jwk = publicKey.export({ format: 'jwk' }) as Record<string, unknown>;
+  jwk.kid = kid;
+  return { idToken, jwk };
+}
+
+it('verifies id_token and saves tokens when present', async () => {
+  const { idToken, jwk } = makeIdToken();
+
+  let resolveWaitForCode!: (value: { code: string; state: string | undefined }) => void;
+  const waitForCodePromise = new Promise<{ code: string; state: string | undefined }>(
+    (resolve) => {
+      resolveWaitForCode = resolve;
+    },
+  );
+
+  vi.mocked(discoverOAuthServerInfo).mockResolvedValue({
+    authorizationServerUrl: 'https://auth.example/',
+    authorizationServerMetadata: {
+      authorization_endpoint: 'https://auth.example/authorize',
+      issuer: 'https://auth.example/',
+      jwks_uri: 'https://auth.example/.well-known/jwks.json',
+    } as Awaited<ReturnType<typeof discoverOAuthServerInfo>>['authorizationServerMetadata'],
+    resourceMetadata: undefined,
+  });
+  vi.mocked(registerClient).mockResolvedValue({
+    client_id: 'client-123',
+  } as Awaited<ReturnType<typeof registerClient>>);
+  vi.mocked(exchangeAuthorization).mockResolvedValue({
+    access_token: 'tok',
+    token_type: 'Bearer',
+    id_token: idToken,
+  });
+  vi.stubGlobal(
+    'fetch',
+    vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ keys: [jwk] }),
+    }),
+  );
+
+  const { startCallbackServer } = await import('../../src/oauth/callback-server');
+  vi.mocked(startCallbackServer).mockResolvedValueOnce({
+    redirectUri: 'http://127.0.0.1:3118/callback',
+    waitForCode: vi.fn(async () => await waitForCodePromise),
+    close: vi.fn().mockResolvedValue(undefined),
+  } as unknown as Awaited<ReturnType<typeof startCallbackServer>>);
+
+  const service = new McpOAuthService({ store: makeStore() });
+  const flow = await service.beginAuthorization('srv', 'https://mcp.example/');
+
+  const provider = service.getProvider('srv', 'https://mcp.example/');
+  resolveWaitForCode({ code: 'auth-code', state: provider.expectedState()! });
+
+  await flow.complete();
+
+  expect(service.hasTokens('srv', 'https://mcp.example/')).toBe(true);
+});
+
+it('rejects tokens when id_token signature is invalid', async () => {
+  const { idToken, jwk } = makeIdToken();
+  const tampered = idToken.slice(0, -5) + 'XXXXX';
+
+  let resolveWaitForCode!: (value: { code: string; state: string | undefined }) => void;
+  const waitForCodePromise = new Promise<{ code: string; state: string | undefined }>(
+    (resolve) => {
+      resolveWaitForCode = resolve;
+    },
+  );
+
+  vi.mocked(discoverOAuthServerInfo).mockResolvedValue({
+    authorizationServerUrl: 'https://auth.example/',
+    authorizationServerMetadata: {
+      authorization_endpoint: 'https://auth.example/authorize',
+      issuer: 'https://auth.example/',
+      jwks_uri: 'https://auth.example/.well-known/jwks.json',
+    } as Awaited<ReturnType<typeof discoverOAuthServerInfo>>['authorizationServerMetadata'],
+    resourceMetadata: undefined,
+  });
+  vi.mocked(registerClient).mockResolvedValue({
+    client_id: 'client-123',
+  } as Awaited<ReturnType<typeof registerClient>>);
+  vi.mocked(exchangeAuthorization).mockResolvedValue({
+    access_token: 'tok',
+    token_type: 'Bearer',
+    id_token: tampered,
+  });
+  vi.stubGlobal(
+    'fetch',
+    vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ keys: [jwk] }),
+    }),
+  );
+
+  const { startCallbackServer } = await import('../../src/oauth/callback-server');
+  vi.mocked(startCallbackServer).mockResolvedValueOnce({
+    redirectUri: 'http://127.0.0.1:3118/callback',
+    waitForCode: vi.fn(async () => await waitForCodePromise),
+    close: vi.fn().mockResolvedValue(undefined),
+  } as unknown as Awaited<ReturnType<typeof startCallbackServer>>);
+
+  const service = new McpOAuthService({ store: makeStore() });
+  const flow = await service.beginAuthorization('srv', 'https://mcp.example/');
+
+  const provider = service.getProvider('srv', 'https://mcp.example/');
+  resolveWaitForCode({ code: 'auth-code', state: provider.expectedState()! });
+
+  await expect(flow.complete()).rejects.toThrow();
+  expect(service.hasTokens('srv', 'https://mcp.example/')).toBe(false);
+});

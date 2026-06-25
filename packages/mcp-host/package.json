@@ -33,5 +33,9 @@
     "@odysseythink/ody-crypto": "workspace:^",
     "pathe": "^2.0.3",
     "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@types/jsonwebtoken": "^9.0.7",
+    "jsonwebtoken": "^9.0.2"
   }
 }

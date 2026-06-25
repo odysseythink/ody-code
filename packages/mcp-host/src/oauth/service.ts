@@ -30,6 +30,7 @@ import {
 } from '@modelcontextprotocol/sdk/client/auth.js';
 import { getOdyCrypto } from '@odysseythink/ody-crypto';
 
+import { verifyIdToken } from './id-token';
 import { startCallbackServer, type CallbackServer } from './callback-server';
 import { McpOAuthClientProvider } from './provider';
 import { JsonFileStore, mcpCredentialsDir, mcpOAuthStoreKey } from './store';
@@ -232,6 +233,14 @@ export class McpOAuthService {
           redirectUri: provider.redirectUrl,
           resource: resourceMetadata?.resource ? new URL(resourceMetadata.resource) : undefined,
         });
+        if (tokens.id_token !== undefined) {
+          await verifyIdToken({
+            idToken: tokens.id_token,
+            authorizationServerUrl: String(authorizationServerUrl),
+            authorizationServerMetadata: metadata!,
+            clientId: clientInformation.client_id,
+          });
+        }
         await provider.saveTokens(tokens);
       } catch (error) {
         await cancel();
