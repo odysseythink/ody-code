@@ -5,7 +5,7 @@
  * separate from the TUI orchestration layer.
  */
 
-import type { ModelAlias, PermissionMode, SessionStatus } from '@odysseythink/ody-code-sdk';
+import type { ModelAlias, PermissionMode, RuntimeMode, SessionStatus } from '@odysseythink/ody-code-sdk';
 import { t } from '@odysseythink/ody-code-sdk';
 import chalk from 'chalk';
 
@@ -35,7 +35,7 @@ export interface StatusReportOptions {
   readonly sessionTitle: string | null;
   readonly thinking: boolean;
   readonly permissionMode: PermissionMode;
-  readonly sessionMode: 'normal' | 'plan' | 'design' | 'office-hours' | 'game-design';
+  readonly sessionMode: RuntimeMode;
   readonly contextUsage: number;
   readonly contextTokens: number;
   readonly maxContextTokens: number;

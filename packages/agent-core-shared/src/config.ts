@@ -1,7 +1,15 @@
 import { HOOK_EVENT_TYPES } from './hook-events';
-import { isValidPermissionPattern, parsePattern } from './permission-pattern';
+import { isValidPermissionPattern } from './permission-pattern';
 import { ErrorCodes, OdyError } from './errors';
 import { z } from 'zod';
+
+/**
+ * Runtime modes mirror packages/agent-core/src/agent/session-mode/types.ts.
+ * Keep these two sources in sync — agent-core-shared cannot import from agent-core.
+ */
+export const RUNTIME_MODES = ['plan', 'design', 'office-hours', 'game-design', 'normal'] as const;
+export type RuntimeMode = typeof RUNTIME_MODES[number];
+export const SESSION_MODE_KINDS = RUNTIME_MODES.slice(0, -1) as ['plan', 'design', 'office-hours', 'game-design'];
 
 export const ProviderTypeSchema = z.enum([
   'anthropic',
@@ -325,11 +333,11 @@ export const OdyConfigSchema = z.object({
   defaultModel: z.string().optional(),
   models: z.record(z.string(), ModelAliasSchema).optional(),
   thinking: ThinkingConfigSchema.optional(),
-  sessionMode: z.enum(['plan', 'design']).optional(),
+  sessionMode: z.enum(RUNTIME_MODES as unknown as [string, ...string[]]).optional(),
   yolo: z.boolean().optional(),
   defaultThinking: z.boolean().optional(),
   defaultPermissionMode: PermissionModeSchema.optional(),
-  defaultSessionMode: z.enum(['plan', 'design']).optional(),
+  defaultSessionMode: z.enum(RUNTIME_MODES as unknown as [string, ...string[]]).optional(),
   permission: PermissionConfigSchema.optional(),
   hooks: z.array(HookDefSchema).optional(),
   services: ServicesConfigSchema.optional(),
@@ -383,11 +391,11 @@ export const OdyConfigPatchSchema = z
     defaultModel: z.string().optional(),
     models: z.record(z.string(), ModelAliasPatchSchema).optional(),
     thinking: ThinkingConfigPatchSchema.optional(),
-    sessionMode: z.enum(['plan', 'design']).optional(),
+    sessionMode: z.enum(RUNTIME_MODES as unknown as [string, ...string[]]).optional(),
     yolo: z.boolean().optional(),
     defaultThinking: z.boolean().optional(),
     defaultPermissionMode: PermissionModeSchema.optional(),
-    defaultSessionMode: z.enum(['plan', 'design']).optional(),
+    defaultSessionMode: z.enum(RUNTIME_MODES as unknown as [string, ...string[]]).optional(),
     permission: PermissionConfigPatchSchema.optional(),
     hooks: z.array(HookDefSchema).optional(),
     services: ServicesConfigPatchSchema.optional(),

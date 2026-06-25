@@ -13,8 +13,10 @@ import type { SessionSummary } from '#/rpc/core-api';
 import type { UsageStatus } from '#/rpc/events';
 import type { SessionMeta } from '#/session';
 
+import type { RuntimeMode } from '#/agent/session-mode';
+
 export type AgentReplayRecord =
-  | { type: 'message'; message: ContextMessage; mode?: string }
+  | { type: 'message'; message: ContextMessage; mode?: RuntimeMode }
   | { type: 'session_mode_updated'; enabled: boolean; kind?: SessionModeKind }
   | { type: 'config_updated'; config: AgentConfigUpdateData }
   | { type: 'permission_updated'; mode: PermissionMode }

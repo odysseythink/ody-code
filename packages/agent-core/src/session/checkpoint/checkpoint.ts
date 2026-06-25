@@ -12,7 +12,7 @@ import { dirname } from 'pathe';
 import { ErrorCodes, OdyError } from '@odysseythink/agent-core-shared';
 import { atomicWrite } from '#/utils/fs';
 import { withFileLock } from '#/utils/file-lock';
-import type { ModeKey } from '../../agent';
+import type { RuntimeMode } from '../../agent/session-mode';
 
 export interface DesignSessionCheckpoint {
   designSessionID: string;
@@ -25,7 +25,7 @@ export interface SessionCheckpointPayload {
   sessionID: string;
   createdAt: string;
   lastUpdatedAt: string;
-  currentMode: ModeKey;
+  currentMode: RuntimeMode;
   messages: unknown[];
   designModeContext: {
     sessions: DesignSessionCheckpoint[];

@@ -25,6 +25,8 @@ export const RawAgentProfileSchema = z.object({
 
 export type RawAgentProfile = z.infer<typeof RawAgentProfileSchema>;
 
+import type { RuntimeMode } from '../agent/session-mode';
+
 /**
  * Runtime context supplied to a system prompt renderer.
  *
@@ -42,7 +44,7 @@ export interface SystemPromptContext {
   readonly skills?: SkillRegistry | string;
   readonly additionalDirsInfo?: string;
   readonly roleAdditional?: string;
-  readonly sessionMode?: 'normal' | 'plan' | 'design' | 'office-hours' | 'game-design';
+  readonly sessionMode?: RuntimeMode;
 }
 
 export type SystemPromptRenderer = (context: SystemPromptContext) => string;

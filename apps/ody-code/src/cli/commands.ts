@@ -2,6 +2,8 @@ import { Command, Option } from 'commander';
 
 import { CLI_COMMAND_NAME } from '#/constant/app';
 
+import type { RuntimeMode } from '@odysseythink/ody-code-sdk';
+
 import type { CLIOptions } from './options';
 import { registerExportCommand } from './sub/export';
 import { registerProviderCommand } from './sub/provider';
@@ -131,7 +133,7 @@ export function createProgram(
       continue: raw['continue'] as boolean,
       yolo: yoloValue,
       auto: autoValue,
-      sessionMode: (raw['sessionMode'] as 'normal' | 'plan' | 'design' | 'office-hours') ?? 'normal',
+      sessionMode: (raw['sessionMode'] as RuntimeMode) ?? 'normal',
       officeHours: (raw['officeHours'] as boolean) ?? false,
       gameDesign: (raw['gameDesign'] as boolean) ?? false,
       model: raw['model'] as string | undefined,

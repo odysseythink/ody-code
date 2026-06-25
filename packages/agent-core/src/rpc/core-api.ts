@@ -3,7 +3,7 @@ import type { AgentConfigData } from '#/agent/config';
 import type { AgentContextData } from '#/agent/context';
 import type { BackgroundTaskInfo } from '#/agent/background';
 import type { PermissionData, PermissionMode } from '#/agent/permission';
-import type { SessionModeData, SessionModeKind } from '#/agent/session-mode';
+import type { SessionModeData, SessionModeKind, RuntimeMode } from '#/agent/session-mode';
 import type { ToolInfo } from '#/agent/tool';
 import type { OdyConfig, OdyConfigPatch } from '@odysseythink/agent-core-shared';
 import type { ExperimentalFlagMap } from '#/flags';
@@ -417,7 +417,7 @@ export interface SessionAPI extends AgentAPIWithId {
   renameSession: (payload: RenameSessionPayload) => void;
   updateSessionMetadata: (payload: UpdateSessionMetadataPayload) => void;
   getSessionMetadata: (payload: EmptyPayload) => SessionMeta;
-  listSkills: (payload: EmptyPayload & { sessionMode?: 'normal' | 'plan' | 'design' | 'office-hours' | 'game-design' }) => readonly SkillSummary[];
+  listSkills: (payload: EmptyPayload & { sessionMode?: RuntimeMode }) => readonly SkillSummary[];
   listMcpServers: (payload: EmptyPayload) => readonly McpServerInfo[];
   getMcpStartupMetrics: (payload: EmptyPayload) => McpStartupMetrics;
   reconnectMcpServer: (payload: ReconnectMcpServerPayload) => void;

@@ -2,6 +2,7 @@ import { expandSkillParameters, skillArgumentNames } from './parser';
 import { discoverSkills, type DiscoverSkillsOptions } from './scanner';
 import type { SkillDefinition, SkillRoot, SkillSource, SkippedSkill } from './types';
 import { isInlineSkillType, isKnowledgeSkillType, normalizeSkillName } from './types';
+import type { RuntimeMode, SessionModeKind } from '../agent/session-mode';
 import { escapeXmlAttr } from '../utils/xml-escape';
 import { filterSimplicityLevels, parseSimplicityLevel } from './builtin/simplicity-first';
 
@@ -116,7 +117,7 @@ export class SkillRegistry {
   }
 
   listInvocableSkills(
-    sessionMode?: 'normal' | 'plan' | 'design' | 'office-hours' | 'game-design',
+    sessionMode?: RuntimeMode,
   ): readonly SkillDefinition[] {
     return this.listSkills().filter((skill) => {
       if (skill.metadata.disableModelInvocation === true) return false;
@@ -149,7 +150,7 @@ export class SkillRegistry {
     return rendered.length === 0 ? 'No skills' : rendered;
   }
 
-  getModelSkillListing(sessionMode?: 'normal' | 'plan' | 'design' | 'office-hours' | 'game-design'): string {
+  getModelSkillListing(sessionMode?: RuntimeMode): string {
     const lines = ['DISREGARD any earlier skill listings. Current available skills:'];
     const listing = renderGroupedSkills(this.listInvocableSkills(sessionMode), formatModelSkill);
     if (listing.length > 0) {
@@ -162,7 +163,7 @@ export class SkillRegistry {
    * Returns a reminder listing skills hidden in the given session mode,
    * or an empty string when no skills are affected.
    */
-  getUnavailableSkillsReminder(sessionMode: 'plan' | 'design'): string {
+  getUnavailableSkillsReminder(sessionMode: SessionModeKind): string {
     const hidden = this.listSkills().filter((skill) => {
       if (!isInlineSkillType(skill.metadata.type)) return false;
       if (skill.metadata.disableModelInvocation === true) return false;

@@ -9,6 +9,8 @@ import type { OdyConfig, SDKAgentRPC, SDKSessionRPC } from '#/rpc';
 import { proxyWithExtraPayload } from '#/rpc/types';
 import type { LLM, LLMFactoryConfig } from '../loop/llm';
 
+import type { RuntimeMode } from '../agent/session-mode';
+
 import { Agent, type AgentOptions, type AgentType } from '../agent';
 import { SessionGoalStore, type SessionGoalState } from './goal';
 import { HookEngine, type HookDef } from './hooks';
@@ -407,7 +409,7 @@ export class Session {
     await Promise.all(Array.from(this.agents.values()).map((agent) => agent.records.flush()));
   }
 
-  async listSkills(options?: { sessionMode?: 'normal' | 'plan' | 'design' | 'office-hours' | 'game-design' }): Promise<readonly SkillSummary[]> {
+  async listSkills(options?: { sessionMode?: RuntimeMode }): Promise<readonly SkillSummary[]> {
     await this.skillsReady;
     if (options?.sessionMode !== undefined) {
       return this.skills.listInvocableSkills(options.sessionMode).map(summarizeSkill);

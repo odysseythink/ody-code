@@ -87,6 +87,8 @@ export type {
 export { t, isSupportedLanguage, normalizeLanguage } from '@odysseythink/agent-core';
 export type { SupportedLanguage, MessageKey } from '@odysseythink/agent-core';
 
+export type { RuntimeMode, SessionModeKind } from '@odysseythink/agent-core';
+
 // Code review report markdown renderer
 export { renderCodeReviewReportToMarkdown } from '@odysseythink/code-review';
 // Code review model resolver

@@ -1,4 +1,6 @@
-import { DynamicInjector } from './injector';
+import type { SessionModeFilePath } from '../session-mode';
+import type { SessionModeInjectorOptions } from '../session-mode/behaviors';
+import { BaseSessionModeInjector } from './session-mode-injector';
 import {
   officeHoursEntryReminder,
   officeHoursExitReminder,
@@ -7,72 +9,34 @@ import {
   officeHoursSparseReminder,
 } from './office-hours-contract';
 
-const OFFICE_HOURS_DEDUP_MIN_TURNS = 2;
-const OFFICE_HOURS_FULL_REFRESH_TURNS = 5;
+export class OfficeHoursInjector extends BaseSessionModeInjector {
+  readonly injectionVariant = 'office_hours';
+  readonly options: SessionModeInjectorOptions = {
+    fullRefreshTurns: 5,
+    dedupMinTurns: 2,
+  };
 
-export class OfficeHoursInjector extends DynamicInjector {
-  protected override readonly injectionVariant = 'office_hours';
-  private wasActive = false;
-
-  override onContextClear(): void {
-    super.onContextClear();
-    this.wasActive =
-      this.agent.sessionMode.isActive && this.agent.sessionMode.kind === 'office-hours';
+  isModeActive(): boolean {
+    return this.agent.sessionMode.isActive && this.agent.sessionMode.kind === 'office-hours';
   }
 
-  override async getInjection(): Promise<string | undefined> {
-    const isActive =
-      this.agent.sessionMode.isActive && this.agent.sessionMode.kind === 'office-hours';
-    const { sessionModeFilePath } = this.agent.sessionMode;
-
-    if (!isActive) {
-      if (!this.wasActive) return undefined;
-      this.wasActive = false;
-      this.injectedAt = null;
-      return officeHoursExitReminder(sessionModeFilePath);
-    }
-
-    if (!this.wasActive) {
-      this.injectedAt = null;
-      this.wasActive = true;
-      const content = await this.currentOfficeHoursContent();
-      if (content.trim().length > 0) {
-        return officeHoursReentryReminder(sessionModeFilePath);
-      }
-      return officeHoursEntryReminder(sessionModeFilePath);
-    }
-
-    const variant = this.getVariant();
-    if (variant === null) return undefined;
-    return variant === 'full'
-      ? officeHoursFullReminder(sessionModeFilePath)
-      : officeHoursSparseReminder(sessionModeFilePath);
+  protected getEntryReminder(path: SessionModeFilePath): string {
+    return officeHoursEntryReminder(path);
   }
 
-  protected getVariant(): 'full' | 'sparse' | null {
-    if (this.injectedAt === null) return 'full';
-    const history = this.agent.context.history;
-    let assistantTurnsSince = 0;
-    for (let i = this.injectedAt + 1; i < history.length; i++) {
-      const msg = history[i];
-      if (msg === undefined) continue;
-      if (msg.role === 'assistant') {
-        assistantTurnsSince += 1;
-        continue;
-      }
-      if (msg.role === 'user') return 'full';
-    }
-    if (assistantTurnsSince >= OFFICE_HOURS_FULL_REFRESH_TURNS) return 'full';
-    if (assistantTurnsSince >= OFFICE_HOURS_DEDUP_MIN_TURNS) return 'sparse';
-    return null;
+  protected getReentryReminder(path: SessionModeFilePath): string {
+    return officeHoursReentryReminder(path);
   }
 
-  private async currentOfficeHoursContent(): Promise<string> {
-    try {
-      const data = await this.agent.sessionMode.data();
-      return data?.content ?? '';
-    } catch {
-      return '';
-    }
+  protected getFullReminder(path: SessionModeFilePath): string {
+    return officeHoursFullReminder(path);
+  }
+
+  protected getSparseReminder(path: SessionModeFilePath): string {
+    return officeHoursSparseReminder(path);
+  }
+
+  protected getExitReminder(path: SessionModeFilePath): string {
+    return officeHoursExitReminder(path);
   }
 }

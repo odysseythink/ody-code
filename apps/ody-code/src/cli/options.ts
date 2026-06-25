@@ -1,3 +1,5 @@
+import type { RuntimeMode } from '@odysseythink/ody-code-sdk';
+
 export type UIMode = 'shell' | 'print';
 export type PromptOutputFormat = 'text' | 'stream-json';
 
@@ -6,7 +8,7 @@ export interface CLIOptions {
   continue: boolean;
   yolo: boolean;
   auto: boolean;
-  sessionMode: 'normal' | 'plan' | 'design' | 'office-hours';
+  sessionMode: RuntimeMode;
   officeHours: boolean;
   gameDesign: boolean;
   model: string | undefined;
@@ -47,8 +49,8 @@ export function validateOptions(opts: CLIOptions): ValidatedOptions {
   if (promptMode && opts.auto) {
     throw new OptionConflictError('Cannot combine --prompt with --auto.');
   }
-  if (!['normal', 'plan', 'design', 'office-hours'].includes(opts.sessionMode)) {
-    throw new OptionConflictError(`Invalid --session-mode: ${opts.sessionMode}. Must be normal, plan, design, or office-hours.`);
+  if (!['normal', 'plan', 'design', 'office-hours', 'game-design'].includes(opts.sessionMode)) {
+    throw new OptionConflictError(`Invalid --session-mode: ${opts.sessionMode}. Must be normal, plan, design, office-hours, or game-design.`);
   }
   if (promptMode && opts.sessionMode !== 'normal') {
     throw new OptionConflictError('Cannot combine --prompt with --session-mode.');

@@ -4,6 +4,7 @@ import type {
   PermissionMode,
   ProviderConfig,
   PromptPart,
+  RuntimeMode,
   ToolInputDisplay,
 } from '@odysseythink/ody-code-sdk';
 
@@ -17,7 +18,7 @@ export interface AppState {
   workDir: string;
   sessionId: string;
   permissionMode: PermissionMode;
-  sessionMode: 'normal' | 'plan' | 'design' | 'office-hours' | 'game-design';
+  sessionMode: RuntimeMode;
   sessionModeFilePath?: string | null;
   thinking: boolean;
   contextUsage: number;

@@ -39,6 +39,7 @@ import {
   type QuestionRequest,
   type QuestionResult,
   type RequestCodeReviewPayload,
+  type RuntimeMode,
   type SDKAPI,
   type SDKRPCClient,
   type TelemetryClient,
@@ -154,7 +155,7 @@ export interface SetSessionPermissionRpcInput extends SessionIdRpcInput {
 }
 
 export interface SetSessionModeRpcInput extends SessionIdRpcInput {
-  readonly mode: 'plan' | 'design' | 'office-hours' | 'game-design' | 'normal';
+  readonly mode: RuntimeMode;
   readonly sourceFilePath?: string;
 }
 
@@ -717,7 +718,7 @@ export class SDKRpcClient {
     };
   }
 
-  async listSkills(input: SessionIdRpcInput & { sessionMode?: 'normal' | 'plan' | 'design' | 'office-hours' | 'game-design' }): Promise<readonly SkillSummary[]> {
+  async listSkills(input: SessionIdRpcInput & { sessionMode?: RuntimeMode }): Promise<readonly SkillSummary[]> {
     const rpc = await this.getRpc();
     return rpc.listSkills({ sessionId: input.sessionId, sessionMode: input.sessionMode });
   }

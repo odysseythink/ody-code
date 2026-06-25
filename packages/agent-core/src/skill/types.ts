@@ -1,3 +1,5 @@
+import type { RuntimeMode } from '../agent/session-mode';
+
 export type SkillSource = 'project' | 'user' | 'extra' | 'builtin';
 
 export interface SkillMetadata {
@@ -6,7 +8,7 @@ export interface SkillMetadata {
   readonly type?: string | undefined;
   readonly whenToUse?: string | undefined;
   readonly disableModelInvocation?: boolean | undefined;
-  readonly hiddenInModes?: readonly string[] | undefined;
+  readonly hiddenInModes?: readonly RuntimeMode[] | undefined;
   readonly safe?: boolean | undefined;
   readonly arguments?: readonly unknown[] | string | undefined;
   readonly triggers?: readonly string[] | undefined;
@@ -55,8 +57,8 @@ export interface SkippedSkill {
 export interface SkillCatalog {
   getSkill(name: string): SkillDefinition | undefined;
   listSkills(): readonly SkillDefinition[];
-  listInvocableSkills(sessionMode?: 'normal' | 'plan' | 'design' | 'office-hours' | 'game-design'): readonly SkillDefinition[];
-  getModelSkillListing(sessionMode?: 'normal' | 'plan' | 'design' | 'office-hours' | 'game-design'): string;
+  listInvocableSkills(sessionMode?: RuntimeMode): readonly SkillDefinition[];
+  getModelSkillListing(sessionMode?: RuntimeMode): string;
 }
 
 export function normalizeSkillName(name: string): string {

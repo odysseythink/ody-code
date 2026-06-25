@@ -48,7 +48,7 @@ import { AdvancedSessionReviewer, shouldEscalate } from './session-mode/reviewer
 import { InjectionManager } from './injection/manager';
 import type { CheckpointCoordinator } from '../session/checkpoint/coordinator';
 import { PermissionManager, type PermissionManagerOptions } from './permission';
-import { SessionMode } from './session-mode';
+import { SessionMode, type RuntimeMode } from './session-mode';
 import {
   AgentRecords,
   BlobStore,
@@ -74,13 +74,13 @@ import { NoopOfficeHoursStateStore, NoopGameDesignStateStore } from '#/office-ho
 import type { SupportedLanguage } from '#/i18n';
 
 
+export type { RuntimeMode, SessionModeKind } from './session-mode';
 export type { AgentRecord, AgentRecordPersistence } from './records';
 export type { BuiltinTool, ToolInfo, ToolSource, UserToolRegistration } from './tool';
 export { buildGoalCompletionMessage } from './goal/completion';
 export type { LLM, LLMFactoryConfig } from '#/loop/llm';
 
 export type AgentType = 'main' | 'sub' | 'independent';
-export type ModeKey = 'normal' | 'plan' | 'design' | 'office-hours' | 'game-design';
 
 export interface AgentOptions {
   readonly kaos: Kaos;
@@ -139,9 +139,9 @@ export class Agent {
   // history, compaction state, and micro-compaction cursor. _activeMode
   // determines which partition agent.context / fullCompaction / microCompaction
   // point to. Changed by setContextMode() as modes are entered and exited.
-  private readonly _contexts: Record<ModeKey, ContextMemory>;
-  private readonly _fullCompactions: Record<ModeKey, FullCompaction>;
-  private readonly _microCompactions: Record<ModeKey, MicroCompaction>;
+  private readonly _contexts: Record<RuntimeMode, ContextMemory>;
+  private readonly _fullCompactions: Record<RuntimeMode, FullCompaction>;
+  private readonly _microCompactions: Record<RuntimeMode, MicroCompaction>;
   /** Detects split-plan/design part boundaries and compacts there when context is
    * over the configured ratio. Current-mode-aware via its agent getters, so one
    * instance serves all partitions. */
@@ -149,12 +149,12 @@ export class Agent {
   /** Detects TodoList task completion boundaries in normal mode and compacts when
    * context exceeds the configured ratio. Only active when sessionMode is inactive. */
   readonly normalModeTaskCheckpoint: NormalModeTaskCheckpoint;
-  private _activeMode: ModeKey = 'normal';
+  private _activeMode: RuntimeMode = 'normal';
   // When setContextMode is called while the current partition has an open step
   // (mid tool-exchange), we defer the switch so the tool.call / tool.result
   // events route to the same partition as step.begin. The flush happens at
   // step.end (via flushDeferredContextSwitch) or at turn end (safety net).
-  private _pendingContextSwitch: ModeKey | null = null;
+  private _pendingContextSwitch: RuntimeMode | null = null;
   readonly turn: TurnFlow;
   readonly injection: InjectionManager;
   readonly permission: PermissionManager;
@@ -214,21 +214,21 @@ export class Agent {
       design: new ContextMemory(this),
       'office-hours': new ContextMemory(this),
       'game-design': new ContextMemory(this),
-    } as Record<ModeKey, ContextMemory>;
+    } as Record<RuntimeMode, ContextMemory>;
     this._fullCompactions = {
       normal: new FullCompaction(this, options.compactionStrategy),
       plan: new FullCompaction(this, options.compactionStrategy),
       design: new FullCompaction(this, options.compactionStrategy),
       'office-hours': new FullCompaction(this, options.compactionStrategy),
       'game-design': new FullCompaction(this, options.compactionStrategy),
-    } as Record<ModeKey, FullCompaction>;
+    } as Record<RuntimeMode, FullCompaction>;
     this._microCompactions = {
       normal: new MicroCompaction(this, options.microCompaction),
       plan: new MicroCompaction(this, options.microCompaction),
       design: new MicroCompaction(this, options.microCompaction),
       'office-hours': new MicroCompaction(this, options.microCompaction),
       'game-design': new MicroCompaction(this, options.microCompaction),
-    } as Record<ModeKey, MicroCompaction>;
+    } as Record<RuntimeMode, MicroCompaction>;
     this.splitPlanCheckpoint = new SplitPlanCheckpoint(this);
     this.normalModeTaskCheckpoint = new NormalModeTaskCheckpoint(this);
     this.config = new ConfigState(this);
@@ -275,7 +275,7 @@ export class Agent {
   }
 
   /** All three partition contexts, keyed by mode. Used for bulk operations (e.g. blob rehydration). */
-  get contexts(): Readonly<Record<ModeKey, ContextMemory>> {
+  get contexts(): Readonly<Record<RuntimeMode, ContextMemory>> {
     return this._contexts;
   }
 
@@ -292,7 +292,7 @@ export class Agent {
    * update the deferred target; the actual switch happens once at step.end. Entry
    * via a /plan or /design slash command runs outside any tool exchange (no open
    * step) and so still switches immediately. */
-  setContextMode(mode: ModeKey): void {
+  setContextMode(mode: RuntimeMode): void {
     if (this._contexts[this._activeMode].hasOpenSteps()) {
       this._pendingContextSwitch = mode;
       return;
@@ -749,6 +749,10 @@ export class Agent {
       ),
     });
   }
+}
+
+export namespace Agent {
+  export type RuntimeMode = import('./session-mode').RuntimeMode;
 }
 
 interface LlmRequestContextFields {

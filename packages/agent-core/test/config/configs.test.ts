@@ -727,6 +727,32 @@ code_review_receive = "claude-3-5-sonnet"
   });
 });
 
+describe('OdyConfig sessionMode schema', () => {
+  it('accepts all runtime modes for sessionMode and defaultSessionMode', () => {
+    for (const mode of ['plan', 'design', 'office-hours', 'game-design', 'normal'] as const) {
+      expect(validateConfig({ sessionMode: mode }).sessionMode).toBe(mode);
+      expect(validateConfig({ defaultSessionMode: mode }).defaultSessionMode).toBe(mode);
+    }
+  });
+
+  it('rejects unknown modes', () => {
+    expect(() => validateConfig({ sessionMode: 'foo' as any })).toThrow();
+    expect(() => validateConfig({ defaultSessionMode: 'foo' as any })).toThrow();
+  });
+});
+
+describe('configToTomlData round-trips runtime modes', () => {
+  it('preserves normal and office-hours in TOML output', () => {
+    const config = validateConfig({
+      sessionMode: 'office-hours',
+      defaultSessionMode: 'normal',
+    });
+    const tomlData = configToTomlData(config);
+    expect(tomlData['session_mode']).toBe('office-hours');
+    expect(tomlData['default_session_mode']).toBe('normal');
+  });
+});
+
 describe('microagentBudget config', () => {
   it('C1: OdyConfigSchema accepts microagentBudget.maxTokens', () => {
     const config = OdyConfigSchema.parse({

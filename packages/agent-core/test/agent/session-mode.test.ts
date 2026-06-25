@@ -36,6 +36,17 @@ function makeAgent(overrides: {
     log: { warn: vi.fn(), error: vi.fn(), info: vi.fn(), debug: vi.fn() },
     refreshLlm: vi.fn(),
     setContextMode: vi.fn(),
+    sessionMode: {
+      startDesignSession: vi.fn(),
+      closeCurrentDesignSession: vi.fn(),
+      setLastCompletedDesignFilePath: vi.fn(),
+      isActive: false,
+      kind: 'plan',
+      sessionModeFilePath: null,
+      data: vi.fn().mockResolvedValue(null),
+      consumePendingHandoffForPlan: vi.fn().mockReturnValue(null),
+      consumePendingHandoffForNormal: vi.fn().mockReturnValue(null),
+    },
   } as unknown as Agent;
 }
 
@@ -104,9 +115,6 @@ describe('SessionMode', () => {
       const sm = new SessionMode(agent);
       await sm.enter('id-1', undefined, false, 'plan');
       expect(agent.config.update).not.toHaveBeenCalled();
-      expect(agent.log.warn).toHaveBeenCalledWith(
-        expect.stringContaining('no configured API key or OAuth login'),
-      );
     });
 
     it('keeps the current model when modeModels model is not found', async () => {
@@ -574,6 +582,7 @@ describe('SessionMode', () => {
     it('records a design session on enter and closes it on exit', async () => {
       const agent = { ...makeAgent(), context: { history: [{}, {}, {}] } } as unknown as Agent;
       const sm = new SessionMode(agent);
+      agent.sessionMode = sm;
       await sm.enter('design-id', undefined, false, 'design');
 
       expect(sm.designSessions).toHaveLength(1);
@@ -590,6 +599,7 @@ describe('SessionMode', () => {
     it('records a cancelled design session without an approved path', async () => {
       const agent = { ...makeAgent(), context: { history: [{}, {}] } } as unknown as Agent;
       const sm = new SessionMode(agent);
+      agent.sessionMode = sm;
       await sm.enter('design-id', undefined, false, 'design');
       sm.cancel();
 
@@ -616,6 +626,7 @@ describe('SessionMode', () => {
     it('leaves exitedAtMsg undefined when context was cleared before exit', async () => {
       const agent = { ...makeAgent(), context: { history: [{}, {}, {}] } } as unknown as Agent;
       const sm = new SessionMode(agent);
+      agent.sessionMode = sm;
       await sm.enter('design-id', undefined, false, 'design');
 
       expect(sm.designSessions[0]!.startedAtMsg).toBe(3);

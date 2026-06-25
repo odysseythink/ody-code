@@ -6,7 +6,7 @@
  */
 import { basename } from 'node:path';
 
-import { KimiHarness, log, type TelemetryClient } from '@odysseythink/ody-code-sdk';
+import { KimiHarness, log, type RuntimeMode, type TelemetryClient } from '@odysseythink/ody-code-sdk';
 import {
   setCrashPhase,
   setTelemetryContext,
@@ -63,7 +63,7 @@ export async function runGameDesign(opts: CLIOptions, version: string): Promise<
   const config = await harness.getConfig();
 
   const tui = new OdyTUI(harness, {
-    cliOptions: { ...opts, sessionMode: 'game-design' as any, gameDesign: true },
+    cliOptions: { ...opts, sessionMode: 'game-design' as RuntimeMode, gameDesign: true },
     tuiConfig,
     version,
     workDir,

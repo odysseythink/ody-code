@@ -12,6 +12,8 @@ import type { SupportedLanguage } from '../i18n';
 export type { ToolInputDisplay } from '../tools/display';
 export type { OdyErrorPayload } from '../errors';
 
+import type { RuntimeMode } from '../agent/session-mode';
+
 export interface UsageStatus {
   readonly byModel?: Record<string, TokenUsage> | undefined;
   readonly currentTurn?: TokenUsage | undefined;
@@ -46,7 +48,7 @@ export interface AgentStatusUpdatedEvent {
   readonly contextTokens?: number | undefined;
   readonly maxContextTokens?: number | undefined;
   readonly contextUsage?: number | undefined;
-  readonly sessionMode?: 'normal' | 'plan' | 'design' | 'office-hours' | 'game-design' | undefined;
+  readonly sessionMode?: RuntimeMode;
   readonly sessionModeFilePath?: string | null;
   readonly permission?: PermissionMode | undefined;
   readonly usage?: UsageStatus | undefined;

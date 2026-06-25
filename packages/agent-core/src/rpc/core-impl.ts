@@ -8,6 +8,7 @@ import { LocalFetchURLProvider } from '#/tools/providers/local-fetch-url';
 import { MoonshotFetchURLProvider } from '#/tools/providers/moonshot-fetch-url';
 import { resolveWebSearchRuntime } from '#/tools/providers/web-search/runtime';
 import type { PromisableMethods } from '#/utils/types';
+import type { SessionModeKind } from '#/agent/session-mode';
 import { getCoreVersion } from '@odysseythink/agent-core-shared';
 import {
   buildAuditDigest,
@@ -285,7 +286,7 @@ export class KimiCore implements PromisableMethods<CoreAPI> {
       // Honor config.defaultSessionMode for fresh sessions. Resumed sessions
       // restore their own plan state from records and never re-apply this.
       if (config.defaultSessionMode !== undefined) {
-        await mainAgent.sessionMode.enter(undefined, undefined, undefined, config.defaultSessionMode);
+        await mainAgent.sessionMode.enter(undefined, undefined, undefined, config.defaultSessionMode as SessionModeKind);
       }
       await session.writeMetadata();
       await session.flushMetadata();

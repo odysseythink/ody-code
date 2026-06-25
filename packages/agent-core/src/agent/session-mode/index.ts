@@ -3,7 +3,6 @@ import { basename, dirname, join, normalize } from 'pathe';
 
 import type { Agent } from '..';
 import type { DesignSessionCheckpoint } from '../../session/checkpoint/checkpoint';
-import type { ResolvedRuntimeProvider } from '../../session/provider-manager';
 import {
   extractFirstHeading,
   extractTopicFromMessage,
@@ -13,7 +12,19 @@ import {
   stripLocators,
   buildTitlePrompt,
 } from './topic-generator';
-import { ensureGitignore } from '../../utils/gitignore';
+import { createDefaultModeBehaviorRegistry, type ModeBehaviorRegistry } from './behaviors/registry';
+import { resolveSessionModeDirectory } from './directory';
+import type { SessionModeKind } from './types';
+
+export {
+  SESSION_MODE_KINDS,
+  RUNTIME_MODES,
+  isSessionModeKind,
+  isRuntimeMode,
+  normalizeRuntimeMode,
+  type SessionModeKind,
+  type RuntimeMode,
+} from './types';
 
 /**
  * Whether the current planning session is a regular implementation `plan`
@@ -21,7 +32,6 @@ import { ensureGitignore } from '../../utils/gitignore';
  * read-only-with-one-writable-file machinery; only the prompts, the output
  * directory and the surfacing labels differ.
  */
-export type SessionModeKind = 'plan' | 'design' | 'office-hours' | 'game-design';
 
 export type SessionModeData = null | {
   id: string;
@@ -50,7 +60,10 @@ export class SessionMode {
   } | null = null;
   private _designSessions: DesignSessionCheckpoint[] = [];
 
-  constructor(protected readonly agent: Agent) {}
+  constructor(
+    protected readonly agent: Agent,
+    private readonly registry: ModeBehaviorRegistry = createDefaultModeBehaviorRegistry(),
+  ) {}
 
   createSessionModeId(): string {
     return randomUUID();
@@ -58,7 +71,7 @@ export class SessionMode {
 
   async enter(
     id = this.createSessionModeId(),
-    _createFile = false, // ignored — no file is created on enter
+    _createFile = false,
     emitStatus = true,
     kind: SessionModeKind = 'plan',
   ): Promise<void> {
@@ -85,70 +98,16 @@ export class SessionMode {
     // "restores the normal model after a direct plan→design→normal switch".
     const restoreTargetAlias = this.agent.config.modelAlias;
 
+    const behavior = this.registry.resolve(kind);
+
     this._isActive = true;
     this._sessionModeId = id;
     this._kind = kind;
     this._sessionModeFilePath = null;
 
-    if (kind === 'design') {
-      this.startDesignSession(id);
-    }
-
-    // Each writing/diagnostic mode can be pinned to its own model via
-    // modeModels. The config keys are camelCase, so kebab kinds map across.
-    const modeModelKey =
-      kind === 'plan' ? 'plan' :
-      kind === 'design' ? 'design' :
-      kind === 'office-hours' ? 'officeHours' :
-      kind === 'game-design' ? 'gameDesign' :
-      undefined;
-    if (modeModelKey !== undefined) {
-      const modeModel = this.agent.kimiConfig?.modeModels?.[modeModelKey];
-      if (modeModel !== undefined) {
-        let resolved: ResolvedRuntimeProvider | undefined;
-        let usable = false;
-        try {
-          resolved = this.agent.modelProvider?.resolveProviderConfig(modeModel);
-          usable = resolved === undefined || this.modelAliasHasUsableAuth(modeModel, resolved);
-        } catch {
-          this.agent.log?.warn(`modeModels.${modeModelKey} "${modeModel}" not found, keeping current model`);
-          this._preModeModelAlias = null;
-        }
-        if (usable) {
-          this._preModeModelAlias = { value: restoreTargetAlias };
-          if (modeModel !== this.agent.config.modelAlias) {
-            this.agent.log?.debug('sessionMode.enter switching model', {
-              kind,
-              fromModelAlias: restoreTargetAlias,
-              toModelAlias: modeModel,
-            });
-            this.agent.config.update({ modelAlias: modeModel });
-            this.agent.refreshLlm();
-          }
-        } else if (resolved !== undefined) {
-          this.agent.log?.warn(
-            `modeModels.${modeModelKey} "${modeModel}" has no configured API key or OAuth login; keeping current model`,
-          );
-          this._preModeModelAlias = null;
-        }
-      }
-    }
-
-    this.agent.log?.debug('sessionMode.enter end', {
-      kind,
-      modelAlias: this.agent.config.modelAlias,
-      preModeModelAlias: this._preModeModelAlias?.value,
-    });
-
     try {
-      const { isProjectScoped } = await this.resolveSessionModeDirectory(kind);
-      if (isProjectScoped) {
-        try {
-          await this.ensureGitignore(this.agent.config.cwd);
-        } catch (error) {
-          this.agent.log?.warn('Failed to update .gitignore', { error });
-        }
-      }
+      await behavior.onEnter({ agent: this.agent, id, restoreTargetAlias });
+      this._preModeModelAlias = { value: restoreTargetAlias };
 
       this.agent.records.logRecord({
         type: 'session_mode.enter',
@@ -172,6 +131,12 @@ export class SessionMode {
       this._kind = 'plan';
       throw error;
     }
+
+    this.agent.log?.debug('sessionMode.enter end', {
+      kind,
+      modelAlias: this.agent.config.modelAlias,
+      preModeModelAlias: this._preModeModelAlias?.value,
+    });
 
     if (emitStatus) this.agent.emitStatusUpdated();
   }
@@ -209,14 +174,17 @@ export class SessionMode {
   }
 
   cancel(id?: string): void {
+    if (!this._isActive) return;
+
     if (this._preModeModelAlias !== null) {
       this.agent.config.update({ modelAlias: this._preModeModelAlias.value });
       this.agent.refreshLlm();
       this._preModeModelAlias = null;
     }
-    if (this._kind === 'design') {
-      this.closeCurrentDesignSession();
-    }
+
+    const behavior = this.registry.resolve(this._kind);
+    behavior.onCancel({ agent: this.agent, id, sessionModeFilePath: this._sessionModeFilePath });
+
     this.agent.records.logRecord({ type: 'session_mode.cancel', id });
     // Return to the normal context partition AFTER the WAL record so replay
     // routes subsequent context records correctly.
@@ -247,6 +215,8 @@ export class SessionMode {
   }
 
   exit(id?: string): void {
+    if (!this._isActive) return;
+
     const exitModelAlias = this.agent.config.modelAlias;
     const restoreModelAlias = this._preModeModelAlias?.value;
     this.agent.log?.debug('sessionMode.exit start', {
@@ -259,9 +229,10 @@ export class SessionMode {
       this.agent.refreshLlm();
       this._preModeModelAlias = null;
     }
-    if (this._kind === 'design') {
-      this.closeCurrentDesignSession(this._sessionModeFilePath ?? undefined);
-    }
+
+    const behavior = this.registry.resolve(this._kind);
+    behavior.onExit({ agent: this.agent, id, sessionModeFilePath: this._sessionModeFilePath });
+
     this.agent.records.logRecord({ type: 'session_mode.exit', id });
     this.agent.log?.debug('sessionMode.exit end', {
       kind: this._kind,
@@ -275,9 +246,6 @@ export class SessionMode {
       enabled: false,
       kind: this._kind,
     });
-    if (this._kind === 'design' && this._sessionModeFilePath !== null) {
-      this._lastCompletedDesignFilePath = this._sessionModeFilePath;
-    }
     this._isActive = false;
     this._sessionModeId = null;
     this._sessionModeFilePath = null;
@@ -296,7 +264,7 @@ export class SessionMode {
    */
   async setWritingPlanSource(sourceFilePath: string): Promise<void> {
     await this.validatePlanSource(sourceFilePath);
-    const { dir } = await this.resolveSessionModeDirectory('plan');
+    const { dir } = await resolveSessionModeDirectory(this.agent, 'plan');
     const base = basename(sourceFilePath);
     const sourceStem = base.endsWith('.md') ? base.slice(0, -'.md'.length) : base;
     const stem = await this.findUniqueStemInDir(dir, sourceStem);
@@ -439,14 +407,14 @@ export class SessionMode {
     this._designSessions = sessions.slice();
   }
 
-  private startDesignSession(id: string): void {
+  public startDesignSession(id: string): void {
     this._designSessions.push({
       designSessionID: id,
       startedAtMsg: this.currentMessageCount(),
     });
   }
 
-  private closeCurrentDesignSession(approvedPath?: string): void {
+  public closeCurrentDesignSession(approvedPath?: string): void {
     const session = this._designSessions[this._designSessions.length - 1];
     if (session === undefined || session.exitedAtMsg !== undefined) return;
     const count = this.currentMessageCount();
@@ -460,6 +428,10 @@ export class SessionMode {
     if (approvedPath !== undefined && approvedPath.length > 0) {
       session.approvedPath = approvedPath;
     }
+  }
+
+  public setLastCompletedDesignFilePath(path: string | null): void {
+    this._lastCompletedDesignFilePath = path;
   }
 
   private currentMessageCount(): number {
@@ -519,7 +491,7 @@ export class SessionMode {
       return this._sessionModeFilePath;
     }
 
-    const { dir } = await this.resolveSessionModeDirectory(this._kind);
+    const { dir } = await resolveSessionModeDirectory(this.agent, this._kind);
 
     // Lazy fallback: if design stem is known, use it instead of deriving from content.
     if (this._kind === 'plan' && this._lastCompletedDesignFilePath !== null) {
@@ -587,7 +559,7 @@ export class SessionMode {
       return this._sessionModeFilePath;
     }
 
-    const { dir } = await this.resolveSessionModeDirectory(this._kind);
+    const { dir } = await resolveSessionModeDirectory(this.agent, this._kind);
 
     // Extract slug from the model's requested path basename.  basename()
     // strips any directory structure the model may have invented, so the
@@ -677,30 +649,6 @@ export class SessionMode {
     });
   }
 
-  private async resolveSessionModeDirectory(kind: SessionModeKind): Promise<{ dir: string; isProjectScoped: boolean }> {
-    const subdir =
-      kind === 'office-hours' ? 'products' :
-      kind === 'game-design' ? 'game-design' :
-      kind === 'design' ? 'designs' :
-      'plans';
-    const projectDir = join(this.agent.config.cwd, '.ody-code', subdir);
-    try {
-      await this.agent.kaos.mkdir(projectDir, { parents: true, existOk: true });
-      return { dir: projectDir, isProjectScoped: true };
-    } catch (error) {
-      if (isPermissionError(error) && this.agent.homedir !== undefined) {
-        const sessionDir = join(this.agent.homedir, subdir);
-        await this.agent.kaos.mkdir(sessionDir, { parents: true, existOk: true });
-        return { dir: sessionDir, isProjectScoped: false };
-      }
-      throw error;
-    }
-  }
-
-  private async ensureGitignore(cwd: string): Promise<void> {
-    await ensureGitignore(cwd, this.agent.kaos);
-  }
-
   private async findUniqueStemInDir(dir: string, baseStem: string): Promise<string> {
     let stem = baseStem;
     let suffix = 1;
@@ -723,36 +671,4 @@ export class SessionMode {
     if (!this._sessionModeFilePath) return baseStem;
     return this.findUniqueStemInDir(dirname(this._sessionModeFilePath), baseStem);
   }
-
-  /**
-   * Whether a model alias can actually be used for generation. A model is usable
-   * when its provider has either a resolved API key (config value or environment
-   * variable) or a configured OAuth login. This prevents mode transitions from
-   * silently switching to a model that will fail on its first LLM call with a
-   * cryptic "apiKey is required" provider error.
-   */
-  private modelAliasHasUsableAuth(
-    modelAlias: string,
-    resolved: ResolvedRuntimeProvider,
-  ): boolean {
-    // OAuth path: resolveAuth returns a wrapper whenever the raw provider config
-    // has an `oauth` entry. The wrapper fetches the access token per request.
-    const withAuth = this.agent.modelProvider?.resolveAuth?.(modelAlias, {
-      log: this.agent.log,
-    });
-    if (withAuth !== undefined) return true;
-
-    // API-key path: the resolved KosongProviderConfig already folds in config
-    // values and environment variables via provider-manager's providerApiKey().
-    const apiKey = (resolved.provider as { apiKey?: string }).apiKey;
-    return apiKey !== undefined && apiKey.length > 0;
-  }
-}
-
-
-
-function isPermissionError(error: unknown): boolean {
-  if (error === null || typeof error !== 'object') return false;
-  const code = (error as { readonly code?: unknown }).code;
-  return code === 'EACCES' || code === 'EPERM';
 }

@@ -255,7 +255,7 @@
         "listSkills": {
           "payload": {
             "kind": "ref",
-            "name": "{ sessionMode?: \"plan\" | \"design\" | \"normal\" | \"office-hours\" | \"game-design\"; readonly sessionId: string; }"
+            "name": "{ sessionMode?: \"plan\" | \"design\" | \"office-hours\" | \"game-design\" | \"normal\"; readonly sessionId: string; }"
           },
           "returns": {
             "kind": "array",
@@ -442,7 +442,7 @@
         "enterPlan": {
           "payload": {
             "kind": "ref",
-            "name": "{ readonly kind?: SessionModeKind; readonly fileStem?: string; readonly sourceFilePath?: string; readonly agentId: string; readonly sessionId: string; }"
+            "name": "{ readonly kind?: \"plan\" | \"design\" | \"office-hours\" | \"game-design\"; readonly fileStem?: string; readonly sourceFilePath?: string; readonly agentId: string; readonly sessionId: string; }"
           },
           "returns": {
             "kind": "void"
@@ -684,7 +684,7 @@
               },
               {
                 "kind": "ref",
-                "name": "{ readonly type: \"agent.status.updated\"; readonly model?: string; readonly contextTokens?: number; readonly maxContextTokens?: number; readonly contextUsage?: number; readonly sessionMode?: \"plan\" | \"design\" | \"normal\" | \"office-hours\" | \"game-design\"; ... 5 more ...; readonly sessionId: string; }"
+                "name": "{ readonly type: \"agent.status.updated\"; readonly model?: string; readonly contextTokens?: number; readonly maxContextTokens?: number; readonly contextUsage?: number; readonly sessionMode?: \"plan\" | \"design\" | \"office-hours\" | \"game-design\" | \"normal\"; ... 5 more ...; readonly sessionId: string; }"
               },
               {
                 "kind": "ref",
@@ -2207,7 +2207,7 @@
         }
       }
     },
-    "{ sessionMode?: \"plan\" | \"design\" | \"normal\" | \"office-hours\" | \"game-design\"; readonly sessionId: string; }": null,
+    "{ sessionMode?: \"plan\" | \"design\" | \"office-hours\" | \"game-design\" | \"normal\"; readonly sessionId: string; }": null,
     "SkillSummary": {
       "root": "#/definitions/SkillSummary",
       "definitions": {
@@ -2664,7 +2664,7 @@
       }
     },
     "{ readonly agentId: string; readonly sessionId: string; }": null,
-    "{ readonly kind?: SessionModeKind; readonly fileStem?: string; readonly sourceFilePath?: string; readonly agentId: string; readonly sessionId: string; }": null,
+    "{ readonly kind?: \"plan\" | \"design\" | \"office-hours\" | \"game-design\"; readonly fileStem?: string; readonly sourceFilePath?: string; readonly agentId: string; readonly sessionId: string; }": null,
     "{ readonly id?: string; readonly agentId: string; readonly sessionId: string; }": null,
     "{ readonly instruction?: string; readonly agentId: string; readonly sessionId: string; }": null,
     "{ readonly name: string; readonly description: string; readonly parameters: Record<string, unknown>; readonly agentId: string; readonly sessionId: string; }": null,
@@ -4253,7 +4253,7 @@
     },
     "{ readonly type: \"error\"; readonly code: OdyErrorCode; readonly message: string; readonly name?: string; readonly details?: Record<string, unknown>; readonly retryable: boolean; readonly agentId: string; readonly sessionId: string; }": null,
     "{ readonly type: \"warning\"; readonly message: string; readonly code?: string; readonly agentId: string; readonly sessionId: string; }": null,
-    "{ readonly type: \"agent.status.updated\"; readonly model?: string; readonly contextTokens?: number; readonly maxContextTokens?: number; readonly contextUsage?: number; readonly sessionMode?: \"plan\" | \"design\" | \"normal\" | \"office-hours\" | \"game-design\"; ... 5 more ...; readonly sessionId: string; }": null,
+    "{ readonly type: \"agent.status.updated\"; readonly model?: string; readonly contextTokens?: number; readonly maxContextTokens?: number; readonly contextUsage?: number; readonly sessionMode?: \"plan\" | \"design\" | \"office-hours\" | \"game-design\" | \"normal\"; ... 5 more ...; readonly sessionId: string; }": null,
     "{ readonly type: \"session.meta.updated\"; readonly title?: string; readonly patch?: Record<string, unknown>; readonly agentId: string; readonly sessionId: string; }": null,
     "{ readonly type: \"goal.updated\"; readonly snapshot: GoalSnapshot; readonly change?: GoalChange; readonly agentId: string; readonly sessionId: string; }": null,
     "{ readonly type: \"skill.activated\"; readonly activationId: string; readonly skillName: string; readonly skillArgs?: string; readonly trigger: \"user-slash\" | \"model-tool\" | \"nested-skill\"; readonly skillPath?: string; readonly skillSource?: SkillSource; readonly agentId: string; readonly sessionId: string; }": null,

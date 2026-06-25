@@ -10,11 +10,10 @@
 
 import type { Message, ToolCall } from '@odysseythink/kosong';
 
+import { RUNTIME_MODES } from '../../agent/session-mode';
+import type { RuntimeMode } from '../../agent/session-mode';
+
 import type { SessionCheckpointPayload } from './checkpoint';
-
-export type ModeKey = 'normal' | 'plan' | 'design' | 'office-hours';
-
-const VALID_MODES: readonly ModeKey[] = ['normal', 'plan', 'design', 'office-hours'];
 
 export interface CheckpointIntegrityOptions {
   /** Expected number of messages in the source of truth (e.g. live memory). */
@@ -114,7 +113,7 @@ function validateJson(payload: unknown, errors: string[]): boolean {
   }
 
   const currentMode = typed.currentMode as string | undefined;
-  if (!VALID_MODES.includes(currentMode as ModeKey)) {
+  if (!RUNTIME_MODES.includes(currentMode as RuntimeMode)) {
     errors.push(`Invalid currentMode: ${String(currentMode)}`);
     ok = false;
   }

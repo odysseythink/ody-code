@@ -13,6 +13,7 @@ import { basename } from 'node:path';
 
 import { isRainbowDancing, renderDanceFooterModel } from '#/tui/easter-eggs/dance';
 import type { ColorPalette } from '#/tui/theme/colors';
+import type { RuntimeMode } from '@odysseythink/ody-code-sdk';
 import type { SessionMode } from '#/tui/commands/types';
 import type { AppState } from '#/tui/types';
 import {
@@ -48,7 +49,7 @@ function luminance(hex: string): number {
 }
 
 function renderModeBadge(
-  mode: 'normal' | 'plan' | 'design' | 'office-hours' | 'game-design',
+  mode: RuntimeMode,
   colors: ColorPalette,
   fileName?: string,
   userLanguage?: 'en' | 'zh' | undefined,

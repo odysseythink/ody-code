@@ -1,0 +1,14 @@
+/Users/ranwei/workspace/ody-code/rust-ody/target/aarch64-apple-darwin/release/deps/thiserror-c3ee7cded9750a4f.d: /Users/ranwei/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/lib.rs /Users/ranwei/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/aserror.rs /Users/ranwei/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/display.rs /Users/ranwei/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/var.rs /Users/ranwei/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/private.rs /Users/ranwei/workspace/ody-code/rust-ody/target/aarch64-apple-darwin/release/build/thiserror-fbd147eb16f7c78c/out/private.rs
+
+/Users/ranwei/workspace/ody-code/rust-ody/target/aarch64-apple-darwin/release/deps/libthiserror-c3ee7cded9750a4f.rlib: /Users/ranwei/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/lib.rs /Users/ranwei/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/aserror.rs /Users/ranwei/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/display.rs /Users/ranwei/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/var.rs /Users/ranwei/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/private.rs /Users/ranwei/workspace/ody-code/rust-ody/target/aarch64-apple-darwin/release/build/thiserror-fbd147eb16f7c78c/out/private.rs
+
+/Users/ranwei/workspace/ody-code/rust-ody/target/aarch64-apple-darwin/release/deps/libthiserror-c3ee7cded9750a4f.rmeta: /Users/ranwei/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/lib.rs /Users/ranwei/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/aserror.rs /Users/ranwei/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/display.rs /Users/ranwei/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/var.rs /Users/ranwei/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/private.rs /Users/ranwei/workspace/ody-code/rust-ody/target/aarch64-apple-darwin/release/build/thiserror-fbd147eb16f7c78c/out/private.rs
+
+/Users/ranwei/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/lib.rs:
+/Users/ranwei/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/aserror.rs:
+/Users/ranwei/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/display.rs:
+/Users/ranwei/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/var.rs:
+/Users/ranwei/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/private.rs:
+/Users/ranwei/workspace/ody-code/rust-ody/target/aarch64-apple-darwin/release/build/thiserror-fbd147eb16f7c78c/out/private.rs:
+
+# env-dep:OUT_DIR=/Users/ranwei/workspace/ody-code/rust-ody/target/aarch64-apple-darwin/release/build/thiserror-fbd147eb16f7c78c/out

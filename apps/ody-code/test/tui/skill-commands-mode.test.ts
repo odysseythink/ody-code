@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { OdyTUI, type OdyTUIStartupInput, type TUIState } from '#/tui/ody-tui';
-import type { SkillSummary } from '@odysseythink/ody-code-sdk';
+import type { RuntimeMode, SkillSummary } from '@odysseythink/ody-code-sdk';
 
 interface SkillCommandsDriver {
   state: TUIState;
@@ -36,7 +36,7 @@ function makeHarness(session = makeSession()) {
   };
 }
 
-type EffectiveMode = 'normal' | 'plan' | 'design' | 'office-hours' | 'game-design';
+type EffectiveMode = RuntimeMode;
 
 function makeStartupInput(mode: EffectiveMode = 'normal'): OdyTUIStartupInput {
   const officeHours = mode === 'office-hours';

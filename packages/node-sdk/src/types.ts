@@ -1,6 +1,7 @@
 import type {
   ExportSessionManifest,
   ResumeSessionResult,
+  RuntimeMode,
   ShellEnvironment,
   TelemetryClient,
   TelemetryContextPatch,
@@ -57,6 +58,7 @@ export type {
   RequestCodeReviewPayload,
   ReviewFindingData,
   ResumedAgentState,
+  RuntimeMode,
   ServicesConfig,
   ShellEnvironment,
   SkillSummary,
@@ -101,7 +103,7 @@ export interface CreateSessionOptions {
   readonly model?: string | undefined;
   readonly thinking?: string | undefined;
   readonly permission?: PermissionMode | undefined;
-  readonly sessionMode?: 'plan' | 'design' | 'office-hours' | 'game-design' | 'normal';
+  readonly sessionMode?: RuntimeMode;
   readonly metadata?: JsonObject | undefined;
 }
 

@@ -6,6 +6,6 @@ export default defineConfig({
   plugins: [rawTextPlugin()],
   test: {
     name: 'kimi-core',
-    include: ['test/**/*.{test,e2e}.ts'],
+    include: ['test/**/*.{test,e2e}.ts', 'src/**/*.test.ts'],
   },
 });

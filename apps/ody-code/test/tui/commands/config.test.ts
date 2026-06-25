@@ -1,10 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
 import { persistModelSelection } from '../../../src/tui/commands/config';
 import type { SlashCommandHost } from '../../../src/tui/commands/dispatch';
+import type { RuntimeMode } from '@odysseythink/ody-code-sdk';
 
 function createMockHost(
   config: { defaultModel?: string; defaultThinking?: boolean; modeModels?: { plan?: string; design?: string } },
-  sessionMode: 'normal' | 'plan' | 'design' | 'office-hours',
+  sessionMode: RuntimeMode,
   
 ) {
   return {

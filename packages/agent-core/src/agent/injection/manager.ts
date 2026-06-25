@@ -1,13 +1,13 @@
 import type { Agent } from '..';
 import { flags } from '../../flags';
-import { DesignModeInjector } from './design-mode';
 import { GoalInjector } from './goal';
 import type { DynamicInjector } from './injector';
+import { PermissionModeInjector } from './permission-mode';
+import { PlanModeInjector } from './plan-mode';
+import { DesignModeInjector } from './design-mode';
 import { OfficeHoursInjector } from './office-hours';
 import { GameDesignInjector } from './game-design';
-import { PermissionModeInjector } from './permission-mode';
 import { PluginSessionStartInjector } from './plugin-session-start';
-import { PlanModeInjector } from './plan-mode';
 import { TodoListReminderInjector } from './todo-list';
 import { KnowledgeMicroagentInjector } from './knowledge-microagent';
 

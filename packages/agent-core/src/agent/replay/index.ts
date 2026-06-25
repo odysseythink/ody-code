@@ -1,14 +1,14 @@
-import type { Agent, ModeKey } from '..';
+import type { Agent, RuntimeMode } from '..';
 import type { AgentReplayRecord } from '../..';
 import type { ContextMessage } from '../context';
 
 export class ReplayBuilder {
   protected readonly records: AgentReplayRecord[] = [];
-  private _mode: ModeKey = 'normal';
+  private _mode: RuntimeMode = 'normal';
 
   constructor(public readonly agent: Agent) {}
 
-  setMode(mode: ModeKey): void {
+  setMode(mode: RuntimeMode): void {
     this._mode = mode;
   }
 
@@ -34,7 +34,7 @@ export class ReplayBuilder {
     return this.records;
   }
 
-  buildResultForMode(mode: ModeKey): readonly AgentReplayRecord[] {
+  buildResultForMode(mode: RuntimeMode): readonly AgentReplayRecord[] {
     return this.records.filter((r) => {
       if (r.type !== 'message') return true;
       return r.mode === mode;

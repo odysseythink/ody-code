@@ -10,6 +10,7 @@ import type {
   BackgroundTaskInfo,
   CompactOptions,
   CreateGoalInput,
+  DesignReviewData,
   GoalSnapshot,
   GoalToolResult,
   McpServerInfo,
@@ -20,7 +21,7 @@ import type {
   PromptInput,
   ReloadSummary,
   ResumedSessionState,
-  DesignReviewData,
+  RuntimeMode,
   SessionPlan,
   SessionStatus,
   SessionSummary,
@@ -152,7 +153,7 @@ export class Session {
   }
 
   async setSessionMode(
-    mode: 'plan' | 'design' | 'office-hours' | 'game-design' | 'normal',
+    mode: RuntimeMode,
     options?: { sourceFilePath?: string },
   ): Promise<void> {
     this.ensureOpen();
@@ -231,7 +232,7 @@ export class Session {
     return this.rpc.getStatus({ sessionId: this.id });
   }
 
-  async listSkills(options?: { sessionMode?: 'normal' | 'plan' | 'design' | 'office-hours' | 'game-design' }): Promise<readonly SkillSummary[]> {
+  async listSkills(options?: { sessionMode?: RuntimeMode }): Promise<readonly SkillSummary[]> {
     this.ensureOpen();
     return this.rpc.listSkills({ sessionId: this.id, sessionMode: options?.sessionMode });
   }
