@@ -8,6 +8,7 @@ export const SMOKE_PACKAGES = [
   '@mariozechner/clipboard',
   'koffi',
   '@odysseythink/ody-crypto',
+  'ody-host',
 ];
 
 export function runNativeAssetSmokeIfRequested(

@@ -118,4 +118,29 @@ describe('runNativeAssetSmokeIfRequested', () => {
     exitSpy.mockRestore();
     stderrSpy.mockRestore();
   });
+
+  it('fails when ody-host is missing from the manifest', () => {
+    const exitSpy = vi
+      .spyOn(process, 'exit')
+      .mockImplementation(() => {
+        throw new Error('process.exit called');
+      });
+    const stderrSpy = vi
+      .spyOn(process.stderr, 'write')
+      .mockImplementation(() => true);
+    const { source, manifest } = fakeManifest('ody-host');
+
+    try {
+      runNativeAssetSmokeIfRequested({ source, manifest });
+    } catch {
+      // process.exit mock throws to stop control flow
+    }
+
+    expect(stderrSpy).toHaveBeenCalledWith(
+      expect.stringContaining('Native package is not available: ody-host'),
+    );
+    expect(exitSpy).toHaveBeenCalledWith(1);
+    exitSpy.mockRestore();
+    stderrSpy.mockRestore();
+  });
 });
