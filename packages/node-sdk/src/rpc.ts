@@ -1026,7 +1026,7 @@ export class ClientAPI implements SDKAPI {
   async chatStreamInit(
     payload: ChatStreamInitPayload & { sessionId: string; agentId: string },
   ): Promise<ChatStreamInitResponse> {
-    const streamId = randomUUID();
+    const streamId = payload.streamId;
     const { request } = payload;
     const abortController = new AbortController();
     this.activeStreams.set(streamId, abortController);

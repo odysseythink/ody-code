@@ -3,9 +3,11 @@ import { describe, it, expect, vi, beforeEach, type MockedFunction } from 'vites
 import type { ChatProvider, ProviderConfig, StreamedMessagePart, TokenUsage } from '@odysseythink/kosong';
 import { createProvider } from '@odysseythink/kosong';
 
-import { ClientAPI, type ResolvedCoreAPI } from '../src/rpc';
+import { ClientAPI } from '../src/rpc';
 import type { SDKRpcClient } from '../src/rpc';
-import type { ChatStreamRequest } from '@odysseythink/agent-core';
+
+type ResolvedCoreAPI = Awaited<ReturnType<SDKRPCClient>>;
+import type { ChatStreamRequest, SDKRPCClient } from '@odysseythink/agent-core';
 
 vi.mock('@odysseythink/kosong', async (importOriginal) => {
   const mod = await importOriginal<typeof import('@odysseythink/kosong')>();
@@ -92,13 +94,13 @@ describe('ClientAPI LLM proxy', () => {
     const request: ChatStreamRequest = {
       modelName: 'fake-model',
       systemPrompt: 's',
-      messages: [{ role: 'user', content: [{ type: 'text', text: 'hi' }] }],
+      messages: [{ role: 'user', content: [{ type: 'text', text: 'hi' }], toolCalls: [] }],
       tools: [],
       provider: { type: 'openai', model: 'fake-model', apiKey: 'key' } as ProviderConfig,
     };
 
-    const { streamId } = await api.chatStreamInit({ request, sessionId: 's1', agentId: 'a1' });
-    expect(streamId).toBeDefined();
+    const { streamId } = await api.chatStreamInit({ request, streamId: 'stream-1', sessionId: 's1', agentId: 'a1' });
+    expect(streamId).toBe('stream-1');
 
     await waitForStreamTermination(rpc);
 
@@ -130,6 +132,10 @@ describe('ClientAPI LLM proxy', () => {
       }),
     );
     expect(rpc.chatStreamError).not.toHaveBeenCalled();
+
+    // The internal active-stream bookkeeping should be cleaned up once the
+    // stream terminates, avoiding a memory leak for long-lived clients.
+    expect((api as unknown as { activeStreams: Map<string, AbortController> }).activeStreams.size).toBe(0);
   });
 
   it('cancels an active stream', async () => {
@@ -165,12 +171,12 @@ describe('ClientAPI LLM proxy', () => {
     const request: ChatStreamRequest = {
       modelName: 'fake-model',
       systemPrompt: 's',
-      messages: [{ role: 'user', content: [{ type: 'text', text: 'hi' }] }],
+      messages: [{ role: 'user', content: [{ type: 'text', text: 'hi' }], toolCalls: [] }],
       tools: [],
       provider: { type: 'openai', model: 'fake-model', apiKey: 'key' } as ProviderConfig,
     };
 
-    const { streamId } = await api.chatStreamInit({ request, sessionId: 's1', agentId: 'a1' });
+    const { streamId } = await api.chatStreamInit({ request, streamId: 'stream-2', sessionId: 's1', agentId: 'a1' });
     // Wait until the generate call has captured the signal.
     await new Promise((resolve) => setTimeout(resolve, 0));
 
@@ -180,5 +186,47 @@ describe('ClientAPI LLM proxy', () => {
     api.chatStreamCancel({ streamId, sessionId: 's1', agentId: 'a1' });
 
     expect(abortSignals[0]?.aborted).toBe(true);
+    expect((api as unknown as { activeStreams: Map<string, AbortController> }).activeStreams.size).toBe(0);
+  });
+
+  it('dispatches a chatStreamError when generation fails', async () => {
+    const fakeProvider = createFakeProvider([]);
+    fakeProvider.generate = async () => {
+      throw new Error('provider blew up');
+    };
+    mockedCreateProvider.mockReturnValue(fakeProvider);
+
+    const rpc = {
+      chatStreamDelta: vi.fn().mockResolvedValue(undefined),
+      chatStreamEnd: vi.fn().mockResolvedValue(undefined),
+      chatStreamError: vi.fn().mockResolvedValue(undefined),
+    } as unknown as ResolvedCoreAPI;
+
+    const client = {} as unknown as SDKRpcClient;
+    const api = new ClientAPI(client, async () => rpc);
+
+    const request: ChatStreamRequest = {
+      modelName: 'fake-model',
+      systemPrompt: 's',
+      messages: [{ role: 'user', content: [{ type: 'text', text: 'hi' }], toolCalls: [] }],
+      tools: [],
+      provider: { type: 'openai', model: 'fake-model', apiKey: 'key' } as ProviderConfig,
+    };
+
+    const { streamId } = await api.chatStreamInit({ request, streamId: 'stream-3', sessionId: 's1', agentId: 'a1' });
+
+    await waitForStreamTermination(rpc);
+
+    expect(rpc.chatStreamEnd).not.toHaveBeenCalled();
+    expect(rpc.chatStreamError).toHaveBeenCalledTimes(1);
+    expect(rpc.chatStreamError).toHaveBeenCalledWith(
+      expect.objectContaining({
+        streamId,
+        error: expect.objectContaining({
+          code: 'internal',
+          message: 'provider blew up',
+        }),
+      }),
+    );
   });
 });

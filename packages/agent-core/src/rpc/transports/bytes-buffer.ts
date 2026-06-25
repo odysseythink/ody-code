@@ -28,7 +28,7 @@ export class BytesBuffer {
   }
 
   slice(start: number, end: number): Uint8Array {
-    return this.buffer.subarray(start, end);
+    return this.buffer.slice(start, end);
   }
 
   discard(count: number): void {

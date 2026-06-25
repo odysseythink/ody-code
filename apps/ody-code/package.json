@@ -80,6 +80,7 @@
   "devDependencies": {
     "@odysseythink/agent-core": "workspace:^",
     "@odysseythink/kimi-code-oauth": "workspace:^",
+    "@odysseythink/kosong": "workspace:^",
     "@odysseythink/ody-code-sdk": "workspace:^",
     "@odysseythink/ody-telemetry": "workspace:^",
     "@types/semver": "^7.7.0",

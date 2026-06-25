@@ -1,3 +1,5 @@
+import { randomUUID } from 'node:crypto';
+
 import { isRetryableGenerateError, type ModelCapability, type ProviderConfig } from '@odysseythink/kosong';
 
 import { ErrorCodes, fromOdyErrorPayload, OdyError } from '@odysseythink/agent-core-shared';
@@ -85,35 +87,47 @@ export class RemoteKosongLLM implements LLM {
 
   async chat(params: LLMChatParams): Promise<LLMChatResponse> {
     const request = this.buildRequest(params);
-    const { streamId } = await this.sdk.chatStreamInit({ request });
+    // The worker/server owns the stream ID so it can register the handler before
+    // the host starts emitting deltas, avoiding a race where early deltas are lost.
+    const streamId = randomUUID();
 
     const signal = params.signal;
     signal?.throwIfAborted();
 
-    try {
-      return await new Promise<LLMChatResponse>((resolve, reject) => {
-        const onAbort = (): void => {
-          this.sdk.chatStreamCancel({ streamId });
-          reject(new OdyError(ErrorCodes.INTERNAL, 'Stream cancelled'));
-        };
-        signal?.addEventListener('abort', onAbort, { once: true });
+    return new Promise<LLMChatResponse>((resolve, reject) => {
+      const onAbort = (): void => {
+        this.sdk.chatStreamCancel({ streamId });
+        remoteLLMStreamRegistry.unregister(streamId);
+        reject(new OdyError(ErrorCodes.INTERNAL, 'Stream cancelled'));
+      };
+      signal?.addEventListener('abort', onAbort, { once: true });
 
-        remoteLLMStreamRegistry.register(streamId, {
-          onDelta: (delta) => {
-            if (signal?.aborted) return;
-            this.forwardDelta(delta, params);
-          },
-          onEnd: (result) => {
-            resolve(this.toLLMChatResponse(result));
-          },
-          onError: (error) => {
-            reject(error);
-          },
-        });
+      const handlers: StreamHandlers = {
+        onDelta: (delta) => {
+          if (signal?.aborted) return;
+          this.forwardDelta(delta, params);
+        },
+        onEnd: (result) => {
+          signal?.removeEventListener('abort', onAbort);
+          remoteLLMStreamRegistry.unregister(streamId);
+          resolve(this.toLLMChatResponse(result));
+        },
+        onError: (error) => {
+          signal?.removeEventListener('abort', onAbort);
+          remoteLLMStreamRegistry.unregister(streamId);
+          reject(error);
+        },
+      };
+      remoteLLMStreamRegistry.register(streamId, handlers);
+
+      // Initiate generation on the host only after the local handler is
+      // registered, so no deltas are dropped.
+      this.sdk.chatStreamInit({ request, streamId }).catch((error) => {
+        signal?.removeEventListener('abort', onAbort);
+        remoteLLMStreamRegistry.unregister(streamId);
+        reject(error);
       });
-    } finally {
-      remoteLLMStreamRegistry.unregister(streamId);
-    }
+    });
   }
 
   isRetryableError(error: unknown): boolean {
@@ -125,7 +139,9 @@ export class RemoteKosongLLM implements LLM {
       modelName: this.modelName,
       systemPrompt: this.systemPrompt,
       messages: params.messages,
-      tools: params.tools,
+      // Strip executable-tool runtime state before crossing the RPC boundary;
+      // only the model-visible definition is needed on the SDK side.
+      tools: params.tools.map(({ name, description, parameters }) => ({ name, description, parameters })),
       capability: this.capability,
       completionBudgetConfig: this.completionBudgetConfig,
       requestLogContext: params.requestLogContext,

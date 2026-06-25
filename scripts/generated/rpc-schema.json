@@ -860,7 +860,7 @@
         "chatStreamInit": {
           "payload": {
             "kind": "ref",
-            "name": "{ readonly request: ChatStreamRequest; readonly agentId: string; readonly sessionId: string; }"
+            "name": "{ readonly request: ChatStreamRequest; readonly streamId: string; readonly agentId: string; readonly sessionId: string; }"
           },
           "returns": {
             "kind": "ref",
@@ -4576,7 +4576,7 @@
         }
       }
     },
-    "{ readonly request: ChatStreamRequest; readonly agentId: string; readonly sessionId: string; }": null,
+    "{ readonly request: ChatStreamRequest; readonly streamId: string; readonly agentId: string; readonly sessionId: string; }": null,
     "ChatStreamInitResult": {
       "root": "#/definitions/ChatStreamInitResult",
       "definitions": {

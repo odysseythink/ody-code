@@ -50,6 +50,8 @@ export interface ChatStreamInitResult {
 /** Payload for chatStreamInit RPC (alias for the wrapping object). */
 export interface ChatStreamInitPayload {
   readonly request: ChatStreamRequest;
+  /** Stream ID assigned by the worker/server; the host must use this ID for all deltas. */
+  readonly streamId: string;
 }
 
 /** Response type alias used by SDKAgentAPI. */

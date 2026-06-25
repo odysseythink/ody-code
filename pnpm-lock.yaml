@@ -112,6 +112,9 @@ importers:
       '@odysseythink/kimi-code-oauth':
         specifier: workspace:^
         version: link:../../packages/oauth
+      '@odysseythink/kosong':
+        specifier: workspace:^
+        version: link:../../packages/kosong
       '@odysseythink/ody-code-sdk':
         specifier: workspace:^
         version: link:../../packages/node-sdk
