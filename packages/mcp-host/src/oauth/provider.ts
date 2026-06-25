@@ -15,7 +15,7 @@
  * orchestrator; the provider is the persistence + flow-state shim.
  */
 
-import { randomBytes } from 'node:crypto';
+import { getOdyCrypto } from '@odysseythink/ody-crypto';
 
 import type {
   OAuthClientProvider,
@@ -107,7 +107,7 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
   }
 
   state(): string {
-    this._state ??= randomBytes(16).toString('hex');
+    this._state ??= getOdyCrypto().randomBytes(16).toString('hex');
     return this._state;
   }
 

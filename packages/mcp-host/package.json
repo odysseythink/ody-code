@@ -26,6 +26,7 @@
   },
   "dependencies": {
     "@odysseythink/agent-core-shared": "workspace:^",
+    "@odysseythink/ody-crypto": "workspace:^",
     "@odysseythink/kaos": "workspace:^",
     "@odysseythink/kosong": "workspace:^",
     "@modelcontextprotocol/sdk": "^1.29.0",
