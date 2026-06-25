@@ -9,7 +9,7 @@ import { MoonshotFetchURLProvider } from '#/tools/providers/moonshot-fetch-url';
 import { resolveWebSearchRuntime } from '#/tools/providers/web-search/runtime';
 import type { PromisableMethods } from '#/utils/types';
 import type { SessionModeKind } from '#/agent/session-mode';
-import { getCoreVersion } from '@odysseythink/agent-core-shared';
+import { getCoreVersion } from '#/version';
 import {
   buildAuditDigest,
   createCodeReviewExecutor,

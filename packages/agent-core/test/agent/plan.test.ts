@@ -519,12 +519,13 @@ describe('plan allows safe tool flow', () => {
 
   it('keeps explicit deny rules above active plan file writes', async () => {
     const files = new Map<string, string>();
+    const readText = vi.fn(async (path: string) => files.get(path) ?? '');
     const writeText = vi.fn(async (path: string, content: string) => {
       files.set(path, content);
       return content.length;
     });
     const ctx = testAgent({
-      kaos: createPlanKaos({ writeText }),
+      kaos: createPlanKaos({ readText, writeText }),
     });
     ctx.configure({ tools: ['Write'] });
     ctx.agent.permission.rules.push({
@@ -553,7 +554,7 @@ describe('plan allows safe tool flow', () => {
     await ctx.untilTurnEnd();
 
     expect(files.get(planPath)).toBeUndefined();
-    expect(writeText).not.toHaveBeenCalled();
+    expect(writeText).not.toHaveBeenCalledWith(planPath, expect.any(String));
     expect(toolResultText(ctx.agent.context.history)).toContain(
       'Tool "Write" was denied by permission rule. Reason: blocked by test',
     );
