@@ -30,6 +30,7 @@
     "@odysseythink/kaos": "workspace:^",
     "@odysseythink/kosong": "workspace:^",
     "@modelcontextprotocol/sdk": "^1.29.0",
+    "@odysseythink/ody-crypto": "workspace:^",
     "pathe": "^2.0.3",
     "zod": "catalog:"
   }
