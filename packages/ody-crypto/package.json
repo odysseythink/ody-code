@@ -1,0 +1,37 @@
+{
+  "name": "@odysseythink/ody-crypto",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Native crypto module loader with TS fallback",
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/index.cjs",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "scripts": {
+    "build": "tsdown",
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "jsonwebtoken": "^9.0.2"
+  },
+  "devDependencies": {
+    "@types/jsonwebtoken": "^9.0.7",
+    "vitest": "^4.1.4"
+  },
+  "optionalDependencies": {
+    "@odysseythink/ody-crypto-darwin-arm64": "workspace:^",
+    "@odysseythink/ody-crypto-darwin-x64": "workspace:^",
+    "@odysseythink/ody-crypto-linux-arm64": "workspace:^",
+    "@odysseythink/ody-crypto-linux-x64": "workspace:^",
+    "@odysseythink/ody-crypto-win32-x64": "workspace:^"
+  }
+}
