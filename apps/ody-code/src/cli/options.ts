@@ -16,6 +16,11 @@ export interface CLIOptions {
   skillsDirs: string[];
   loginProvider: string | undefined;
   logoutProvider: string | undefined;
+  host: 'inproc' | 'rust';
+  hostStdio: boolean;
+  hostSocket: string | undefined;
+  hostTcp: string | undefined;
+  hostBinary: string | undefined;
 }
 
 export interface ValidatedOptions {
@@ -109,6 +114,26 @@ export function validateOptions(opts: CLIOptions): ValidatedOptions {
     }
     if (opts.officeHours) {
       throw new OptionConflictError('Cannot combine --game-design with --office-hours.');
+    }
+    return { options: opts, uiMode: 'shell' };
+  }
+
+  if (!['inproc', 'rust'].includes(opts.host)) {
+    throw new OptionConflictError(`Invalid --host: ${opts.host}. Must be inproc or rust.`);
+  }
+  if (opts.host === 'rust') {
+    if (opts.prompt !== undefined) {
+      throw new OptionConflictError('Cannot combine --host=rust with --prompt.');
+    }
+    if (opts.officeHours || opts.gameDesign) {
+      throw new OptionConflictError('Cannot combine --host=rust with --office-hours or --game-design.');
+    }
+    if (opts.hostSocket !== undefined && opts.hostTcp !== undefined) {
+      throw new OptionConflictError('Cannot combine --host-socket with --host-tcp.');
+    }
+    if (!opts.hostStdio && opts.hostSocket === undefined && opts.hostTcp === undefined) {
+      // Default to stdio when --host=rust is given without a transport flag.
+      opts.hostStdio = true;
     }
     return { options: opts, uiMode: 'shell' };
   }

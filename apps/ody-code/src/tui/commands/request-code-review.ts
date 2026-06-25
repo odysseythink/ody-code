@@ -93,7 +93,7 @@ export async function handleRequestCodeReviewCommand(
       },
       {
         signal: controller.signal,
-        onProgress: (progress) => {
+        onProgress: (progress: any) => {
           if (progress.stage === 'generating') {
             spinner.updateLabel(`Generating review with ${progress.modelAlias}`);
           } else if (progress.stage === 'preparing') {

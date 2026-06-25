@@ -23,6 +23,7 @@ import {
 
 import { createProgram } from './cli/commands';
 import type { CLIOptions } from './cli/options';
+import { runShellWithRustHost } from './cli/run-shell-rust';
 import { OptionConflictError, validateOptions } from './cli/options';
 import { runOfficeHours } from './cli/run-office-hours';
 import { runGameDesign } from './cli/run-game-design';
@@ -85,6 +86,11 @@ export async function handleMainCommand(opts: CLIOptions, version: string): Prom
 
   if (validated.options.gameDesign) {
     await runGameDesign(validated.options, version);
+    return;
+  }
+
+  if (validated.options.host === 'rust') {
+    await runShellWithRustHost(validated.options, version);
     return;
   }
 

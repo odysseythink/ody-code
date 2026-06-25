@@ -1,6 +1,8 @@
 import type { Component, Focusable } from '@earendil-works/pi-tui';
 import type { DeviceAuthorization } from '@odysseythink/kimi-code-oauth';
-import type { KimiHarness, Session } from '@odysseythink/ody-code-sdk';
+import type { Session } from '@odysseythink/ody-code-sdk';
+
+import type { OdyHarness } from '../types';
 
 import type { Theme } from '../theme';
 import type { ResolvedTheme } from '../theme/colors';
@@ -101,7 +103,7 @@ export { handleWritingPlanCommand } from './writing-plan';
 export interface SlashCommandHost {
   state: TUIState;
   session: Session | undefined;
-  readonly harness: KimiHarness;
+  readonly harness: OdyHarness;
   cancelInFlight: (() => void) | undefined;
   deferUserMessages: boolean;
 

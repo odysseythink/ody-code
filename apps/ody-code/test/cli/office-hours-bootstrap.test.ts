@@ -84,6 +84,11 @@ describe('runOfficeHours', () => {
       prompt: undefined,
       skillsDirs: [],
       loginProvider: undefined,
+    host: 'inproc',
+    hostStdio: false,
+    hostSocket: undefined,
+    hostTcp: undefined,
+    hostBinary: undefined,
       logoutProvider: undefined,
     };
 
@@ -105,6 +110,11 @@ describe('runOfficeHours', () => {
       prompt: undefined,
       skillsDirs: [],
       loginProvider: undefined,
+    host: 'inproc',
+    hostStdio: false,
+    hostSocket: undefined,
+    hostTcp: undefined,
+    hostBinary: undefined,
       logoutProvider: undefined,
     };
 

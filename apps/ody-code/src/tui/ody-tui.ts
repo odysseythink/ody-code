@@ -14,7 +14,6 @@ import type {
   ApprovalResponse,
   BackgroundTaskInfo,
   CreateSessionOptions,
-  KimiHarness,
   PermissionMode,
   PromptPart,
   Session,
@@ -99,6 +98,7 @@ import type { Theme } from './theme/index';
 import {
   INITIAL_LIVE_PANE,
   type AppState,
+  type OdyHarness,
   type OdyTUIOptions,
   type LivePaneState,
   type LoginProgressSpinnerHandle,
@@ -194,7 +194,7 @@ interface SendMessageOptions {
 }
 
 export class OdyTUI {
-  readonly harness: KimiHarness;
+  readonly harness: OdyHarness;
   readonly options: OdyTUIOptions;
   session: Session | undefined;
   state: TUIState;
@@ -244,12 +244,12 @@ export class OdyTUI {
 
   track(
     event: string,
-    properties?: Parameters<KimiHarness['track']>[1],
+    properties?: Parameters<OdyHarness['track']>[1],
   ): void {
     this.harness.track(event, properties);
   }
 
-  constructor(harness: KimiHarness, startupInput: OdyTUIStartupInput) {
+  constructor(harness: OdyHarness, startupInput: OdyTUIStartupInput) {
     this.harness = harness;
     const tuiOptions: OdyTUIOptions = {
       initialAppState: createInitialAppState(startupInput),

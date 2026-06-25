@@ -30,6 +30,29 @@ function parse(argv: string[]): CLIOptions {
   return captured;
 }
 
+function base(): CLIOptions {
+  return {
+    session: undefined,
+    continue: false,
+    yolo: false,
+    auto: false,
+    sessionMode: 'normal',
+    officeHours: false,
+    gameDesign: false,
+    model: undefined,
+    outputFormat: undefined,
+    prompt: undefined,
+    skillsDirs: [],
+    loginProvider: undefined,
+    logoutProvider: undefined,
+    host: 'inproc',
+    hostStdio: false,
+    hostSocket: undefined,
+    hostTcp: undefined,
+    hostBinary: undefined,
+  };
+}
+
 describe('CLI options parsing', () => {
   describe('defaults', () => {
     it('returns defaults when no arguments are given', () => {
@@ -294,7 +317,7 @@ describe('CLI options parsing', () => {
       const commandNames: string[] = program.commands
         .filter((command) => !command.name().startsWith('__'))
         .map((command) => command.name());
-      expect(commandNames).toEqual(['export', 'provider', 'request-code-review', 'upgrade']);
+      expect(commandNames).toEqual(['export', 'provider', 'request-code-review', 'serve', 'upgrade']);
     });
   });
 
@@ -399,6 +422,33 @@ describe('CLI options parsing', () => {
       ]) {
         expect(() => parse([arg])).toThrow();
       }
+    });
+  });
+
+  describe('rust host options', () => {
+    it('defaults host to inproc', () => {
+      expect(parse([]).host).toBe('inproc');
+    });
+
+    it('accepts --host=rust with stdio', () => {
+      const result = validateOptions({ ...base(), host: 'rust', hostStdio: true });
+      expect(result.uiMode).toBe('shell');
+    });
+
+    it('rejects --host=rust in prompt mode', () => {
+      expect(() => validateOptions({ ...base(), host: 'rust', hostStdio: true, prompt: 'hi' })).toThrow(
+        'Cannot combine --host=rust with --prompt.',
+      );
+    });
+
+    it('rejects unknown host value', () => {
+      expect(() => validateOptions({ ...base(), host: 'wasm' as any })).toThrow('Invalid --host');
+    });
+
+    it('rejects combining host socket and tcp', () => {
+      expect(() =>
+        validateOptions({ ...base(), host: 'rust', hostSocket: '/tmp/ody.sock', hostTcp: '127.0.0.1:9000' }),
+      ).toThrow('Cannot combine --host-socket with --host-tcp.');
     });
   });
 });

@@ -110,8 +110,9 @@ export interface SDKRpcClientOptions {
 export interface SDKRpcClientConnectOptions {
   readonly transport:
     | 'stdio'
-    | { readonly socketPath: string }
-    | { readonly host: string; readonly port: number; readonly webSocket?: boolean };
+    | { readonly socketPath: string; readonly spawn?: boolean }
+    | { readonly host: string; readonly port: number; readonly webSocket?: boolean; readonly spawn?: boolean };
+  readonly binaryPath?: string;
   readonly token?: string;
   readonly homeDir?: string;
   readonly configPath?: string;
@@ -177,48 +178,64 @@ export interface ReviewDesignRpcInput extends SessionIdRpcInput {
 
 type ResolvedCoreAPI = Awaited<ReturnType<SDKRPCClient>>;
 
+type ExternalTransportResult = {
+  transport: Transport;
+  proc?: import('node:child_process').ChildProcess | undefined;
+};
+
 async function createExternalTransport(
   options: SDKRpcClientConnectOptions,
   dispatch: Dispatch,
-): Promise<Transport> {
+): Promise<ExternalTransportResult> {
+  const binaryPath = options.binaryPath ?? 'ody';
+  const extraArgs: string[] = [];
+  if (options.configPath !== undefined) {
+    extraArgs.push('--config', options.configPath);
+  }
+  if (options.homeDir !== undefined) {
+    extraArgs.push('--home', options.homeDir);
+  }
+
   if (options.transport === 'stdio') {
     const { spawn } = await import('node:child_process');
-    const proc = spawn('ody', ['serve', '--stdio'], {
+    const proc = spawn(binaryPath, ['serve', '--stdio', ...extraArgs], {
       stdio: ['pipe', 'pipe', 'pipe'],
     });
-
-    await new Promise<ReadyMessage>((resolve, reject) => {
-      const onData = (chunk: Buffer): void => {
-        const lines = chunk.toString('utf8').split('\n');
-        for (const line of lines) {
-          if (!line.trim()) continue;
-          try {
-            const msg = JSON.parse(line) as ReadyMessage;
-            if (msg.type === 'ready' && msg.stdio) {
-              proc.stderr.off('data', onData);
-              resolve(msg);
-              return;
-            }
-          } catch {
-            // ignore non-JSON stderr lines
-          }
-        }
-      };
-      proc.stderr.on('data', onData);
-      proc.once('error', reject);
-      proc.once('exit', (code) => reject(new Error(`ody serve exited with ${String(code)}`)));
-    });
-
-    return createStreamTransport(proc.stdout, proc.stdin, dispatch, { framing: 'length-prefixed' });
+    await waitForReadyMessage(proc.stderr, (msg) => msg.stdio === true);
+    return {
+      transport: createStreamTransport(proc.stdout!, proc.stdin!, dispatch, { framing: 'length-prefixed' }),
+      proc,
+    };
   }
 
   if ('socketPath' in options.transport) {
-    const socket: Socket = connectNet(options.transport.socketPath);
+    const { socketPath, spawn: shouldSpawn } = options.transport;
+    let proc: import('node:child_process').ChildProcess | undefined;
+    if (shouldSpawn) {
+      const { spawn } = await import('node:child_process');
+      proc = spawn(binaryPath, ['serve', '--socket-path', socketPath, ...extraArgs], {
+        stdio: ['ignore', 'ignore', 'pipe'],
+      });
+      await waitForReadyMessage(proc.stderr!, (msg) => msg.socketPath === socketPath);
+    }
+    const socket: Socket = connectNet(socketPath);
     await once(socket, 'connect');
-    return createStreamTransport(socket, socket, dispatch, { framing: 'length-prefixed' });
+    return {
+      transport: createStreamTransport(socket, socket, dispatch, { framing: 'length-prefixed' }),
+      proc,
+    };
   }
 
-  const { host, port, webSocket } = options.transport;
+  const { host, port, webSocket, spawn: shouldSpawn } = options.transport;
+
+  let proc: import('node:child_process').ChildProcess | undefined;
+  if (shouldSpawn) {
+    const { spawn } = await import('node:child_process');
+    proc = spawn(binaryPath, ['serve', '--tcp-host', host, '--tcp-port', String(port), ...extraArgs], {
+      stdio: ['ignore', 'ignore', 'pipe'],
+    });
+    await waitForReadyMessage(proc.stderr!, (msg) => msg.host === host && msg.port === port);
+  }
 
   if (webSocket) {
     const ws = new WebSocket(`ws://${host}:${port}`);
@@ -238,14 +255,42 @@ async function createExternalTransport(
     };
     ws.onerror = () => adapted.onerror?.({ type: 'error' });
     ws.onclose = () => adapted.onclose?.({ type: 'close' });
-    return createWebSocketTransport(adapted, dispatch);
+    return { transport: createWebSocketTransport(adapted, dispatch), proc };
   }
 
   const socket: Socket = connectNet(port, host);
   await once(socket, 'connect');
-  return createStreamTransport(socket, socket, dispatch, {
-    framing: options.token === undefined ? 'length-prefixed' : undefined,
-    token: options.token,
+  return {
+    transport: createStreamTransport(socket, socket, dispatch, {
+      framing: options.token === undefined ? 'length-prefixed' : undefined,
+      token: options.token,
+    }),
+    proc,
+  };
+}
+
+async function waitForReadyMessage(
+  stderr: NodeJS.ReadableStream,
+  predicate: (msg: ReadyMessage) => boolean,
+): Promise<ReadyMessage> {
+  return new Promise<ReadyMessage>((resolve, reject) => {
+    const onData = (chunk: Buffer): void => {
+      const lines = chunk.toString('utf8').split('\n');
+      for (const line of lines) {
+        if (!line.trim()) continue;
+        try {
+          const msg = JSON.parse(line) as ReadyMessage;
+          if (msg.type === 'ready' && predicate(msg)) {
+            stderr.off('data', onData);
+            resolve(msg);
+            return;
+          }
+        } catch {
+          // ignore non-JSON stderr lines
+        }
+      }
+    };
+    stderr.on('data', onData);
   });
 }
 
@@ -403,12 +448,20 @@ export class SDKRpcClient {
     );
 
     const endpoint = createRPCEndpoint<SDKAPI, CoreAPI>();
-    const transport = await createExternalTransport(options, endpoint.dispatch);
+    const { transport, proc } = await createExternalTransport(options, endpoint.dispatch);
     endpoint.setTransport(transport);
+    (instance as any)._hostProc = proc;
+    (instance as any)._transport = transport;
 
     const clientApi = new ClientAPI(instance, () => instance.getRpc());
     const rpc = await endpoint.client(clientApi);
     Object.assign(instance, { rpc, ready: Promise.resolve() });
+
+    // Attach close for external transport clients
+    (instance as any).close = async () => {
+      proc?.kill();
+      transport.close?.();
+    };
     return instance;
   }
 
