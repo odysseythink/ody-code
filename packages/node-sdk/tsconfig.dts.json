@@ -11,11 +11,15 @@
   },
   "include": [
     "src/**/*.ts",
+    "../agent-core-shared/src/**/*.ts",
     "../agent-core/src/**/*.ts",
     "../agent-core/src/prompt-modules.d.ts",
+    "../code-review/src/**/*.ts",
     "../kaos/src/**/*.ts",
     "../kosong/src/**/*.ts",
-    "../oauth/src/**/*.ts"
+    "../mcp-host/src/**/*.ts",
+    "../oauth/src/**/*.ts",
+    "../ody-crypto/src/**/*.ts"
   ],
   "exclude": ["dist", ".tmp-api-extractor", "examples", "test", "../*/dist", "../*/test"]
 }

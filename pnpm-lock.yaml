@@ -84,6 +84,9 @@ importers:
       '@mariozechner/clipboard':
         specifier: ^0.3.2
         version: 0.3.2
+      '@odysseythink/ody-crypto':
+        specifier: workspace:^
+        version: link:../../packages/ody-crypto
       chalk:
         specifier: ^5.4.1
         version: 5.6.2

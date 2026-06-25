@@ -8,13 +8,39 @@ const tempDir = path.join(packageRoot, '.tmp-api-extractor');
 const dtsRoot = path.join(tempDir, 'dts');
 const providerClientShimPath = path.join(dtsRoot, 'provider-clients.d.ts');
 
-const packageDirs = new Set(['agent-core', 'kaos', 'kosong', 'node-sdk', 'oauth']);
+const packageDirs = new Set([
+  'agent-core',
+  'agent-core-shared',
+  'code-review',
+  'kaos',
+  'kosong',
+  'mcp-host',
+  'node-sdk',
+  'oauth',
+  'ody-crypto',
+]);
 const workspacePackages = new Map([
   ['@odysseythink/agent-core', 'agent-core'],
+  ['@odysseythink/agent-core-shared', 'agent-core-shared'],
+  ['@odysseythink/code-review', 'code-review'],
   ['@odysseythink/kaos', 'kaos'],
   ['@odysseythink/kimi-code-oauth', 'oauth'],
   ['@odysseythink/kosong', 'kosong'],
+  ['@odysseythink/mcp-host', 'mcp-host'],
+  ['@odysseythink/ody-crypto', 'ody-crypto'],
 ]);
+
+function escapeRegExp(string) {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+const workspacePackageNames = Array.from(workspacePackages.keys())
+  .map((name) => escapeRegExp(name.slice('@odysseythink/'.length)))
+  .join('|');
+const workspaceSpecifierRe = new RegExp(
+  `(["'])((?:#\\/[^"']+)|(?:@odysseythink\\/(?:${workspacePackageNames})(?:\\/[^"']+)?))\\1`,
+  'g',
+);
 
 try {
   await rm(tempDir, { recursive: true, force: true });
@@ -100,7 +126,7 @@ async function rewriteWorkspaceSpecifiers() {
           `import { GoogleGenAI as GenAIClient } from '${providerClientSpecifier}';`,
         );
       const updated = providerClientText.replaceAll(
-        /(["'])(#\/[^"']+|@odysseythink\/(?:agent-core|kaos|kimi-code-oauth|kosong)(?:\/[^"']+)?)\1/g,
+        workspaceSpecifierRe,
         (_match, quote, specifier) => {
           const resolved = resolveSpecifier({
             currentFile: file,

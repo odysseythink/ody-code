@@ -3,9 +3,13 @@
   "mainEntryPointFilePath": "<projectFolder>/.tmp-api-extractor/dts/node-sdk/src/index.d.ts",
   "bundledPackages": [
     "@odysseythink/agent-core",
+    "@odysseythink/agent-core-shared",
+    "@odysseythink/code-review",
     "@odysseythink/kaos",
     "@odysseythink/kimi-code-oauth",
-    "@odysseythink/kosong"
+    "@odysseythink/kosong",
+    "@odysseythink/mcp-host",
+    "@odysseythink/ody-crypto"
   ],
   "compiler": {
     "tsconfigFilePath": "<projectFolder>/tsconfig.api-extractor.json",
