@@ -1,17 +1,34 @@
-import { getEmbeddedNativeAssetManifest, getNativePackageRoot } from './native-assets';
+import {
+  getEmbeddedNativeAssetManifest,
+  getNativePackageRoot,
+  type NativeAssetOptions,
+} from './native-assets';
 
-const smokePackages = ['@mariozechner/clipboard', 'koffi'];
+export const SMOKE_PACKAGES = [
+  '@mariozechner/clipboard',
+  'koffi',
+  '@odysseythink/ody-crypto',
+];
 
-export function runNativeAssetSmokeIfRequested(): boolean {
-  if (process.env['ODY_CODE_NATIVE_ASSET_SMOKE'] !== '1') return false;
+export function runNativeAssetSmokeIfRequested(
+  options?: NativeAssetOptions,
+): boolean {
+  if (process.env['ODY_CODE_NATIVE_ASSET_SMOKE'] !== '1') {
+    return false;
+  }
 
   try {
-    const manifest = getEmbeddedNativeAssetManifest();
+    const manifest =
+      options?.manifest ??
+      getEmbeddedNativeAssetManifest(options?.source);
     if (manifest === null) {
       throw new Error('Native asset manifest is not available.');
     }
-    for (const packageName of smokePackages) {
-      const packageRoot = getNativePackageRoot(packageName, { manifest });
+    for (const packageName of SMOKE_PACKAGES) {
+      const packageRoot = getNativePackageRoot(packageName, {
+        manifest,
+        ...options,
+      });
       if (packageRoot === null) {
         throw new Error(`Native package is not available: ${packageName}`);
       }
