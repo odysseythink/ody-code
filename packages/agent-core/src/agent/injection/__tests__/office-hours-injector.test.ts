@@ -30,7 +30,7 @@ function makeAgent(stub: OfficeHoursStub): Agent {
 }
 
 function lastReminder(agent: Agent): string {
-  const msgs = agent.context.history as Array<{ role: string; content?: Array<{ text?: string }> }>;
+  const msgs = agent.context.history as ReadonlyArray<{ role: string; content?: ReadonlyArray<{ text?: string }> }>;
   const last = msgs.findLast((m) => m.role === 'user');
   return last?.content?.map((p) => p.text ?? '').join('') ?? '';
 }

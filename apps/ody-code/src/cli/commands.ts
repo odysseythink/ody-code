@@ -2,8 +2,6 @@ import { Command, Option } from 'commander';
 
 import { CLI_COMMAND_NAME } from '#/constant/app';
 
-import type { RuntimeMode } from '@odysseythink/ody-code-sdk';
-
 import type { CLIOptions } from './options';
 import { registerExportCommand } from './sub/export';
 import { registerProviderCommand } from './sub/provider';
@@ -74,7 +72,7 @@ export function createProgram(
     )
     .addOption(new Option('--yes').hideHelp().default(false))
     .addOption(new Option('--auto-approve').hideHelp().default(false))
-    .option('--session-mode <mode>', 'Start in session mode: plan, design, or normal.', 'normal')
+    .option('--session-mode <mode>', 'Start in session mode: normal, plan, design, office-hours, or game-design.', 'normal')
     .addOption(
       new Option(
         '--office-hours',
@@ -133,7 +131,7 @@ export function createProgram(
       continue: raw['continue'] as boolean,
       yolo: yoloValue,
       auto: autoValue,
-      sessionMode: (raw['sessionMode'] as RuntimeMode) ?? 'normal',
+      sessionMode: (raw['sessionMode'] as CLIOptions['sessionMode']) ?? 'normal',
       officeHours: (raw['officeHours'] as boolean) ?? false,
       gameDesign: (raw['gameDesign'] as boolean) ?? false,
       model: raw['model'] as string | undefined,

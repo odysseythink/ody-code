@@ -7,7 +7,7 @@ class TestInjector extends BaseSessionModeInjector {
   readonly injectionVariant = 'test_mode';
   readonly options: SessionModeInjectorOptions = { fullRefreshTurns: 5, dedupMinTurns: 2 };
   active = false;
-  protected wasActive = false;
+  protected override wasActive = false;
 
   isModeActive(): boolean {
     return this.active;
@@ -173,7 +173,7 @@ describe('BaseSessionModeInjector', () => {
     await injector.inject();
     vi.mocked(agent.context.appendSystemReminder).mockClear();
     // Push enough assistant turns (6) so 5 are counted after index 0 → 'full'
-    const history = agent.context.history as { role: string }[];
+    const history = agent.context.history as unknown as { role: string }[];
     for (let i = 0; i < 6; i++) {
       history.push({ role: 'assistant' });
     }
@@ -192,7 +192,7 @@ describe('BaseSessionModeInjector', () => {
     await injector.inject();
     vi.mocked(agent.context.appendSystemReminder).mockClear();
     // Push 3 assistants → 2 counted after index 0 → 'sparse'
-    const history = agent.context.history as { role: string }[];
+    const history = agent.context.history as unknown as { role: string }[];
     history.push({ role: 'assistant' }, { role: 'assistant' }, { role: 'assistant' });
     await injector.inject();
     expect(agent.context.appendSystemReminder).toHaveBeenCalledWith(

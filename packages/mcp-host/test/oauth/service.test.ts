@@ -157,7 +157,7 @@ function makeIdToken(overrides: { exp?: number; aud?: string } = {}): { idToken:
     { algorithm: 'RS256', keyid: kid },
   );
   const jwk = publicKey.export({ format: 'jwk' }) as Record<string, unknown>;
-  jwk.kid = kid;
+  jwk['kid'] = kid;
   return { idToken, jwk };
 }
 

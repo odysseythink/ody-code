@@ -28,6 +28,7 @@ import {
   registerClient,
   type OAuthClientProvider,
 } from '@modelcontextprotocol/sdk/client/auth.js';
+import type { OAuthClientInformationMixed } from '@modelcontextprotocol/sdk/shared/auth.js';
 import { getOdyCrypto } from '@odysseythink/ody-crypto';
 
 import { verifyIdToken } from './id-token';
@@ -137,10 +138,10 @@ export class McpOAuthService {
     provider.setRedirectUrl(new URL(callbackServer.redirectUri));
 
     // Captured in closure for complete()
-    let authorizationServerUrl!: URL;
+    let authorizationServerUrl!: string;
     let metadata!: OAuthDiscoveryResult['authorizationServerMetadata'];
     let resourceMetadata!: OAuthDiscoveryResult['resourceMetadata'];
-    let clientInformation!: Awaited<ReturnType<typeof registerClient>>;
+    let clientInformation!: OAuthClientInformationMixed;
 
     let authorizationUrl: URL | undefined;
     try {

@@ -582,7 +582,7 @@ describe('SessionMode', () => {
     it('records a design session on enter and closes it on exit', async () => {
       const agent = { ...makeAgent(), context: { history: [{}, {}, {}] } } as unknown as Agent;
       const sm = new SessionMode(agent);
-      agent.sessionMode = sm;
+      Object.assign(agent, { sessionMode: sm });
       await sm.enter('design-id', undefined, false, 'design');
 
       expect(sm.designSessions).toHaveLength(1);
@@ -599,7 +599,7 @@ describe('SessionMode', () => {
     it('records a cancelled design session without an approved path', async () => {
       const agent = { ...makeAgent(), context: { history: [{}, {}] } } as unknown as Agent;
       const sm = new SessionMode(agent);
-      agent.sessionMode = sm;
+      Object.assign(agent, { sessionMode: sm });
       await sm.enter('design-id', undefined, false, 'design');
       sm.cancel();
 
@@ -626,7 +626,7 @@ describe('SessionMode', () => {
     it('leaves exitedAtMsg undefined when context was cleared before exit', async () => {
       const agent = { ...makeAgent(), context: { history: [{}, {}, {}] } } as unknown as Agent;
       const sm = new SessionMode(agent);
-      agent.sessionMode = sm;
+      Object.assign(agent, { sessionMode: sm });
       await sm.enter('design-id', undefined, false, 'design');
 
       expect(sm.designSessions[0]!.startedAtMsg).toBe(3);

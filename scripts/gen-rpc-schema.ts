@@ -5,7 +5,9 @@
  * 1. Extract method names, payload types, and return types from CoreAPI/SDKAPI
  *    using the TypeScript compiler API.
  * 2. For each referenced data type, generate a proper JSON Schema using
- *    ts-json-schema-generator (which works for plain object types).
+ *    ts-json-schema-generator (which works for plain object types), with a
+ *    TypeScript-compiler-API fallback for anonymous inline types such as
+ *    discriminated union members.
  *
  * The output is a single JSON file consumed by the G2-B code generator.
  */
@@ -63,6 +65,9 @@ const entryFiles = [
 const program = ts.createProgram(entryFiles, parsedCmd.options);
 const checker = program.getTypeChecker();
 
+/** JSON Schema fragment (object/draft-07-ish). */
+type JSONSchema = Record<string, unknown>;
+
 /** Compact type-node for method info (references only, no deep inlining). */
 type TypeRef =
   | { kind: 'ref'; name: string; typeArgs?: TypeRef[] }
@@ -71,10 +76,113 @@ type TypeRef =
   | { kind: 'void' }
   | { kind: 'unknown' }
   | { kind: 'literal'; value: string | number | boolean | null }
-  | { kind: 'union'; members: TypeRef[] };
+  | { kind: 'union'; members: TypeRef[] }
+  | { kind: 'inline'; schema: JSONSchema };
+
+function isNamedType(t: ts.Type): boolean {
+  if (!t.symbol) return false;
+  return Boolean(
+    t.symbol.flags &
+      (ts.SymbolFlags.TypeAlias |
+        ts.SymbolFlags.Interface |
+        ts.SymbolFlags.Enum |
+        ts.SymbolFlags.Class),
+  );
+}
+
+function typeToSchema(t: ts.Type, depth = 0): JSONSchema {
+  if (depth > 8) return {};
+
+  const symbolName = t.symbol?.name;
+
+  // Generic wrappers
+  if (symbolName && ['Promise', 'Awaited'].includes(symbolName)) {
+    const args = checker.getTypeArguments(t as ts.TypeReference);
+    if (args?.length) return typeToSchema(args[0]!, depth + 1);
+  }
+  if (symbolName && ['ReadonlyArray', 'Array'].includes(symbolName)) {
+    const args = checker.getTypeArguments(t as ts.TypeReference);
+    if (args?.length) return { type: 'array', items: typeToSchema(args[0]!, depth + 1) };
+    return { type: 'array' };
+  }
+  if (symbolName && ['Omit', 'Partial', 'Required', 'Readonly'].includes(symbolName)) {
+    const args = checker.getTypeArguments(t as ts.TypeReference);
+    if (args?.length) return typeToSchema(args[0]!, depth + 1);
+  }
+  if (symbolName === 'Record') {
+    const args = checker.getTypeArguments(t as ts.TypeReference);
+    if (args?.length === 2) {
+      return {
+        type: 'object',
+        additionalProperties: typeToSchema(args[1]!, depth + 1),
+      };
+    }
+  }
+
+  // Named non-anonymous types become refs so they live in the definitions section.
+  if (isNamedType(t) && !(t.objectFlags & ts.ObjectFlags.Anonymous)) {
+    return { $ref: `#/definitions/${symbolName}` };
+  }
+
+  if (t.isStringLiteral()) return { const: t.value };
+  if (t.isNumberLiteral()) return { const: t.value };
+  if (t.flags & ts.TypeFlags.String) return { type: 'string' };
+  if (t.flags & ts.TypeFlags.Number) return { type: 'number' };
+  if (t.flags & ts.TypeFlags.Boolean) return { type: 'boolean' };
+  if (t.flags & ts.TypeFlags.Void || t.flags & ts.TypeFlags.Undefined) return { type: 'null' };
+  if (t.flags & ts.TypeFlags.Null) return { type: 'null' };
+  if (t.flags & ts.TypeFlags.Any || t.flags & ts.TypeFlags.Unknown) return {};
+
+  if (t.flags & ts.TypeFlags.Union) {
+    const members = (t as ts.UnionType).types.map((u) => typeToSchema(u, depth + 1));
+    // Simplify unions that are only string/number literals into enums.
+    const literals = members.filter((m) => 'const' in m);
+    if (literals.length === members.length && literals.length > 0) {
+      const first = literals[0]!.const;
+      const type = typeof first === 'string' ? 'string' : 'number';
+      return { type, enum: literals.map((m) => m.const) };
+    }
+    return { anyOf: members };
+  }
+
+  if (t.flags & ts.TypeFlags.Intersection) {
+    return { allOf: (t as ts.IntersectionType).types.map((u) => typeToSchema(u, depth + 1)) };
+  }
+
+  if (t.objectFlags & ts.ObjectFlags.Tuple) {
+    const args = checker.getTypeArguments(t as ts.TypeReference);
+    return {
+      type: 'array',
+      items: args.map((a) => typeToSchema(a, depth + 1)),
+      minItems: args.length,
+      maxItems: args.length,
+    };
+  }
+
+  if (t.flags & ts.TypeFlags.Object) {
+    const props = checker.getPropertiesOfType(t);
+    const properties: Record<string, JSONSchema> = {};
+    const required: string[] = [];
+    for (const prop of props) {
+      const decl = prop.valueDeclaration ?? prop.declarations?.[0];
+      const propType = decl
+        ? checker.getTypeOfSymbolAtLocation(prop, decl)
+        : checker.getTypeOfSymbol(prop);
+      properties[prop.name] = typeToSchema(propType, depth + 1);
+      if (!(prop.flags & ts.SymbolFlags.Optional)) required.push(prop.name);
+    }
+    const stringIndex = t.getStringIndexType();
+    const additionalProperties = stringIndex ? typeToSchema(stringIndex, depth + 1) : false;
+    const schema: JSONSchema = { type: 'object', properties, additionalProperties };
+    if (required.length > 0) schema.required = required;
+    return schema;
+  }
+
+  return {};
+}
 
 function makeRef(t: ts.Type, depth = 0): TypeRef {
-  if (depth > 6) return { kind: 'ref', name: checker.typeToString(t) };
+  if (depth > 6) return { kind: 'inline', schema: typeToSchema(t, depth + 1) };
 
   if (t.symbol && (t.symbol.flags & (ts.SymbolFlags.TypeAlias | ts.SymbolFlags.Interface))) {
     const name = t.symbol.name;
@@ -91,11 +199,20 @@ function makeRef(t: ts.Type, depth = 0): TypeRef {
       const args = checker.getTypeArguments(t as ts.TypeReference);
       if (args?.length) return makeRef(args[0]!, depth + 1);
     }
+    if (name === 'Record') {
+      const args = checker.getTypeArguments(t as ts.TypeReference);
+      if (args?.length === 2) {
+        return {
+          kind: 'inline',
+          schema: { type: 'object', additionalProperties: typeToSchema(args[1]!, depth + 1) },
+        };
+      }
+    }
     const targs = checker.getTypeArguments(t as ts.TypeReference);
     return {
       kind: 'ref',
       name,
-      typeArgs: targs.length ? targs.map(a => makeRef(a, depth + 1)) : undefined,
+      typeArgs: targs.length ? targs.map((a) => makeRef(a, depth + 1)) : undefined,
     };
   }
 
@@ -110,14 +227,15 @@ function makeRef(t: ts.Type, depth = 0): TypeRef {
   if (t.flags & ts.TypeFlags.Any) return { kind: 'unknown' };
   if (t.flags & ts.TypeFlags.Unknown) return { kind: 'unknown' };
   if (t.flags & ts.TypeFlags.Union) {
-    return { kind: 'union', members: (t as ts.UnionType).types.map(u => makeRef(u, depth + 1)) };
+    return { kind: 'union', members: (t as ts.UnionType).types.map((u) => makeRef(u, depth + 1)) };
   }
   if (t.flags & ts.TypeFlags.Intersection) {
-    // Flatten intersections to unions of refs for simplicity
-    return { kind: 'ref', name: checker.typeToString(t) };
+    // Flatten intersections to inline schemas; named members remain refs inside.
+    return { kind: 'inline', schema: typeToSchema(t, depth + 1) };
   }
 
-  return { kind: 'ref', name: checker.typeToString(t) };
+  // Anonymous object / tuple / everything else -> inline JSON Schema.
+  return { kind: 'inline', schema: typeToSchema(t, depth + 1) };
 }
 
 interface MethodInfo {
@@ -184,6 +302,22 @@ function collectRefs(ref: TypeRef, acc: Set<string>): void {
   }
   if (ref.kind === 'array' && ref.items) collectRefs(ref.items, acc);
   if (ref.kind === 'union') for (const m of ref.members) collectRefs(m, acc);
+  if (ref.kind === 'inline') collectRefsFromSchema(ref.schema, acc);
+}
+
+function collectRefsFromSchema(schema: JSONSchema, acc: Set<string>): void {
+  if (!schema || typeof schema !== 'object') return;
+  if (schema.$ref && typeof schema.$ref === 'string') {
+    const m = /^#\/definitions\/(.+)$/.exec(schema.$ref);
+    if (m?.[1]) acc.add(m[1]);
+  }
+  for (const value of Object.values(schema)) {
+    if (Array.isArray(value)) {
+      for (const item of value) collectRefsFromSchema(item as JSONSchema, acc);
+    } else if (typeof value === 'object' && value !== null) {
+      collectRefsFromSchema(value as JSONSchema, acc);
+    }
+  }
 }
 
 /* ------------------------------------------------------------------ */
@@ -202,8 +336,15 @@ function generateSchemaForType(typeName: string): object | null {
   if (BUILTINS.has(typeName)) return null;
   if (typeName === 'EmptyPayload') return { type: 'object', properties: {}, additionalProperties: false };
 
+  const sym = findSymbol(typeName);
+  if (!sym) {
+    // Type is not available in the local source (e.g. from a dependency).
+    // It may already be nested inside another generated schema's definitions.
+    return null;
+  }
+
   // Determine which source file to use as entry
-  const entry = findSymbol(typeName)?.declarations?.[0]?.getSourceFile()?.fileName;
+  const entry = sym.declarations?.[0]?.getSourceFile()?.fileName;
   if (!entry) return null;
 
   try {
@@ -218,7 +359,16 @@ function generateSchemaForType(typeName: string): object | null {
     const defs = schema.definitions as Record<string, unknown> | undefined;
     return { root: schema.$ref, definitions: defs ?? {} };
   } catch {
-    return null;
+    // Fallback: generate a schema directly from the TypeScript compiler API.
+    // This covers anonymous inline types and named types that ts-json-schema-generator
+    // cannot process (e.g. due to path-alias or complex mapped-type issues).
+    try {
+      const declaredType = checker.getDeclaredTypeOfSymbol(sym);
+      const schema = typeToSchema(declaredType, 0);
+      return { root: `#/definitions/${typeName}`, definitions: { [typeName]: schema } };
+    } catch {
+      return null;
+    }
   }
 }
 
@@ -242,7 +392,7 @@ for (const m of Object.values(sdkMethods)) {
   collectRefs(m.returns, allRefs);
 }
 
-const externalRefs = [...allRefs].filter(r => !BUILTINS.has(r));
+const externalRefs = [...allRefs].filter((r) => !BUILTINS.has(r));
 
 // Generate JSON Schema for each referenced type
 const schemas: Record<string, object | null> = {};
@@ -250,7 +400,9 @@ for (const ref of externalRefs) {
   schemas[ref] = generateSchemaForType(ref);
 }
 
-// Resolve nested refs in schemas recursively
+// Resolve nested refs in schemas recursively.  Stop if a name cannot be found
+// as a local symbol: it may be an external type already nested in another
+// schema's definitions.
 let prevSize = 0;
 const seen = new Set(externalRefs);
 while (Object.keys(schemas).length > prevSize) {
@@ -259,7 +411,7 @@ while (Object.keys(schemas).length > prevSize) {
     if (!schema) continue;
     const defs = (schema as any).definitions ?? {};
     for (const defName of Object.keys(defs)) {
-      if (!BUILTINS.has(defName) && !seen.has(defName) && !schemas[defName]) {
+      if (!BUILTINS.has(defName) && !seen.has(defName) && !schemas[defName] && findSymbol(defName)) {
         seen.add(defName);
         schemas[defName] = generateSchemaForType(defName);
       }
@@ -286,14 +438,21 @@ console.log(`Wrote ${outPath}`);
 const coreCount = Object.keys(coreMethods).length;
 const sdkCount = Object.keys(sdkMethods).length;
 const schemaCount = Object.values(schemas).filter(Boolean).length;
-const failedCount = Object.values(schemas).filter(v => v === null).length;
+const failedCount = Object.values(schemas).filter((v) => v === null).length;
 console.log(`CoreAPI methods: ${coreCount}`);
 console.log(`SDKAPI methods: ${sdkCount}`);
 console.log(`Type schemas generated: ${schemaCount}`);
 console.log(`Type schemas failed: ${failedCount}`);
+const maxFailures = Number(process.env['RPC_SCHEMA_MAX_FAILURES'] ?? '0');
 if (failedCount > 0) {
   console.log('Failed types:');
   for (const [name, schema] of Object.entries(schemas)) {
     if (schema === null) console.log(`  - ${name}`);
+  }
+  if (failedCount > maxFailures) {
+    console.error(
+      `Schema generation failed for ${failedCount} type(s) (threshold: ${maxFailures}).`,
+    );
+    process.exit(1);
   }
 }

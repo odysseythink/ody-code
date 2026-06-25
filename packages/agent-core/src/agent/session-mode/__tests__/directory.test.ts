@@ -1,4 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
+import type { Agent } from '../..';
 import { resolveSessionModeDirectory, getModeOutputSubdirectory } from '../directory';
 
 const CWD = '/workspace/project';
@@ -15,7 +16,7 @@ function makeAgent(overrides: { homedir?: string; existing?: Set<string> } = {})
         throw Object.assign(new Error('ENOENT'), { code: 'ENOENT' });
       }),
     },
-  } as unknown as import('../../agent').Agent;
+  } as unknown as Agent;
 }
 
 describe('directory utilities', () => {

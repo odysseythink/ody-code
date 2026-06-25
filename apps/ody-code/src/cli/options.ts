@@ -1,5 +1,4 @@
-import type { RuntimeMode } from '@odysseythink/ody-code-sdk';
-
+export type CLIRuntimeMode = 'normal' | 'plan' | 'design' | 'office-hours' | 'game-design';
 export type UIMode = 'shell' | 'print';
 export type PromptOutputFormat = 'text' | 'stream-json';
 
@@ -8,7 +7,7 @@ export interface CLIOptions {
   continue: boolean;
   yolo: boolean;
   auto: boolean;
-  sessionMode: RuntimeMode;
+  sessionMode: CLIRuntimeMode;
   officeHours: boolean;
   gameDesign: boolean;
   model: string | undefined;

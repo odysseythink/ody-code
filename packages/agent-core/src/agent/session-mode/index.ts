@@ -122,7 +122,7 @@ export class SessionMode {
       this.agent.setContextMode('normal');
       if (this._preModeModelAlias !== null) {
         this.agent.config.update({ modelAlias: this._preModeModelAlias.value });
-        this.agent.refreshLlm();
+        this.agent.refreshLlm?.();
         this._preModeModelAlias = null;
       }
       this._isActive = false;
@@ -178,7 +178,7 @@ export class SessionMode {
 
     if (this._preModeModelAlias !== null) {
       this.agent.config.update({ modelAlias: this._preModeModelAlias.value });
-      this.agent.refreshLlm();
+      this.agent.refreshLlm?.();
       this._preModeModelAlias = null;
     }
 
@@ -226,7 +226,7 @@ export class SessionMode {
     });
     if (this._preModeModelAlias !== null) {
       this.agent.config.update({ modelAlias: this._preModeModelAlias.value });
-      this.agent.refreshLlm();
+      this.agent.refreshLlm?.();
       this._preModeModelAlias = null;
     }
 

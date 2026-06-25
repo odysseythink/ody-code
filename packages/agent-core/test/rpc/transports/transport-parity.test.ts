@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { MessageChannel } from 'node:worker_threads';
 import { PassThrough } from 'node:stream';
 
+import { createRPC } from '../../../src/rpc';
 import { createMessagePortTransport } from '../../../src/rpc/transports/message-port';
 import { createInProcessTransportPair, decodeJson, encodeJson } from '../../../src/rpc/transport';
 import { createStreamTransport } from '../../../src/rpc/transports/stream';
@@ -178,13 +179,24 @@ function createWebSocketTransportFactory(
 
 describe('transport parity', () => {
   it('default path and explicit InProcessTransport produce identical wire semantics', async () => {
-    const defaultLeftWire: WireEntry[] = [];
-    const defaultRightWire: WireEntry[] = [];
-    const [connectCoreDefault, connectHostDefault] = createInProcessTransportPair(
-      defaultLeftWire as unknown as Dispatch,
-      defaultRightWire as unknown as Dispatch,
-    );
-    // skip full scenario for simplicity
+    const defaultWire: WireEntry[] = [];
+    const explicitWire: WireEntry[] = [];
+
+    const [connectCoreDefault, connectHostDefault] = createRPC<CoreSide, HostSide>({
+      transport: createRecordingFactory(defaultWire, defaultWire),
+    });
+
+    // Run the full scenario through the default transport and record its wire.
+    await runScenario(connectCoreDefault, connectHostDefault);
+
+    // Run the same scenario through an explicit InProcessTransport and record its wire.
+    const [connectCoreExplicit, connectHostExplicit] = createRPC<CoreSide, HostSide>({
+      transport: createRecordingFactory(explicitWire, explicitWire),
+    });
+    await runScenario(connectCoreExplicit, connectHostExplicit);
+
+    // In-process transport has no reqId, so recordings should be byte-for-byte identical.
+    expect(explicitWire).toEqual(defaultWire);
   });
 
   it('stream transport preserves wire semantics', async () => {
