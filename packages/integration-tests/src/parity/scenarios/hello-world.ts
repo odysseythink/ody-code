@@ -17,6 +17,6 @@ export const helloWorldScenario: Scenario = {
     });
     await backend.client.prompt({ sessionId: summary.id, input: [{ type: 'text', text: 'Say hello' }] });
     await waitForTurnEnded(backend.client, { timeoutMs: 10000 });
-    return { responses: [{ sessionId: summary.id }] };
+    return { responses: [{ sessionId: summary.id }], events: [] };
   },
 };

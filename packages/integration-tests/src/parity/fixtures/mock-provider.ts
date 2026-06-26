@@ -28,7 +28,7 @@ export class MockChatProvider implements ChatProvider {
       const responses = this.partsOrResponses as StreamedMessagePart[][];
       const parts = responses[this.callIndex % responses.length];
       this.callIndex++;
-      return parts;
+      return parts ?? [];
     }
     return this.partsOrResponses as StreamedMessagePart[];
   }

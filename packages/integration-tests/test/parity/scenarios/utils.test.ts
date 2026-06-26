@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { AgentEvent } from '@odysseythink/agent-core';
+import type { StreamedMessage } from '@odysseythink/kosong';
 import { MockChatProvider } from '../../../src/parity/fixtures/mock-provider';
 import { waitForEvent, waitForTurnEnded } from '../../../src/parity/scenarios/utils';
 
@@ -38,7 +39,7 @@ describe('MockChatProvider multi-turn', () => {
     expect(chunks).toEqual([{ type: 'text', text: 'hello' }]);
   });
 
-  async function collectChunks(msg: { [Symbol.asyncIterator](): AsyncIterable<unknown> }) {
+  async function collectChunks(msg: StreamedMessage) {
     const out: unknown[] = [];
     for await (const chunk of msg) out.push(chunk);
     return out;
