@@ -76,11 +76,7 @@ function makeStartupInput(officeHours = false): OdyTUIStartupInput {
     hostTcp: undefined,
     hostBinary: undefined,
       logoutProvider: undefined,
-      host: 'inproc',
-            hostStdio: false,
-            hostSocket: undefined,
-            hostTcp: undefined,
-            hostBinary: undefined,
+      smokeTest: false,
     },
     tuiConfig: {
       theme: 'dark',

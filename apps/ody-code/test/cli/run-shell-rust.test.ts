@@ -78,6 +78,7 @@ describe('run-shell-rust helpers', () => {
       hostStdio: true,
       hostSocket: undefined,
       hostTcp: undefined,
+      hostBinary: undefined,
     });
     expect(opts).toEqual({
       mode: 'stdio',

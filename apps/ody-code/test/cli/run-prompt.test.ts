@@ -144,12 +144,8 @@ function opts(overrides: Partial<CLIOptions> = {}): CLIOptions {
     hostSocket: undefined,
     hostTcp: undefined,
     hostBinary: undefined,
+    smokeTest: false,
     logoutProvider: undefined,
-    host: 'inproc',
-    hostStdio: false,
-    hostSocket: undefined,
-    hostTcp: undefined,
-    hostBinary: undefined,
     ...overrides,
   };
 }

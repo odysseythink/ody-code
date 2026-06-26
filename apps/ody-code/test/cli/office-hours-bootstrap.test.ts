@@ -90,11 +90,7 @@ describe('runOfficeHours', () => {
     hostTcp: undefined,
     hostBinary: undefined,
       logoutProvider: undefined,
-      host: 'inproc',
-            hostStdio: false,
-            hostSocket: undefined,
-            hostTcp: undefined,
-            hostBinary: undefined,
+      smokeTest: false,
     };
 
     // Should not throw
@@ -121,11 +117,7 @@ describe('runOfficeHours', () => {
     hostTcp: undefined,
     hostBinary: undefined,
       logoutProvider: undefined,
-      host: 'inproc',
-            hostStdio: false,
-            hostSocket: undefined,
-            hostTcp: undefined,
-            hostBinary: undefined,
+      smokeTest: false,
     };
 
     await runOfficeHours(opts, '0.0.0-test');

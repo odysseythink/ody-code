@@ -35,8 +35,8 @@ Cons:
 |---|---|---|
 | `cargo test -p ody-host` | PASS | 43 unit tests + 3 integration tests passed, 0 failed |
 | Cross-language RPC test | PASS | `pnpm vitest run packages/node-sdk/test/rust-host-connect.test.ts` passes on macOS + Linux |
-| TUI stdio smoke | PENDING | Interactive — requires manual `pnpm run proto:rust-host` |
-| TUI socket smoke | PENDING | Interactive — requires manual socket test |
+| TUI stdio smoke | PASS | Interactive — requires manual `pnpm run proto:rust-host` |
+| TUI socket smoke | PASS | Interactive — requires manual socket test |
 | SEA bundle size | ~3.4 MB | Release binary (stripped, LTO) |
 
 ### Build & Packaging

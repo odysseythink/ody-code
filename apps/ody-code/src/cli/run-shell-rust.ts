@@ -36,8 +36,8 @@ export async function resolveHostBinary(opts: Pick<CLIOptions, 'hostBinary'>): P
     return opts.hostBinary;
   }
   // ODY_HOST_BINARY_PATH is the canonical env override for CI / verification scripts.
-  if (process.env.ODY_HOST_BINARY_PATH) {
-    return process.env.ODY_HOST_BINARY_PATH;
+  if (process.env['ODY_HOST_BINARY_PATH']) {
+    return process.env['ODY_HOST_BINARY_PATH'];
   }
   // In a SEA build the Rust host is embedded as a native asset; extract it to
   // the cache and use that absolute path. Fall back to PATH lookup otherwise.
