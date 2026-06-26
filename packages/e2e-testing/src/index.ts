@@ -31,3 +31,4 @@ export { E2EGeneratorRegistry, registry } from './registry';
 export { NodejsJestGenerator, parseJestJson } from './generators/nodejs-jest';
 export { PythonPytestGenerator, parsePytestJsonReport } from './generators/python-pytest';
 export { GoGenerator, parseGoTestJson } from './generators/go';
+export { derivePackageRoot } from './tool-helpers';

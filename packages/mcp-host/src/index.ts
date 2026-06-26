@@ -6,4 +6,5 @@ export * from './output';
 export * from './session-config';
 export * from './tool-naming';
 export * from './trace-recorder';
+export * from './mcp-config-skill';
 export * from './types';

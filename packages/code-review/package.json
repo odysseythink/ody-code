@@ -21,6 +21,11 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@odysseythink/agent-core-shared": "workspace:^"
+    "@odysseythink/agent-core-shared": "workspace:^",
+    "picomatch": "^4.0.4",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@types/picomatch": "^4.0.3"
   }
 }

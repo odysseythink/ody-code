@@ -360,6 +360,16 @@ importers:
       '@odysseythink/agent-core-shared':
         specifier: workspace:^
         version: link:../agent-core-shared
+      picomatch:
+        specifier: ^4.0.4
+        version: 4.0.4
+      zod:
+        specifier: 'catalog:'
+        version: 4.3.6
+    devDependencies:
+      '@types/picomatch':
+        specifier: ^4.0.3
+        version: 4.0.3
 
   packages/e2e-testing:
     dependencies:

@@ -80,7 +80,8 @@ describe('E2EPlanEnricher', () => {
   });
 });
 
-import { RunE2ETestsTool, derivePackageRoot } from '@odysseythink/agent-core';
+import { RunE2ETestsTool } from '@odysseythink/agent-core';
+import { derivePackageRoot } from '@odysseythink/e2e-testing';
 
 describe('derivePackageRoot', () => {
   it('returns packages/<name> for packages/agent-core path', () => {

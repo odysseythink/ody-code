@@ -4,7 +4,7 @@ import { EXECUTING_PLANS_SKILL } from './executing-plans';
 import { FINISHING_A_DEVELOPMENT_BRANCH_SKILL } from './finishing-a-development-branch';
 import { IDEA_EVALUATOR_SKILL } from './idea-evaluator';
 import { IDEA_GENERATOR_SKILL } from './idea-generator';
-import { MCP_CONFIG_SKILL } from './mcp-config';
+import { MCP_CONFIG_SKILL } from '@odysseythink/mcp-host';
 import { RECEIVING_CODE_REVIEW_SKILL } from './receiving-code-review';
 import { REQUESTING_CODE_REVIEW_SKILL } from './requesting-code-review';
 import { SIMPLICITY_FIRST_SKILL } from './simplicity-first';

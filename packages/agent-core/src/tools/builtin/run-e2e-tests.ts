@@ -10,7 +10,19 @@ import type { OdyConfig } from '@odysseythink/agent-core-shared';
 import { E2ETestExecutor } from '@odysseythink/e2e-testing';
 import { registry } from '@odysseythink/e2e-testing';
 import { detectChangedFiles } from '@odysseythink/e2e-testing';
-import DESCRIPTION from './run-e2e-tests.md';
+import { derivePackageRoot } from '@odysseythink/e2e-testing';
+
+const DESCRIPTION =
+  'Generate and run temporary end-to-end (E2E) tests for the current project. ' +
+  'Use this tool after completing implementation work to validate that your changes ' +
+  "haven't broken the affected builtin tools.\n\n" +
+  'When called without arguments, the tool detects changed files (via git status or ' +
+  'the approved plan), analyzes which builtin tools are affected, generates temporary ' +
+  'Vitest test files, runs them with pnpm vitest run, parses the JSON output into a ' +
+  'report, and returns a markdown summary.\n\n' +
+  'The tool respects the `[e2e]` section in config.toml: disable with `enabled = false`, ' +
+  'control failure behaviour with `failure_policy` (`block` / `warn` / `ignore`), and ' +
+  'adjust parallelism with `max_concurrency`.';
 
 const RunE2ETestsInputSchema = z.object({
   toolId: z.string().optional().describe('Optional specific tool to test; if omitted, all affected tools are tested.'),
@@ -107,16 +119,4 @@ export class RunE2ETestsTool implements BuiltinTool<RunE2ETestsInput> {
   private async getChangedFiles(projectRoot: string): Promise<string[]> {
     return detectChangedFiles(this.kaos, projectRoot);
   }
-}
-
-/** Derive a package root from monorepo-style changed file paths. */
-export function derivePackageRoot(changedFiles: string[]): string | undefined {
-  for (const file of changedFiles) {
-    const normalized = file.replace(/\\/g, '/');
-    const parts = normalized.split('/');
-    if ((parts[0] === 'packages' || parts[0] === 'apps') && parts.length >= 2) {
-      return `${parts[0]}/${parts[1]}`;
-    }
-  }
-  return undefined;
 }

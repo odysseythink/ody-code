@@ -474,7 +474,20 @@ export class ToolManager {
         toolServices?.webSearcher && new b.WebSearchTool(toolServices.webSearcher),
         toolServices?.urlFetcher && new b.FetchURLTool(toolServices.urlFetcher),
         new b.RunE2ETestsTool(kaos, this.agent),
-        new b.RequestCodeReviewTool(kaos, this.agent),
+        new b.RequestCodeReviewTool({
+          cwd,
+          subagentHost: this.agent.subagentHost,
+          modeModels: this.agent.kimiConfig?.modeModels,
+          defaultModel: this.agent.kimiConfig?.defaultModel,
+          validateModelAlias: (alias) => {
+            try {
+              this.agent.modelProvider?.resolveProviderConfig(alias);
+              return true;
+            } catch {
+              return false;
+            }
+          },
+        }),
         new b.ReviewTestsTool(kaos, this.agent),
         new b.HarvestOdyMarkersTool(
           kaos,

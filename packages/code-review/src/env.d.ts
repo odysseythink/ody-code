@@ -1,3 +1,10 @@
+// Raw-string imports for prompt sources. The `raw-text-plugin` (used by both
+// tsdown and vitest) loads `.md` files as their string content.
+declare module '*.md' {
+  const content: string;
+  export default content;
+}
+
 // Minimal WebAssembly declarations for the project's non-DOM build target.
 // The agent-core-shared wasm-loader relies on WebAssembly types.
 declare namespace WebAssembly {

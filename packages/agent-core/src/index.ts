@@ -58,7 +58,8 @@ export { ToolManager } from './agent/tool/index';
 export { NormalModeTaskCheckpoint } from './agent/compaction/normal-task-checkpoint';
 export { SessionAPIImpl } from './session/rpc';
 export { ExitPlanModeTool } from './tools/builtin/planning/exit-plan-mode';
-export { RunE2ETestsTool, derivePackageRoot } from './tools/builtin/e2e/run-e2e-tests';
+export { RunE2ETestsTool } from './tools/builtin/run-e2e-tests';
+export { derivePackageRoot } from '@odysseythink/e2e-testing';
 
 // ─── Wire records (for in-monorepo consumers like apps/vis) ────────────────
 export type {

@@ -7,6 +7,16 @@ export type { ResolveModelOverrides } from './model-resolver';
 export { buildReviewPrompt, parseReviewReport } from './prompt';
 export { renderCodeReviewReportToMarkdown } from './report';
 export {
+  RequestCodeReviewTool,
+  runReviewerSubagent,
+} from './request-code-review-tool';
+export type {
+  RequestCodeReviewInput,
+  RequestCodeReviewToolDeps,
+  CodeReviewSubagentHost,
+  RunReviewerSubagentInput,
+} from './request-code-review-tool';
+export {
   parseSimplicityReport,
   buildSimplicityReviewPrompt,
   buildSimplicityAuditPrompt,

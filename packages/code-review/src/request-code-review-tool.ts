@@ -1,30 +1,62 @@
+import { spawn } from 'node:child_process';
+import picomatch from 'picomatch';
 import { z } from 'zod';
-import type { Kaos } from '@odysseythink/kaos';
-import type { Agent } from '#/agent';
-import type { BuiltinTool } from '#/agent/tool';
-import type { ExecutableToolResult, ToolExecution } from '#/loop/types';
-import type { SessionSubagentHost } from '#/session/subagent-host';
-import { toInputJsonSchema } from '@odysseythink/agent-core-shared';
-import { literalRulePattern, matchesGlobRuleSubject } from '#/tools/support/rule-match';
-import { createDeadlineAbortSignal } from '@odysseythink/agent-core-shared';
-import { fetchDiff } from '@odysseythink/code-review';
-import { buildReviewPrompt, parseReviewReport } from '@odysseythink/code-review';
-import { resolveCodeReviewModel } from '@odysseythink/code-review';
-import { renderCodeReviewReportToMarkdown } from '@odysseythink/code-review';
-import type { CodeReviewDiffSource, CodeReviewReport } from '@odysseythink/code-review';
+import {
+  createDeadlineAbortSignal,
+  toInputJsonSchema,
+} from '@odysseythink/agent-core-shared';
+import type {
+  ExecutableTool,
+  ExecutableToolResult,
+  ToolExecution,
+} from '@odysseythink/agent-core-shared';
+import type { OdyConfig } from '@odysseythink/agent-core-shared';
+import { fetchDiff } from './diff';
+import { resolveCodeReviewModel } from './model-resolver';
+import { buildReviewPrompt, parseReviewReport } from './prompt';
+import { renderCodeReviewReportToMarkdown } from './report';
+import type { CodeReviewDiffSource, CodeReviewReport } from './types';
 import DESCRIPTION from './request-code-review.md';
 
-const RequestCodeReviewInputSchema = z.object({
-  description: z.string().optional().describe('Short summary of what was built/changed.'),
-  requirements: z.string().optional().describe('What the change is supposed to do (plan/requirements).'),
-  model: z.string().optional().describe('Override the reviewer model alias. Defaults to the configured code-review model, else the default model.'),
-  base: z.string().optional().describe('Base git ref. With head, reviews base..head; otherwise reviews the working tree (falling back to changes vs the default branch).'),
-  head: z.string().optional().describe('Head git ref (use with base).'),
-  pr: z.string().optional().describe('GitHub PR URL or number to review instead of local changes.'),
-  timeout: z.number().int().min(30).max(3600).optional().describe('Optional timeout in seconds for the review (30-3600).'),
-}).strict();
+const RequestCodeReviewInputSchema = z
+  .object({
+    description: z.string().optional().describe('Short summary of what was built/changed.'),
+    requirements: z.string().optional().describe('What the change is supposed to do (plan/requirements).'),
+    model: z.string().optional().describe('Override the reviewer model alias. Defaults to the configured code-review model, else the default model.'),
+    base: z.string().optional().describe('Base git ref. With head, reviews base..head; otherwise reviews the working tree (falling back to changes vs the default branch).'),
+    head: z.string().optional().describe('Head git ref (use with base).'),
+    pr: z.string().optional().describe('GitHub PR URL or number to review instead of local changes.'),
+    timeout: z.number().int().min(30).max(3600).optional().describe('Optional timeout in seconds for the review (30-3600).'),
+  })
+  .strict();
 
 export type RequestCodeReviewInput = z.infer<typeof RequestCodeReviewInputSchema>;
+
+/**
+ * Minimal subagent host surface required by the code-review tool. The full
+ * {@link SessionSubagentHost} from agent-core implements this shape.
+ */
+export interface CodeReviewSubagentHost {
+  spawn(
+    profileName: string,
+    options: {
+      readonly parentToolCallId: string;
+      readonly prompt: string;
+      readonly description: string;
+      readonly runInBackground: boolean;
+      readonly signal: AbortSignal;
+      readonly modelAlias?: string | undefined;
+    },
+  ): Promise<{ readonly completion: Promise<{ readonly result: string }> }>;
+}
+
+export interface RequestCodeReviewToolDeps {
+  readonly cwd: string;
+  readonly subagentHost?: CodeReviewSubagentHost | undefined;
+  readonly modeModels?: OdyConfig['modeModels'];
+  readonly defaultModel?: string;
+  readonly validateModelAlias?: (alias: string) => boolean;
+}
 
 export interface RunReviewerSubagentInput {
   readonly diff: string;
@@ -41,7 +73,7 @@ export interface RunReviewerSubagentInput {
  * into a {@link CodeReviewReport}. Shared so a deep/command path can reuse it.
  */
 export async function runReviewerSubagent(
-  subagentHost: SessionSubagentHost,
+  subagentHost: CodeReviewSubagentHost,
   input: RunReviewerSubagentInput,
 ): Promise<CodeReviewReport> {
   const handle = await subagentHost.spawn('reviewer', {
@@ -56,21 +88,18 @@ export async function runReviewerSubagent(
   return parseReviewReport(completion.result, input.reviewerAlias);
 }
 
-export class RequestCodeReviewTool implements BuiltinTool<RequestCodeReviewInput> {
+export class RequestCodeReviewTool implements ExecutableTool<RequestCodeReviewInput> {
   readonly name = 'RequestCodeReview' as const;
   readonly description: string = DESCRIPTION;
   readonly parameters: Record<string, unknown> = toInputJsonSchema(RequestCodeReviewInputSchema);
 
-  constructor(
-    private readonly kaos: Kaos,
-    private readonly agent: Agent,
-  ) {}
+  constructor(private readonly deps: RequestCodeReviewToolDeps) {}
 
   resolveExecution(input: RequestCodeReviewInput): ToolExecution {
     return {
       description: 'Request a second-model code review',
-      approvalRule: literalRulePattern(this.name, '*'),
-      matchesRule: (ruleArgs) => matchesGlobRuleSubject(ruleArgs, '*'),
+      approvalRule: 'RequestCodeReview(\\*)',
+      matchesRule: (ruleArgs) => matchesStarSubject(ruleArgs),
       execute: (ctx) => this.execution(input, ctx),
     };
   }
@@ -79,7 +108,7 @@ export class RequestCodeReviewTool implements BuiltinTool<RequestCodeReviewInput
     input: RequestCodeReviewInput,
     ctx: { signal: AbortSignal; turnId: string; toolCallId: string },
   ): Promise<ExecutableToolResult> {
-    const subagentHost = this.agent.subagentHost;
+    const subagentHost = this.deps.subagentHost;
     if (subagentHost === undefined) {
       return { isError: true, output: 'Code review is unavailable: no subagent host in this context.' };
     }
@@ -88,13 +117,14 @@ export class RequestCodeReviewTool implements BuiltinTool<RequestCodeReviewInput
     try {
       reviewerAlias = resolveCodeReviewModel(
         'request',
-        this.agent.kimiConfig?.modeModels,
-        this.agent.kimiConfig?.defaultModel,
+        this.deps.modeModels,
+        this.deps.defaultModel,
         { explicit: input.model },
         (alias) => {
+          const validate = this.deps.validateModelAlias;
+          if (validate === undefined) return true;
           try {
-            this.agent.modelProvider?.resolveProviderConfig(alias);
-            return true;
+            return validate(alias);
           } catch {
             return false;
           }
@@ -104,10 +134,9 @@ export class RequestCodeReviewTool implements BuiltinTool<RequestCodeReviewInput
       return { isError: true, output: error instanceof Error ? error.message : String(error) };
     }
 
-    const cwd = this.kaos.getcwd();
     let diff: string;
     try {
-      diff = await this.resolveDiff(input, cwd, ctx.signal);
+      diff = await this.resolveDiff(input, this.deps.cwd, ctx.signal);
     } catch (error) {
       return { isError: true, output: `Failed to fetch diff: ${error instanceof Error ? error.message : String(error)}` };
     }
@@ -138,7 +167,8 @@ export class RequestCodeReviewTool implements BuiltinTool<RequestCodeReviewInput
       // A non-conforming reviewer message parses to zero findings + no summary,
       // which would otherwise look identical to a genuinely clean review.
       if (report.findings.length === 0 && (report.summary === undefined || report.summary.length === 0)) {
-        output += '\n\n_(The reviewer returned no structured findings — this may be a clean review, or its output did not match the expected format.)_';
+        output +=
+          '\n\n_(The reviewer returned no structured findings — this may be a clean review, or its output did not match the expected format.)_';
       }
       return { output };
     } catch (error) {
@@ -174,16 +204,15 @@ export class RequestCodeReviewTool implements BuiltinTool<RequestCodeReviewInput
 
   /** Merge-base of HEAD with the default branch (prefers remote-tracking refs). */
   private async resolveDefaultBase(cwd: string): Promise<string | undefined> {
-    const k = this.kaos.withCwd(cwd);
     let headSha: string;
     try {
-      headSha = (await this.git(k, ['rev-parse', 'HEAD'])).trim();
+      headSha = (await runGit(['rev-parse', 'HEAD'], cwd)).trim();
     } catch {
       return undefined;
     }
     for (const ref of ['origin/HEAD', 'origin/main', 'origin/master', 'main', 'master']) {
       try {
-        const base = (await this.git(k, ['merge-base', 'HEAD', ref])).trim();
+        const base = (await runGit(['merge-base', 'HEAD', ref], cwd)).trim();
         if (base.length > 0 && base !== headSha) return base;
       } catch {
         // try next ref
@@ -191,12 +220,36 @@ export class RequestCodeReviewTool implements BuiltinTool<RequestCodeReviewInput
     }
     return undefined;
   }
+}
 
-  private async git(k: Kaos, args: string[]): Promise<string> {
-    const proc = await k.exec('git', ...args);
-    const chunks: Buffer[] = [];
-    proc.stdout.on('data', (chunk: Buffer) => chunks.push(chunk));
-    await proc.wait();
-    return Buffer.concat(chunks).toString('utf-8');
-  }
+function runGit(args: string[], cwd: string): Promise<string> {
+  return new Promise<string>((resolve, reject) => {
+    const child = spawn('git', args, {
+      cwd,
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    const stdoutChunks: Buffer[] = [];
+    const stderrChunks: Buffer[] = [];
+    child.stdout.on('data', (chunk: Buffer) => stdoutChunks.push(chunk));
+    child.stderr.on('data', (chunk: Buffer) => stderrChunks.push(chunk));
+    child.on('error', (err) => {
+      reject(new Error(`git failed to start: ${err.message}`));
+    });
+    child.on('close', (code) => {
+      if (code !== 0) {
+        const stderr = Buffer.concat(stderrChunks).toString('utf-8').trim();
+        reject(new Error(`git ${args.join(' ')} exited with ${code}${stderr ? ': ' + stderr : ''}`));
+      } else {
+        resolve(Buffer.concat(stdoutChunks).toString('utf-8'));
+      }
+    });
+  });
+}
+
+function matchesStarSubject(ruleArgs: string): boolean {
+  if (ruleArgs.length === 0) return true;
+  const negated = ruleArgs.startsWith('!');
+  const pattern = negated ? ruleArgs.slice(1) : ruleArgs;
+  const hit = picomatch.isMatch('*', pattern);
+  return negated ? !hit : hit;
 }
