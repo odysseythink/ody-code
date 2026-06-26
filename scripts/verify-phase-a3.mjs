@@ -256,3 +256,34 @@ export async function runVerification(config) {
     summary: buildSummary(results, Date.now() - startedAt),
   };
 }
+
+const ADR_STEP_LABELS = {
+  'rust-test': 'cargo test -p ody-host',
+  'cross-lang-rpc': 'Cross-language RPC test',
+  'tui-smoke-stdio': 'TUI stdio smoke',
+  'tui-smoke-socket': 'TUI socket smoke',
+  'tui-smoke-tcp': 'TUI tcp smoke',
+  'sea-build': 'SEA full build',
+  'sea-smoke': 'Native smoke',
+  'typecheck': 'Workspace typecheck',
+};
+
+export function updateAdr(text, report) {
+  let result = text;
+  for (const [stepId, label] of Object.entries(ADR_STEP_LABELS)) {
+    const step = report.steps.find((s) => s.id === stepId);
+    const status = step ? statusToAdr(step.status) : 'BLOCKED';
+    const escaped = label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    result = result.replace(
+      new RegExp(`(\\|\\s*${escaped}\\s*\\|\\s*)[^|]*(\\s*\\|)`, 'g'),
+      `$1${status} $2`,
+    );
+  }
+  return result;
+}
+
+function statusToAdr(status) {
+  if (status === 'passed') return 'PASS';
+  if (status === 'failed') return 'FAIL';
+  return 'BLOCKED';
+}

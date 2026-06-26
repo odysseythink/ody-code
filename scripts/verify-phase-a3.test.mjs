@@ -1,7 +1,7 @@
 // scripts/verify-phase-a3.test.mjs
 import { describe, it } from 'node:test';
 import assert from 'node:assert';
-import { ensureNodeVersion, parseConfig, redact, executeCommand, buildStepRegistry, buildSummary, buildMetadata, buildEnvironment } from './verify-phase-a3.mjs';
+import { ensureNodeVersion, parseConfig, redact, executeCommand, buildStepRegistry, buildSummary, buildMetadata, buildEnvironment, updateAdr } from './verify-phase-a3.mjs';
 
 describe('ensureNodeVersion', () => {
   it('rejects Node older than 24.15.0', () => {
@@ -213,5 +213,41 @@ describe('buildEnvironment', () => {
     assert.ok(typeof env.pnpmVersion === 'string');
     assert.ok(typeof env.cargoVersion === 'string');
     assert.ok(typeof env.rustcVersion === 'string');
+  });
+});
+
+describe('updateAdr', () => {
+  it('updates PASS/FAIL/BLOCKED cells', () => {
+    const adr = `| Criterion | Result | Notes |
+|---|---|---|
+| cargo test -p ody-host | PASS | notes |
+| Cross-language RPC test | PASS | notes |
+| TUI stdio smoke | PENDING | notes |
+| TUI socket smoke | PENDING | notes |
+| TUI tcp smoke | PENDING | notes |
+| SEA full build | PENDING | notes |
+| Native smoke | PENDING | notes |
+| Workspace typecheck | PENDING | notes |`;
+
+    const report = {
+      steps: [
+        { id: 'rust-test', status: 'passed' },
+        { id: 'cross-lang-rpc', status: 'passed' },
+        { id: 'tui-smoke-stdio', status: 'passed' },
+        { id: 'tui-smoke-socket', status: 'failed' },
+        { id: 'tui-smoke-tcp', status: 'skipped' },
+        { id: 'sea-build', status: 'failed' },
+        { id: 'sea-smoke', status: 'skipped' },
+        { id: 'typecheck', status: 'passed' },
+      ],
+    };
+
+    const updated = updateAdr(adr, report);
+    assert.match(updated, /\| TUI stdio smoke \| PASS \|/);
+    assert.match(updated, /\| TUI socket smoke \| FAIL \|/);
+    assert.match(updated, /\| TUI tcp smoke \| BLOCKED \|/);
+    assert.match(updated, /\| SEA full build \| FAIL \|/);
+    assert.match(updated, /\| Native smoke \| BLOCKED \|/);
+    assert.match(updated, /\| Workspace typecheck \| PASS \|/);
   });
 });
