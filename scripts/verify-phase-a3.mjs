@@ -1,7 +1,9 @@
 // scripts/verify-phase-a3.mjs
 import { existsSync } from 'node:fs';
-import { resolve } from 'node:path';
-import { spawn } from 'node:child_process';
+import { rm, mkdtemp } from 'node:fs/promises';
+import { resolve, join } from 'node:path';
+import { spawn, execSync } from 'node:child_process';
+import { tmpdir } from 'node:os';
 
 export function ensureNodeVersion(minVersion, currentVersion = process.version) {
   const current = parseSemver(currentVersion);
@@ -110,4 +112,147 @@ export function executeCommand(command, args, options) {
       finish({ status, exitCode, signal });
     });
   });
+}
+
+const DEFAULT_STEP_TIMEOUTS = {
+  'tui-smoke-stdio': 60_000,
+  'tui-smoke-socket': 60_000,
+  'tui-smoke-tcp': 60_000,
+};
+
+export function resolveTimeout(stepId, config) {
+  return config.stepTimeoutsMs[stepId] ?? DEFAULT_STEP_TIMEOUTS[stepId] ?? config.defaultTimeoutMs;
+}
+
+export async function buildContext(config) {
+  const workspaceRoot = process.cwd();
+  const tempHomeDir = await mkdtemp(join(tmpdir(), 'phase-a3-'));
+  const env = { ...process.env, ODY_HOME: tempHomeDir };
+  return { config, workspaceRoot, tempHomeDir, env };
+}
+
+export function buildStepRegistry(config) {
+  const steps = [
+    { id: 'rust-test', name: 'Rust host unit tests' },
+    { id: 'cross-lang-rpc', name: 'Cross-language RPC test' },
+    { id: 'tui-smoke-stdio', name: 'TUI stdio smoke' },
+    { id: 'tui-smoke-socket', name: 'TUI socket smoke' },
+    { id: 'tui-smoke-tcp', name: 'TUI tcp smoke' },
+    { id: 'sea-build', name: 'SEA full build' },
+    { id: 'sea-smoke', name: 'Native smoke' },
+    { id: 'typecheck', name: 'Workspace typecheck' },
+  ];
+  return steps
+    .filter((s) => !config.skipSea || (s.id !== 'sea-build' && s.id !== 'sea-smoke'))
+    .map((s) => ({
+      ...s,
+      run: (ctx) => runStepById(s.id, ctx),
+    }));
+}
+
+async function runStepById(id, ctx) {
+  const timeoutMs = resolveTimeout(id, ctx.config);
+  if (id === 'rust-test') {
+    return wrapResult(await executeCommand('pnpm', ['run', 'test:host'], { cwd: ctx.workspaceRoot, env: ctx.env, timeoutMs }), 'pnpm', ['run', 'test:host'], ctx.workspaceRoot);
+  }
+  if (id === 'cross-lang-rpc') {
+    return wrapResult(await executeCommand('pnpm', ['vitest', 'run', 'packages/node-sdk/test/rust-host-connect.test.ts'], { cwd: ctx.workspaceRoot, env: ctx.env, timeoutMs }), 'pnpm', ['vitest', 'run', 'packages/node-sdk/test/rust-host-connect.test.ts'], ctx.workspaceRoot);
+  }
+  if (id.startsWith('tui-smoke-')) {
+    return runTuiSmoke(id.replace('tui-smoke-', ''), ctx, timeoutMs);
+  }
+  if (id === 'sea-build') {
+    return wrapResult(await executeCommand('pnpm', ['--filter', 'ody-code', 'run', 'build:native:sea'], { cwd: ctx.workspaceRoot, env: ctx.env, timeoutMs }), 'pnpm', ['--filter', 'ody-code', 'run', 'build:native:sea'], ctx.workspaceRoot);
+  }
+  if (id === 'sea-smoke') {
+    return wrapResult(await executeCommand('pnpm', ['--filter', 'ody-code', 'run', 'test:native:smoke'], { cwd: ctx.workspaceRoot, env: ctx.env, timeoutMs }), 'pnpm', ['--filter', 'ody-code', 'run', 'test:native:smoke'], ctx.workspaceRoot);
+  }
+  if (id === 'typecheck') {
+    return wrapResult(await executeCommand('pnpm', ['-r', 'typecheck'], { cwd: ctx.workspaceRoot, env: ctx.env, timeoutMs }), 'pnpm', ['-r', 'typecheck'], ctx.workspaceRoot);
+  }
+  throw new Error(`Unknown step id: ${id}`);
+}
+
+function wrapResult(result, command, args, cwd) {
+  return { ...result, command, args, cwd };
+}
+
+async function runTuiSmoke(transport, ctx, timeoutMs) {
+  const baseArgs = ['--filter', 'ody-code', 'run', 'dev:cli-only', '--', '--host=rust', '--smoke-test'];
+  if (transport === 'stdio') {
+    baseArgs.push('--host-stdio');
+  } else if (transport === 'socket') {
+    baseArgs.push('--host-socket', join(ctx.tempHomeDir, 'ody-smoke.sock'));
+  } else if (transport === 'tcp') {
+    const basePort = 19090;
+    const maxAttempts = 10;
+    let lastResult;
+    for (let offset = 0; offset < maxAttempts; offset += 1) {
+      const port = basePort + offset;
+      const args = [...baseArgs, '--host-tcp', `127.0.0.1:${port}`];
+      lastResult = wrapResult(await executeCommand('pnpm', args, { cwd: ctx.workspaceRoot, env: ctx.env, timeoutMs }), 'pnpm', args, ctx.workspaceRoot);
+      if (lastResult.status === 'passed') return lastResult;
+      const combined = `${lastResult.stdoutRedacted}\n${lastResult.stderrRedacted}`;
+      if (!/eaddrinuse|address already in use/i.test(combined)) return lastResult;
+    }
+    return lastResult;
+  }
+  return wrapResult(await executeCommand('pnpm', baseArgs, { cwd: ctx.workspaceRoot, env: ctx.env, timeoutMs }), 'pnpm', baseArgs, ctx.workspaceRoot);
+}
+
+export function buildMetadata(config) {
+  return {
+    nodeVersion: process.version,
+    platform: process.platform,
+    arch: process.arch,
+    timestamp: new Date().toISOString(),
+    hostBinaryPath: config.hostBinaryPath,
+  };
+}
+
+export function buildEnvironment() {
+  return {
+    cwd: process.cwd(),
+    pnpmVersion: execSync('pnpm --version', { encoding: 'utf-8' }).trim(),
+    cargoVersion: execSync('cargo --version', { encoding: 'utf-8' }).trim(),
+    rustcVersion: execSync('rustc --version', { encoding: 'utf-8' }).trim(),
+  };
+}
+
+export function buildSummary(results, totalDurationMs) {
+  const passedCount = results.filter((r) => r.status === 'passed').length;
+  const failedCount = results.filter((r) => r.status === 'failed').length;
+  const skippedCount = results.filter((r) => r.status === 'skipped').length;
+  let overallStatus = 'passed';
+  if (failedCount > 0) overallStatus = results.length === failedCount ? 'failed' : 'partial';
+  return { overallStatus, passedCount, failedCount, skippedCount, totalDurationMs };
+}
+
+export async function runVerification(config) {
+  ensureNodeVersion('24.15.0');
+  if (!existsSync(config.hostBinaryPath)) {
+    throw new Error(`ody-host binary not found at ${config.hostBinaryPath}. Build with "pnpm run build:host" or set ODY_HOST_BINARY_PATH.`);
+  }
+  const ctx = await buildContext(config);
+  const steps = buildStepRegistry(config);
+  const results = [];
+  const startedAt = Date.now();
+  try {
+    for (const step of steps) {
+      const base = await step.run(ctx);
+      const result = { ...base, id: step.id, name: step.name };
+      results.push(result);
+      if (result.status === 'failed') break;
+    }
+  } finally {
+    if (!config.keepTemp) {
+      await rm(ctx.tempHomeDir, { recursive: true, force: true }).catch(() => {});
+    }
+  }
+  return {
+    metadata: buildMetadata(config),
+    environment: buildEnvironment(),
+    steps: results,
+    summary: buildSummary(results, Date.now() - startedAt),
+  };
 }

@@ -1,7 +1,7 @@
 // scripts/verify-phase-a3.test.mjs
 import { describe, it } from 'node:test';
 import assert from 'node:assert';
-import { ensureNodeVersion, parseConfig, redact, executeCommand } from './verify-phase-a3.mjs';
+import { ensureNodeVersion, parseConfig, redact, executeCommand, buildStepRegistry, buildSummary, buildMetadata, buildEnvironment } from './verify-phase-a3.mjs';
 
 describe('ensureNodeVersion', () => {
   it('rejects Node older than 24.15.0', () => {
@@ -147,5 +147,71 @@ describe('executeCommand', () => {
     });
     assert(result.stdoutRedacted.includes('***'));
     assert(!result.stdoutRedacted.includes('leaked'));
+  });
+});
+
+describe('buildStepRegistry', () => {
+  it('includes all steps when skipSea is false', () => {
+    const steps = buildStepRegistry({ skipSea: false });
+    assert.deepStrictEqual(
+      steps.map((s) => s.id),
+      ['rust-test', 'cross-lang-rpc', 'tui-smoke-stdio', 'tui-smoke-socket', 'tui-smoke-tcp', 'sea-build', 'sea-smoke', 'typecheck'],
+    );
+  });
+
+  it('skips sea steps when skipSea is true', () => {
+    const steps = buildStepRegistry({ skipSea: true });
+    assert.ok(!steps.some((s) => s.id === 'sea-build'));
+    assert.ok(!steps.some((s) => s.id === 'sea-smoke'));
+  });
+});
+
+describe('buildSummary', () => {
+  it('marks partial when some pass and some fail', () => {
+    const summary = buildSummary(
+      [
+        { status: 'passed' },
+        { status: 'passed' },
+        { status: 'failed' },
+        { status: 'skipped' },
+      ],
+      1000,
+    );
+    assert.strictEqual(summary.overallStatus, 'partial');
+    assert.strictEqual(summary.passedCount, 2);
+    assert.strictEqual(summary.failedCount, 1);
+    assert.strictEqual(summary.skippedCount, 1);
+    assert.strictEqual(summary.totalDurationMs, 1000);
+  });
+
+  it('marks passed only when every step passed', () => {
+    const summary = buildSummary([{ status: 'passed' }, { status: 'passed' }], 100);
+    assert.strictEqual(summary.overallStatus, 'passed');
+  });
+
+  it('marks failed when every step failed', () => {
+    const summary = buildSummary([{ status: 'failed' }, { status: 'failed' }], 100);
+    assert.strictEqual(summary.overallStatus, 'failed');
+  });
+});
+
+describe('buildMetadata', () => {
+  it('includes node version, platform, arch, host binary path', () => {
+    const meta = buildMetadata({ hostBinaryPath: '/bin/ody-host' });
+    assert.strictEqual(meta.nodeVersion, process.version);
+    assert.strictEqual(meta.platform, process.platform);
+    assert.strictEqual(meta.arch, process.arch);
+    assert.strictEqual(meta.hostBinaryPath, '/bin/ody-host');
+    assert.ok(/\d{4}-\d{2}-\d{2}T/.test(meta.timestamp));
+  });
+});
+
+describe('buildEnvironment', () => {
+  it('includes cwd, pnpm, cargo, rustc versions', () => {
+    const env = buildEnvironment();
+    assert.strictEqual(env.cwd, process.cwd());
+    assert.ok(typeof env.pnpmVersion === 'string');
+    assert.ok(typeof env.cargoVersion === 'string');
+    assert.ok(typeof env.rustcVersion === 'string');
   });
 });
