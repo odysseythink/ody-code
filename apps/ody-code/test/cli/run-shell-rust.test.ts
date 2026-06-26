@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { buildRustHostLaunchOptions, resolveHostBinary } from '#/cli/run-shell-rust';
+import { buildRustHostLaunchOptions, resolveHostBinary, runSmokeTestBranch } from '#/cli/run-shell-rust';
 import { getHostBinaryPath } from '#/native/native-assets';
 
 vi.mock('#/native/native-assets', async (importOriginal) => ({
@@ -130,5 +130,44 @@ describe('run-shell-rust helpers', () => {
       configPath: '/tmp/c.toml',
       homeDir: '/tmp/h',
     });
+  });
+});
+
+describe('runSmokeTestBranch', () => {
+  it('prints SMOKE_OK and exits 0 on success', async () => {
+    const harness = {
+      ensureConfigFile: vi.fn().mockResolvedValue(undefined),
+      getExperimentalFlags: vi.fn().mockResolvedValue({}),
+      createSession: vi.fn().mockResolvedValue({ id: 'sess-ok' }),
+      listSessions: vi.fn().mockResolvedValue([{ id: 'sess-ok' }]),
+      close: vi.fn().mockResolvedValue(undefined),
+    } as any;
+    const stdout = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
+    const exit = vi.spyOn(process, 'exit').mockImplementation(() => undefined as never);
+
+    await runSmokeTestBranch(harness, { host: 'rust', hostStdio: true } as any);
+
+    expect(stdout).toHaveBeenCalledWith('SMOKE_OK stdio sess-ok\n');
+    expect(exit).toHaveBeenCalledWith(0);
+
+    stdout.mockRestore();
+    exit.mockRestore();
+  });
+
+  it('prints SMOKE_FAIL and exits 1 on failure', async () => {
+    const harness = {
+      ensureConfigFile: vi.fn().mockRejectedValue(new Error('boom')),
+      close: vi.fn().mockResolvedValue(undefined),
+    } as any;
+    const stderr = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+    const exit = vi.spyOn(process, 'exit').mockImplementation(() => undefined as never);
+
+    await runSmokeTestBranch(harness, { host: 'rust', hostStdio: true } as any);
+
+    expect(stderr).toHaveBeenCalledWith(expect.stringMatching(/^SMOKE_FAIL stdio: boom/));
+    expect(exit).toHaveBeenCalledWith(1);
+
+    stderr.mockRestore();
+    exit.mockRestore();
   });
 });

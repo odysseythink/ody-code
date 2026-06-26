@@ -57,6 +57,18 @@ export function buildRustHostLaunchOptions(
   return { mode: 'stdio', binaryPath, configPath: opts.configPath, homeDir: opts.homeDir };
 }
 
+export async function runSmokeTestBranch(harness: any, opts: CLIOptions): Promise<void> {
+  const result = await OdyTUI.runSmokeTest(harness, opts);
+  await harness.close();
+  if (result.success) {
+    process.stdout.write(`SMOKE_OK ${result.transport} ${result.sessionId}\n`);
+    process.exit(0);
+  } else {
+    process.stderr.write(`SMOKE_FAIL ${result.transport}: ${result.error}\n`);
+    process.exit(1);
+  }
+}
+
 export async function runShellWithRustHost(opts: CLIOptions, version: string): Promise<void> {
   const startedAt = Date.now();
   const configStartedAt = startedAt;
@@ -93,6 +105,11 @@ export async function runShellWithRustHost(opts: CLIOptions, version: string): P
   const client = await connector.connect(launchOptions as RustHostConnectorOptions);
   const harness = new RustHostHarness({ client, telemetry: telemetryClient });
 
+  if (opts.smokeTest) {
+    await runSmokeTestBranch(harness, opts);
+    return;
+  }
+
   await harness.ensureConfigFile();
   const config = await harness.getConfig();
   const configMs = Date.now() - configStartedAt;
@@ -106,6 +123,7 @@ export async function runShellWithRustHost(opts: CLIOptions, version: string): P
     resolvedTheme,
     officeHours: false,
     gameDesign: false,
+    smokeTest: opts.smokeTest,
   });
 
   initializeCliTelemetry({
