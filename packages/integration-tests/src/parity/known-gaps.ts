@@ -14,8 +14,8 @@ export function parseKnownGaps(markdown: string): KnownGap[] {
     if (!trimmed.startsWith('|') || trimmed.startsWith('|--')) continue;
     const cells = trimmed.split('|').map((c) => c.trim()).filter((c) => c.length > 0);
     if (cells.length < 3) continue;
-    const [scenario, layer, ...reasonParts] = cells;
-    if (scenario === 'Scenario' || !['L2', 'L3', 'L4'].includes(layer)) continue;
+    const [scenario, layer, ...reasonParts] = cells as [string, string, ...string[]];
+    if (scenario === 'Scenario' || !(['L2', 'L3', 'L4'] as readonly string[]).includes(layer)) continue;
     gaps.push({ scenario, layer: layer as GapLayer, reason: reasonParts.join(' | ') });
   }
   return gaps;

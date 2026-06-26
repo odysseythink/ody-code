@@ -79,7 +79,7 @@ function isErrorObject(value: unknown): value is { code: unknown; kind?: unknown
     typeof value === 'object' &&
     value !== null &&
     'code' in value &&
-    (value as Record<string, unknown>).code !== undefined
+    (value as Record<string, unknown>)['code'] !== undefined
   );
 }
 
@@ -88,10 +88,10 @@ function normalizeError(
   options: NormalizerOptions,
   path: string,
 ): unknown {
-  const out: Record<string, unknown> = { code: value.code };
-  if ('kind' in value) out.kind = value.kind;
-  if (typeof value.message === 'string') {
-    out.message = normalizeString(value.message, options, `${path}.message`);
+  const out: Record<string, unknown> = { code: value['code'] };
+  if ('kind' in value) out['kind'] = value['kind'];
+  if (typeof value['message'] === 'string') {
+    out['message'] = normalizeString(value['message'], options, `${path}.message`);
   }
   return out;
 }
@@ -100,15 +100,16 @@ function joinAssistantDeltas(events: AgentEvent[]): { events: AgentEvent[]; join
   const result: AgentEvent[] = [];
   let joinedCount = 0;
   for (const event of events) {
+    const prev = result[result.length - 1];
     if (
       event.type === 'assistant.delta' &&
-      result.length > 0 &&
-      result[result.length - 1].type === 'assistant.delta'
+      prev !== undefined &&
+      prev.type === 'assistant.delta'
     ) {
-      const prev = result[result.length - 1] as { turnId: number; delta: string };
-      const next = event as { turnId: number; delta: string };
-      if (prev.turnId === next.turnId) {
-        prev.delta += next.delta;
+      const prevDelta = prev as { turnId: number; delta: string };
+      const nextDelta = event as { turnId: number; delta: string };
+      if (prevDelta.turnId === nextDelta.turnId) {
+        prevDelta.delta += nextDelta.delta;
         joinedCount++;
         continue;
       }
@@ -146,20 +147,20 @@ export function normalize(
   snapshot: ScenarioSnapshot,
   options: NormalizerOptions,
 ): NormalizedSnapshot {
+  let events = walk(snapshot.events, options, '$.events') as AgentEvent[];
+  const { events: joinedEvents, joinedCount } = joinAssistantDeltas(events);
+  events = joinedEvents;
+
   const normalized: NormalizedSnapshot = {
     responses: walk(snapshot.responses, options, '$.responses') as unknown[],
-    events: walk(snapshot.events, options, '$.events') as AgentEvent[],
+    events,
     records: snapshot.records !== undefined
       ? (walk(snapshot.records, options, '$.records') as unknown[])
       : undefined,
     fsTree: snapshot.fsTree !== undefined
       ? walk(snapshot.fsTree, options, '$.fsTree')
       : undefined,
+    meta: joinedCount > 0 ? { joinedDeltaCount: joinedCount } : undefined,
   };
-  const { events, joinedCount } = joinAssistantDeltas(normalized.events as AgentEvent[]);
-  normalized.events = events;
-  if (joinedCount > 0) {
-    normalized.meta = { joinedDeltaCount: joinedCount };
-  }
   return normalized;
 }

@@ -27,6 +27,7 @@
     "@odysseythink/kaos": "workspace:^",
     "@odysseythink/kosong": "workspace:^",
     "@odysseythink/mcp-host": "workspace:^",
+    "@odysseythink/ody-code-sdk": "workspace:^",
     "@modelcontextprotocol/sdk": "^1.29.0",
     "pathe": "^2.0.3",
     "zod": "catalog:"
