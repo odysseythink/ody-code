@@ -7,7 +7,7 @@
  */
 
 import { mkdir, readdir, stat, unlink } from 'node:fs/promises';
-import { dirname, join } from 'pathe';
+import { join } from 'pathe';
 
 import { atomicWrite } from '#/utils/fs';
 import { withFileLock } from '#/utils/file-lock';

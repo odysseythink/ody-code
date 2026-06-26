@@ -14,7 +14,7 @@
 
 import type { Logger } from '@odysseythink/agent-core-shared';
 import { CheckpointBackupStore } from './backup-store';
-import type { CheckpointIndexData, CheckpointVersion } from './checkpoint-index';
+import type { CheckpointIndexData } from './checkpoint-index';
 import { SessionCheckpoint } from './checkpoint';
 import type { SessionCheckpointPayload } from './checkpoint';
 
