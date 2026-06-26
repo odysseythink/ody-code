@@ -140,9 +140,10 @@ vi.mock('../../src/tui/theme/detect', () => ({
 
 vi.mock('node:child_process', () => ({
   execSync: mocks.execSync,
+  spawn: vi.fn(),
 }));
 
-vi.mock('#host', () => ({
+vi.mock('#host/index', () => ({
   RustHostConnector: class {
     onDisconnect = mocks.rustHostConnectorOnDisconnect;
     connect = mocks.rustHostConnectorConnect;

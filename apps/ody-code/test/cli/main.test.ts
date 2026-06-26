@@ -346,6 +346,9 @@ describe('main entry command handling', () => {
         '\u001B[31mmessage:\u001B[39m',
         '\u001B[31mGit Bash was not found on this Windows host. Checked: C:\\Program Files\\Git\\bin\\bash.exe.\u001B[39m',
         '',
+        '\u001B[31maction:\u001B[39m',
+        '\u001B[31mInstall Git for Windows from https://gitforwindows.org/ or set ODY_SHELL_PATH to a bash.exe.\u001B[39m',
+        '',
       ].join('\n'),
     );
   });
