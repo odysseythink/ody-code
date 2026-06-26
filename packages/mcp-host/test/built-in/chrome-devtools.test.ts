@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createChromeDevToolsServerDefinition } from '#/built-in/chrome-devtools';
+import { createChromeDevToolsServerDefinition } from '#built-in/chrome-devtools';
 
 describe('createChromeDevToolsServerDefinition', () => {
   it('returns a stdio server definition with correct defaults', () => {

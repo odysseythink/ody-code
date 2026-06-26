@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { OdyTUI, type OdyTUIStartupInput, type TUIState } from '#/tui/ody-tui';
+import { OdyTUI, type OdyTUIStartupInput, type TUIState } from '#tui/ody-tui';
 
 vi.mock('node:fs/promises', async (importOriginal) => {
   const actual = await importOriginal<typeof import('node:fs/promises')>();

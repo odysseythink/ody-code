@@ -3,7 +3,7 @@ import { setImmediate as defer, setTimeout as delay } from 'node:timers/promises
 
 import { describe, expect, it } from 'vitest';
 
-import { BufferedReadable, decodeTextWithErrors, globPatternToRegex } from '#/internal';
+import { BufferedReadable, decodeTextWithErrors, globPatternToRegex } from '#internal';
 
 async function collectBytes(readable: AsyncIterable<Uint8Array | string>): Promise<Buffer> {
   const chunks: Buffer[] = [];

@@ -4,15 +4,15 @@ import {
   APIStatusError,
   APITimeoutError,
   ChatProviderError,
-} from '#/errors';
-import type { Message, StreamedMessagePart, ToolCall } from '#/message';
+} from '#errors';
+import type { Message, StreamedMessagePart, ToolCall } from '#message';
 import {
   convertGoogleGenAIError,
   GoogleGenAIChatProvider,
   GoogleGenAIStreamedMessage,
   messagesToGoogleGenAIContents,
-} from '#/providers/google-genai';
-import type { Tool } from '#/tool';
+} from '#providers/google-genai';
+import type { Tool } from '#tool';
 import { describe, it, expect, vi } from 'vitest';
 
 function makeGenerateContentResponse() {

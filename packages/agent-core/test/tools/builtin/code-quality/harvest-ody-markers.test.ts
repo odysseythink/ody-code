@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseOdyMarker, renderDebtLedger } from '#/tools/builtin/code-quality/harvest-ody-markers';
+import { parseOdyMarker, renderDebtLedger } from '#tools/builtin/code-quality/harvest-ody-markers';
 
 describe('parseOdyMarker', () => {
   it('parses a valid // marker with upgrade trigger', () => {

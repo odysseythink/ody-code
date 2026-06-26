@@ -12,12 +12,12 @@
  * `ModelCapability`) do not churn every row.
  */
 
-import { UNKNOWN_CAPABILITY } from '#/capability';
-import { AnthropicChatProvider } from '#/providers/anthropic';
-import { GoogleGenAIChatProvider } from '#/providers/google-genai';
-import { KimiChatProvider } from '#/providers/kimi';
-import { OpenAILegacyChatProvider } from '#/providers/openai-legacy';
-import { OpenAIResponsesChatProvider } from '#/providers/openai-responses';
+import { UNKNOWN_CAPABILITY } from '#capability';
+import { AnthropicChatProvider } from '#providers/anthropic';
+import { GoogleGenAIChatProvider } from '#providers/google-genai';
+import { KimiChatProvider } from '#providers/kimi';
+import { OpenAILegacyChatProvider } from '#providers/openai-legacy';
+import { OpenAIResponsesChatProvider } from '#providers/openai-responses';
 import { describe, expect, it } from 'vitest';
 describe('KimiChatProvider.getCapability', () => {
   function make(model: string): KimiChatProvider {

@@ -4,8 +4,8 @@ import {
 } from '@odysseythink/ody-code-sdk';
 import type { Command } from 'commander';
 
-import { OptionConflictError } from '#/cli/options';
-import { createKimiCodeHostIdentity } from '#/cli/version';
+import { OptionConflictError } from '#cli/options';
+import { createKimiCodeHostIdentity } from '#cli/version';
 
 interface RequestCodeReviewCLIOptions {
   base?: string | undefined;

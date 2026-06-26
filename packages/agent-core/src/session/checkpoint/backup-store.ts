@@ -9,8 +9,8 @@
 import { mkdir, readdir, stat, unlink } from 'node:fs/promises';
 import { join } from 'pathe';
 
-import { atomicWrite } from '#/utils/fs';
-import { withFileLock } from '#/utils/file-lock';
+import { atomicWrite } from '#utils/fs';
+import { withFileLock } from '#utils/file-lock';
 import type { SessionCheckpointPayload } from './checkpoint';
 
 export interface CheckpointBackupStoreOptions {

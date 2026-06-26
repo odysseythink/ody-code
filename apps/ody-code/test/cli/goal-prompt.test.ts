@@ -6,8 +6,8 @@ import {
   goalExitCode,
   goalSummaryJson,
   parseHeadlessGoalCreate,
-} from '#/cli/goal-prompt';
-import { runPrompt } from '#/cli/run-prompt';
+} from '#cli/goal-prompt';
+import { runPrompt } from '#cli/run-prompt';
 
 function snapshot(overrides: Record<string, unknown> = {}) {
   return {

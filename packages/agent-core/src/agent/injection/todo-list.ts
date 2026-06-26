@@ -1,10 +1,10 @@
-import type { ContextMessage } from '#/agent/context';
+import type { ContextMessage } from '#agent/context';
 import {
   TODO_LIST_TOOL_NAME,
   TODO_STORE_KEY,
   type TodoItem,
   type TodoStatus,
-} from '#/tools/builtin/state/todo-list';
+} from '#tools/builtin/state/todo-list';
 
 import { DynamicInjector } from './injector';
 

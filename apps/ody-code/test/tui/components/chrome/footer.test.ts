@@ -1,10 +1,10 @@
 import chalk from 'chalk';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { FooterComponent, tipsForMode } from '#/tui/components/chrome/footer';
-import { setRainbowDance, type RainbowDanceController } from '#/tui/easter-eggs/dance';
-import { darkColors } from '#/tui/theme/colors';
-import type { AppState } from '#/tui/types';
+import { FooterComponent, tipsForMode } from '#tui/components/chrome/footer';
+import { setRainbowDance, type RainbowDanceController } from '#tui/easter-eggs/dance';
+import { darkColors } from '#tui/theme/colors';
+import type { AppState } from '#tui/types';
 
 const TRUECOLOR_PATTERN = /\[38;2;(\d+);(\d+);(\d+)m/g;
 

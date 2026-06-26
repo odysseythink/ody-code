@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { getNativeCacheBase } from '#/native/native-assets';
+import { getNativeCacheBase } from '#native/native-assets';
 
 describe('getNativeCacheBase precedence', () => {
   const baseOptions = { homeDir: '/home/u' };

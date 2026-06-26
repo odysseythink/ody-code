@@ -1,6 +1,6 @@
 import { valid } from 'semver';
 
-import { ODY_CODE_CDN_LATEST_URL } from '#/constant/app';
+import { ODY_CODE_CDN_LATEST_URL } from '#constant/app';
 
 /**
  * Fetch the latest published Ody Code version from the CDN.

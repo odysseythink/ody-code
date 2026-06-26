@@ -3,7 +3,7 @@ import type { QuestionHandler, QuestionRequest, QuestionResult } from '@odysseyt
 import type {
   QuestionPanelData,
   QuestionPanelResponse,
-} from '#/tui/reverse-rpc/types';
+} from '#tui/reverse-rpc/types';
 
 import type { QuestionController } from './controller';
 

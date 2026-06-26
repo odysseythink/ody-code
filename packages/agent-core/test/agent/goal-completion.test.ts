@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildGoalCompletionMessage } from '#/agent/goal/completion';
-import type { GoalSnapshot } from '#/session/goal';
+import { buildGoalCompletionMessage } from '#agent/goal/completion';
+import type { GoalSnapshot } from '#session/goal';
 
 function snapshot(overrides: Partial<GoalSnapshot> = {}): GoalSnapshot {
   return {

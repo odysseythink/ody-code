@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { refreshUpdateCache } from '#/cli/update/refresh';
+import { refreshUpdateCache } from '#cli/update/refresh';
 
 describe('refreshUpdateCache', () => {
   it('writes a fresh cache on successful fetch', async () => {

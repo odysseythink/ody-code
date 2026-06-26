@@ -1,4 +1,4 @@
-import type { PromisableMethods, Promisify } from '#/utils/types';
+import type { PromisableMethods, Promisify } from '#utils/types';
 import { createControlledPromise, objectMap } from '@antfu/utils';
 
 import {

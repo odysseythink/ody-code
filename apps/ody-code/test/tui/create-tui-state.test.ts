@@ -1,8 +1,8 @@
 
 import { describe, it, expect } from 'vitest';
 
-import { createTUIState, type OdyTUIOptions } from '#/tui/ody-tui';
-import type { AppState } from '#/tui/types';
+import { createTUIState, type OdyTUIOptions } from '#tui/ody-tui';
+import type { AppState } from '#tui/types';
 
 function fakeInitialAppState(): AppState {
   return {

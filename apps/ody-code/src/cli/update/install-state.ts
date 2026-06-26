@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
-import { getUpdateInstallStateFile } from '#/utils/paths';
-import { readJsonFile, writeJsonFile } from '#/utils/persistence';
+import { getUpdateInstallStateFile } from '#utils/paths';
+import { readJsonFile, writeJsonFile } from '#utils/persistence';
 
 import { emptyUpdateInstallState, type InstallSource, type UpdateInstallState } from './types';
 

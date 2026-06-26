@@ -8,9 +8,9 @@ import {
   PluginsOverviewSelectorComponent,
   type PluginMcpSelection,
   type PluginRemoveConfirmResult,
-} from '#/tui/components/dialogs/plugins-selector';
-import { darkColors } from '#/tui/theme/colors';
-import { pluginTrustLabel } from '#/tui/utils/plugin-source-label';
+} from '#tui/components/dialogs/plugins-selector';
+import { darkColors } from '#tui/theme/colors';
+import { pluginTrustLabel } from '#tui/utils/plugin-source-label';
 
 const ANSI_SGR = /\[[0-9;]*m/g;
 const SGR_SEQUENCE = String.raw`\[[0-9;]*m`;

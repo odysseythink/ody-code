@@ -4,7 +4,7 @@ import { join } from 'node:path';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { OdyError, KimiHarness } from '#/index';
+import { OdyError, KimiHarness } from '#index';
 
 import {
   parseConfigString,

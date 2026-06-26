@@ -3,12 +3,12 @@ import {
   APITimeoutError,
   ChatProviderError,
   normalizeAPIStatusError,
-} from '#/errors';
-import { extractText } from '#/message';
-import type { ContentPart, Message } from '#/message';
-import type { FinishReason, ThinkingEffort } from '#/provider';
-import type { Tool } from '#/tool';
-import type { TokenUsage } from '#/usage';
+} from '#errors';
+import { extractText } from '#message';
+import type { ContentPart, Message } from '#message';
+import type { FinishReason, ThinkingEffort } from '#provider';
+import type { Tool } from '#tool';
+import type { TokenUsage } from '#usage';
 import {
   APIConnectionError as OpenAIConnectionError,
   APIConnectionTimeoutError as OpenAITimeoutError,

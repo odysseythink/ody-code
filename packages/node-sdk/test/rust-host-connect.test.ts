@@ -6,6 +6,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
+import { Session } from '../src/session';
 import { SDKRpcClient, type SDKRpcClientConnectOptions } from '../src/rpc';
 
 interface WithRustHostOptions {
@@ -13,6 +14,7 @@ interface WithRustHostOptions {
     | SDKRpcClientConnectOptions['transport']
     | ((homeDir: string) => SDKRpcClientConnectOptions['transport']);
   readonly binaryPath?: string | undefined;
+  readonly extraArgs?: readonly string[];
 }
 
 interface HostFixture {
@@ -50,6 +52,7 @@ async function withRustHost<T>(
     transport,
     binaryPath: options.binaryPath ?? resolveBinaryPath(process.env),
     homeDir,
+    extraArgs: options.extraArgs,
   });
   const proc = (client as unknown as { _hostProc?: ChildProcess })._hostProc;
   try {
@@ -120,6 +123,10 @@ async function assertSessionLifecycle(
   await client.closeSession({ sessionId: session.id });
 }
 
+function wrapSession(client: SDKRpcClient, summary: { readonly id: string; readonly workDir: string }): Session {
+  return new Session({ id: summary.id, workDir: summary.workDir, rpc: client });
+}
+
 describe('SDKRpcClient.connect with real ody-host', () => {
   it('stdio transport creates and lists a session', async () => {
     await withRustHost({ transport: 'stdio' }, async ({ client, homeDir }) => {
@@ -158,12 +165,155 @@ describe('SDKRpcClient.connect with real ody-host', () => {
   it('createSession without id generates a uuid', async () => {
     await withRustHost({ transport: 'stdio' }, async ({ client, homeDir }) => {
       const session = await client.createSession({ workDir: homeDir });
-      expect(session.id).toBeDefined();
-      expect(session.id).not.toBe('');
-      expect(session.id.length).toBeGreaterThan(10);
+      expect(session.id).toMatch(
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
+      );
       const sessions = await client.listSessions({ workDir: homeDir });
       expect(sessions.some((s) => s.id === session.id)).toBe(true);
       await client.closeSession({ sessionId: session.id });
+    });
+  });
+
+  it('rejects when the host binary is missing', async () => {
+    await expect(
+      withRustHost(
+        { transport: 'stdio', binaryPath: '/nonexistent/ody-host-binary' },
+        async () => {},
+      ),
+    ).rejects.toThrow(/Failed to spawn host/);
+  });
+
+  it('rejects when a UDS socket path is unreachable', async () => {
+    await expect(
+      withRustHost(
+        {
+          transport: { socketPath: join(tmpdir(), 'nonexistent-dir', 'host.sock'), spawn: false },
+        },
+        async () => {},
+      ),
+    ).rejects.toThrow();
+  });
+
+  describe('expanded CoreAPI (mock provider)', () => {
+    it('agent-scoped getConfig is exercised by getStatus', async () => {
+      await withRustHost(
+        { transport: 'stdio', extraArgs: ['--mock-provider'] },
+        async ({ client, homeDir }) => {
+          const summary = await client.createSession({ workDir: homeDir });
+          const session = wrapSession(client, summary);
+          const status = await session.getStatus();
+          expect(status.model).toBeDefined();
+          expect(typeof status.model).toBe('string');
+          expect(status.model!.length).toBeGreaterThan(0);
+          expect(status.thinkingLevel).toBe('off');
+          await client.closeSession({ sessionId: session.id });
+        },
+      );
+    });
+
+    it('setModel updates the session model', async () => {
+      await withRustHost(
+        { transport: 'stdio', extraArgs: ['--mock-provider'] },
+        async ({ client, homeDir }) => {
+          const summary = await client.createSession({ workDir: homeDir });
+          const session = wrapSession(client, summary);
+          await session.setModel('gpt-4o');
+          const status = await session.getStatus();
+          expect(status.model).toBe('gpt-4o');
+          await client.closeSession({ sessionId: session.id });
+        },
+      );
+    });
+
+    it('setThinking updates the session thinking level', async () => {
+      await withRustHost(
+        { transport: 'stdio', extraArgs: ['--mock-provider'] },
+        async ({ client, homeDir }) => {
+          const summary = await client.createSession({ workDir: homeDir });
+          const session = wrapSession(client, summary);
+          await session.setThinking('on');
+          const status = await session.getStatus();
+          expect(status.thinkingLevel).toBe('on');
+          await client.closeSession({ sessionId: session.id });
+        },
+      );
+    });
+
+    it('setPermission updates the session permission mode', async () => {
+      await withRustHost(
+        { transport: 'stdio', extraArgs: ['--mock-provider'] },
+        async ({ client, homeDir }) => {
+          const summary = await client.createSession({ workDir: homeDir });
+          const session = wrapSession(client, summary);
+          await session.setPermission('yolo');
+          const status = await session.getStatus();
+          expect(status.permission).toBe('yolo');
+          await client.closeSession({ sessionId: session.id });
+        },
+      );
+    });
+
+    it('listSkills returns an empty array', async () => {
+      await withRustHost(
+        { transport: 'stdio', extraArgs: ['--mock-provider'] },
+        async ({ client, homeDir }) => {
+          const summary = await client.createSession({ workDir: homeDir });
+          const session = wrapSession(client, summary);
+          expect(await session.listSkills()).toEqual([]);
+          await client.closeSession({ sessionId: session.id });
+        },
+      );
+    });
+
+    it('prompt emits turn events and returns ok', async () => {
+      await withRustHost(
+        { transport: 'stdio', extraArgs: ['--mock-provider'] },
+        async ({ client, homeDir }) => {
+          const summary = await client.createSession({ workDir: homeDir });
+          const session = wrapSession(client, summary);
+          const events: Array<{ readonly type: string }> = [];
+          const unsubscribe = session.onEvent((event) => {
+            events.push(event);
+          });
+          try {
+            await session.prompt('hello');
+          } finally {
+            unsubscribe();
+          }
+          expect(events.some((e) => e.type === 'turn.started')).toBe(true);
+          expect(events.some((e) => e.type === 'assistant.delta')).toBe(true);
+          expect(events.some((e) => e.type === 'turn.ended')).toBe(true);
+          await client.closeSession({ sessionId: session.id });
+        },
+      );
+    });
+
+    it('steer returns ok', async () => {
+      await withRustHost(
+        { transport: 'stdio', extraArgs: ['--mock-provider'] },
+        async ({ client, homeDir }) => {
+          const summary = await client.createSession({ workDir: homeDir });
+          const session = wrapSession(client, summary);
+          await expect(session.steer('focus on tests')).resolves.toBeUndefined();
+          await client.closeSession({ sessionId: session.id });
+        },
+      );
+    });
+
+    it('getStatus composes config, context, permission, plan and usage', async () => {
+      await withRustHost(
+        { transport: 'stdio', extraArgs: ['--mock-provider'] },
+        async ({ client, homeDir }) => {
+          const summary = await client.createSession({ workDir: homeDir });
+          const session = wrapSession(client, summary);
+          const status = await session.getStatus();
+          expect(status.permission).toBe('manual');
+          expect(status.contextTokens).toBe(0);
+          expect(status.maxContextTokens).toBe(0);
+          expect(status.sessionMode).toBe('normal');
+          await client.closeSession({ sessionId: session.id });
+        },
+      );
     });
   });
 });

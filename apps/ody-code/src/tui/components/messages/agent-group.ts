@@ -19,8 +19,8 @@ import type { TUI } from '@earendil-works/pi-tui';
 import { Container, Spacer, Text } from '@earendil-works/pi-tui';
 import chalk from 'chalk';
 
-import { STATUS_BULLET } from '#/tui/constant/symbols';
-import type { ColorPalette } from '#/tui/theme/colors';
+import { STATUS_BULLET } from '#tui/constant/symbols';
+import type { ColorPalette } from '#tui/theme/colors';
 
 import type { ToolCallComponent, ToolCallSubagentSnapshot } from './tool-call';
 

@@ -9,10 +9,10 @@ import {
 import type { PluginInfo, PluginMcpServerInfo, PluginSummary } from '@odysseythink/ody-code-sdk';
 import chalk from 'chalk';
 
-import type { ColorPalette } from '#/tui/theme/colors';
-import { formatPluginSourceLabel, pluginTrustLabel } from '#/tui/utils/plugin-source-label';
-import { printableChar } from '#/tui/utils/printable-key';
-import type { PluginMarketplaceEntry } from '#/utils/plugin-marketplace';
+import type { ColorPalette } from '#tui/theme/colors';
+import { formatPluginSourceLabel, pluginTrustLabel } from '#tui/utils/plugin-source-label';
+import { printableChar } from '#tui/utils/printable-key';
+import type { PluginMarketplaceEntry } from '#utils/plugin-marketplace';
 
 import { ChoicePickerComponent } from './choice-picker';
 

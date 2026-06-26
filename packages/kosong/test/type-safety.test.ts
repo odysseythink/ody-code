@@ -7,7 +7,7 @@ import type {
   ToolCall,
   ToolCallPart,
   VideoURLPart,
-} from '#/message';
+} from '#message';
 import { describe, expect, it } from 'vitest';
 /**
  * This function exercises TypeScript's discriminated-union narrowing.

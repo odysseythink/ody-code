@@ -5,15 +5,15 @@ import {
   APITimeoutError,
   ChatProviderError,
   isRetryableGenerateError,
-} from '#/errors';
-import type { ContentPart } from '#/message';
+} from '#errors';
+import type { ContentPart } from '#message';
 import {
   convertContentPart,
   convertOpenAIError,
   reasoningEffortToThinkingEffort,
   thinkingEffortToReasoningEffort,
-} from '#/providers/openai-common';
-import { OpenAILegacyChatProvider, OpenAILegacyStreamedMessage } from '#/providers/openai-legacy';
+} from '#providers/openai-common';
+import { OpenAILegacyChatProvider, OpenAILegacyStreamedMessage } from '#providers/openai-legacy';
 import {
   APIError as OpenAIAPIError,
   APIConnectionError as OpenAIConnectionError,

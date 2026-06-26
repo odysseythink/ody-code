@@ -4,7 +4,7 @@
  * `capability-providers.test.ts`.
  */
 
-import { UNKNOWN_CAPABILITY, isUnknownCapability, type ModelCapability } from '#/capability';
+import { UNKNOWN_CAPABILITY, isUnknownCapability, type ModelCapability } from '#capability';
 import { describe, expect, it } from 'vitest';
 
 describe('ModelCapability / UNKNOWN_CAPABILITY', () => {

@@ -1,10 +1,10 @@
 import { z } from 'zod';
 import type { Kaos } from '@odysseythink/kaos';
-import type { Agent } from '#/agent';
-import type { BuiltinTool } from '#/agent/tool';
-import type { ExecutableToolResult, ToolExecution } from '#/loop/types';
+import type { Agent } from '#agent';
+import type { BuiltinTool } from '#agent/tool';
+import type { ExecutableToolResult, ToolExecution } from '#loop/types';
 import { toInputJsonSchema } from '@odysseythink/agent-core-shared';
-import { literalRulePattern, matchesGlobRuleSubject } from '#/tools/support/rule-match';
+import { literalRulePattern, matchesGlobRuleSubject } from '#tools/support/rule-match';
 import { E2EConfigResolver } from '@odysseythink/e2e-testing';
 import type { OdyConfig } from '@odysseythink/agent-core-shared';
 import { E2ETestExecutor } from '@odysseythink/e2e-testing';

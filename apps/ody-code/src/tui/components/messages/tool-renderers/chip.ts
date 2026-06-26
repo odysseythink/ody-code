@@ -8,8 +8,8 @@
  * registry get no chip at all.
  */
 
-import { computeDiffLines } from '#/tui/components/media/diff-preview';
-import type { ToolCallBlockData, ToolResultBlockData } from '#/tui/types';
+import { computeDiffLines } from '#tui/components/media/diff-preview';
+import type { ToolCallBlockData, ToolResultBlockData } from '#tui/types';
 
 import { readMediaChip } from './media';
 import { strArg } from './types';

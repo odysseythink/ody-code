@@ -5,8 +5,8 @@ import { fileURLToPath } from 'node:url';
 
 import { describe, expect, it, vi } from 'vitest';
 
-import { ODY_CODE_PLUGIN_MARKETPLACE_URL } from '#/constant/app';
-import { loadPluginMarketplace } from '#/utils/plugin-marketplace';
+import { ODY_CODE_PLUGIN_MARKETPLACE_URL } from '#constant/app';
+import { loadPluginMarketplace } from '#utils/plugin-marketplace';
 
 const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), '../../../..');
 

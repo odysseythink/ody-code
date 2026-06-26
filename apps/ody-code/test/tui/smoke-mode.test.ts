@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import type { CLIOptions } from '#/cli/options';
-import { OdyTUI } from '#/tui/ody-tui';
-import type { OdyHarness } from '#/tui/types';
+import type { CLIOptions } from '#cli/options';
+import { OdyTUI } from '#tui/ody-tui';
+import type { OdyHarness } from '#tui/types';
 
 function makeHarness(overrides: Partial<OdyHarness> = {}): OdyHarness {
   return {

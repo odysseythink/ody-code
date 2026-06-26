@@ -1,7 +1,7 @@
 import type { ApprovalRequest, ApprovalResponse, ToolInputDisplay } from '@odysseythink/ody-code-sdk';
 
-import type { ApprovalPanelResponse } from '#/tui/components/dialogs/approval-panel';
-import type { ApprovalPanelChoice, ApprovalPanelData, DisplayBlock } from '#/tui/reverse-rpc/types';
+import type { ApprovalPanelResponse } from '#tui/components/dialogs/approval-panel';
+import type { ApprovalPanelChoice, ApprovalPanelData, DisplayBlock } from '#tui/reverse-rpc/types';
 
 const DEFAULT_APPROVAL_CHOICES: ApprovalPanelChoice[] = [
   { label: 'Approve once', response: 'approved' },

@@ -14,8 +14,8 @@ import {
   ratioSeverity,
   renderProgressBar,
   safeUsageRatio,
-} from '#/utils/usage/usage-format';
-import type { ColorPalette } from '#/tui/theme/colors';
+} from '#utils/usage/usage-format';
+import type { ColorPalette } from '#tui/theme/colors';
 
 const LEFT_MARGIN = 2;
 const SIDE_PADDING = 1;

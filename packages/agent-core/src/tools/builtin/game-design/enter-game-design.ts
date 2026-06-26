@@ -1,6 +1,6 @@
-import type { Agent } from '#/agent';
+import type { Agent } from '#agent';
 import { z } from 'zod';
-import { gameDesignEntryReminder } from '#/agent/injection/game-design-contract';
+import { gameDesignEntryReminder } from '#agent/injection/game-design-contract';
 import { t } from '../../../i18n';
 import type { BuiltinTool } from '../../../agent/tool';
 import type { ToolExecution } from '../../../loop/types';

@@ -3,8 +3,8 @@ import { execSync } from 'node:child_process';
 import type { createKimiDeviceId as createKimiDeviceIdFn } from '@odysseythink/kimi-code-oauth';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { runShell } from '#/cli/run-shell';
-import type { CLIOptions } from '#/cli/options';
+import { runShell } from '#cli/run-shell';
+import type { CLIOptions } from '#cli/options';
 
 import { captureProcessWrite, ExitCalled, mockProcessExit } from '../helpers/process';
 
@@ -142,7 +142,7 @@ vi.mock('node:child_process', () => ({
   execSync: mocks.execSync,
 }));
 
-vi.mock('#/host', () => ({
+vi.mock('#host', () => ({
   RustHostConnector: class {
     onDisconnect = mocks.rustHostConnectorOnDisconnect;
     connect = mocks.rustHostConnectorConnect;

@@ -3,7 +3,7 @@ import { EventEmitter } from 'node:events';
 import type { AnyAuthMethod, ConnectConfig, SFTPWrapper, Stats as SFTPStats } from 'ssh2';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import type { SSHKaos as SSHKaosType } from '#/ssh';
+import type { SSHKaos as SSHKaosType } from '#ssh';
 
 interface CreateHarnessState {
   attemptedKeys: string[];
@@ -123,7 +123,7 @@ async function loadSSHModule(options: CreateHarnessOptions = {}): Promise<{
     }),
   }));
 
-  const { SSHKaos } = await import('#/ssh');
+  const { SSHKaos } = await import('#ssh');
   return { SSHKaos, state };
 }
 

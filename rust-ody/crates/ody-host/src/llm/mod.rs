@@ -81,4 +81,5 @@ pub trait LlmProvider: Send + Sync {
     ) -> Result<FinishReason, LlmError>;
 }
 
+pub mod mock;
 pub mod openai;

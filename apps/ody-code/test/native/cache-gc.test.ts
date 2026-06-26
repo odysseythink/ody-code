@@ -4,7 +4,7 @@ import { join } from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { cleanupStaleNativeCache } from '#/native/native-assets';
+import { cleanupStaleNativeCache } from '#native/native-assets';
 
 describe('cleanupStaleNativeCache', () => {
   let root: string;

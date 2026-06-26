@@ -23,11 +23,11 @@ import {
 } from '@odysseythink/ody-code-sdk';
 import type { Command } from 'commander';
 
-import { CLI_SHUTDOWN_TIMEOUT_MS, CLI_UI_MODE } from '#/constant/app';
-import { createCliTelemetryBootstrap, initializeCliTelemetry } from '#/cli/telemetry';
-import { detectInstallSource } from '#/cli/update/source';
-import { createKimiCodeHostIdentity } from '#/cli/version';
-import { detectShellEnvironment } from '#/utils/process/shell-env';
+import { CLI_SHUTDOWN_TIMEOUT_MS, CLI_UI_MODE } from '#constant/app';
+import { createCliTelemetryBootstrap, initializeCliTelemetry } from '#cli/telemetry';
+import { detectInstallSource } from '#cli/update/source';
+import { createKimiCodeHostIdentity } from '#cli/version';
+import { detectShellEnvironment } from '#utils/process/shell-env';
 
 interface WritableLike {
   write(chunk: string): boolean;

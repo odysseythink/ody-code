@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import type { TUIState } from '#/tui/ody-tui';
+import type { TUIState } from '#tui/ody-tui';
 import {
   DISABLE_TERMINAL_FOCUS_REPORTING,
   ENABLE_TERMINAL_FOCUS_REPORTING,
@@ -8,7 +8,7 @@ import {
   TERMINAL_FOCUS_OUT,
   handleTerminalFocusInput,
   installTerminalFocusTracking,
-} from '#/tui/utils/terminal-focus';
+} from '#tui/utils/terminal-focus';
 
 describe('terminal focus tracking', () => {
   it('updates focus state from terminal focus reporting sequences', () => {

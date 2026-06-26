@@ -1,6 +1,6 @@
-import { generate } from '#/generate';
-import type { StreamedMessagePart } from '#/message';
-import { extractText } from '#/message';
+import { generate } from '#generate';
+import type { StreamedMessagePart } from '#message';
+import { extractText } from '#message';
 import { MockChatProvider } from '../fixtures/mock-provider';
 import { describe, expect, it } from 'vitest';
 

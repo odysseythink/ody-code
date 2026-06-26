@@ -1,7 +1,7 @@
-import type { Message, StreamedMessagePart, ToolCall } from '#/message';
-import { AnthropicChatProvider } from '#/providers/anthropic';
-import type { Tool } from '#/tool';
-import type { TokenUsage } from '#/usage';
+import type { Message, StreamedMessagePart, ToolCall } from '#message';
+import { AnthropicChatProvider } from '#providers/anthropic';
+import type { Tool } from '#tool';
+import type { TokenUsage } from '#usage';
 import Anthropic from '@anthropic-ai/sdk';
 import { describe, expect, it } from 'vitest';
 

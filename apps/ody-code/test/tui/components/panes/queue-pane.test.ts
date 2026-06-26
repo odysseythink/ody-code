@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { QueuePaneComponent } from '#/tui/components/panes/queue-pane';
-import { darkColors } from '#/tui/theme/colors';
+import { QueuePaneComponent } from '#tui/components/panes/queue-pane';
+import { darkColors } from '#tui/theme/colors';
 
 function stripAnsi(text: string): string {
   return text.replaceAll(/\u001B\[[0-9;]*m/g, '');

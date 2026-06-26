@@ -2,15 +2,15 @@ import { readFile } from 'node:fs/promises';
 import { resolve } from 'pathe';
 
 import { ErrorCodes, OdyError } from '@odysseythink/agent-core-shared';
-import { resolveGlobalLogPath } from '#/logging/logger';
-import { buildExportManifest } from '#/session/export/manifest';
-import { scanSessionWire } from '#/session/export/wire-scan';
+import { resolveGlobalLogPath } from '#logging/logger';
+import { buildExportManifest } from '#session/export/manifest';
+import { scanSessionWire } from '#session/export/wire-scan';
 import {
   type ExtraZipEntry,
   collectFilesRecursive,
   writeExportZip,
-} from '#/session/export/zip';
-import type { ExportSessionPayload, ExportSessionResult, SessionSummary } from '#/rpc/core-api';
+} from '#session/export/zip';
+import type { ExportSessionPayload, ExportSessionResult, SessionSummary } from '#rpc/core-api';
 
 const SESSION_LOG_REL = 'logs/ody-code.log';
 const GLOBAL_LOG_REL = 'logs/global/ody-code.log';

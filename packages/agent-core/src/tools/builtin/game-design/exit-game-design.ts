@@ -1,4 +1,4 @@
-import type { Agent } from '#/agent';
+import type { Agent } from '#agent';
 import { z } from 'zod';
 import { t } from '../../../i18n';
 import type { BuiltinTool } from '../../../agent/tool';

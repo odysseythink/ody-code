@@ -26,7 +26,7 @@ import {
   type WebSearchProviderConfig,
 } from '@odysseythink/agent-core-shared';
 import { applyEnvModelConfig, stripEnvModelConfig } from './env-model';
-import { atomicWrite } from '#/utils/fs';
+import { atomicWrite } from '#utils/fs';
 import { parse as parseToml, stringify as stringifyToml } from 'smol-toml';
 
 /* ------------------------------------------------------------------ */

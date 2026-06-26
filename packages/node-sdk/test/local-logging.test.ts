@@ -5,7 +5,7 @@ import * as zlib from 'node:zlib';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { KimiHarness, log } from '#/index';
+import { KimiHarness, log } from '#index';
 import { __resetRootLoggerForTest, getRootLogger } from '../../agent-core/src/logging/logger';
 import { TEST_IDENTITY } from './test-identity';
 
@@ -350,7 +350,7 @@ describe('Local logging — harness integration', () => {
     // Type-level check — if these names show up on the SDK index they must
     // be re-exports we forgot to filter. Use string keys so the assertion is
     // structural and survives renames.
-    const sdk = await import('#/index');
+    const sdk = await import('#index');
     const exposed = Object.keys(sdk);
     expect(exposed).toContain('log');
     expect(exposed).toContain('redact');

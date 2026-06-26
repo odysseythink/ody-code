@@ -8,8 +8,8 @@ import type {
   LLMChatParams,
   LLMChatResponse,
   ToolCallDelta,
-} from '#/loop/llm';
-import type { SDKAgentRPC } from '#/rpc';
+} from '#loop/llm';
+import type { SDKAgentRPC } from '#rpc';
 import type {
   ChatStreamDeltaPayload,
   ChatStreamEndPayload,
@@ -17,8 +17,8 @@ import type {
   ChatStreamRequest,
   ChatStreamResult,
   StreamDelta,
-} from '#/rpc/llm-stream';
-import type { CompletionBudgetConfig } from '#/utils/completion-budget';
+} from '#rpc/llm-stream';
+import type { CompletionBudgetConfig } from '#utils/completion-budget';
 
 export interface RemoteKosongLLMConfig {
   readonly sdk: SDKAgentRPC;

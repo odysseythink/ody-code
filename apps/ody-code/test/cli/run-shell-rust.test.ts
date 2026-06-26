@@ -1,10 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { buildRustHostLaunchOptions, resolveHostBinary, runSmokeTestBranch } from '#/cli/run-shell-rust';
-import { getHostBinaryPath } from '#/native/native-assets';
+import { buildRustHostLaunchOptions, resolveHostBinary, runSmokeTestBranch } from '#cli/run-shell-rust';
+import { getHostBinaryPath } from '#native/native-assets';
 
-vi.mock('#/native/native-assets', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('#/native/native-assets')>()),
+vi.mock('#native/native-assets', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('#native/native-assets')>()),
   getHostBinaryPath: vi.fn(),
 }));
 

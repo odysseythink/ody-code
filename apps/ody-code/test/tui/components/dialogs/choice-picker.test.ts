@@ -1,13 +1,13 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { ChoicePickerComponent } from '#/tui/components/dialogs/choice-picker';
-import { EditorSelectorComponent } from '#/tui/components/dialogs/editor-selector';
-import { ModelSelectorComponent } from '#/tui/components/dialogs/model-selector';
-import { PermissionSelectorComponent } from '#/tui/components/dialogs/permission-selector';
-import { SettingsSelectorComponent } from '#/tui/components/dialogs/settings-selector';
-import { ThemeSelectorComponent } from '#/tui/components/dialogs/theme-selector';
-import { UpdatePreferenceSelectorComponent } from '#/tui/components/dialogs/update-preference-selector';
-import { darkColors } from '#/tui/theme/colors';
+import { ChoicePickerComponent } from '#tui/components/dialogs/choice-picker';
+import { EditorSelectorComponent } from '#tui/components/dialogs/editor-selector';
+import { ModelSelectorComponent } from '#tui/components/dialogs/model-selector';
+import { PermissionSelectorComponent } from '#tui/components/dialogs/permission-selector';
+import { SettingsSelectorComponent } from '#tui/components/dialogs/settings-selector';
+import { ThemeSelectorComponent } from '#tui/components/dialogs/theme-selector';
+import { UpdatePreferenceSelectorComponent } from '#tui/components/dialogs/update-preference-selector';
+import { darkColors } from '#tui/theme/colors';
 
 const ANSI_SGR = /\u001B\[[0-9;]*m/g;
 

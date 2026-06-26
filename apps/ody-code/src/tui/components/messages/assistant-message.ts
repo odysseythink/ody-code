@@ -9,9 +9,9 @@ import type { Component, MarkdownTheme } from '@earendil-works/pi-tui';
 import { Container, Markdown, visibleWidth } from '@earendil-works/pi-tui';
 import chalk from 'chalk';
 
-import { MESSAGE_INDENT } from '#/tui/constant/rendering';
-import { STATUS_BULLET } from '#/tui/constant/symbols';
-import type { ColorPalette } from '#/tui/theme/colors';
+import { MESSAGE_INDENT } from '#tui/constant/rendering';
+import { STATUS_BULLET } from '#tui/constant/symbols';
+import type { ColorPalette } from '#tui/theme/colors';
 
 export class AssistantMessageComponent implements Component {
   private contentContainer: Container;

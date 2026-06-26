@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildStatusReportLines } from '#/tui/components/messages/status-panel';
-import { darkColors } from '#/tui/theme/colors';
+import { buildStatusReportLines } from '#tui/components/messages/status-panel';
+import { darkColors } from '#tui/theme/colors';
 
 function strip(text: string): string {
   return text.replaceAll(/\u001B\[[0-9;]*m/g, '');

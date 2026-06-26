@@ -5,8 +5,8 @@
 import { Editor, isKeyRelease, matchesKey, Key, type TUI } from '@earendil-works/pi-tui';
 import chalk from 'chalk';
 
-import type { ColorPalette } from '#/tui/theme/colors';
-import { createEditorTheme } from '#/tui/theme/pi-tui-theme';
+import type { ColorPalette } from '#tui/theme/colors';
+import { createEditorTheme } from '#tui/theme/pi-tui-theme';
 
 // oxlint-disable-next-line no-control-regex -- ESC (\x1b) is required to match ANSI SGR escape sequences
 const ANSI_SGR = /\u001B\[[0-9;]*m/g;

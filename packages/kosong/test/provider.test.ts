@@ -1,4 +1,4 @@
-import type { StreamedMessagePart, TextPart } from '#/message';
+import type { StreamedMessagePart, TextPart } from '#message';
 import { MockChatProvider } from './fixtures/mock-provider';
 import { describe, it, expect } from 'vitest';
 

@@ -1,7 +1,7 @@
-import { UNKNOWN_CAPABILITY, type ModelCapability } from '#/capability';
-import type { Message } from '#/message';
-import type { ChatProvider, GenerateOptions, StreamedMessage, ThinkingEffort } from '#/provider';
-import type { Tool } from '#/tool';
+import { UNKNOWN_CAPABILITY, type ModelCapability } from '#capability';
+import type { Message } from '#message';
+import type { ChatProvider, GenerateOptions, StreamedMessage, ThinkingEffort } from '#provider';
+import type { Tool } from '#tool';
 import {
   OpenAILegacyChatProvider,
   type OpenAILegacyGenerationKwargs,

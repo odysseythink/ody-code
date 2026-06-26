@@ -1,4 +1,4 @@
-import type { Agent } from '#/agent';
+import type { Agent } from '#agent';
 import { isOdyError } from '@odysseythink/agent-core-shared';
 
 import type { ExecutableToolErrorResult } from '../../../loop/types';

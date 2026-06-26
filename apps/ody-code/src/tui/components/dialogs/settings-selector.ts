@@ -1,6 +1,6 @@
 import { ChoicePickerComponent, type ChoiceOption } from './choice-picker';
 
-import type { ColorPalette } from '#/tui/theme/colors';
+import type { ColorPalette } from '#tui/theme/colors';
 
 export type SettingsSelection =
   | 'model'

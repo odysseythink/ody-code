@@ -12,7 +12,7 @@ describe('e2e: SSH mock tests', () => {
       // SSHKaos.create() passes the host directly to ssh2's connect().
       // With an empty/undefined host, ssh2 will fail to connect.
       // We verify the error is thrown.
-      const { SSHKaos } = await import('#/ssh');
+      const { SSHKaos } = await import('#ssh');
 
       await expect(
         SSHKaos.create({
@@ -23,7 +23,7 @@ describe('e2e: SSH mock tests', () => {
     });
 
     it('missing username -> connect attempt with empty username', async () => {
-      const { SSHKaos } = await import('#/ssh');
+      const { SSHKaos } = await import('#ssh');
 
       await expect(
         SSHKaos.create({
@@ -35,7 +35,7 @@ describe('e2e: SSH mock tests', () => {
     });
 
     it('invalid port -> connection error', async () => {
-      const { SSHKaos } = await import('#/ssh');
+      const { SSHKaos } = await import('#ssh');
 
       // Port 1 is unlikely to have an SSH server; should fail quickly
       await expect(

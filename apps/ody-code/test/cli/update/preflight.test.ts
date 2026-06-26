@@ -4,20 +4,20 @@ import { EventEmitter } from 'node:events';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { readUpdateCache } from '#/cli/update/cache';
+import { readUpdateCache } from '#cli/update/cache';
 import {
   emptyUpdateInstallState,
   readUpdateInstallState,
   writeUpdateInstallState,
-} from '#/cli/update/install-state';
-import { runUpdatePreflight, spawnForSource } from '#/cli/update/preflight';
-import { promptForInstallChoice } from '#/cli/update/prompt';
-import type * as PromptModule from '#/cli/update/prompt';
-import { refreshUpdateCache } from '#/cli/update/refresh';
-import type * as RefreshModule from '#/cli/update/refresh';
-import { detectInstallSource } from '#/cli/update/source';
-import { emptyUpdateCache, type UpdateCache, type UpdateInstallState } from '#/cli/update/types';
-import type { TuiConfig } from '#/tui/config';
+} from '#cli/update/install-state';
+import { runUpdatePreflight, spawnForSource } from '#cli/update/preflight';
+import { promptForInstallChoice } from '#cli/update/prompt';
+import type * as PromptModule from '#cli/update/prompt';
+import { refreshUpdateCache } from '#cli/update/refresh';
+import type * as RefreshModule from '#cli/update/refresh';
+import { detectInstallSource } from '#cli/update/source';
+import { emptyUpdateCache, type UpdateCache, type UpdateInstallState } from '#cli/update/types';
+import type { TuiConfig } from '#tui/config';
 
 const mocks = vi.hoisted(() => ({
   readUpdateCache: vi.fn(),

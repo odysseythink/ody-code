@@ -5,7 +5,7 @@ import {
   renderProgressBar,
   ratioSeverity,
   safeUsageRatio,
-} from '#/utils/usage/usage-format';
+} from '#utils/usage/usage-format';
 
 describe('formatTokenCount', () => {
   it('passes small values through unchanged', () => {

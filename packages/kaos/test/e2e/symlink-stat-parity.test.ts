@@ -4,7 +4,7 @@ import { join } from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { LocalKaos } from '#/local';
+import { LocalKaos } from '#local';
 
 const S_IFMT = 0o170000;
 const S_IFDIR = 0o040000;

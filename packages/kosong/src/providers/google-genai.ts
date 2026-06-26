@@ -1,11 +1,11 @@
-import type { ModelCapability } from '#/capability';
+import type { ModelCapability } from '#capability';
 import {
   APIConnectionError,
   APITimeoutError,
   ChatProviderError,
   normalizeAPIStatusError,
-} from '#/errors';
-import type { Message, StreamedMessagePart, ToolCall } from '#/message';
+} from '#errors';
+import type { Message, StreamedMessagePart, ToolCall } from '#message';
 import type {
   ChatProvider,
   FinishReason,
@@ -13,9 +13,9 @@ import type {
   ProviderRequestAuth,
   StreamedMessage,
   ThinkingEffort,
-} from '#/provider';
-import type { Tool } from '#/tool';
-import type { TokenUsage } from '#/usage';
+} from '#provider';
+import type { Tool } from '#tool';
+import type { TokenUsage } from '#usage';
 import { ApiError as GoogleApiError, GoogleGenAI as GenAIClient } from '@google/genai';
 
 import { getGoogleGenAIModelCapability } from './capability-registry';

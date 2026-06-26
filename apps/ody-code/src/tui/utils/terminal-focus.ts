@@ -3,16 +3,16 @@ import {
   ENABLE_TERMINAL_FOCUS_REPORTING,
   TERMINAL_FOCUS_IN,
   TERMINAL_FOCUS_OUT,
-} from '#/tui/constant/terminal';
-import type { TUIState } from '#/tui/tui-state';
-import type { TerminalState } from '#/tui/utils/terminal-state';
+} from '#tui/constant/terminal';
+import type { TUIState } from '#tui/tui-state';
+import type { TerminalState } from '#tui/utils/terminal-state';
 
 export {
   DISABLE_TERMINAL_FOCUS_REPORTING,
   ENABLE_TERMINAL_FOCUS_REPORTING,
   TERMINAL_FOCUS_IN,
   TERMINAL_FOCUS_OUT,
-} from '#/tui/constant/terminal';
+} from '#tui/constant/terminal';
 
 export function installTerminalFocusTracking(state: TUIState): () => void {
   state.terminalState.focused = true;

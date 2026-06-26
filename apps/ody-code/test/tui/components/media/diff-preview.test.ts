@@ -4,8 +4,8 @@ import {
   computeDiffLines,
   renderDiffLines,
   renderDiffLinesClustered,
-} from '#/tui/components/media/diff-preview';
-import { getColorPalette } from '#/tui/theme/colors';
+} from '#tui/components/media/diff-preview';
+import { getColorPalette } from '#tui/theme/colors';
 
 const COLORS = getColorPalette('dark');
 

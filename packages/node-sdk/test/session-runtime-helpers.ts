@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 
-import type { Event } from '#/index';
+import type { Event } from '#index';
 
 export interface AgentWirePayload {
   readonly type: string;

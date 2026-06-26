@@ -7,13 +7,13 @@
  * visual contract.
  */
 
-import { FEEDBACK_VERSION_PREFIX } from '#/constant/app';
+import { FEEDBACK_VERSION_PREFIX } from '#constant/app';
 
 export {
   FEEDBACK_ISSUE_URL,
   FEEDBACK_TELEMETRY_EVENT,
   FEEDBACK_VERSION_PREFIX,
-} from '#/constant/app';
+} from '#constant/app';
 
 export const FEEDBACK_STATUS_SUBMITTING = 'Submitting feedback…';
 export const FEEDBACK_STATUS_SUCCESS = 'Feedback submitted, thank you!';

@@ -8,7 +8,7 @@ import { once } from 'node:events';
 import { Command } from 'commander';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { handleServe, registerServeCommand, type ServeDeps } from '#/cli/sub/serve';
+import { handleServe, registerServeCommand, type ServeDeps } from '#cli/sub/serve';
 
 let tmp: string;
 

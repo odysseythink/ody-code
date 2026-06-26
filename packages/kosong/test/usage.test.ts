@@ -1,5 +1,5 @@
-import type { TokenUsage } from '#/usage';
-import { addUsage, emptyUsage, grandTotal, inputTotal } from '#/usage';
+import type { TokenUsage } from '#usage';
+import { addUsage, emptyUsage, grandTotal, inputTotal } from '#usage';
 import { describe, expect, it } from 'vitest';
 
 describe('emptyUsage', () => {

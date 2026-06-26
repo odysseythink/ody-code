@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { ErrorCodes, OdyError, type OdyConfig, type Logger } from '#/index';
+import { ErrorCodes, OdyError, type OdyConfig, type Logger } from '#index';
 
 import { ProviderManager } from '../../agent-core/src/session/provider-manager';
 

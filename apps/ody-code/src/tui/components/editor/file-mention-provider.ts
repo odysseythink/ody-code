@@ -42,7 +42,7 @@ import {
   type SlashCommand,
 } from '@earendil-works/pi-tui';
 
-import type { GitLsFilesCache, GitSnapshot } from '#/utils/git/git-ls-files';
+import type { GitLsFilesCache, GitSnapshot } from '#utils/git/git-ls-files';
 
 const MAX_SUGGESTIONS_WHEN_QUERY = 50;
 const MAX_SUGGESTIONS_WHEN_EMPTY = 15;

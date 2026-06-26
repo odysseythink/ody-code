@@ -59,17 +59,28 @@ impl ConnectionHandle {
 #[async_trait::async_trait]
 impl EventSink for ConnectionHandle {
     async fn request(&self, method: &str, payload: Vec<u8>) -> Result<Vec<u8>, RpcError> {
-        self.send_request(method, payload).await
+        let rpc_payload = wrap_rpc_request(method, payload);
+        self.send_request(method, rpc_payload).await
     }
 
     fn emit(&self, event: AgentEvent) {
-        let payload = serde_json::to_vec(&event).unwrap_or_default();
+        let event_bytes = serde_json::to_vec(&event).unwrap_or_default();
+        let payload = wrap_rpc_request("emitEvent", event_bytes);
         let req_id = uuid::Uuid::new_v4().to_string();
         let item = OutboundItem::Request { req_id, payload };
         if let Err(e) = self.inner.outbound_tx.try_send(item) {
             tracing::warn!("event emit dropped: {e}");
         }
     }
+}
+
+fn wrap_rpc_request(method: &str, payload: Vec<u8>) -> Vec<u8> {
+    let payload_value: serde_json::Value = serde_json::from_slice(&payload).unwrap_or(serde_json::Value::Null);
+    let wrapper = serde_json::json!({
+        "method": method,
+        "args": [payload_value],
+    });
+    serde_json::to_vec(&wrapper).unwrap_or_default()
 }
 
 pub struct StreamConnection {

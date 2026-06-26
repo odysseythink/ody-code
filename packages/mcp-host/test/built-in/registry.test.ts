@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { BuiltInMcpRegistry } from '#/built-in/registry';
+import { BuiltInMcpRegistry } from '#built-in/registry';
 import type { OdyConfig } from '@odysseythink/agent-core-shared';
 
 describe('BuiltInMcpRegistry', () => {

@@ -1,7 +1,7 @@
 import type { ApprovalResponse } from '@odysseythink/ody-code-sdk';
 
-import { ReverseRpcController } from '#/tui/reverse-rpc/base-controller';
-import type { ApprovalPanelData } from '#/tui/reverse-rpc/types';
+import { ReverseRpcController } from '#tui/reverse-rpc/base-controller';
+import type { ApprovalPanelData } from '#tui/reverse-rpc/types';
 
 export class ApprovalController extends ReverseRpcController<
   ApprovalPanelData,

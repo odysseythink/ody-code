@@ -1,4 +1,4 @@
-import type { StreamedMessagePart, ToolCall } from '#/message';
+import type { StreamedMessagePart, ToolCall } from '#message';
 
 export interface ChatCompletionStreamToolFunctionDelta {
   readonly name?: string;

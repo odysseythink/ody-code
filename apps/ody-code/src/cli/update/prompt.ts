@@ -2,15 +2,15 @@ import { clearLine, cursorTo, emitKeypressEvents, moveCursor } from 'node:readli
 
 import chalk from 'chalk';
 
-import { PRODUCT_NAME } from '#/constant/app';
-import { HIDE_CURSOR, SHOW_CURSOR } from '#/constant/terminal';
+import { PRODUCT_NAME } from '#constant/app';
+import { HIDE_CURSOR, SHOW_CURSOR } from '#constant/terminal';
 import {
   UPDATE_PROMPT_MUTED,
   UPDATE_PROMPT_PRIMARY,
   UPDATE_PROMPT_SUCCESS,
   UPDATE_PROMPT_TEXT_DIM,
   UPDATE_PROMPT_WARNING,
-} from '#/constant/update';
+} from '#constant/update';
 
 import { type InstallSource, type UpdateTarget } from './types';
 

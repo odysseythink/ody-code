@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 
-const SUBPATH_PATTERN = '#/*';
+const SUBPATH_PATTERN = '#*';
 
 function findPackageRoot(importer) {
   let dir = dirname(importer);
@@ -39,7 +39,7 @@ function tryResolve(source, packageRoot) {
  * relative to the importing package's own `src` directory.
  *
  * This is needed for the native SEA bundle, where every workspace package
- * declares a `"#/*"` imports mapping to TypeScript files under `src/`.
+ * declares a `"#*"` imports mapping to TypeScript files under `src/`.
  * The regular ESM build relies on Node's resolver at runtime, but the
  * single-file CJS bundle must resolve these aliases during bundling.
  */
@@ -47,7 +47,7 @@ export function resolveSubpathImportsPlugin() {
   return {
     name: 'resolve-subpath-imports',
     async resolveId(source, importer) {
-      if (!source.startsWith('#/') || importer === undefined) return null;
+      if (!source.startsWith('#') || importer === undefined) return null;
       const packageRoot = findPackageRoot(importer);
       if (packageRoot === null) return null;
       const resolved = tryResolve(source, packageRoot);

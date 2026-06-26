@@ -33,7 +33,7 @@ import {
 } from '@odysseythink/ody-code-sdk';
 import type { Command } from 'commander';
 
-import { createKimiCodeHostIdentity } from '#/cli/version';
+import { createKimiCodeHostIdentity } from '#cli/version';
 
 interface WritableLike {
   write(chunk: string): boolean;

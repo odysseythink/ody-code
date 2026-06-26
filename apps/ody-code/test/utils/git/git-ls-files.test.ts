@@ -5,7 +5,7 @@ import { join } from 'node:path';
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 
-import { createGitLsFilesCache } from '#/utils/git/git-ls-files';
+import { createGitLsFilesCache } from '#utils/git/git-ls-files';
 
 function git(cwd: string, ...args: string[]): void {
   execFileSync('git', args, { cwd, stdio: 'ignore' });

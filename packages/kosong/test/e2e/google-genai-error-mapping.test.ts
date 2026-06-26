@@ -1,7 +1,7 @@
-import { APIStatusError } from '#/errors';
-import type { Message } from '#/message';
-import { GoogleGenAIChatProvider } from '#/providers/google-genai';
-import type { Tool } from '#/tool';
+import { APIStatusError } from '#errors';
+import type { Message } from '#message';
+import { GoogleGenAIChatProvider } from '#providers/google-genai';
+import type { Tool } from '#tool';
 import { GoogleGenAI } from '@google/genai';
 import { describe, expect, it } from 'vitest';
 

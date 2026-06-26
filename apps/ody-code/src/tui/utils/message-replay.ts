@@ -14,7 +14,7 @@ import type {
   SkillActivationTrigger,
   ToolCallBlockData,
   TranscriptEntry,
-} from '#/tui/types';
+} from '#tui/types';
 
 import { mediaUrlPartToText } from './media-url';
 import { nextTranscriptId } from './transcript-id';

@@ -3,7 +3,7 @@ import { isOdyError } from '@odysseythink/ody-code-sdk';
 import {
   STREAMING_ARGS_FIELD_RE,
   STREAMING_ARGS_PREVIEW_MAX_CHARS,
-} from '#/tui/constant/streaming';
+} from '#tui/constant/streaming';
 
 export function appendStreamingArgsPreview(
   current: string | undefined,

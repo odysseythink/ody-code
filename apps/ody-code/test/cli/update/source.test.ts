@@ -4,7 +4,7 @@ import {
   classifyByPathHeuristic,
   classifyInstallSource,
   detectInstallSource,
-} from '#/cli/update/source';
+} from '#cli/update/source';
 
 describe('classifyByPathHeuristic', () => {
   it('returns null for an npm-style global path (handled by classifyInstallSource)', () => {

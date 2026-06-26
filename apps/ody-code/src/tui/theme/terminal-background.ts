@@ -1,4 +1,4 @@
-import { OSC11_RESPONSE } from "#/tui/constant/terminal";
+import { OSC11_RESPONSE } from "#tui/constant/terminal";
 
 import type { ResolvedTheme } from "./colors";
 

@@ -1,7 +1,7 @@
 import { ODY_ERROR_INFO, isOdyError } from '@odysseythink/ody-code-sdk';
 import { chalkStderr } from 'chalk';
 
-import { STARTUP_ERROR_COLOR } from '#/constant/startup-error';
+import { STARTUP_ERROR_COLOR } from '#constant/startup-error';
 
 export interface StartupErrorFormatOptions {
   readonly errorStyle?: (text: string) => string;

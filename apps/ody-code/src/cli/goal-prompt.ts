@@ -1,6 +1,6 @@
 import type { GoalSnapshot } from '@odysseythink/ody-code-sdk';
 
-import { parseGoalCommand } from '#/tui/commands/index';
+import { parseGoalCommand } from '#tui/commands/index';
 
 /**
  * Headless goal-mode support for the `ody -p "/goal <objective>"` prompt path.

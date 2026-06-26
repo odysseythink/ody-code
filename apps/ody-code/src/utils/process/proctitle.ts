@@ -8,8 +8,8 @@
  * OSC is written to stderr (not stdout) so it still reaches the terminal
  * when stdout is piped, e.g. `ody --print | grep ...`.
  */
-import { PRODUCT_NAME } from '#/constant/app';
-import { BEL, ESC } from '#/constant/terminal';
+import { PRODUCT_NAME } from '#constant/app';
+import { BEL, ESC } from '#constant/terminal';
 
 export function setProcessTitle(label: string): void {
   try {

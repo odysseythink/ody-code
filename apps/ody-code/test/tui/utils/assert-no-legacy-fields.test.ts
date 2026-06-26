@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { assertNoLegacyFields } from '#/tui/utils/assert-no-legacy-fields';
+import { assertNoLegacyFields } from '#tui/utils/assert-no-legacy-fields';
 
 describe('assertNoLegacyFields', () => {
   it('rejects planMode', () => {

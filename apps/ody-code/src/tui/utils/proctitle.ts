@@ -8,8 +8,8 @@
  * sequences, which most terminals use for window/tab titles. Non-TTY stdout
  * skips the OSC write.
  */
-import { PRODUCT_NAME } from '#/constant/app';
-import { MAX_PROCESS_TITLE_LENGTH } from '#/tui/constant/terminal';
+import { PRODUCT_NAME } from '#constant/app';
+import { MAX_PROCESS_TITLE_LENGTH } from '#tui/constant/terminal';
 
 export function setProcessTitle(title: string | null, _sessionId: string): void {
   const trimmed = title?.trim() ?? '';

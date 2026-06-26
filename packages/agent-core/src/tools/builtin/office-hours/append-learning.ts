@@ -1,4 +1,4 @@
-import type { Agent } from '#/agent';
+import type { Agent } from '#agent';
 import type { LearningEntry } from '@odysseythink/agent-core-shared';
 import { z } from 'zod';
 

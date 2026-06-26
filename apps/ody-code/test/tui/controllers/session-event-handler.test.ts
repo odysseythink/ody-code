@@ -3,8 +3,8 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   SessionEventHandler,
   type SessionEventHost,
-} from '#/tui/controllers/session-event-handler';
-import type { AppState } from '#/tui/types';
+} from '#tui/controllers/session-event-handler';
+import type { AppState } from '#tui/types';
 import type { Event } from '@odysseythink/ody-code-sdk';
 
 function makeHost(): SessionEventHost {

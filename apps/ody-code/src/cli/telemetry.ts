@@ -2,8 +2,8 @@ import { createKimiDeviceId, ODY_CODE_PROVIDER_NAME } from '@odysseythink/kimi-c
 import { initializeTelemetry } from '@odysseythink/ody-telemetry';
 import { resolveOdyHome, type KimiHarness, type OdyConfig } from '@odysseythink/ody-code-sdk';
 
-import { CLI_USER_AGENT_PRODUCT } from '#/constant/app';
-import type { OdyHarness } from '#/tui/types';
+import { CLI_USER_AGENT_PRODUCT } from '#constant/app';
+import type { OdyHarness } from '#tui/types';
 
 export interface CliTelemetryBootstrap {
   readonly homeDir: string;

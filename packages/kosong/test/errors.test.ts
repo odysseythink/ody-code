@@ -7,7 +7,7 @@ import {
   ChatProviderError,
   isRetryableGenerateError,
   normalizeAPIStatusError,
-} from '#/errors';
+} from '#errors';
 import { describe, expect, it } from 'vitest';
 
 describe('ChatProviderError', () => {

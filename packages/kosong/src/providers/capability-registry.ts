@@ -1,4 +1,4 @@
-import { UNKNOWN_CAPABILITY, type ModelCapability } from '#/capability';
+import { UNKNOWN_CAPABILITY, type ModelCapability } from '#capability';
 
 type CapabilityMatcher = (normalizedModelName: string) => boolean;
 

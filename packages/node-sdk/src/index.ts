@@ -1,8 +1,8 @@
-export { KimiHarness } from '#/kimi-harness';
-export { Session } from '#/session';
-export { KimiAuthFacade } from '#/auth';
-export { KimiForCodingProvider } from '#/kimi-code-model-provider';
-export type { KimiForCodingProviderOptions } from '#/kimi-code-model-provider';
+export { KimiHarness } from '#kimi-harness';
+export { Session } from '#session';
+export { KimiAuthFacade } from '#auth';
+export { KimiForCodingProvider } from '#kimi-code-model-provider';
+export type { KimiForCodingProviderOptions } from '#kimi-code-model-provider';
 
 export {
   applyCatalogProvider,
@@ -14,13 +14,13 @@ export {
   fetchCatalog,
   inferWireType,
   loadBuiltInCatalog,
-} from '#/catalog';
+} from '#catalog';
 export type {
   ApplyCatalogProviderOptions,
   Catalog,
   CatalogModel,
   CatalogProviderEntry,
-} from '#/catalog';
+} from '#catalog';
 
 export {
   ErrorCodes,
@@ -64,24 +64,24 @@ export type {
   KimiAuthLoginResult,
   KimiAuthLogoutResult,
   KimiAuthSubmitFeedbackInput,
-} from '#/auth';
+} from '#auth';
 
-export * from '#/events';
-export type * from '#/types';
+export * from '#events';
+export type * from '#types';
 
 // Core-worker bootstrap — exposed for custom worker thread integration
-export type { CoreWorkerBootPayload } from '#/core-worker';
+export type { CoreWorkerBootPayload } from '#core-worker';
 
 // Core server — headless server entry for external transports
-export { createCoreServer } from '#/core-server';
-export type { CoreServerOptions } from '#/core-server';
+export { createCoreServer } from '#core-server';
+export type { CoreServerOptions } from '#core-server';
 
 // SDK RPC client — in-process and external transport client
-export { SDKRpcClient } from '#/rpc';
+export { SDKRpcClient } from '#rpc';
 export type {
   SDKRpcClientConnectOptions,
   SDKRpcClientOptions,
-} from '#/rpc';
+} from '#rpc';
 
 // i18n for office-hours language adaptation
 export { t, isSupportedLanguage, normalizeLanguage } from '@odysseythink/agent-core';

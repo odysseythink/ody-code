@@ -7,7 +7,7 @@ import {
   getDefaultInstallPromptSelection,
   moveInstallPromptSelection,
   promptForInstallChoice,
-} from '#/cli/update/prompt';
+} from '#cli/update/prompt';
 
 describe('install prompt helpers', () => {
   it('defaults the selection to "Install update now"', () => {

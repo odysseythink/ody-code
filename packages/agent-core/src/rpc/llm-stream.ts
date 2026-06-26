@@ -9,8 +9,8 @@ import type {
 } from '@odysseythink/kosong';
 
 import type { OdyErrorPayload } from '@odysseythink/agent-core-shared';
-import type { LLMRequestLogContext, LLMStreamTiming } from '#/loop/llm';
-import type { CompletionBudgetConfig } from '#/utils/completion-budget';
+import type { LLMRequestLogContext, LLMStreamTiming } from '#loop/llm';
+import type { CompletionBudgetConfig } from '#utils/completion-budget';
 
 // ── Stream delta types ──────────────────────────────────────────────
 

@@ -6,7 +6,7 @@ import {
   BRAILLE_SPINNER_INTERVAL_MS,
   MOON_SPINNER_FRAMES,
   MOON_SPINNER_INTERVAL_MS,
-} from '#/tui/constant/rendering';
+} from '#tui/constant/rendering';
 
 export type SpinnerStyle = 'moon' | 'braille';
 

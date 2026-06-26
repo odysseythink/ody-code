@@ -12,7 +12,7 @@
  */
 
 import type { Environment, Kaos } from '@odysseythink/kaos';
-import type { ExecutableToolResult } from '#/loop';
+import type { ExecutableToolResult } from '#loop';
 
 import type { WorkspaceConfig } from '../../../src/tools/support/workspace';
 

@@ -1,7 +1,7 @@
 import type { Component } from '@earendil-works/pi-tui';
 import { describe, expect, it, vi } from 'vitest';
 
-import { GutterContainer } from '#/tui/components/chrome/gutter-container';
+import { GutterContainer } from '#tui/components/chrome/gutter-container';
 
 class FakeChild implements Component {
   constructor(

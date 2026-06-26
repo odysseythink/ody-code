@@ -15,11 +15,11 @@ import {
   withTelemetryContext,
 } from '@odysseythink/ody-telemetry';
 
-import { CLI_SHUTDOWN_TIMEOUT_MS, CLI_UI_MODE } from '#/constant/app';
-import type { TuiConfig } from '#/tui/config';
-import { loadTuiConfig, TuiConfigParseError } from '#/tui/config';
-import { OdyTUI } from '#/tui/index';
-import { detectTerminalTheme } from '#/tui/theme/detect';
+import { CLI_SHUTDOWN_TIMEOUT_MS, CLI_UI_MODE } from '#constant/app';
+import type { TuiConfig } from '#tui/config';
+import { loadTuiConfig, TuiConfigParseError } from '#tui/config';
+import { OdyTUI } from '#tui/index';
+import { detectTerminalTheme } from '#tui/theme/detect';
 
 import type { CLIOptions } from './options';
 import { createCliTelemetryBootstrap, initializeCliTelemetry } from './telemetry';

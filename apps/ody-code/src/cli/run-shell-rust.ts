@@ -9,14 +9,14 @@ import {
 } from '@odysseythink/ody-telemetry';
 import type { TelemetryClient } from '@odysseythink/ody-code-sdk';
 
-import { CLI_SHUTDOWN_TIMEOUT_MS, CLI_UI_MODE } from '#/constant/app';
-import { RustHostConnector, RustHostHarness, type RustHostConnectorOptions } from '#/host/index';
-import { getHostBinaryPath } from '#/native/native-assets';
-import type { TuiConfig } from '#/tui/config';
-import { loadTuiConfig, TuiConfigParseError } from '#/tui/config';
-import { CHROME_GUTTER } from '#/tui/constant/rendering';
-import { OdyTUI } from '#/tui/index';
-import { detectTerminalTheme } from '#/tui/theme/detect';
+import { CLI_SHUTDOWN_TIMEOUT_MS, CLI_UI_MODE } from '#constant/app';
+import { RustHostConnector, RustHostHarness, type RustHostConnectorOptions } from '#host/index';
+import { getHostBinaryPath } from '#native/native-assets';
+import type { TuiConfig } from '#tui/config';
+import { loadTuiConfig, TuiConfigParseError } from '#tui/config';
+import { CHROME_GUTTER } from '#tui/constant/rendering';
+import { OdyTUI } from '#tui/index';
+import { detectTerminalTheme } from '#tui/theme/detect';
 
 import type { CLIOptions } from './options';
 import { createCliTelemetryBootstrap, initializeCliTelemetry } from './telemetry';

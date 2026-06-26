@@ -12,7 +12,7 @@
  * (see `ToolManager.initializeBuiltinTools`).
  */
 
-import type { Agent } from '#/agent';
+import type { Agent } from '#agent';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';

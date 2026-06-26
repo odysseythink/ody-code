@@ -8,10 +8,10 @@ import {
 } from '@earendil-works/pi-tui';
 import chalk from 'chalk';
 
-import { DEFAULT_OAUTH_PROVIDER_NAME, PRODUCT_NAME } from '#/constant/app';
-import type { ColorPalette } from '#/tui/theme/colors';
-import { printableChar } from '#/tui/utils/printable-key';
-import { SearchableList } from '#/tui/utils/searchable-list';
+import { DEFAULT_OAUTH_PROVIDER_NAME, PRODUCT_NAME } from '#constant/app';
+import type { ColorPalette } from '#tui/theme/colors';
+import { printableChar } from '#tui/utils/printable-key';
+import { SearchableList } from '#tui/utils/searchable-list';
 
 import type { ChoiceOption } from './choice-picker';
 

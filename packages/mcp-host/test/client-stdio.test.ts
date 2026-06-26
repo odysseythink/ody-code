@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
 import { OdyError } from '@odysseythink/agent-core-shared';
-import { StdioMcpClient } from '#/client-stdio';
+import { StdioMcpClient } from '#client-stdio';
 
 const here = import.meta.dirname;
 const fixture = join(here, 'fixtures', 'mock-stdio-server.mjs');

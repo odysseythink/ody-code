@@ -4,8 +4,8 @@ import {
   computeEditStats,
   computeWriteStats,
   pickChip,
-} from '#/tui/components/messages/tool-renderers/chip';
-import type { ToolCallBlockData, ToolResultBlockData } from '#/tui/types';
+} from '#tui/components/messages/tool-renderers/chip';
+import type { ToolCallBlockData, ToolResultBlockData } from '#tui/types';
 
 function strip(text: string): string {
   return text.replaceAll(/\[[0-9;]*m/g, '');

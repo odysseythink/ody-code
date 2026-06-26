@@ -11,8 +11,8 @@ import {
   NATIVE_ASSET_MANIFEST_VERSION,
   type NativeAssetManifest,
   type NativeAssetSource,
-} from '#/native/native-assets';
-import { loadNativePackage } from '#/native/native-require';
+} from '#native/native-assets';
+import { loadNativePackage } from '#native/native-require';
 
 function sha256(bytes: Buffer | string): string {
   return createHash('sha256').update(bytes).digest('hex');

@@ -1,5 +1,5 @@
-import { ChatProviderError } from '#/errors';
-import type { ProviderRequestAuth } from '#/provider';
+import { ChatProviderError } from '#errors';
+import type { ProviderRequestAuth } from '#provider';
 
 export function requireProviderApiKey(
   providerName: string,

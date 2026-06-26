@@ -7,8 +7,8 @@
  * {@link ExitPlanModeTool} and reuses the same `plan_review` approval surface.
  */
 
-import type { Agent } from '#/agent';
-import type { SessionModeData } from '#/agent/session-mode';
+import type { Agent } from '#agent';
+import type { SessionModeData } from '#agent/session-mode';
 import { z } from 'zod';
 
 import type { BuiltinTool } from '../../../agent/tool';

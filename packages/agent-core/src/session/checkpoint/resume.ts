@@ -9,7 +9,7 @@
 
 import { dirname, join } from 'pathe';
 
-import type { Agent } from '#/agent';
+import type { Agent } from '#agent';
 import type { Logger } from '@odysseythink/agent-core-shared';
 import type { Session } from '..';
 import { CheckpointBackupStore } from './backup-store';

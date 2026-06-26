@@ -2,10 +2,10 @@ import { createHash } from 'node:crypto';
 import { basename, dirname, isAbsolute, join } from 'pathe';
 
 import { ErrorCodes, OdyError, makeErrorPayload } from '@odysseythink/agent-core-shared';
-import { log } from '#/logging/logger';
+import { log } from '#logging/logger';
 import type { Logger } from '@odysseythink/agent-core-shared';
-import type { AgentAPI, AgentEvent, OdyConfig, SDKAgentRPC, UsageStatus } from '#/rpc';
-import type { LLM, LLMFactoryConfig } from '#/loop/llm';
+import type { AgentAPI, AgentEvent, OdyConfig, SDKAgentRPC, UsageStatus } from '#rpc';
+import type { LLM, LLMFactoryConfig } from '#loop/llm';
 import {
   generate,
   type ChatProvider,
@@ -13,7 +13,7 @@ import {
   type Tool,
 } from '@odysseythink/kosong';
 
-import type { EnabledPluginSessionStart } from '#/plugin';
+import type { EnabledPluginSessionStart } from '#plugin';
 
 import type { McpConnectionManager } from '@odysseythink/mcp-host';
 import type { PreparedSystemPromptContext, ResolvedAgentProfile } from '../profile';
@@ -71,14 +71,14 @@ import type { Kaos } from '@odysseythink/kaos';
 import type { ToolServices } from '../tools/support/services';
 import type { OfficeHoursStateStore, GameDesignStateStore } from '@odysseythink/agent-core-shared';
 import { NoopOfficeHoursStateStore, NoopGameDesignStateStore } from '@odysseythink/agent-core-shared';
-import type { SupportedLanguage } from '#/i18n';
+import type { SupportedLanguage } from '#i18n';
 
 
 export type { RuntimeMode, SessionModeKind } from './session-mode';
 export type { AgentRecord, AgentRecordPersistence } from './records';
 export type { BuiltinTool, ToolInfo, ToolSource, UserToolRegistration } from './tool';
 export { buildGoalCompletionMessage } from './goal/completion';
-export type { LLM, LLMFactoryConfig } from '#/loop/llm';
+export type { LLM, LLMFactoryConfig } from '#loop/llm';
 
 export type AgentType = 'main' | 'sub' | 'independent';
 

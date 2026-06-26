@@ -1,8 +1,8 @@
 import { visibleWidth } from '@earendil-works/pi-tui';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { SessionPickerComponent } from '#/tui/components/dialogs/session-picker';
-import { getColorPalette } from '#/tui/theme/colors';
+import { SessionPickerComponent } from '#tui/components/dialogs/session-picker';
+import { getColorPalette } from '#tui/theme/colors';
 
 function stripAnsi(text: string): string {
   return text.replaceAll(/\[[0-?]*[ -/]*[@-~]/g, '');

@@ -4,8 +4,8 @@ import { describe, expect, it } from 'vitest';
 import {
   ApprovalPreviewViewer,
   type ApprovalPreviewBlock,
-} from '#/tui/components/dialogs/approval-preview';
-import { getColorPalette } from '#/tui/theme/colors';
+} from '#tui/components/dialogs/approval-preview';
+import { getColorPalette } from '#tui/theme/colors';
 
 const COLORS = getColorPalette('dark');
 

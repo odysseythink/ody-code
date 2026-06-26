@@ -1,11 +1,11 @@
 import { z } from 'zod';
 import type { Kaos } from '@odysseythink/kaos';
-import type { Agent } from '#/agent';
-import type { BuiltinTool } from '#/agent/tool';
+import type { Agent } from '#agent';
+import type { BuiltinTool } from '#agent/tool';
 import type { OdyConfig } from '@odysseythink/agent-core-shared';
-import type { ExecutableToolResult, ToolExecution } from '#/loop/types';
+import type { ExecutableToolResult, ToolExecution } from '#loop/types';
 import { toInputJsonSchema } from '@odysseythink/agent-core-shared';
-import { literalRulePattern, matchesGlobRuleSubject } from '#/tools/support/rule-match';
+import { literalRulePattern, matchesGlobRuleSubject } from '#tools/support/rule-match';
 import { parseGitStatusShort } from '@odysseythink/e2e-testing';
 import {
   AdvancedSessionReviewer,
@@ -13,7 +13,7 @@ import {
   type AdvancedSessionReviewResult,
   type MutationProbe,
   type ReviewFinding,
-} from '#/agent/session-mode/reviewer';
+} from '#agent/session-mode/reviewer';
 import DESCRIPTION from './review-tests.md';
 
 /** Matches `.test.ts` / `.spec.tsx` / `.test.mjs` etc. */

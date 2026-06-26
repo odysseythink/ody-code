@@ -2,8 +2,8 @@ import { ContentBlockSchema } from '@modelcontextprotocol/sdk/types.js';
 import type { ContentPart } from '@odysseythink/kosong';
 import { describe, expect, test } from 'vitest';
 
-import { convertMCPContentBlock, mcpResultToExecutableOutput } from '#/output';
-import type { MCPContentBlock, MCPToolResult } from '#/types';
+import { convertMCPContentBlock, mcpResultToExecutableOutput } from '#output';
+import type { MCPContentBlock, MCPToolResult } from '#types';
 
 const MCP_OUTPUT_TRUNCATED_TEXT =
   '\n\n[Output truncated: exceeded 100000 character limit. ' +

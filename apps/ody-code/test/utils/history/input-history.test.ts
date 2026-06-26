@@ -4,7 +4,7 @@ import { join } from 'node:path';
 
 import { afterEach, beforeEach, describe, it, expect } from 'vitest';
 
-import { loadInputHistory, appendInputHistory } from '#/utils/history/input-history';
+import { loadInputHistory, appendInputHistory } from '#utils/history/input-history';
 
 let dir: string;
 let file: string;

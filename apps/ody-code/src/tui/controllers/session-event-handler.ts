@@ -61,7 +61,7 @@ import {
 import { openUrl } from '../utils/open-url';
 import { setProcessTitle } from '../utils/proctitle';
 import { errorReportHintLine } from '../constant/feedback';
-import { formatStepDebugTiming } from '#/utils/usage/debug-timing';
+import { formatStepDebugTiming } from '#utils/usage/debug-timing';
 import { nextTranscriptId } from '../utils/transcript-id';
 import type { StreamingUIController } from './streaming-ui';
 import type { TasksBrowserController } from './tasks-browser';

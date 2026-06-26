@@ -14,9 +14,9 @@ import {
   BRAILLE_SPINNER_INTERVAL_MS,
   MESSAGE_INDENT,
   THINKING_PREVIEW_LINES,
-} from '#/tui/constant/rendering';
-import { STATUS_BULLET } from '#/tui/constant/symbols';
-import type { ColorPalette } from '#/tui/theme/colors';
+} from '#tui/constant/rendering';
+import { STATUS_BULLET } from '#tui/constant/symbols';
+import type { ColorPalette } from '#tui/theme/colors';
 
 export type ThinkingRenderMode = 'live' | 'finalized';
 

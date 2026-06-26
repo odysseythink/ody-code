@@ -16,6 +16,12 @@ pub struct SessionState {
     pub last_prompt: Option<String>,
     #[serde(skip_serializing_if = "HashMap::is_empty", default)]
     pub custom: HashMap<String, serde_json::Value>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub model: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub thinking: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub permission: Option<String>,
 }
 
 #[derive(Debug, Clone)]
@@ -231,6 +237,9 @@ mod tests {
             title: Some("hello".to_string()),
             last_prompt: Some("hi".to_string()),
             custom: [("k".to_string(), serde_json::json!(1))].into_iter().collect(),
+            model: None,
+            thinking: None,
+            permission: None,
         };
         write_state_json(dir.path(), &state).unwrap();
         let restored = read_state_json(dir.path()).unwrap().unwrap();

@@ -1,6 +1,6 @@
 import { Command, Option } from 'commander';
 
-import { CLI_COMMAND_NAME } from '#/constant/app';
+import { CLI_COMMAND_NAME } from '#constant/app';
 
 import type { CLIOptions } from './options';
 import { registerExportCommand } from './sub/export';

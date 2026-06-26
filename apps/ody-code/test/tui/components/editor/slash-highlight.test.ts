@@ -1,7 +1,7 @@
 import chalk from 'chalk';
 import { describe, it, expect, beforeAll } from 'vitest';
 
-import { highlightFirstSlashToken } from '#/tui/components/editor/custom-editor';
+import { highlightFirstSlashToken } from '#tui/components/editor/custom-editor';
 
 beforeAll(() => {
   // Vitest runs without a TTY so chalk auto-detects colour support as

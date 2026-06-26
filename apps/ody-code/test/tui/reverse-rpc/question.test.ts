@@ -1,8 +1,8 @@
 import type { QuestionRequest } from '@odysseythink/ody-code-sdk';
 import { describe, expect, it, vi } from 'vitest';
 
-import { QuestionController } from '#/tui/reverse-rpc/question/controller';
-import { createQuestionAskHandler } from '#/tui/reverse-rpc/question/handler';
+import { QuestionController } from '#tui/reverse-rpc/question/controller';
+import { createQuestionAskHandler } from '#tui/reverse-rpc/question/handler';
 
 function questionEvent(overrides: Partial<QuestionRequest> = {}): QuestionRequest {
   return {

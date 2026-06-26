@@ -1,6 +1,6 @@
-import { BEL, ESC, ST } from "#/constant/terminal";
+import { BEL, ESC, ST } from "#constant/terminal";
 
-export { BEL, ESC, ST } from "#/constant/terminal";
+export { BEL, ESC, ST } from "#constant/terminal";
 
 // Terminal theme reporting uses private CSI sequences: enable reporting,
 // query once, then parse dark/light reports from the input stream.

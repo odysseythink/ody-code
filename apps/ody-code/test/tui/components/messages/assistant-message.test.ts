@@ -1,10 +1,10 @@
 import { visibleWidth } from '@earendil-works/pi-tui';
 import { describe, expect, it } from 'vitest';
 
-import { AssistantMessageComponent } from '#/tui/components/messages/assistant-message';
-import { STATUS_BULLET } from '#/tui/constant/symbols';
-import { darkColors } from '#/tui/theme/colors';
-import { createMarkdownTheme } from '#/tui/theme/pi-tui-theme';
+import { AssistantMessageComponent } from '#tui/components/messages/assistant-message';
+import { STATUS_BULLET } from '#tui/constant/symbols';
+import { darkColors } from '#tui/theme/colors';
+import { createMarkdownTheme } from '#tui/theme/pi-tui-theme';
 
 import { captureProcessWrite } from '../../../helpers/process';
 

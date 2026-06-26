@@ -12,7 +12,7 @@ import { dirname, join } from 'node:path';
 import { parse as parseToml } from 'smol-toml';
 import { z } from 'zod';
 
-import { getDataDir } from '#/utils/paths';
+import { getDataDir } from '#utils/paths';
 
 export const INVALID_TUI_CONFIG_MESSAGE =
   'Invalid TUI config in ~/.ody-code/tui.toml; using defaults.';

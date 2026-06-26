@@ -1,4 +1,4 @@
-import { buildSkillSlashCommands, isUserActivatableSkill } from '#/tui/commands/index';
+import { buildSkillSlashCommands, isUserActivatableSkill } from '#tui/commands/index';
 import type { SkillSummary } from '@odysseythink/ody-code-sdk';
 import { describe, expect, it } from 'vitest';
 

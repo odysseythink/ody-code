@@ -1,10 +1,10 @@
-import { generate } from '#/generate';
-import type { GenerateCallbacks } from '#/generate';
-import type { Message, StreamedMessagePart, TextPart, ThinkPart, ToolCall } from '#/message';
-import { extractText } from '#/message';
-import type { ChatProvider, StreamedMessage, ThinkingEffort } from '#/provider';
-import type { Tool } from '#/tool';
-import type { TokenUsage } from '#/usage';
+import { generate } from '#generate';
+import type { GenerateCallbacks } from '#generate';
+import type { Message, StreamedMessagePart, TextPart, ThinkPart, ToolCall } from '#message';
+import { extractText } from '#message';
+import type { ChatProvider, StreamedMessage, ThinkingEffort } from '#provider';
+import type { Tool } from '#tool';
+import type { TokenUsage } from '#usage';
 import { describe, expect, it } from 'vitest';
 
 /**

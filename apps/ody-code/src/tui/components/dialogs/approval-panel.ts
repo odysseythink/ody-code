@@ -16,16 +16,16 @@ import {
 } from '@earendil-works/pi-tui';
 import chalk from 'chalk';
 
-import { highlightLines, langFromPath } from '#/tui/components/media/code-highlight';
-import { renderDiffLinesClustered } from '#/tui/components/media/diff-preview';
+import { highlightLines, langFromPath } from '#tui/components/media/code-highlight';
+import { renderDiffLinesClustered } from '#tui/components/media/diff-preview';
 import type {
   ApprovalPanelChoice,
   DiffDisplayBlock,
   DisplayBlock,
   FileContentDisplayBlock,
   PendingApproval,
-} from '#/tui/reverse-rpc/types';
-import type { ColorPalette } from '#/tui/theme/colors';
+} from '#tui/reverse-rpc/types';
+import type { ColorPalette } from '#tui/theme/colors';
 
 export interface ApprovalPanelResponse {
   readonly response: 'approved' | 'approved_for_session' | 'rejected' | 'cancelled';

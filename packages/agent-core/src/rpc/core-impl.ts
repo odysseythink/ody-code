@@ -2,14 +2,14 @@ import { randomUUID } from 'node:crypto';
 import { homedir } from 'node:os';
 
 import { ErrorCodes, OdyError } from '@odysseythink/agent-core-shared';
-import { getRootLogger, log } from '#/logging/logger';
-import { PluginManager } from '#/plugin';
-import { LocalFetchURLProvider } from '#/tools/providers/local-fetch-url';
-import { MoonshotFetchURLProvider } from '#/tools/providers/moonshot-fetch-url';
-import { resolveWebSearchRuntime } from '#/tools/providers/web-search/runtime';
-import type { PromisableMethods } from '#/utils/types';
-import type { SessionModeKind } from '#/agent/session-mode';
-import { getCoreVersion } from '#/version';
+import { getRootLogger, log } from '#logging/logger';
+import { PluginManager } from '#plugin';
+import { LocalFetchURLProvider } from '#tools/providers/local-fetch-url';
+import { MoonshotFetchURLProvider } from '#tools/providers/moonshot-fetch-url';
+import { resolveWebSearchRuntime } from '#tools/providers/web-search/runtime';
+import type { PromisableMethods } from '#utils/types';
+import type { SessionModeKind } from '#agent/session-mode';
+import { getCoreVersion } from '#version';
 import {
   buildAuditDigest,
   createCodeReviewExecutor,
@@ -18,7 +18,7 @@ import {
 } from '@odysseythink/code-review';
 import { createProvider, generate, createUserMessage } from '@odysseythink/kosong';
 import type { ProviderRequestAuth } from '@odysseythink/kosong';
-import { estimateTokens } from '#/utils/tokens';
+import { estimateTokens } from '#utils/tokens';
 import { resolveThinkingLevel } from '../agent/config/thinking';
 import {
   ensureOdyHome,

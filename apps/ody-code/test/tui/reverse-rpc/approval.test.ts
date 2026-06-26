@@ -1,8 +1,8 @@
 import type { ApprovalRequest } from '@odysseythink/ody-code-sdk';
 import { describe, expect, it, vi } from 'vitest';
 
-import { ApprovalController } from '#/tui/reverse-rpc/approval/controller';
-import { createApprovalRequestHandler } from '#/tui/reverse-rpc/approval/handler';
+import { ApprovalController } from '#tui/reverse-rpc/approval/controller';
+import { createApprovalRequestHandler } from '#tui/reverse-rpc/approval/handler';
 
 function approvalEvent(overrides: Partial<ApprovalRequest> = {}): ApprovalRequest {
   return {

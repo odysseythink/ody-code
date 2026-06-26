@@ -25,7 +25,7 @@ vi.mock('node:fs/promises', async () => {
   };
 });
 
-import { editInExternalEditor, resolveEditorCommand } from '#/utils/process/external-editor';
+import { editInExternalEditor, resolveEditorCommand } from '#utils/process/external-editor';
 
 function shellPath(cmd: string): string {
   const match = cmd.match(/'([^']+)'$/);

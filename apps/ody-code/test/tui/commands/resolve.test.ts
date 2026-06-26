@@ -4,7 +4,7 @@ import {
   setExperimentalFlags,
   slashBusyMessage,
   slashCommandBusyReason,
-} from '#/tui/commands/index';
+} from '#tui/commands/index';
 import { afterEach, describe, expect, it } from 'vitest';
 
 function resolve(

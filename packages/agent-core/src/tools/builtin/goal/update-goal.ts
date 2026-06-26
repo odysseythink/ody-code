@@ -10,7 +10,7 @@
  * `loopTools` filter in the tool manager).
  */
 
-import type { Agent } from '#/agent';
+import type { Agent } from '#agent';
 import { z } from 'zod';
 
 import { buildGoalCompletionMessage } from '../../../agent/goal/completion';

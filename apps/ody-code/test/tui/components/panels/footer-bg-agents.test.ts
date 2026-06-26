@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import { FooterComponent } from '#/tui/components/chrome/footer';
-import { darkColors } from '#/tui/theme/colors';
-import type { AppState } from '#/tui/types';
+import { FooterComponent } from '#tui/components/chrome/footer';
+import { darkColors } from '#tui/theme/colors';
+import type { AppState } from '#tui/types';
 
 const ANSI_SGR = /\[[0-9;]*m/g;
 function strip(text: string): string {

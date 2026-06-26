@@ -5,7 +5,7 @@ import {
   resolveSlashCommandAvailability,
   sortSlashCommands,
   type KimiSlashCommand,
-} from '#/tui/commands/index';
+} from '#tui/commands/index';
 import { describe, expect, it } from 'vitest';
 
 describe('parseSlashInput', () => {

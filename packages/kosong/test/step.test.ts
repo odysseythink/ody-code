@@ -1,11 +1,11 @@
-import { ChatProviderError } from '#/errors';
-import type { Message, StreamedMessagePart, ToolCall } from '#/message';
-import type { ChatProvider, StreamedMessage, ThinkingEffort } from '#/provider';
+import { ChatProviderError } from '#errors';
+import type { Message, StreamedMessagePart, ToolCall } from '#message';
+import type { ChatProvider, StreamedMessage, ThinkingEffort } from '#provider';
 import { step } from './fixtures/step';
-import type { Tool } from '#/tool';
+import type { Tool } from '#tool';
 import { toolOk } from './fixtures/simple-toolset';
 import type { ToolResult, Toolset } from './fixtures/simple-toolset';
-import type { TokenUsage } from '#/usage';
+import type { TokenUsage } from '#usage';
 import { describe, expect, it } from 'vitest';
 function createMockStream(
   parts: StreamedMessagePart[],

@@ -11,7 +11,7 @@ import type { Component } from '@earendil-works/pi-tui';
 import type { GoalChange } from '@odysseythink/ody-code-sdk';
 import chalk from 'chalk';
 
-import type { ColorPalette } from '#/tui/theme/colors';
+import type { ColorPalette } from '#tui/theme/colors';
 
 const HEAD_INDENT = '  ';
 const DETAIL_INDENT = '    ';

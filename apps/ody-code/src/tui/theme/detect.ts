@@ -13,7 +13,7 @@
  * the OSC reply gets eaten by the input loop.
  */
 
-import { OSC11_QUERY, TERMINAL_THEME_DETECT_TIMEOUT_MS } from "#/tui/constant/terminal";
+import { OSC11_QUERY, TERMINAL_THEME_DETECT_TIMEOUT_MS } from "#tui/constant/terminal";
 
 import type { ResolvedTheme } from "./colors";
 import { parseOsc11BackgroundTheme } from "./terminal-background";

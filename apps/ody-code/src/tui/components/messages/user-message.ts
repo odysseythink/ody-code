@@ -6,10 +6,10 @@ import type { Component } from '@earendil-works/pi-tui';
 import { Spacer, Text, visibleWidth } from '@earendil-works/pi-tui';
 import chalk from 'chalk';
 
-import { ImageThumbnail } from '#/tui/components/media/image-thumbnail';
-import { USER_MESSAGE_BULLET } from '#/tui/constant/symbols';
-import type { ColorPalette } from '#/tui/theme/colors';
-import type { ImageAttachment } from '#/tui/utils/image-attachment-store';
+import { ImageThumbnail } from '#tui/components/media/image-thumbnail';
+import { USER_MESSAGE_BULLET } from '#tui/constant/symbols';
+import type { ColorPalette } from '#tui/theme/colors';
+import type { ImageAttachment } from '#tui/utils/image-attachment-store';
 
 export class UserMessageComponent implements Component {
   private color: string;

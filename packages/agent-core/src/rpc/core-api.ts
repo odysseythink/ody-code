@@ -1,15 +1,15 @@
 import type { Confidence } from '../agent/session-mode/reviewer';
-import type { AgentConfigData } from '#/agent/config';
-import type { AgentContextData } from '#/agent/context';
-import type { BackgroundTaskInfo } from '#/agent/background';
-import type { PermissionData, PermissionMode } from '#/agent/permission';
-import type { SessionModeData, SessionModeKind, RuntimeMode } from '#/agent/session-mode';
-import type { ToolInfo } from '#/agent/tool';
+import type { AgentConfigData } from '#agent/config';
+import type { AgentContextData } from '#agent/context';
+import type { BackgroundTaskInfo } from '#agent/background';
+import type { PermissionData, PermissionMode } from '#agent/permission';
+import type { SessionModeData, SessionModeKind, RuntimeMode } from '#agent/session-mode';
+import type { ToolInfo } from '#agent/tool';
 import type { OdyConfig, OdyConfigPatch } from '@odysseythink/agent-core-shared';
-import type { ExperimentalFlagMap } from '#/flags';
-import type { ResumeSessionResult } from '#/rpc/resumed';
-import type { SupportedLanguage } from '#/i18n';
-import type { SessionMeta } from '#/session';
+import type { ExperimentalFlagMap } from '#flags';
+import type { ResumeSessionResult } from '#rpc/resumed';
+import type { SupportedLanguage } from '#i18n';
+import type { SessionMeta } from '#session';
 import type {
   CreateGoalInput,
   GoalBudgetLimits,
@@ -19,11 +19,11 @@ import type {
   GoalSnapshot,
   GoalStatus,
   GoalToolResult,
-} from '#/session/goal';
+} from '#session/goal';
 import type { ContentPart } from '@odysseythink/kosong';
 
 import type { CodeReviewDiffSource } from '@odysseythink/code-review';
-import type { PluginInfo, PluginSummary, ReloadSummary } from '#/plugin';
+import type { PluginInfo, PluginSummary, ReloadSummary } from '#plugin';
 import type { UsageStatus } from './events';
 import type {
   ChatStreamDeltaPayload,

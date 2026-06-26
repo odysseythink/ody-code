@@ -1,12 +1,12 @@
-import { generate } from '#/generate';
-import type { GenerateCallbacks, GenerateResult } from '#/generate';
-import type { Message, StreamedMessagePart, ToolCall } from '#/message';
-import type { ChatProvider, FinishReason, GenerateOptions } from '#/provider';
+import { generate } from '#generate';
+import type { GenerateCallbacks, GenerateResult } from '#generate';
+import type { Message, StreamedMessagePart, ToolCall } from '#message';
+import type { ChatProvider, FinishReason, GenerateOptions } from '#provider';
 import type { ToolResult, Toolset } from './simple-toolset';
-import type { TokenUsage } from '#/usage';
+import type { TokenUsage } from '#usage';
 
-export type { GenerateResult } from '#/generate';
-export { generate } from '#/generate';
+export type { GenerateResult } from '#generate';
+export { generate } from '#generate';
 export interface StepCallbacks {
   onMessagePart?: (part: StreamedMessagePart) => void | Promise<void>;
   /** Sync-only callback fired when a tool result resolves. */

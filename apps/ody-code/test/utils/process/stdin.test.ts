@@ -9,7 +9,7 @@ vi.mock('node:readline', () => ({
   createInterface: mocks.createInterface,
 }));
 
-import { createStdinLineReader, readStdinText } from '#/utils/process/stdin';
+import { createStdinLineReader, readStdinText } from '#utils/process/stdin';
 
 afterEach(() => {
   vi.clearAllMocks();

@@ -36,6 +36,7 @@ pub struct HostConfig {
     pub transport: TransportMode,
     pub log_level: LogLevel,
     pub provider: ProviderConfig,
+    pub mock_provider: bool,
 }
 
 #[derive(Debug, Args)]
@@ -54,6 +55,8 @@ struct SharedArgs {
     home: Option<PathBuf>,
     #[arg(long, default_value = "info")]
     log_level: String,
+    #[arg(long, hide = true)]
+    mock_provider: bool,
 }
 
 #[derive(Debug, Parser)]
@@ -143,6 +146,7 @@ impl HostConfig {
             transport,
             log_level,
             provider,
+            mock_provider: active.mock_provider,
         })
     }
 }
@@ -254,5 +258,12 @@ mod tests {
             msg.contains("global flags") || msg.contains("serve"),
             "expected conflict error, got: {msg}"
         );
+    }
+
+    #[test]
+    fn mock_provider_flag_is_parsed() {
+        let args = vec!["ody-host", "--stdio", "--mock-provider"];
+        let config = HostConfig::from_cli(args.into_iter()).unwrap();
+        assert!(config.mock_provider);
     }
 }

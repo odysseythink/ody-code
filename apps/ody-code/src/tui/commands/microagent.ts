@@ -8,7 +8,7 @@ import { installStarterPackIfEmpty, renderMicroagentFile, validateMicroagentInpu
 import { TextInputDialogComponent } from '../components/dialogs/text-input-dialog';
 import { QuestionDialogComponent } from '../components/dialogs/question-dialog';
 import type { TextInputResult } from '../components/dialogs/text-input-dialog';
-import type { PendingQuestion, QuestionPanelResponse } from '#/tui/reverse-rpc/types';
+import type { PendingQuestion, QuestionPanelResponse } from '#tui/reverse-rpc/types';
 
 export async function handleMicroagentCommand(host: SlashCommandHost, _args: string): Promise<void> {
   if (!isExperimentalFlagEnabled('repo-knowledge')) {

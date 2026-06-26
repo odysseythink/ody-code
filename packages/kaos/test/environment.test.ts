@@ -23,8 +23,8 @@ import {
   type Environment,
   type OsKind,
   type ShellName,
-} from '#/environment';
-import { KaosShellNotFoundError } from '#/errors';
+} from '#environment';
+import { KaosShellNotFoundError } from '#errors';
 
 interface StubOpts {
   readonly platform: NodeJS.Platform;

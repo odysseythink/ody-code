@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import type { Tool } from '#/tool';
+import type { Tool } from '#tool';
 import { compileArgsValidator, type JsonValue } from './args-validator';
 import { toolValidateError, type ToolReturnValue } from './simple-toolset';
 

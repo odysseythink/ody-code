@@ -1,14 +1,14 @@
 import { EventEmitter } from 'node:events';
 
-import { KaosFileExistsError, KaosValueError } from '#/errors';
+import { KaosFileExistsError, KaosValueError } from '#errors';
 import {
   KaosConnectionError,
   KaosFileNotFoundError,
   KaosPermissionError,
   KaosSSHError,
   SSHKaos,
-} from '#/ssh';
-import type { StatResult } from '#/types';
+} from '#ssh';
+import type { StatResult } from '#types';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, test } from 'vitest';
 
 // Environment variable configuration for SSH connection
@@ -44,7 +44,7 @@ describe.skipIf(process.platform === 'win32' || !SSH_SMOKE)('SSHKaos smoke', () 
     }
 
     // Dynamic import to avoid compilation errors when ssh2 is not available
-    const { SSHKaos: SSHKaosClass } = await import('#/ssh');
+    const { SSHKaos: SSHKaosClass } = await import('#ssh');
     sshKaos = await SSHKaosClass.create({
       host: SSH_HOST,
       port: SSH_PORT,

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { OdyTUI, type OdyTUIStartupInput, type TUIState } from '#/tui/ody-tui';
+import { OdyTUI, type OdyTUIStartupInput, type TUIState } from '#tui/ody-tui';
 import type { RuntimeMode, SkillSummary } from '@odysseythink/ody-code-sdk';
 
 interface SkillCommandsDriver {

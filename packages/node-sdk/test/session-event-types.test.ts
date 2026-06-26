@@ -1,6 +1,6 @@
 import { describe, expectTypeOf, it } from 'vitest';
 
-import type { ApprovalRequest, ApprovalResponse, Event, QuestionRequest } from '#/index';
+import type { ApprovalRequest, ApprovalResponse, Event, QuestionRequest } from '#index';
 
 type EventByType<T extends Event['type']> = Extract<Event, { readonly type: T }>;
 

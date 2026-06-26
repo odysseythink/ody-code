@@ -1,4 +1,4 @@
-import { NPM_PACKAGE_NAME } from '#/constant/app';
+import { NPM_PACKAGE_NAME } from '#constant/app';
 
 export { NPM_PACKAGE_NAME };
 

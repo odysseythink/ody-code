@@ -1,4 +1,4 @@
-import type { Agent } from '#/agent';
+import type { Agent } from '#agent';
 import { t, isSupportedLanguage, type SupportedLanguage } from '../../../i18n';
 import { z } from 'zod';
 

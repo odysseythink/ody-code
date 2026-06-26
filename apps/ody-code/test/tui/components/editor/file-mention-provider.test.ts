@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 
-import { FileMentionProvider } from '#/tui/components/editor/file-mention-provider';
-import type { GitLsFilesCache, GitSnapshot } from '#/utils/git/git-ls-files';
+import { FileMentionProvider } from '#tui/components/editor/file-mention-provider';
+import type { GitLsFilesCache, GitSnapshot } from '#utils/git/git-ls-files';
 
 function stubGitCache(
   files: string[] | null,

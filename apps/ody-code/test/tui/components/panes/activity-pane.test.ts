@@ -1,7 +1,7 @@
 import { Text } from '@earendil-works/pi-tui';
 import { describe, expect, it } from 'vitest';
 
-import { ActivityPaneComponent } from '#/tui/components/panes/activity-pane';
+import { ActivityPaneComponent } from '#tui/components/panes/activity-pane';
 
 describe('ActivityPaneComponent', () => {
   it('renders waiting loader after a spacer', () => {

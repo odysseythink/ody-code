@@ -1,26 +1,26 @@
 import { log, type Logger } from '@odysseythink/ody-code-sdk';
 import { track as trackTelemetry, type TelemetryProperties } from '@odysseythink/ody-telemetry';
 
-import { refreshUpdateCache } from '#/cli/update/refresh';
-import { selectUpdateTarget } from '#/cli/update/select';
-import { detectInstallSource } from '#/cli/update/source';
+import { refreshUpdateCache } from '#cli/update/refresh';
+import { selectUpdateTarget } from '#cli/update/select';
+import { detectInstallSource } from '#cli/update/source';
 import {
   canAutoInstall,
   installCommandFor,
   installUpdate as installUpdateForeground,
   renderInstallSuccessMessage,
   renderManualUpdateMessage,
-} from '#/cli/update/preflight';
+} from '#cli/update/preflight';
 import {
   promptForInstallChoice,
   type InstallPromptChoiceValue,
   type InstallPromptOptions,
-} from '#/cli/update/prompt';
+} from '#cli/update/prompt';
 import {
   NPM_PACKAGE_NAME,
   type InstallSource,
   type UpdateCache,
-} from '#/cli/update/types';
+} from '#cli/update/types';
 
 interface WritableLike {
   write(chunk: string): boolean;

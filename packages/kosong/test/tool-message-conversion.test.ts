@@ -1,5 +1,5 @@
-import type { Message } from '#/message';
-import { convertToolMessageContent } from '#/providers/openai-common';
+import type { Message } from '#message';
+import { convertToolMessageContent } from '#providers/openai-common';
 import { describe, expect, test } from 'vitest';
 
 describe('convertToolMessageContent', () => {

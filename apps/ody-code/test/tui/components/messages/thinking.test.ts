@@ -1,9 +1,9 @@
 import type { TUI } from '@earendil-works/pi-tui';
 import { describe, expect, it, vi } from 'vitest';
 
-import { ThinkingComponent } from '#/tui/components/messages/thinking';
-import { STATUS_BULLET } from '#/tui/constant/symbols';
-import { darkColors } from '#/tui/theme/colors';
+import { ThinkingComponent } from '#tui/components/messages/thinking';
+import { STATUS_BULLET } from '#tui/constant/symbols';
+import { darkColors } from '#tui/theme/colors';
 
 function strip(text: string): string {
   return text.replaceAll(/\u001B\[[0-9;]*m/g, '');

@@ -1,5 +1,5 @@
 import { ScriptedEchoChatProvider } from './fixtures/echo-provider';
-import { ChatProviderError } from '#/errors';
+import { ChatProviderError } from '#errors';
 import type {
   AudioURLPart,
   StreamedMessagePart,
@@ -7,7 +7,7 @@ import type {
   ToolCall,
   ToolCallPart,
   VideoURLPart,
-} from '#/message';
+} from '#message';
 import { describe, it, expect } from 'vitest';
 
 describe('ScriptedEchoChatProvider', () => {
@@ -169,7 +169,7 @@ describe('ScriptedEchoChatProvider', () => {
     ].join('\n');
 
     const provider = new ScriptedEchoChatProvider([dsl]);
-    const { generate } = await import('#/generate');
+    const { generate } = await import('#generate');
 
     const result = await generate(provider, '', [], []);
 

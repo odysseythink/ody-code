@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import chalk from 'chalk';
 
-import { FooterComponent, formatFooterGitBadge, buildWeightedTips } from '#/tui/components/chrome/footer';
-import { darkColors } from '#/tui/theme/colors';
-import type { AppState } from '#/tui/types';
+import { FooterComponent, formatFooterGitBadge, buildWeightedTips } from '#tui/components/chrome/footer';
+import { darkColors } from '#tui/theme/colors';
+import type { AppState } from '#tui/types';
 
 const ANSI_SGR = /\u001B\[[0-9;]*m/g;
 function strip(text: string): string {

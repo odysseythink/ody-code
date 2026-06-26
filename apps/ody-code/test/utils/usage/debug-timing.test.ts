@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { formatStepDebugTiming } from '#/utils/usage/debug-timing';
+import { formatStepDebugTiming } from '#utils/usage/debug-timing';
 
 describe('formatStepDebugTiming', () => {
   it('returns undefined when timing fields are missing', () => {

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 
-import { parseImageMeta } from '#/utils/image/image-mime';
+import { parseImageMeta } from '#utils/image/image-mime';
 
 function png(width: number, height: number): Uint8Array {
   // 8-byte PNG signature + IHDR length (4) + 'IHDR' + width (4 BE) + height (4 BE) + ...

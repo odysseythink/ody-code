@@ -1,7 +1,7 @@
-import { generate } from '#/generate';
-import type { ContentPart, Message, StreamedMessagePart, ToolCall } from '#/message';
-import { OpenAILegacyChatProvider } from '#/providers/openai-legacy';
-import type { Tool } from '#/tool';
+import { generate } from '#generate';
+import type { ContentPart, Message, StreamedMessagePart, ToolCall } from '#message';
+import { OpenAILegacyChatProvider } from '#providers/openai-legacy';
+import type { Tool } from '#tool';
 import { describe, it, expect, vi } from 'vitest';
 
 function makeChatCompletionResponse(model: string = 'test-model') {

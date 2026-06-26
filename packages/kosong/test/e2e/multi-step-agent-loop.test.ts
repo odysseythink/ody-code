@@ -1,13 +1,13 @@
 import { ScriptedEchoChatProvider } from '../fixtures/echo-provider';
-import { extractText } from '#/message';
-import type { Message, StreamedMessagePart, ToolCall } from '#/message';
-import type { ChatProvider, StreamedMessage, ThinkingEffort } from '#/provider';
+import { extractText } from '#message';
+import type { Message, StreamedMessagePart, ToolCall } from '#message';
+import type { ChatProvider, StreamedMessage, ThinkingEffort } from '#provider';
 import { SimpleToolset, toolOk } from '../fixtures/simple-toolset';
 import type { ToolReturnValue } from '../fixtures/simple-toolset';
 import { step } from '../fixtures/step';
-import type { Tool } from '#/tool';
+import type { Tool } from '#tool';
 import type { JsonValue } from '../fixtures/args-validator';
-import type { TokenUsage } from '#/usage';
+import type { TokenUsage } from '#usage';
 import { describe, expect, it } from 'vitest';
 function createMockStream(
   parts: StreamedMessagePart[],

@@ -28,8 +28,8 @@ import type {
   UndoHistoryPayload,
   UnregisterToolPayload,
   UpdateSessionMetadataPayload,
-} from '#/rpc';
-import type { PromisableMethods } from '#/utils/types';
+} from '#rpc';
+import type { PromisableMethods } from '#utils/types';
 
 import type { Session, SessionMeta } from '.';
 import { runSetupScriptIfNeeded } from './setup-script';

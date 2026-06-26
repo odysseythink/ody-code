@@ -12,7 +12,7 @@ import {
   buildMcpHttpHeaders,
   HttpMcpClient,
   isTerminalTransportError,
-} from '#/client-http';
+} from '#client-http';
 
 const cleanups: Array<() => Promise<void> | void> = [];
 

@@ -8,7 +8,7 @@ import {
   getHostPackageJsonPath,
   getHostPackageRoot,
   getVersion,
-} from '#/cli/version';
+} from '#cli/version';
 
 describe('cli version helpers', () => {
   it('resolves the host package manifest near apps/ody-code and reads its version', () => {

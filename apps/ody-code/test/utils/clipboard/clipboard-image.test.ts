@@ -5,8 +5,8 @@ import { pathToFileURL } from 'node:url';
 
 import { describe, expect, it, vi } from 'vitest';
 
-import { ClipboardMediaError, readClipboardMedia } from '#/utils/clipboard/clipboard-image';
-import type { ClipboardModule } from '#/utils/clipboard/clipboard-native';
+import { ClipboardMediaError, readClipboardMedia } from '#utils/clipboard/clipboard-image';
+import type { ClipboardModule } from '#utils/clipboard/clipboard-native';
 
 function png(width: number, height: number): Uint8Array {
   const bytes = new Uint8Array(24);

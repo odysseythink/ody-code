@@ -15,8 +15,8 @@
 import { Container, Image, Text, type ImageTheme, getCapabilities } from '@earendil-works/pi-tui';
 import chalk from 'chalk';
 
-import type { ColorPalette } from '#/tui/theme/colors';
-import type { ImageAttachment } from '#/tui/utils/image-attachment-store';
+import type { ColorPalette } from '#tui/theme/colors';
+import type { ImageAttachment } from '#tui/utils/image-attachment-store';
 
 const MAX_IMAGE_ROWS = 12;
 const MAX_IMAGE_WIDTH = 40;

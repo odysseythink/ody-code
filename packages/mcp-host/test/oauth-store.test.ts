@@ -5,8 +5,8 @@ import { join } from 'pathe';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import type { OAuthTokens } from '@modelcontextprotocol/sdk/shared/auth.js';
-import { McpOAuthClientProvider, McpOAuthService } from '#/oauth';
-import { JsonFileStore, sanitizeStoreKey } from '#/oauth/store';
+import { McpOAuthClientProvider, McpOAuthService } from '#oauth';
+import { JsonFileStore, sanitizeStoreKey } from '#oauth/store';
 
 describe('sanitizeStoreKey', () => {
   it('strips path traversal segments', () => {

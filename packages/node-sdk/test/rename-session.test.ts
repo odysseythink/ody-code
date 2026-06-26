@@ -5,7 +5,7 @@ import { join } from 'node:path';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { OdyError, KimiHarness, type Event } from '#/index';
+import { OdyError, KimiHarness, type Event } from '#index';
 
 import { SessionStore } from '../../agent-core/src/session/store';
 import { TEST_IDENTITY } from './test-identity';

@@ -18,8 +18,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { SDKRpcClient, type Event } from '@odysseythink/ody-code-sdk';
 import type { ChatProvider, StreamedMessage, StreamedMessagePart, TokenUsage } from '@odysseythink/kosong';
 
-import { handleServe, type ServeDeps } from '#/cli/sub/serve';
-import { getVersion } from '#/cli/version';
+import { handleServe, type ServeDeps } from '#cli/sub/serve';
+import { getVersion } from '#cli/version';
 
 const ENABLED = process.env['ODY_E2E'] === '1';
 const TEST_TIMEOUT_MS = 60_000;

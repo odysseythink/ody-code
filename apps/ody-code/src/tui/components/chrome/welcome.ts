@@ -7,9 +7,9 @@ import type { Component } from '@earendil-works/pi-tui';
 import { truncateToWidth, visibleWidth } from '@earendil-works/pi-tui';
 import chalk from 'chalk';
 
-import { isRainbowDancing, renderDanceWelcomeHeader } from '#/tui/easter-eggs/dance';
-import type { ColorPalette } from '#/tui/theme/colors';
-import type { AppState } from '#/tui/types';
+import { isRainbowDancing, renderDanceWelcomeHeader } from '#tui/easter-eggs/dance';
+import type { ColorPalette } from '#tui/theme/colors';
+import type { AppState } from '#tui/types';
 
 export class WelcomeComponent implements Component {
   private state: AppState;

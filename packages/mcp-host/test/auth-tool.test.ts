@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
 import type { ToolUpdate } from '@odysseythink/agent-core-shared';
-import { createMcpAuthTool } from '#/auth-tool';
+import { createMcpAuthTool } from '#auth-tool';
 import {
   AlreadyAuthorizedError,
   type BeginAuthorizationResult,
   type McpOAuthService,
-} from '#/oauth';
+} from '#oauth';
 import { MCP_OAUTH_AUTHORIZATION_URL_TOOL_UPDATE } from '@odysseythink/agent-core-shared';
 import { executeTool } from './helpers/execute-tool';
 

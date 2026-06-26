@@ -18,9 +18,9 @@ import {
 } from '@earendil-works/pi-tui';
 import chalk from 'chalk';
 
-import type { ColorPalette } from '#/tui/theme/colors';
-import { printableChar } from '#/tui/utils/printable-key';
-import { SearchableList } from '#/tui/utils/searchable-list';
+import type { ColorPalette } from '#tui/theme/colors';
+import { printableChar } from '#tui/utils/printable-key';
+import { SearchableList } from '#tui/utils/searchable-list';
 
 export interface ChoiceOption {
   /** Value passed to onSelect (e.g. the actual editor command string). */

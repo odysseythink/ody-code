@@ -3,7 +3,7 @@ import { realpathSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { join, resolve } from 'node:path';
 
-import { getHostPackageRoot } from '#/cli/version';
+import { getHostPackageRoot } from '#cli/version';
 
 import { NPM_PACKAGE_NAME, type InstallSource } from './types';
 

@@ -1,13 +1,13 @@
 import { CURSOR_MARKER } from '@earendil-works/pi-tui';
 import { describe, expect, it } from 'vitest';
 
-import { ApprovalPanelComponent } from '#/tui/components/dialogs/approval-panel';
+import { ApprovalPanelComponent } from '#tui/components/dialogs/approval-panel';
 import type {
   DiffDisplayBlock,
   FileContentDisplayBlock,
   PendingApproval,
-} from '#/tui/reverse-rpc/types';
-import { getColorPalette } from '#/tui/theme/colors';
+} from '#tui/reverse-rpc/types';
+import { getColorPalette } from '#tui/theme/colors';
 
 import { captureProcessWrite } from '../../../helpers/process';
 

@@ -1,5 +1,5 @@
-import { UNKNOWN_CAPABILITY, type ModelCapability } from '#/capability';
-import { ChatProviderError } from '#/errors';
+import { UNKNOWN_CAPABILITY, type ModelCapability } from '#capability';
+import { ChatProviderError } from '#errors';
 import type {
   AudioURLPart,
   ImageURLPart,
@@ -10,18 +10,18 @@ import type {
   ToolCall,
   ToolCallPart,
   VideoURLPart,
-} from '#/message';
-import { extractText } from '#/message';
+} from '#message';
+import { extractText } from '#message';
 import type {
   ChatProvider,
   FinishReason,
   GenerateOptions,
   StreamedMessage,
   ThinkingEffort,
-} from '#/provider';
-import { normalizeOpenAIFinishReason } from '#/providers/openai-common';
-import type { Tool } from '#/tool';
-import type { TokenUsage } from '#/usage';
+} from '#provider';
+import { normalizeOpenAIFinishReason } from '#providers/openai-common';
+import type { Tool } from '#tool';
+import type { TokenUsage } from '#usage';
 
 // ---------------------------------------------------------------------------
 // DSL parser

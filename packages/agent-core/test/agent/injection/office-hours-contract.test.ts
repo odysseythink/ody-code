@@ -9,7 +9,7 @@ import {
   officeHoursSparseReminder,
   officeHoursReentryReminder,
   officeHoursExitReminder,
-} from '#/agent/injection/office-hours-contract';
+} from '#agent/injection/office-hours-contract';
 
 describe('office-hours-contract', () => {
   const path = '/project/.ody-code/office-hours/2026-06-16-my-startup.md';

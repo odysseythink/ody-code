@@ -148,6 +148,7 @@ mod tests {
                 base_url: None,
                 default_model: Some("mock".to_string()),
             },
+            mock_provider: false,
         };
         Arc::new(
             CoreHost::new(config, Box::new(MockSink), Box::new(MockProvider)).unwrap(),

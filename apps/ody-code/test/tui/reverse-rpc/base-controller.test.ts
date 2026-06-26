@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { ReverseRpcController } from '#/tui/reverse-rpc/base-controller';
+import { ReverseRpcController } from '#tui/reverse-rpc/base-controller';
 
 class TestController extends ReverseRpcController<string, string> {
   protected createCancelResponse(reason: string): string {

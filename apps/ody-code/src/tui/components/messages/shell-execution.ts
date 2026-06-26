@@ -2,8 +2,8 @@ import type { Component } from '@earendil-works/pi-tui';
 import { Container, Text } from '@earendil-works/pi-tui';
 import chalk from 'chalk';
 
-import type { ColorPalette } from '#/tui/theme/colors';
-import type { ToolCallBlockData, ToolResultBlockData } from '#/tui/types';
+import type { ColorPalette } from '#tui/theme/colors';
+import type { ToolCallBlockData, ToolResultBlockData } from '#tui/types';
 
 import type { ResultRenderer } from './tool-renderers/types';
 import { PREVIEW_LINES } from './tool-renderers/types';

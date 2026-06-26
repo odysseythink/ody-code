@@ -4,9 +4,9 @@ import { join } from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import type { Kaos } from '#/kaos';
-import { LocalKaos } from '#/local';
-import type { KaosProcess } from '#/process';
+import type { Kaos } from '#kaos';
+import { LocalKaos } from '#local';
+import type { KaosProcess } from '#process';
 
 /**
  * Helper to run a shell command via /bin/sh -c and collect stdout/stderr/exitCode.

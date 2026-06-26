@@ -10,7 +10,7 @@ import type { Component } from '@earendil-works/pi-tui';
 import { truncateToWidth, visibleWidth } from '@earendil-works/pi-tui';
 import chalk from 'chalk';
 
-import type { ColorPalette } from '#/tui/theme/colors';
+import type { ColorPalette } from '#tui/theme/colors';
 
 export interface DeviceCodeBoxParams {
   readonly title: string;

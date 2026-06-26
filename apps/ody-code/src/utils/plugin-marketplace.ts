@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 import {
   ODY_CODE_PLUGIN_MARKETPLACE_URL,
   ODY_CODE_PLUGIN_MARKETPLACE_URL_ENV,
-} from '#/constant/app';
+} from '#constant/app';
 
 export const PLUGIN_MARKETPLACE_TIERS = ['official', 'curated'] as const;
 

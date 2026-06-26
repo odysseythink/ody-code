@@ -3,8 +3,8 @@ import { describe, expect, it } from 'vitest';
 import {
   ShellExecutionComponent,
   shellExecutionResultRenderer,
-} from '#/tui/components/messages/shell-execution';
-import { darkColors } from '#/tui/theme/colors';
+} from '#tui/components/messages/shell-execution';
+import { darkColors } from '#tui/theme/colors';
 
 function strip(text: string): string {
   return text.replaceAll(/\u001B\[[0-9;]*m/g, '');

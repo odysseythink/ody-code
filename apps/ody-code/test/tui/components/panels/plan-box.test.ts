@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import { PlanBoxComponent } from '#/tui/components/messages/plan-box';
-import { darkColors } from '#/tui/theme/colors';
-import { createMarkdownTheme } from '#/tui/theme/pi-tui-theme';
+import { PlanBoxComponent } from '#tui/components/messages/plan-box';
+import { darkColors } from '#tui/theme/colors';
+import { createMarkdownTheme } from '#tui/theme/pi-tui-theme';
 
 const ESC = String.fromCodePoint(0x1b);
 const BEL = String.fromCodePoint(0x07);

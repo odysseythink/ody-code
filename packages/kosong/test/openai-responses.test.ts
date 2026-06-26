@@ -1,11 +1,11 @@
-import { APIContextOverflowError, ChatProviderError } from '#/errors';
-import { generate } from '#/generate';
-import type { ContentPart, Message, StreamedMessagePart, ToolCall } from '#/message';
+import { APIContextOverflowError, ChatProviderError } from '#errors';
+import { generate } from '#generate';
+import type { ContentPart, Message, StreamedMessagePart, ToolCall } from '#message';
 import {
   OpenAIResponsesChatProvider,
   OpenAIResponsesStreamedMessage,
-} from '#/providers/openai-responses';
-import type { Tool } from '#/tool';
+} from '#providers/openai-responses';
+import type { Tool } from '#tool';
 import { describe, it, expect, vi } from 'vitest';
 
 function makeResponsesAPIResponse() {

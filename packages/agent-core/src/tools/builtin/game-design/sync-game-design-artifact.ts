@@ -1,6 +1,6 @@
 import { execFileSync } from 'node:child_process';
 import { join } from 'pathe';
-import type { Agent } from '#/agent';
+import type { Agent } from '#agent';
 import { t } from '../../../i18n';
 import { z } from 'zod';
 import type { BuiltinTool } from '../../../agent/tool';

@@ -1,8 +1,8 @@
 import type { createKimiDeviceId as createKimiDeviceIdFn } from '@odysseythink/kimi-code-oauth';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { runPrompt } from '#/cli/run-prompt';
-import type { CLIOptions } from '#/cli/options';
+import { runPrompt } from '#cli/run-prompt';
+import type { CLIOptions } from '#cli/options';
 
 type CreateKimiDeviceId = typeof createKimiDeviceIdFn;
 

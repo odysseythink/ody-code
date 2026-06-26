@@ -9,14 +9,14 @@ import type { ModelAlias, PermissionMode, RuntimeMode, SessionStatus } from '@od
 import { t } from '@odysseythink/ody-code-sdk';
 import chalk from 'chalk';
 
-import { PRODUCT_NAME } from '#/constant/app';
-import type { ColorPalette } from '#/tui/theme/colors';
+import { PRODUCT_NAME } from '#constant/app';
+import type { ColorPalette } from '#tui/theme/colors';
 import {
   formatTokenCount,
   ratioSeverity,
   renderProgressBar,
   safeUsageRatio,
-} from '#/utils/usage/usage-format';
+} from '#utils/usage/usage-format';
 
 import { buildManagedUsageReportLines, type ManagedUsageReport } from './usage-panel';
 

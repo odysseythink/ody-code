@@ -11,7 +11,7 @@ vi.mock('node:child_process', () => ({
   spawnSync: mocks.spawnSync,
 }));
 
-import { createGitStatusCache, formatGitBadge } from '#/utils/git/git-status';
+import { createGitStatusCache, formatGitBadge } from '#utils/git/git-status';
 
 afterEach(() => {
   vi.useRealTimers();

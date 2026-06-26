@@ -3,12 +3,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   runNativeAssetSmokeIfRequested,
   SMOKE_PACKAGES,
-} from '#/native/smoke';
+} from '#native/smoke';
 import {
   NATIVE_ASSET_MANIFEST_VERSION,
   type NativeAssetManifest,
   type NativeAssetSource,
-} from '#/native/native-assets';
+} from '#native/native-assets';
 
 function fakeManifest(missingPackage?: string): {
   manifest: NativeAssetManifest;

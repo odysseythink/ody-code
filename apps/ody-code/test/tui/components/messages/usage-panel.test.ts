@@ -1,8 +1,8 @@
 import { visibleWidth } from '@earendil-works/pi-tui';
 import { describe, expect, it } from 'vitest';
 
-import { buildUsageReportLines, UsagePanelComponent } from '#/tui/components/messages/usage-panel';
-import { darkColors } from '#/tui/theme/colors';
+import { buildUsageReportLines, UsagePanelComponent } from '#tui/components/messages/usage-panel';
+import { darkColors } from '#tui/theme/colors';
 
 function strip(text: string): string {
   return text.replaceAll(/\u001B\[[0-9;]*m/g, '');

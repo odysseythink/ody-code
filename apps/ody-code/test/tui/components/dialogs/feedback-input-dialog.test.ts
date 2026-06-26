@@ -4,8 +4,8 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import {
   FeedbackInputDialogComponent,
   type FeedbackInputDialogResult,
-} from '#/tui/components/dialogs/feedback-input-dialog';
-import { darkColors } from '#/tui/theme/colors';
+} from '#tui/components/dialogs/feedback-input-dialog';
+import { darkColors } from '#tui/theme/colors';
 
 const ESC = String.fromCodePoint(27);
 const CTRL_C = String.fromCodePoint(3);

@@ -6,9 +6,9 @@
  * file; this tool reads that file and flips plan mode off.
  */
 
-import type { Agent } from '#/agent';
+import type { Agent } from '#agent';
 import type { OdyConfig } from '@odysseythink/agent-core-shared';
-import type { SessionModeData } from '#/agent/session-mode';
+import type { SessionModeData } from '#agent/session-mode';
 import type { Kaos } from '@odysseythink/kaos';
 import { z } from 'zod';
 

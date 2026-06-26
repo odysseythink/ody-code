@@ -8,10 +8,10 @@ import {
   emptyUpdateInstallState,
   readUpdateInstallState,
   writeUpdateInstallState,
-} from '#/cli/update/install-state';
-import { readUpdateCache, writeUpdateCache } from '#/cli/update/cache';
-import { emptyUpdateCache, type UpdateInstallState } from '#/cli/update/types';
-import { getUpdateInstallStateFile, getUpdateStateFile } from '#/utils/paths';
+} from '#cli/update/install-state';
+import { readUpdateCache, writeUpdateCache } from '#cli/update/cache';
+import { emptyUpdateCache, type UpdateInstallState } from '#cli/update/types';
+import { getUpdateInstallStateFile, getUpdateStateFile } from '#utils/paths';
 
 const originalEnv = { ...process.env };
 

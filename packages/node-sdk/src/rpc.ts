@@ -48,9 +48,9 @@ import {
 } from '@odysseythink/agent-core';
 import { createProvider } from '@odysseythink/kosong';
 import { createKimiDefaultHeaders } from '@odysseythink/kimi-code-oauth';
-import type { CoreWorkerBootPayload } from '#/core-worker';
+import type { CoreWorkerBootPayload } from '#core-worker';
 
-import type { ApprovalHandler, OpenExternalHandler, QuestionHandler } from '#/events';
+import type { ApprovalHandler, OpenExternalHandler, QuestionHandler } from '#events';
 import type {
   BackgroundTaskInfo,
   CreateSessionOptions,
@@ -82,7 +82,7 @@ import type {
   SkillSummary,
   Unsubscribe,
   KimiHostIdentity,
-} from '#/types';
+} from '#types';
 
 const MAIN_AGENT_ID = 'main';
 
@@ -117,6 +117,12 @@ export interface SDKRpcClientConnectOptions {
   readonly configPath?: string;
   readonly skillDirs?: readonly string[];
   readonly telemetry?: TelemetryClient;
+  /**
+   * Additional arguments to append after the transport-specific arguments when
+   * spawning an external host binary. Useful for testing flags such as
+   * `--mock-provider`.
+   */
+  readonly extraArgs?: readonly string[];
 }
 
 interface ReadyMessage {
@@ -247,18 +253,21 @@ async function createExternalTransport(
   dispatch: Dispatch,
 ): Promise<ExternalTransportResult> {
   const binaryPath = options.binaryPath ?? 'ody';
-  const extraArgs: string[] = [];
+  const hostArgs: string[] = [];
   if (options.configPath !== undefined) {
-    extraArgs.push('--config', options.configPath);
+    hostArgs.push('--config', options.configPath);
   }
   if (options.homeDir !== undefined) {
-    extraArgs.push('--home', options.homeDir);
+    hostArgs.push('--home', options.homeDir);
+  }
+  if (options.extraArgs !== undefined) {
+    hostArgs.push(...options.extraArgs);
   }
 
   if (options.transport === 'stdio') {
     const { proc } = await spawnHost({
       binaryPath,
-      argv: ['serve', '--stdio', ...extraArgs],
+      argv: ['serve', '--stdio', ...hostArgs],
       stdio: ['pipe', 'pipe', 'pipe'],
       predicate: (msg) => msg.stdio === true,
     });
@@ -274,7 +283,7 @@ async function createExternalTransport(
     if (shouldSpawn) {
       ({ proc } = await spawnHost({
         binaryPath,
-        argv: ['serve', '--socket-path', socketPath, ...extraArgs],
+        argv: ['serve', '--socket-path', socketPath, ...hostArgs],
         stdio: ['ignore', 'ignore', 'pipe'],
         predicate: (msg) => msg.socketPath === socketPath,
       }));
@@ -296,7 +305,7 @@ async function createExternalTransport(
   if (shouldSpawn) {
     ({ proc } = await spawnHost({
       binaryPath,
-      argv: ['serve', '--tcp-host', host, '--tcp-port', String(port), ...extraArgs],
+      argv: ['serve', '--tcp-host', host, '--tcp-port', String(port), ...hostArgs],
       stdio: ['ignore', 'ignore', 'pipe'],
       predicate: (msg) => msg.host === host && msg.port === port,
     }));

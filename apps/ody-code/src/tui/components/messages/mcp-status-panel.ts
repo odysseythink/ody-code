@@ -1,7 +1,7 @@
 import type { McpServerInfo } from '@odysseythink/ody-code-sdk';
 import chalk from 'chalk';
 
-import type { ColorPalette } from '#/tui/theme/colors';
+import type { ColorPalette } from '#tui/theme/colors';
 
 export interface McpStatusReportOptions {
   readonly colors: ColorPalette;

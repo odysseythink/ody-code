@@ -1,4 +1,4 @@
-import type { TelemetryClient, TelemetryProperties } from '#/index';
+import type { TelemetryClient, TelemetryProperties } from '#index';
 
 export interface TelemetryRecord {
   readonly event: string;

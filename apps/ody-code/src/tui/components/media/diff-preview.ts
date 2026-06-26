@@ -7,7 +7,7 @@
 
 import chalk from 'chalk';
 
-import type { ColorPalette } from '#/tui/theme/colors';
+import type { ColorPalette } from '#tui/theme/colors';
 
 export type DiffLineKind = 'context' | 'add' | 'delete';
 

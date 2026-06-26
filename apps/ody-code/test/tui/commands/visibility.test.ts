@@ -1,4 +1,4 @@
-import { isCommandVisibleInMode } from '#/tui/commands/index';
+import { isCommandVisibleInMode } from '#tui/commands/index';
 import { describe, expect, it } from 'vitest';
 
 describe('isCommandVisibleInMode', () => {

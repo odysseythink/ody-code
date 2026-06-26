@@ -5,8 +5,8 @@ import { basename, dirname, join } from 'node:path';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { KimiHarness } from '#/index';
-import type { OdyError } from '#/index';
+import { KimiHarness } from '#index';
+import type { OdyError } from '#index';
 
 import {
   SessionStore,

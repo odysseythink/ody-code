@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 
-import { normalizeCapsLockedCtrl } from '#/tui/components/editor/custom-editor';
+import { normalizeCapsLockedCtrl } from '#tui/components/editor/custom-editor';
 
 // Kitty keyboard protocol emits `ESC[<codepoint>;<modifier+1>[:eventType]u`.
 // Modifier mask bits: shift=1, alt=2, ctrl=4, super=8, hyper=16, meta=32,

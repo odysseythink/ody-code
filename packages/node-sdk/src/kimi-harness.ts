@@ -16,9 +16,9 @@ import {
 import type { CodeReviewReport } from '@odysseythink/code-review';
 import { assertKimiHostIdentity } from '@odysseythink/kimi-code-oauth';
 
-import { KimiAuthFacade } from '#/auth';
-import { SDKRpcClient } from '#/rpc';
-import { Session } from '#/session';
+import { KimiAuthFacade } from '#auth';
+import { SDKRpcClient } from '#rpc';
+import { Session } from '#session';
 import type {
   CreateSessionOptions,
   ExportSessionInput,
@@ -33,7 +33,7 @@ import type {
   RenameSessionInput,
   ResumeSessionInput,
   SessionSummary,
-} from '#/types';
+} from '#types';
 
 export class KimiHarness {
   readonly homeDir: string;

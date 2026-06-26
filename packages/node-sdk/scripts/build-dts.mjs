@@ -173,7 +173,7 @@ function packageDirForFile(file) {
 }
 
 function resolveSpecifier({ currentFile, emittedFiles, packageDir, specifier }) {
-  if (specifier.startsWith('#/')) {
+  if (specifier.startsWith('#')) {
     return resolvePackageSubpath({
       emittedFiles,
       packageDir,

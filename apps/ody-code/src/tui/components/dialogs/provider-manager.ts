@@ -45,10 +45,10 @@ import {
 } from '@earendil-works/pi-tui';
 import chalk from 'chalk';
 
-import { DEFAULT_OAUTH_PROVIDER_NAME } from '#/constant/app';
-import type { ColorPalette } from '#/tui/theme/colors';
-import { printableChar } from '#/tui/utils/printable-key';
-import { pageView, type PageView } from '#/tui/utils/paging';
+import { DEFAULT_OAUTH_PROVIDER_NAME } from '#constant/app';
+import type { ColorPalette } from '#tui/theme/colors';
+import { printableChar } from '#tui/utils/printable-key';
+import { pageView, type PageView } from '#tui/utils/paging';
 
 interface ConfirmState {
   readonly label: string;

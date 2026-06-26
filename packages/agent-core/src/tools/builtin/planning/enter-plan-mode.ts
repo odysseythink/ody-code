@@ -5,7 +5,7 @@
  * does not require approval in any permission mode.
  */
 
-import type { Agent } from '#/agent';
+import type { Agent } from '#agent';
 import { z } from 'zod';
 
 import { planModeEntryMessage } from '../../../agent/injection/plan-mode-contract';

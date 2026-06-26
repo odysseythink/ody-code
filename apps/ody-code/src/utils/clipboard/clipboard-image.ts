@@ -23,7 +23,7 @@ import { tmpdir } from 'node:os';
 import { basename, isAbsolute, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { parseImageMeta } from '#/utils/image/image-mime';
+import { parseImageMeta } from '#utils/image/image-mime';
 
 import { clipboard, type ClipboardModule } from './clipboard-native';
 

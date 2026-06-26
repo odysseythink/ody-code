@@ -1,4 +1,4 @@
-import type { ToolCall } from '#/message';
+import type { ToolCall } from '#message';
 import type { JsonValue } from './fixtures/args-validator';
 import { SimpleToolset, toolOk } from './fixtures/simple-toolset';
 import type { ToolReturnValue } from './fixtures/simple-toolset';

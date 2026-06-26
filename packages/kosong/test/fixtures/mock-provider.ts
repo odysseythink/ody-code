@@ -1,14 +1,14 @@
-import { UNKNOWN_CAPABILITY, type ModelCapability } from '#/capability';
-import type { Message, StreamedMessagePart } from '#/message';
+import { UNKNOWN_CAPABILITY, type ModelCapability } from '#capability';
+import type { Message, StreamedMessagePart } from '#message';
 import type {
   ChatProvider,
   FinishReason,
   GenerateOptions,
   StreamedMessage,
   ThinkingEffort,
-} from '#/provider';
-import type { Tool } from '#/tool';
-import type { TokenUsage } from '#/usage';
+} from '#provider';
+import type { Tool } from '#tool';
+import type { TokenUsage } from '#usage';
 
 /**
  * Constructor options accepted by {@link MockChatProvider}.

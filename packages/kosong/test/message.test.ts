@@ -9,7 +9,7 @@ import type {
   ToolCall,
   ToolCallPart,
   VideoURLPart,
-} from '#/message';
+} from '#message';
 import {
   createAssistantMessage,
   createToolMessage,
@@ -20,7 +20,7 @@ import {
   isToolCall,
   isToolCallPart,
   mergeInPlace,
-} from '#/message';
+} from '#message';
 import { describe, expect, it } from 'vitest';
 describe('createUserMessage', () => {
   it('creates a user message with single text part', () => {

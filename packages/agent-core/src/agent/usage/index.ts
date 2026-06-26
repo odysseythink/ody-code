@@ -1,4 +1,4 @@
-import type { UsageStatus } from '#/rpc';
+import type { UsageStatus } from '#rpc';
 import { addUsage, type TokenUsage } from '@odysseythink/kosong';
 
 import type { Agent } from '..';

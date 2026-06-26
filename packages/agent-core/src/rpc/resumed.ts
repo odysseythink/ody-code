@@ -1,19 +1,19 @@
-import type { AgentType } from '#/agent';
-import type { BackgroundTaskInfo } from '#/agent/background';
-import type { AgentConfigData, AgentConfigUpdateData } from '#/agent/config';
-import type { AgentContextData, ContextMessage } from '#/agent/context';
+import type { AgentType } from '#agent';
+import type { BackgroundTaskInfo } from '#agent/background';
+import type { AgentConfigData, AgentConfigUpdateData } from '#agent/config';
+import type { AgentContextData, ContextMessage } from '#agent/context';
 import type {
   PermissionApprovalResultRecord,
   PermissionData,
   PermissionMode,
-} from '#/agent/permission';
-import type { SessionModeData, SessionModeKind } from '#/agent/session-mode';
-import type { ToolInfo } from '#/agent/tool';
-import type { SessionSummary } from '#/rpc/core-api';
-import type { UsageStatus } from '#/rpc/events';
-import type { SessionMeta } from '#/session';
+} from '#agent/permission';
+import type { SessionModeData, SessionModeKind } from '#agent/session-mode';
+import type { ToolInfo } from '#agent/tool';
+import type { SessionSummary } from '#rpc/core-api';
+import type { UsageStatus } from '#rpc/events';
+import type { SessionMeta } from '#session';
 
-import type { RuntimeMode } from '#/agent/session-mode';
+import type { RuntimeMode } from '#agent/session-mode';
 
 export type AgentReplayRecord =
   | { type: 'message'; message: ContextMessage; mode?: RuntimeMode }

@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { handleUpgrade } from '#/cli/sub/upgrade';
-import type { InstallPromptChoiceValue } from '#/cli/update/prompt';
-import type { InstallSource, UpdateCache } from '#/cli/update/types';
+import { handleUpgrade } from '#cli/sub/upgrade';
+import type { InstallPromptChoiceValue } from '#cli/update/prompt';
+import type { InstallSource, UpdateCache } from '#cli/update/types';
 
 function cacheWith(version: string | null): UpdateCache {
   return {

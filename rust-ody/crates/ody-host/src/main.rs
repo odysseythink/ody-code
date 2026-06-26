@@ -3,6 +3,7 @@ use std::sync::Arc;
 use ody_host::config::{HostConfig, LogLevel};
 use ody_host::error::HostError;
 use ody_host::host::CoreHost;
+use ody_host::llm::mock::MockProvider;
 use ody_host::llm::openai::OpenAiProvider;
 use ody_host::transport::{build_transport, RpcRouter};
 
@@ -32,7 +33,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     tracing::subscriber::set_global_default(subscriber)?;
 
     let (server, event_sink) = build_transport(config.transport.clone()).await?;
-    let provider = Box::new(OpenAiProvider::new(config.provider.clone()));
+    let provider: Box<dyn ody_host::llm::LlmProvider> = if config.mock_provider {
+        Box::new(MockProvider::new())
+    } else {
+        Box::new(OpenAiProvider::new(config.provider.clone()))
+    };
     let host = Arc::new(CoreHost::new(config, event_sink, provider)?);
     let router = RpcRouter::new(host);
     let dispatch = router.into_byte_dispatch();

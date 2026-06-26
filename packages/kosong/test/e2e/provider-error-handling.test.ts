@@ -4,14 +4,14 @@ import {
   APIStatusError,
   APITimeoutError,
   ChatProviderError,
-} from '#/errors';
-import { generate } from '#/generate';
-import type { StreamedMessagePart, ToolCall } from '#/message';
-import type { ChatProvider, StreamedMessage, ThinkingEffort } from '#/provider';
+} from '#errors';
+import { generate } from '#generate';
+import type { StreamedMessagePart, ToolCall } from '#message';
+import type { ChatProvider, StreamedMessage, ThinkingEffort } from '#provider';
 import { SimpleToolset, toolOk } from '../fixtures/simple-toolset';
 import type { ToolReturnValue } from '../fixtures/simple-toolset';
 import { step } from '../fixtures/step';
-import type { TokenUsage } from '#/usage';
+import type { TokenUsage } from '#usage';
 import { describe, expect, it } from 'vitest';
 
 /**

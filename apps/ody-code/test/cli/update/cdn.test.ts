@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { fetchLatestVersionFromCdn } from '#/cli/update/cdn';
-import { ODY_CODE_CDN_LATEST_URL } from '#/constant/app';
+import { fetchLatestVersionFromCdn } from '#cli/update/cdn';
+import { ODY_CODE_CDN_LATEST_URL } from '#constant/app';
 
 function mockFetchOk(body: string): typeof fetch {
   return vi.fn(async () => ({

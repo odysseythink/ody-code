@@ -1,8 +1,8 @@
 import { APIConnectionError, emptyUsage, isRetryableGenerateError } from '@odysseythink/kosong';
 import { describe, expect, it } from 'vitest';
 
-import type { LLM, LLMChatParams, LLMChatResponse } from '#/loop/llm';
-import { chatWithRetry } from '#/loop/retry';
+import type { LLM, LLMChatParams, LLMChatResponse } from '#loop/llm';
+import { chatWithRetry } from '#loop/retry';
 
 function okResponse(): LLMChatResponse {
   return { toolCalls: [], usage: emptyUsage() };

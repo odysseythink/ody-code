@@ -2,7 +2,7 @@ import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'pathe';
 import { describe, expect, it, afterEach } from 'vitest';
-import { resolveBuiltInRoot, BuiltInRootNotFoundError } from '#/built-in/resolve-root';
+import { resolveBuiltInRoot, BuiltInRootNotFoundError } from '#built-in/resolve-root';
 
 const tempDirs: string[] = [];
 

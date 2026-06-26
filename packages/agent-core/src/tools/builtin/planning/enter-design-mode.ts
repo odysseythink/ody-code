@@ -9,7 +9,7 @@
  * approval in any permission mode.
  */
 
-import type { Agent } from '#/agent';
+import type { Agent } from '#agent';
 import { z } from 'zod';
 
 import { designModeEntryMessage } from '../../../agent/injection/design-mode-contract';

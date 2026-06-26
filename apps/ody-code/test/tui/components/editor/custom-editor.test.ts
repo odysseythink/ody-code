@@ -6,8 +6,8 @@ import type {
 } from '@earendil-works/pi-tui';
 import { describe, expect, it, vi } from 'vitest';
 
-import { CustomEditor } from '#/tui/components/editor/custom-editor';
-import { getColorPalette } from '#/tui/theme/index';
+import { CustomEditor } from '#tui/components/editor/custom-editor';
+import { getColorPalette } from '#tui/theme/index';
 
 function makeEditor(): CustomEditor {
   const tui = {

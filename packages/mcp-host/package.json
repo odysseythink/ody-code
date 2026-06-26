@@ -6,7 +6,7 @@
   "license": "MIT",
   "type": "module",
   "imports": {
-    "#/*": ["./src/*.ts", "./src/*/index.ts"],
+    "#*": ["./src/*.ts", "./src/*/index.ts"],
     "#/built-in/*": ["./src/built-in/*.ts", "./src/built-in/*/index.ts"],
     "#/oauth/*": ["./src/oauth/*.ts", "./src/oauth/*/index.ts"],
     "#/oauth": "./src/oauth/index.ts",

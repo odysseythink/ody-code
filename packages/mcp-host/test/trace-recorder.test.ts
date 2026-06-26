@@ -2,8 +2,8 @@ import { mkdtemp, readFile, readdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { describe, expect, it } from 'vitest';
-import { ChromeTraceRecorder } from '#/trace-recorder';
-import type { MCPToolResult } from '#/types';
+import { ChromeTraceRecorder } from '#trace-recorder';
+import type { MCPToolResult } from '#types';
 
 describe('ChromeTraceRecorder', () => {
   it('writes manifest.jsonl with tool call record', async () => {

@@ -30,6 +30,38 @@ pub struct Session {
     state: tokio::sync::Mutex<SessionState>,
 }
 
+impl Session {
+    pub async fn model(&self) -> Option<String> {
+        self.state.lock().await.model.clone()
+    }
+
+    pub async fn thinking(&self) -> Option<String> {
+        self.state.lock().await.thinking.clone()
+    }
+
+    pub async fn permission(&self) -> Option<String> {
+        self.state.lock().await.permission.clone()
+    }
+
+    pub async fn set_model(&self, model: Option<String>) {
+        self.state.lock().await.model = model;
+    }
+
+    pub async fn set_thinking(&self, thinking: Option<String>) {
+        self.state.lock().await.thinking = thinking;
+    }
+
+    pub async fn set_permission(&self, permission: Option<String>) {
+        self.state.lock().await.permission = permission;
+    }
+
+    pub async fn persist_state(&self) -> Result<(), SessionError> {
+        let state = self.state.lock().await.clone();
+        crate::session::store::write_state_json(&self.dir, &state)
+            .map_err(|e| SessionError::Io { source: e, path: self.dir.clone() })
+    }
+}
+
 impl SessionManager {
     pub fn new(store: SessionStoreAdapter) -> Self {
         Self { store, active: RwLock::new(HashMap::new()) }
@@ -54,6 +86,9 @@ impl SessionManager {
             title: title.map(|s| s.to_string()),
             last_prompt: None,
             custom: HashMap::new(),
+            model: None,
+            thinking: None,
+            permission: None,
         };
         crate::session::store::write_state_json(&dir, &state)
             .map_err(|e| SessionError::Io { source: e, path: dir.clone() })?;

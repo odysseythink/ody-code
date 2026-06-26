@@ -10,33 +10,33 @@ import {
 import type { ApprovalRequest, ApprovalResponse, Event } from '@odysseythink/ody-code-sdk';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { ApprovalPanelComponent } from '#/tui/components/dialogs/approval-panel';
-import { ODY_CODE_PLUGIN_MARKETPLACE_URL } from '#/constant/app';
-import { WelcomeComponent } from '#/tui/components/chrome/welcome';
-import { ModelSelectorComponent } from '#/tui/components/dialogs/model-selector';
-import { TabbedModelSelectorComponent } from '#/tui/components/dialogs/tabbed-model-selector';
+import { ApprovalPanelComponent } from '#tui/components/dialogs/approval-panel';
+import { ODY_CODE_PLUGIN_MARKETPLACE_URL } from '#constant/app';
+import { WelcomeComponent } from '#tui/components/chrome/welcome';
+import { ModelSelectorComponent } from '#tui/components/dialogs/model-selector';
+import { TabbedModelSelectorComponent } from '#tui/components/dialogs/tabbed-model-selector';
 import {
   PluginMcpSelectorComponent,
   PluginMarketplaceSelectorComponent,
   PluginRemoveConfirmComponent,
   PluginsOverviewSelectorComponent,
-} from '#/tui/components/dialogs/plugins-selector';
-import { OdyTUI, type OdyTUIStartupInput, type TUIState } from '#/tui/ody-tui';
-import type { StreamingUIController } from '#/tui/controllers/streaming-ui';
-import { handleFeedbackCommand } from '#/tui/commands/info';
+} from '#tui/components/dialogs/plugins-selector';
+import { OdyTUI, type OdyTUIStartupInput, type TUIState } from '#tui/ody-tui';
+import type { StreamingUIController } from '#tui/controllers/streaming-ui';
+import { handleFeedbackCommand } from '#tui/commands/info';
 import {
   promptFeedbackInput,
   runModelSelector,
-} from '#/tui/commands/prompts';
-import type { QueuedMessage } from '#/tui/types';
-import type { ImageAttachmentStore } from '#/tui/utils/image-attachment-store';
+} from '#tui/commands/prompts';
+import type { QueuedMessage } from '#tui/types';
+import type { ImageAttachmentStore } from '#tui/utils/image-attachment-store';
 
-vi.mock('#/tui/commands/prompts', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('#/tui/commands/prompts')>();
+vi.mock('#tui/commands/prompts', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('#tui/commands/prompts')>();
   return { ...actual, promptFeedbackInput: vi.fn() };
 });
 
-vi.mock('#/tui/utils/open-url', () => ({ openUrl: vi.fn() }));
+vi.mock('#tui/utils/open-url', () => ({ openUrl: vi.fn() }));
 
 const ESC = String.fromCodePoint(0x1b);
 const BEL = String.fromCodePoint(0x07);

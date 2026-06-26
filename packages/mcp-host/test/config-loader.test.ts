@@ -6,7 +6,7 @@ import { join } from 'pathe';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { ErrorCodes, OdyError } from '@odysseythink/agent-core-shared';
-import { loadMcpServers, resolveMcpJsonPaths } from '#/config-loader';
+import { loadMcpServers, resolveMcpJsonPaths } from '#config-loader';
 
 const tempDirs: string[] = [];
 

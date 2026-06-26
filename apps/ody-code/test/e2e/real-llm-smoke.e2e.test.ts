@@ -17,7 +17,7 @@ import process from 'node:process';
 import { KimiHarness, type Event } from '@odysseythink/ody-code-sdk';
 import { describe, expect, test } from 'vitest';
 
-import { createKimiCodeHostIdentity, getVersion } from '#/cli/version';
+import { createKimiCodeHostIdentity, getVersion } from '#cli/version';
 
 const DEFAULT_PROMPT = 'Reply with a single word: hi';
 const DEFAULT_WORKDIR = '/tmp/kimi-e2e';

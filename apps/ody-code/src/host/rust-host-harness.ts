@@ -17,7 +17,7 @@ import type {
 } from '@odysseythink/ody-code-sdk';
 import type { ExperimentalFlagMap, TelemetryContextPatch } from '@odysseythink/agent-core';
 
-import type { OdyHarness } from '#/tui/types';
+import type { OdyHarness } from '#tui/types';
 
 import { RustHostAuthFacade } from './rust-host-auth';
 

@@ -10,7 +10,7 @@ import {
   OdyError,
   KimiHarness,
   type SessionSummary,
-} from '#/index';
+} from '#index';
 import { resolveGlobalLogPath } from '../../agent-core/src/logging/logger';
 import {
   WIRE_PROTOCOL_VERSION,

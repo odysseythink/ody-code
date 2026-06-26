@@ -6,8 +6,8 @@ import * as zlib from 'node:zlib';
 import { Command } from 'commander';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { registerExportCommand } from '#/cli/sub/export';
-import { createKimiCodeHostIdentity } from '#/cli/version';
+import { registerExportCommand } from '#cli/sub/export';
+import { createKimiCodeHostIdentity } from '#cli/version';
 import { KimiHarness, log } from '@odysseythink/ody-code-sdk';
 import { __resetRootLoggerForTest } from '@odysseythink/agent-core';
 

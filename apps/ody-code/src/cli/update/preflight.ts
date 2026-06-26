@@ -6,8 +6,8 @@ import type { TelemetryProperties } from '@odysseythink/ody-telemetry';
 import {
   NATIVE_INSTALL_COMMAND_UNIX,
   NATIVE_INSTALL_COMMAND_WIN,
-} from '#/constant/app';
-import { loadTuiConfig } from '#/tui/config';
+} from '#constant/app';
+import { loadTuiConfig } from '#tui/config';
 
 import { readUpdateCache } from './cache';
 import { tryAcquireUpdateInstallLock } from './install-lock';

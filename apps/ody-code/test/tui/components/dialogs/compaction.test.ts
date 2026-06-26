@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { CompactionComponent } from '#/tui/components/dialogs/compaction';
-import { darkColors } from '#/tui/theme/colors';
+import { CompactionComponent } from '#tui/components/dialogs/compaction';
+import { darkColors } from '#tui/theme/colors';
 
 function strip(text: string): string {
   return text.replaceAll(/\u001B\[[0-9;]*m/g, '');

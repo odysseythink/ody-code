@@ -20,12 +20,12 @@ import type {
 } from '@odysseythink/ody-code-sdk';
 import chalk from 'chalk';
 
-import type { CLIOptions } from '#/cli/options';
-import type { GitLsFilesCache } from '#/utils/git/git-ls-files';
-import { createGitLsFilesCache } from '#/utils/git/git-ls-files';
-import { appendInputHistory, loadInputHistory } from '#/utils/history/input-history';
-import { arePathsEqual, getInputHistoryFile } from '#/utils/paths';
-import { detectFdPath } from '#/utils/process/fd-detect';
+import type { CLIOptions } from '#cli/options';
+import type { GitLsFilesCache } from '#utils/git/git-ls-files';
+import { createGitLsFilesCache } from '#utils/git/git-ls-files';
+import { appendInputHistory, loadInputHistory } from '#utils/history/input-history';
+import { arePathsEqual, getInputHistoryFile } from '#utils/paths';
+import { detectFdPath } from '#utils/process/fd-detect';
 
 import {
   BUILTIN_SLASH_COMMANDS,

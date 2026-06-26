@@ -1,7 +1,7 @@
 import { ChoicePickerComponent, type ChoiceOption } from './choice-picker';
 
-import type { ColorPalette } from '#/tui/theme/colors';
-import type { Theme } from '#/tui/theme/index';
+import type { ColorPalette } from '#tui/theme/colors';
+import type { Theme } from '#tui/theme/index';
 
 const THEME_OPTIONS: readonly ChoiceOption[] = [
   { value: 'auto', label: 'Auto (match terminal)' },

@@ -1,6 +1,6 @@
-import { UNKNOWN_CAPABILITY, type ModelCapability } from '#/capability';
+import { UNKNOWN_CAPABILITY, type ModelCapability } from '#capability';
 import { normalizeKimiToolSchema } from './kimi-schema';
-import type { ContentPart, Message, StreamedMessagePart, ToolCall } from '#/message';
+import type { ContentPart, Message, StreamedMessagePart, ToolCall } from '#message';
 import type {
   ChatProvider,
   FinishReason,
@@ -9,9 +9,9 @@ import type {
   StreamedMessage,
   ThinkingEffort,
   VideoUploadInput,
-} from '#/provider';
-import type { Tool } from '#/tool';
-import type { TokenUsage } from '#/usage';
+} from '#provider';
+import type { Tool } from '#tool';
+import type { TokenUsage } from '#usage';
 import OpenAI from 'openai';
 
 import { KimiFiles } from './kimi-files';

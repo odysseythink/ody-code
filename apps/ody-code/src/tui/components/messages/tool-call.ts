@@ -9,19 +9,19 @@ import { Container, Text, Spacer, visibleWidth } from '@earendil-works/pi-tui';
 import type { Component, MarkdownTheme, TUI } from '@earendil-works/pi-tui';
 import chalk from 'chalk';
 
-import { highlightLines, langFromPath } from '#/tui/components/media/code-highlight';
-import { renderDiffLinesClustered } from '#/tui/components/media/diff-preview';
-import { COMMAND_PREVIEW_LINES } from '#/tui/constant/rendering';
+import { highlightLines, langFromPath } from '#tui/components/media/code-highlight';
+import { renderDiffLinesClustered } from '#tui/components/media/diff-preview';
+import { COMMAND_PREVIEW_LINES } from '#tui/constant/rendering';
 import {
   STREAMING_ARGS_FIELD_RE,
   STREAMING_ARGS_PREVIEW_MAX_CHARS,
-} from '#/tui/constant/streaming';
-import { STATUS_BULLET } from '#/tui/constant/symbols';
-import type { ColorPalette } from '#/tui/theme/colors';
-import type { ToolCallBlockData, ToolResultBlockData } from '#/tui/types';
+} from '#tui/constant/streaming';
+import { STATUS_BULLET } from '#tui/constant/symbols';
+import type { ColorPalette } from '#tui/theme/colors';
+import type { ToolCallBlockData, ToolResultBlockData } from '#tui/types';
 import type { TokenUsage } from '@odysseythink/ody-code-sdk';
-import { appendStreamingArgsPreview } from '#/tui/utils/event-payload';
-import { decodeMcpToolName } from '#/tui/utils/mcp-tool-name';
+import { appendStreamingArgsPreview } from '#tui/utils/event-payload';
+import { decodeMcpToolName } from '#tui/utils/mcp-tool-name';
 
 import { PlanBoxComponent } from './plan-box';
 import { ShellExecutionComponent } from './shell-execution';

@@ -18,10 +18,10 @@ import { Text, visibleWidth } from '@earendil-works/pi-tui';
 import type { GoalSnapshot, GoalStatus } from '@odysseythink/ody-code-sdk';
 import chalk from 'chalk';
 
-import { MESSAGE_INDENT } from '#/tui/constant/rendering';
-import { STATUS_BULLET } from '#/tui/constant/symbols';
-import type { ColorPalette } from '#/tui/theme/colors';
-import { formatTokenCount } from '#/utils/usage/usage-format';
+import { MESSAGE_INDENT } from '#tui/constant/rendering';
+import { STATUS_BULLET } from '#tui/constant/symbols';
+import type { ColorPalette } from '#tui/theme/colors';
+import { formatTokenCount } from '#utils/usage/usage-format';
 import { UsagePanelComponent } from './usage-panel';
 
 const WRAP_WIDTH = 72;

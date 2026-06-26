@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import type { TUIState } from '#/tui/ody-tui';
+import type { TUIState } from '#tui/ody-tui';
 import {
   buildTerminalNotificationSequences,
   emitTerminalNotification,
@@ -8,7 +8,7 @@ import {
   isInsideTmux,
   notifyTerminalOnce,
   supportsOsc9Notification,
-} from '#/tui/utils/terminal-notification';
+} from '#tui/utils/terminal-notification';
 
 function makeNotificationState(args: {
   readonly enabled?: boolean;

@@ -11,7 +11,7 @@ import type { Component, MarkdownTheme } from '@earendil-works/pi-tui';
 import { Markdown, visibleWidth } from '@earendil-works/pi-tui';
 import chalk from 'chalk';
 
-import { toTerminalHyperlink } from '#/utils/terminal-hyperlink';
+import { toTerminalHyperlink } from '#utils/terminal-hyperlink';
 
 const LEFT_MARGIN = 2; // two-space indent matching other tool call children
 const SIDE_PADDING = 1; // space between the │ and the content on each side

@@ -1,9 +1,9 @@
-import { generate } from '#/generate';
-import { extractText } from '#/message';
-import type { Message, StreamedMessagePart } from '#/message';
-import type { ChatProvider, GenerateOptions, StreamedMessage, ThinkingEffort } from '#/provider';
-import type { Tool } from '#/tool';
-import type { TokenUsage } from '#/usage';
+import { generate } from '#generate';
+import { extractText } from '#message';
+import type { Message, StreamedMessagePart } from '#message';
+import type { ChatProvider, GenerateOptions, StreamedMessage, ThinkingEffort } from '#provider';
+import type { Tool } from '#tool';
+import type { TokenUsage } from '#usage';
 import { describe, expect, it } from 'vitest';
 
 /**

@@ -2,25 +2,25 @@ import { describe, expect, it, vi } from "vitest";
 
 import { log, type GoalSnapshot } from "@odysseythink/ody-code-sdk";
 
-import { OdyTUI, type OdyTUIStartupInput, type TUIState } from "#/tui/ody-tui";
+import { OdyTUI, type OdyTUIStartupInput, type TUIState } from "#tui/ody-tui";
 import {
   handleLoginCommand,
   handleLogoutCommand,
-} from "#/tui/commands/auth";
+} from "#tui/commands/auth";
 import {
   promptLoginProviderSelection,
   promptLogoutProviderSelection,
-} from "#/tui/commands/prompts";
+} from "#tui/commands/prompts";
 import {
   DISABLE_TERMINAL_THEME_REPORTING,
   ENABLE_TERMINAL_THEME_REPORTING,
   OSC11_QUERY,
   QUERY_TERMINAL_THEME,
   TERMINAL_THEME_LIGHT,
-} from "#/tui/utils/terminal-theme";
+} from "#tui/utils/terminal-theme";
 
-vi.mock("#/tui/commands/prompts", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("#/tui/commands/prompts")>();
+vi.mock("#tui/commands/prompts", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("#tui/commands/prompts")>();
   return { ...actual, promptLoginProviderSelection: vi.fn(), promptLogoutProviderSelection: vi.fn() };
 });
 

@@ -11,19 +11,19 @@ import { truncateToWidth, visibleWidth } from '@earendil-works/pi-tui';
 import chalk from 'chalk';
 import { basename } from 'node:path';
 
-import { isRainbowDancing, renderDanceFooterModel } from '#/tui/easter-eggs/dance';
-import type { ColorPalette } from '#/tui/theme/colors';
+import { isRainbowDancing, renderDanceFooterModel } from '#tui/easter-eggs/dance';
+import type { ColorPalette } from '#tui/theme/colors';
 import type { RuntimeMode } from '@odysseythink/ody-code-sdk';
-import type { SessionMode } from '#/tui/commands/types';
-import type { AppState } from '#/tui/types';
+import type { SessionMode } from '#tui/commands/types';
+import type { AppState } from '#tui/types';
 import {
   createGitStatusCache,
   formatGitBadgeBase,
   formatPullRequestBadge,
   type GitStatus,
   type GitStatusCache,
-} from '#/utils/git/git-status';
-import { safeUsageRatio } from '#/utils/usage/usage-format';
+} from '#utils/git/git-status';
+import { safeUsageRatio } from '#utils/usage/usage-format';
 import { t } from '@odysseythink/ody-code-sdk';
 
 const MAX_CWD_SEGMENTS = 3;

@@ -10,13 +10,13 @@ import type {
 } from '@odysseythink/ody-code-sdk';
 import { describe, expect, it, vi } from 'vitest';
 
-import { OdyTUI, type OdyTUIStartupInput, type TUIState } from '#/tui/ody-tui';
-import type { SessionEventHandler } from '#/tui/controllers/session-event-handler';
-import type { StreamingUIController } from '#/tui/controllers/streaming-ui';
-import { AgentGroupComponent } from '#/tui/components/messages/agent-group';
-import { ReadGroupComponent } from '#/tui/components/messages/read-group';
+import { OdyTUI, type OdyTUIStartupInput, type TUIState } from '#tui/ody-tui';
+import type { SessionEventHandler } from '#tui/controllers/session-event-handler';
+import type { StreamingUIController } from '#tui/controllers/streaming-ui';
+import { AgentGroupComponent } from '#tui/components/messages/agent-group';
+import { ReadGroupComponent } from '#tui/components/messages/read-group';
 
-vi.mock('#/tui/utils/open-url', () => ({ openUrl: vi.fn() }));
+vi.mock('#tui/utils/open-url', () => ({ openUrl: vi.fn() }));
 
 interface ReplayDriver {
   readonly state: TUIState;

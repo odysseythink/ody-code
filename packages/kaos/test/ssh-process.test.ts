@@ -3,7 +3,7 @@ import { PassThrough } from 'node:stream';
 
 import { describe, expect, test } from 'vitest';
 
-import { SSHProcess } from '#/ssh';
+import { SSHProcess } from '#ssh';
 
 /**
  * Build a minimal fake ssh2 ClientChannel that satisfies SSHProcess's needs:

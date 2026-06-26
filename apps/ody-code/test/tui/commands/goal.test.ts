@@ -7,9 +7,9 @@ import {
   handleGoalCommand,
   parseGoalCommand,
   setExperimentalFlags,
-} from '#/tui/commands/index';
-import type { SlashCommandHost } from '#/tui/commands/dispatch';
-import { getColorPalette } from '#/tui/theme/colors';
+} from '#tui/commands/index';
+import type { SlashCommandHost } from '#tui/commands/dispatch';
+import { getColorPalette } from '#tui/theme/colors';
 
 const ENTER = '\r';
 const ESCAPE = '\u001B';

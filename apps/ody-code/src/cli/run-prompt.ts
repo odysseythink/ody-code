@@ -17,7 +17,7 @@ import {
   type TelemetryClient,
 } from '@odysseythink/ody-code-sdk';
 
-import { CLI_SHUTDOWN_TIMEOUT_MS } from '#/constant/app';
+import { CLI_SHUTDOWN_TIMEOUT_MS } from '#constant/app';
 
 import type { CLIOptions, PromptOutputFormat } from './options';
 import {
@@ -27,7 +27,7 @@ import {
   parseHeadlessGoalCreate,
   type HeadlessGoalCreate,
 } from './goal-prompt';
-import { arePathsEqual } from '#/utils/paths';
+import { arePathsEqual } from '#utils/paths';
 import { createCliTelemetryBootstrap, initializeCliTelemetry } from './telemetry';
 import { createKimiCodeHostIdentity } from './version';
 

@@ -1,14 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ErrorCodes, OdyError } from '@odysseythink/ody-code-sdk';
 
-import { validateOptions } from '#/cli/options';
-import type { CLIOptions } from '#/cli/options';
-import type * as OptionsModule from '#/cli/options';
-import { runPrompt } from '#/cli/run-prompt';
-import { runShell } from '#/cli/run-shell';
-import { formatStartupError } from '#/cli/startup-error';
-import { runUpdatePreflight } from '#/cli/update/preflight';
-import { handleMainCommand, handleUpgradeCommand, main } from '#/main';
+import { validateOptions } from '#cli/options';
+import type { CLIOptions } from '#cli/options';
+import type * as OptionsModule from '#cli/options';
+import { runPrompt } from '#cli/run-prompt';
+import { runShell } from '#cli/run-shell';
+import { formatStartupError } from '#cli/startup-error';
+import { runUpdatePreflight } from '#cli/update/preflight';
+import { handleMainCommand, handleUpgradeCommand, main } from '#main';
 
 const mocks = vi.hoisted(() => {
   const parse = vi.fn();

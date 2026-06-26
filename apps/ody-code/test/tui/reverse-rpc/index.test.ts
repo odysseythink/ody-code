@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { ApprovalController } from '#/tui/reverse-rpc/approval/controller';
-import { registerReverseRPCHandlers } from '#/tui/reverse-rpc/index';
-import { QuestionController } from '#/tui/reverse-rpc/question/controller';
+import { ApprovalController } from '#tui/reverse-rpc/approval/controller';
+import { registerReverseRPCHandlers } from '#tui/reverse-rpc/index';
+import { QuestionController } from '#tui/reverse-rpc/question/controller';
 
 describe('registerReverseRPCHandlers', () => {
   it('wires controller UI hooks without registering wire request handlers', async () => {

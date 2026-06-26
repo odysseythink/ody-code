@@ -1,9 +1,9 @@
-import { APIEmptyResponseError } from '#/errors';
-import { generate } from '#/generate';
-import type { Message, StreamedMessagePart, ToolCall } from '#/message';
-import type { ChatProvider, StreamedMessage, ThinkingEffort } from '#/provider';
-import type { Tool } from '#/tool';
-import type { TokenUsage } from '#/usage';
+import { APIEmptyResponseError } from '#errors';
+import { generate } from '#generate';
+import type { Message, StreamedMessagePart, ToolCall } from '#message';
+import type { ChatProvider, StreamedMessage, ThinkingEffort } from '#provider';
+import type { Tool } from '#tool';
+import type { TokenUsage } from '#usage';
 import { describe, expect, it, vi } from 'vitest';
 function createMockStream(
   parts: StreamedMessagePart[],

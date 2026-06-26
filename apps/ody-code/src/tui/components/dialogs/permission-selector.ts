@@ -2,7 +2,7 @@ import type { PermissionMode } from '@odysseythink/ody-code-sdk';
 
 import { ChoicePickerComponent, type ChoiceOption } from './choice-picker';
 
-import type { ColorPalette } from '#/tui/theme/colors';
+import type { ColorPalette } from '#tui/theme/colors';
 
 const PERMISSION_OPTIONS: readonly ChoiceOption[] = [
   {

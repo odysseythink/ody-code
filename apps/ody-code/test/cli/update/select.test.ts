@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { selectUpdateTarget } from '#/cli/update/select';
+import { selectUpdateTarget } from '#cli/update/select';
 
 describe('selectUpdateTarget', () => {
   it('returns the latest version when it is newer than current', () => {

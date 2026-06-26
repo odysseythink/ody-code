@@ -10,7 +10,7 @@ import {
   getLogDir,
   getUpdateInstallStateFile,
   getUpdateStateFile,
-} from '#/utils/paths';
+} from '#utils/paths';
 
 const originalEnv = { ...process.env };
 

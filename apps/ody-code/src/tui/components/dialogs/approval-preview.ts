@@ -27,11 +27,11 @@ import {
 } from '@earendil-works/pi-tui';
 import chalk from 'chalk';
 
-import { highlightLines, langFromPath } from '#/tui/components/media/code-highlight';
-import { renderDiffLines } from '#/tui/components/media/diff-preview';
-import type { DiffDisplayBlock, FileContentDisplayBlock } from '#/tui/reverse-rpc/types';
-import type { ColorPalette } from '#/tui/theme/colors';
-import { printableChar } from '#/tui/utils/printable-key';
+import { highlightLines, langFromPath } from '#tui/components/media/code-highlight';
+import { renderDiffLines } from '#tui/components/media/diff-preview';
+import type { DiffDisplayBlock, FileContentDisplayBlock } from '#tui/reverse-rpc/types';
+import type { ColorPalette } from '#tui/theme/colors';
+import { printableChar } from '#tui/utils/printable-key';
 
 const ELLIPSIS = '…';
 

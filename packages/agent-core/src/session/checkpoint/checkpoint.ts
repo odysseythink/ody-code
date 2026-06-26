@@ -10,8 +10,8 @@ import { mkdir, readFile } from 'node:fs/promises';
 import { dirname } from 'pathe';
 
 import { ErrorCodes, OdyError } from '@odysseythink/agent-core-shared';
-import { atomicWrite } from '#/utils/fs';
-import { withFileLock } from '#/utils/file-lock';
+import { atomicWrite } from '#utils/fs';
+import { withFileLock } from '#utils/file-lock';
 import type { RuntimeMode } from '../../agent/session-mode';
 
 export interface DesignSessionCheckpoint {

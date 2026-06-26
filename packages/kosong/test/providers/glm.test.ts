@@ -1,6 +1,6 @@
-import { UNKNOWN_CAPABILITY } from '#/capability';
-import type { Message, StreamedMessagePart } from '#/message';
-import { GLMChatProvider } from '#/providers/glm';
+import { UNKNOWN_CAPABILITY } from '#capability';
+import type { Message, StreamedMessagePart } from '#message';
+import { GLMChatProvider } from '#providers/glm';
 import { describe, expect, it, vi } from 'vitest';
 
 function makeProvider(options?: {

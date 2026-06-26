@@ -2,7 +2,7 @@ import type {
   BackgroundAgentMetadata,
   BackgroundAgentStatusData,
   BackgroundAgentStatusPhase,
-} from '#/tui/types';
+} from '#tui/types';
 
 const MAX_BACKGROUND_FIELD_LENGTH = 240;
 

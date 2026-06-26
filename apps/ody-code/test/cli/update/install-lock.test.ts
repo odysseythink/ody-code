@@ -4,8 +4,8 @@ import { dirname, join } from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { tryAcquireUpdateInstallLock } from '#/cli/update/install-lock';
-import { getUpdateInstallLockFile } from '#/utils/paths';
+import { tryAcquireUpdateInstallLock } from '#cli/update/install-lock';
+import { getUpdateInstallLockFile } from '#utils/paths';
 
 const originalEnv = { ...process.env };
 

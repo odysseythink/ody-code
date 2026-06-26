@@ -8,15 +8,15 @@ import {
   withTelemetryContext,
 } from '@odysseythink/ody-telemetry';
 import { KimiHarness, log, type TelemetryClient } from '@odysseythink/ody-code-sdk';
-import type { OdyHarness } from '#/tui/types';
-import { RustHostConnector, RustHostHarness } from '#/host/index';
+import type { OdyHarness } from '#tui/types';
+import { RustHostConnector, RustHostHarness } from '#host/index';
 
-import { CLI_SHUTDOWN_TIMEOUT_MS, CLI_UI_MODE } from '#/constant/app';
-import type { TuiConfig } from '#/tui/config';
-import { loadTuiConfig, TuiConfigParseError } from '#/tui/config';
-import { CHROME_GUTTER } from '#/tui/constant/rendering';
-import { OdyTUI } from '#/tui/index';
-import { detectTerminalTheme } from '#/tui/theme/detect';
+import { CLI_SHUTDOWN_TIMEOUT_MS, CLI_UI_MODE } from '#constant/app';
+import type { TuiConfig } from '#tui/config';
+import { loadTuiConfig, TuiConfigParseError } from '#tui/config';
+import { CHROME_GUTTER } from '#tui/constant/rendering';
+import { OdyTUI } from '#tui/index';
+import { detectTerminalTheme } from '#tui/theme/detect';
 
 import type { CLIOptions } from './options';
 import { OptionConflictError } from './options';
@@ -65,7 +65,7 @@ async function createRustHarness(
   homeDir: string,
 ): Promise<RustHostHarness> {
   const connector = new RustHostConnector();
-  let connectorOptions: import('#/host').RustHostConnectorOptions = {
+  let connectorOptions: import('#host').RustHostConnectorOptions = {
     mode: 'stdio',
     binaryPath: opts.hostBinary ?? 'ody-host',
     homeDir,

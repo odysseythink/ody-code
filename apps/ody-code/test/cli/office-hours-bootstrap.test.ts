@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { runOfficeHours } from '#/cli/run-office-hours';
-import type { CLIOptions } from '#/cli/options';
+import { runOfficeHours } from '#cli/run-office-hours';
+import type { CLIOptions } from '#cli/options';
 
 const mockWithTelemetryContext = vi.fn<(ctx: { sessionId?: string }) => { track: () => void }>(() => ({
   track: vi.fn(),
@@ -32,7 +32,7 @@ vi.mock('@odysseythink/ody-code-sdk', async () => {
 
 let lastTuiInstance: { onExit?: (exitCode?: number) => Promise<void>; getCurrentSessionId: () => string } | undefined;
 
-vi.mock('#/tui/index', () => ({
+vi.mock('#tui/index', () => ({
   OdyTUI: vi.fn().mockImplementation(function () {
     const instance = {
       onExit: undefined as unknown as ((exitCode?: number) => Promise<void>) | undefined,
@@ -45,23 +45,23 @@ vi.mock('#/tui/index', () => ({
   }),
 }));
 
-vi.mock('#/tui/config', () => ({
+vi.mock('#tui/config', () => ({
   loadTuiConfig: vi.fn().mockResolvedValue({ theme: 'dark', editorCommand: null, notifications: {}, upgrade: {} }),
   TuiConfigParseError: class extends Error {},
 }));
 
-vi.mock('#/tui/theme/detect', () => ({
+vi.mock('#tui/theme/detect', () => ({
   detectTerminalTheme: vi.fn().mockResolvedValue('dark'),
 }));
 
-vi.mock('#/cli/telemetry', () => ({
+vi.mock('#cli/telemetry', () => ({
   createCliTelemetryBootstrap: vi.fn().mockReturnValue({
     homeDir: '/tmp/.ody-code-test',
   }),
   initializeCliTelemetry: vi.fn(),
 }));
 
-vi.mock('#/cli/version', () => ({
+vi.mock('#cli/version', () => ({
   createKimiCodeHostIdentity: vi.fn().mockReturnValue({}),
 }));
 

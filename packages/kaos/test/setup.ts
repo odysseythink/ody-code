@@ -1,7 +1,7 @@
 import { beforeEach } from 'vitest';
 
-import { setCurrentKaos } from '#/current';
-import { LocalKaos } from '#/local';
+import { setCurrentKaos } from '#current';
+import { LocalKaos } from '#local';
 
 const kaos = await LocalKaos.create();
 

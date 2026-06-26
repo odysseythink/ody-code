@@ -1,4 +1,4 @@
-import { derefJsonSchema, normalizeKimiToolSchema } from '#/providers/kimi-schema';
+import { derefJsonSchema, normalizeKimiToolSchema } from '#providers/kimi-schema';
 import { describe, expect, it } from 'vitest';
 
 describe('derefJsonSchema', () => {

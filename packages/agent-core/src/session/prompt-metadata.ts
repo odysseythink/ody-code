@@ -1,4 +1,4 @@
-import type { ActivateSkillPayload, PromptPayload } from '#/rpc';
+import type { ActivateSkillPayload, PromptPayload } from '#rpc';
 import type { ContentPart } from '@odysseythink/kosong';
 
 const MAX_TITLE_LENGTH = 200;

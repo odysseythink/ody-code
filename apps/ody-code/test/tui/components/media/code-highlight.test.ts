@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { highlightLines, langFromPath } from '#/tui/components/media/code-highlight';
+import { highlightLines, langFromPath } from '#tui/components/media/code-highlight';
 
 import { captureProcessWrite } from '../../../helpers/process';
 

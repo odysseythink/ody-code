@@ -17,8 +17,8 @@ import { Container, Text, Spacer } from '@earendil-works/pi-tui';
 import type { TUI } from '@earendil-works/pi-tui';
 import chalk from 'chalk';
 
-import { STATUS_BULLET } from '#/tui/constant/symbols';
-import type { ColorPalette } from '#/tui/theme/colors';
+import { STATUS_BULLET } from '#tui/constant/symbols';
+import type { ColorPalette } from '#tui/theme/colors';
 
 const BLINK_INTERVAL = 500;
 

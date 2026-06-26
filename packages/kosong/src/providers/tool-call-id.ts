@@ -1,4 +1,4 @@
-import type { Message, ToolCall } from '#/message';
+import type { Message, ToolCall } from '#message';
 
 export interface ToolCallIdPolicy {
   normalize: (id: string) => string;

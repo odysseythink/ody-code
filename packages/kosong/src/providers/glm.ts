@@ -1,5 +1,5 @@
-import { UNKNOWN_CAPABILITY, type ModelCapability } from '#/capability';
-import type { ContentPart, Message, StreamedMessagePart, ToolCall } from '#/message';
+import { UNKNOWN_CAPABILITY, type ModelCapability } from '#capability';
+import type { ContentPart, Message, StreamedMessagePart, ToolCall } from '#message';
 import type {
   ChatProvider,
   FinishReason,
@@ -7,9 +7,9 @@ import type {
   ProviderRequestAuth,
   StreamedMessage,
   ThinkingEffort,
-} from '#/provider';
-import type { Tool } from '#/tool';
-import type { TokenUsage } from '#/usage';
+} from '#provider';
+import type { Tool } from '#tool';
+import type { TokenUsage } from '#usage';
 import OpenAI from 'openai';
 
 import {

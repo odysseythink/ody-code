@@ -16,7 +16,7 @@ import {
   handleProviderRemove,
   registerProviderCommand,
   type ProviderDeps,
-} from '#/cli/sub/provider';
+} from '#cli/sub/provider';
 
 class ExitCalled extends Error {
   constructor(public readonly code: number) {

@@ -12,8 +12,8 @@ import { dirname } from 'pathe';
 
 import type { ContentPart } from '@odysseythink/kosong';
 
-import type { AgentRecordOf } from '#/agent/records';
-import { withFileLock } from '#/utils/file-lock';
+import type { AgentRecordOf } from '#agent/records';
+import { withFileLock } from '#utils/file-lock';
 import type { ContextMessage } from '../../agent/context';
 
 export interface SessionMarkdownExportOptions {

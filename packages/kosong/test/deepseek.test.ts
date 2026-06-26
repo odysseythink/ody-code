@@ -1,6 +1,6 @@
-import { UNKNOWN_CAPABILITY } from '#/capability';
-import type { Message } from '#/message';
-import { DeepSeekChatProvider } from '#/providers/deepseek';
+import { UNKNOWN_CAPABILITY } from '#capability';
+import type { Message } from '#message';
+import { DeepSeekChatProvider } from '#providers/deepseek';
 import { describe, expect, it, vi } from 'vitest';
 
 function makeProvider(options?: {

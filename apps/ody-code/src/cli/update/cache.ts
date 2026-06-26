@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
-import { getUpdateStateFile } from '#/utils/paths';
-import { readJsonFile, writeJsonFile } from '#/utils/persistence';
+import { getUpdateStateFile } from '#utils/paths';
+import { readJsonFile, writeJsonFile } from '#utils/persistence';
 
 import { emptyUpdateCache, type UpdateCache } from './types';
 

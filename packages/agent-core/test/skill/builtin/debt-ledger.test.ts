@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { SkillRegistry } from '#/skill/registry';
-import { registerBuiltinSkills } from '#/skill/builtin/index';
+import { SkillRegistry } from '#skill/registry';
+import { registerBuiltinSkills } from '#skill/builtin/index';
 
 describe('debt-ledger skill', () => {
   it('is registered as a builtin skill', () => {

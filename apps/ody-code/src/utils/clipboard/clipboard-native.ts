@@ -10,7 +10,7 @@
 
 import { createRequire } from 'node:module';
 
-import { loadNativePackage } from '#/native/native-require';
+import { loadNativePackage } from '#native/native-require';
 
 declare const __ODY_CODE_NATIVE_BUNDLE__: boolean | undefined;
 

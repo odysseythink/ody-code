@@ -1,7 +1,7 @@
-import type { Message, StreamedMessagePart, ToolCall } from '#/message';
-import { GoogleGenAIChatProvider } from '#/providers/google-genai';
-import type { Tool } from '#/tool';
-import type { TokenUsage } from '#/usage';
+import type { Message, StreamedMessagePart, ToolCall } from '#message';
+import { GoogleGenAIChatProvider } from '#providers/google-genai';
+import type { Tool } from '#tool';
+import type { TokenUsage } from '#usage';
 import { GoogleGenAI } from '@google/genai';
 import { describe, expect, it } from 'vitest';
 

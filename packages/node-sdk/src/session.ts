@@ -4,8 +4,8 @@ import {
   type Event,
   type OpenExternalHandler,
   type QuestionHandler,
-} from '#/events';
-import type { SDKRpcClient } from '#/rpc';
+} from '#events';
+import type { SDKRpcClient } from '#rpc';
 import type {
   BackgroundTaskInfo,
   CompactOptions,
@@ -28,7 +28,7 @@ import type {
   SessionUsage,
   SkillSummary,
   Unsubscribe,
-} from '#/types';
+} from '#types';
 
 const MAIN_AGENT_ID = 'main';
 

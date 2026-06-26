@@ -11,7 +11,7 @@
 
 import { z } from 'zod';
 
-import { appendJsonlLine, readJsonlFile } from '#/utils/persistence';
+import { appendJsonlLine, readJsonlFile } from '#utils/persistence';
 
 export interface InputHistoryEntry {
   content: string;

@@ -1,7 +1,7 @@
-import { generate } from '#/generate';
-import type { GenerateCallbacks } from '#/generate';
-import type { StreamedMessagePart, TextPart, ThinkPart, ToolCall } from '#/message';
-import { extractText } from '#/message';
+import { generate } from '#generate';
+import type { GenerateCallbacks } from '#generate';
+import type { StreamedMessagePart, TextPart, ThinkPart, ToolCall } from '#message';
+import { extractText } from '#message';
 import { MockChatProvider } from '../fixtures/mock-provider';
 import { SimpleToolset, toolOk } from '../fixtures/simple-toolset';
 import type { ToolReturnValue } from '../fixtures/simple-toolset';

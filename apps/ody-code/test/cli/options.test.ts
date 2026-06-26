@@ -1,9 +1,9 @@
 import { CommanderError } from 'commander';
 import { describe, expect, it } from 'vitest';
 
-import { createProgram } from '#/cli/commands';
-import type { CLIOptions } from '#/cli/options';
-import { OptionConflictError, validateOptions } from '#/cli/options';
+import { createProgram } from '#cli/commands';
+import type { CLIOptions } from '#cli/options';
+import { OptionConflictError, validateOptions } from '#cli/options';
 
 function parse(argv: string[]): CLIOptions {
   let captured: CLIOptions | undefined;

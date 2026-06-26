@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { UserMessageComponent } from '#/tui/components/messages/user-message';
-import { darkColors } from '#/tui/theme/colors';
+import { UserMessageComponent } from '#tui/components/messages/user-message';
+import { darkColors } from '#tui/theme/colors';
 
 function stripAnsi(text: string): string {
   return text.replaceAll(/\u001B\[[0-9;]*m/g, '');

@@ -1,7 +1,7 @@
 import { mkdir, open, readFile, unlink } from 'node:fs/promises';
 import { dirname } from 'node:path';
 
-import { getUpdateInstallLockFile } from '#/utils/paths';
+import { getUpdateInstallLockFile } from '#utils/paths';
 
 const UPDATE_INSTALL_LOCK_STALE_MS = 30 * 60 * 1000;
 

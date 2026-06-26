@@ -6,7 +6,7 @@ import { join } from 'node:path';
 import { FileTokenStorage, ODY_CODE_PROVIDER_NAME, type TokenInfo } from '@odysseythink/kimi-code-oauth';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { KimiHarness } from '#/index';
+import { KimiHarness } from '#index';
 
 import { ProviderManager } from '../../agent-core/src/session/provider-manager';
 import { TEST_IDENTITY } from './test-identity';

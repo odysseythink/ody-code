@@ -8,7 +8,7 @@
  * Run: pnpm exec tsc --noEmit -p tsconfig.type-negative.json
  */
 
-import type { Message, ToolCall, StreamedMessagePart, TextPart } from '#/message';
+import type { Message, ToolCall, StreamedMessagePart, TextPart } from '#message';
 // Assigning `undefined` to an optional property should be rejected
 // when exactOptionalPropertyTypes is enabled.
 

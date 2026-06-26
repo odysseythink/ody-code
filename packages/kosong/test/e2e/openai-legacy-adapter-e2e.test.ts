@@ -1,7 +1,7 @@
-import type { Message, StreamedMessagePart, ToolCall } from '#/message';
-import type { StreamedMessage } from '#/provider';
-import { OpenAILegacyChatProvider } from '#/providers/openai-legacy';
-import type { Tool } from '#/tool';
+import type { Message, StreamedMessagePart, ToolCall } from '#message';
+import type { StreamedMessage } from '#provider';
+import { OpenAILegacyChatProvider } from '#providers/openai-legacy';
+import type { Tool } from '#tool';
 import { describe, expect, it } from 'vitest';
 
 import { createFakeProviderHarness, type FakeProviderHarness } from './fake-provider-harness';

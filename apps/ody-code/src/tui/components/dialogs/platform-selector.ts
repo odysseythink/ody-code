@@ -2,7 +2,7 @@ import { OPEN_PLATFORMS } from '@odysseythink/kimi-code-oauth';
 
 import { ChoicePickerComponent, type ChoiceOption } from './choice-picker';
 
-import type { ColorPalette } from '#/tui/theme/colors';
+import type { ColorPalette } from '#tui/theme/colors';
 
 const PLATFORM_OPTIONS: readonly ChoiceOption[] = [
   { value: 'kimi-code', label: 'Kimi Code (OAuth)' },

@@ -2,11 +2,11 @@ import { mkdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { ExecutableToolContext, RunnableToolExecution } from '#/loop/types';
-import { GrepTool } from '#/tools/builtin/file/grep';
-import { noopTelemetryClient, type TelemetryClient } from '#/telemetry';
+import type { ExecutableToolContext, RunnableToolExecution } from '#loop/types';
+import { GrepTool } from '#tools/builtin/file/grep';
+import { noopTelemetryClient, type TelemetryClient } from '#telemetry';
 import type { LocalKaos } from '@odysseythink/kaos';
-import { HarvestOdyMarkersTool } from '#/tools/builtin/code-quality/harvest-ody-markers';
+import { HarvestOdyMarkersTool } from '#tools/builtin/code-quality/harvest-ody-markers';
 
 /** Minimal context for internal tool delegation in tests. */
 function testToolCtx(signal: AbortSignal): ExecutableToolContext {

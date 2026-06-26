@@ -13,8 +13,8 @@ import type { createKimiDeviceId as createKimiDeviceIdFn } from '@odysseythink/k
 import { Command } from 'commander';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { handleExport, registerExportCommand } from '#/cli/sub/export';
-import type { ExportDeps } from '#/cli/sub/export';
+import { handleExport, registerExportCommand } from '#cli/sub/export';
+import type { ExportDeps } from '#cli/sub/export';
 import type {
   ExportSessionInput,
   ExportSessionManifest,

@@ -3,10 +3,10 @@ import { join } from 'pathe';
 import type { Kaos } from '@odysseythink/kaos';
 
 import { ErrorCodes, OdyError } from '@odysseythink/agent-core-shared';
-import { getRootLogger, log } from '#/logging/logger';
+import { getRootLogger, log } from '#logging/logger';
 import type { Logger, SessionLogHandle } from '@odysseythink/agent-core-shared';
-import type { OdyConfig, SDKAgentRPC, SDKSessionRPC } from '#/rpc';
-import { proxyWithExtraPayload } from '#/rpc/types';
+import type { OdyConfig, SDKAgentRPC, SDKSessionRPC } from '#rpc';
+import { proxyWithExtraPayload } from '#rpc/types';
 import type { LLM, LLMFactoryConfig } from '../loop/llm';
 
 import type { RuntimeMode } from '../agent/session-mode';
@@ -17,7 +17,7 @@ import { HookEngine, type HookDef } from './hooks';
 import type { PermissionManagerOptions, PermissionRule } from '../agent/permission';
 import { parseBooleanEnv, resolveConfigValue, resolveOdyHome, type BackgroundConfig } from '../config';
 import { makeErrorPayload } from '../errors';
-import { getCoreVersion } from '#/version';
+import { getCoreVersion } from '#version';
 import {
   McpConnectionManager,
   McpOAuthService,

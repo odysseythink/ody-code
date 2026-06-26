@@ -11,7 +11,7 @@ import {
   parseTuiConfig,
   saveTuiConfig,
   TuiConfigParseError,
-} from '#/tui/config';
+} from '#tui/config';
 
 let dir: string;
 let filePath: string;

@@ -2,9 +2,9 @@ import type { Component } from '@earendil-works/pi-tui';
 import { Spacer, Text, visibleWidth } from '@earendil-works/pi-tui';
 import chalk from 'chalk';
 
-import { STATUS_BULLET } from '#/tui/constant/symbols';
-import type { ColorPalette } from '#/tui/theme/colors';
-import type { CronTranscriptData } from '#/tui/types';
+import { STATUS_BULLET } from '#tui/constant/symbols';
+import type { ColorPalette } from '#tui/theme/colors';
+import type { CronTranscriptData } from '#tui/types';
 
 export class CronMessageComponent implements Component {
   private readonly spacer = new Spacer(1);

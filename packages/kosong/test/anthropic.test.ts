@@ -1,7 +1,7 @@
-import { ChatProviderError } from '#/errors';
-import type { ContentPart, Message, StreamedMessagePart, ToolCall } from '#/message';
-import { AnthropicChatProvider, resolveDefaultMaxTokens } from '#/providers/anthropic';
-import type { Tool } from '#/tool';
+import { ChatProviderError } from '#errors';
+import type { ContentPart, Message, StreamedMessagePart, ToolCall } from '#message';
+import { AnthropicChatProvider, resolveDefaultMaxTokens } from '#providers/anthropic';
+import type { Tool } from '#tool';
 import { describe, it, expect, vi } from 'vitest';
 
 function makeAnthropicResponse(model: string = 'k25') {
@@ -1848,7 +1848,7 @@ describe('AnthropicChatProvider', () => {
       // End-to-end: verify that generate() routes interleaved deltas to the
       // correct ToolCall using the block index, producing fully-assembled
       // arguments per tool.
-      const { generate } = await import('#/generate');
+      const { generate } = await import('#generate');
 
       const provider = createStreamProvider();
       const stream = mockStream([

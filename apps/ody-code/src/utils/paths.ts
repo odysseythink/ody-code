@@ -18,7 +18,7 @@ import {
   ODY_CODE_UPDATE_INSTALL_STATE_FILE_NAME,
   ODY_CODE_UPDATE_DIR_NAME,
   ODY_CODE_UPDATE_STATE_FILE_NAME,
-} from '#/constant/app';
+} from '#constant/app';
 
 /**
  * Return the root data directory for Ody Code.

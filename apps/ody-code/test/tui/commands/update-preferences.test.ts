@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { applyUpdatePreferenceChoice } from '#/tui/commands/config';
-import { darkColors } from '#/tui/theme/colors';
+import { applyUpdatePreferenceChoice } from '#tui/commands/config';
+import { darkColors } from '#tui/theme/colors';
 
 const mocks = vi.hoisted(() => ({
   saveTuiConfig: vi.fn(),

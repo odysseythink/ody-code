@@ -1,4 +1,4 @@
-import type { KimiHostIdentity } from '#/index';
+import type { KimiHostIdentity } from '#index';
 
 export const TEST_IDENTITY: KimiHostIdentity = {
   userAgentProduct: 'ody-code-cli',

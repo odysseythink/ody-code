@@ -1,9 +1,9 @@
 import { EchoChatProvider, ScriptedEchoChatProvider } from '../fixtures/echo-provider';
-import { generate } from '#/generate';
-import type { Message, StreamedMessagePart, TextPart } from '#/message';
-import { createUserMessage, extractText } from '#/message';
+import { generate } from '#generate';
+import type { Message, StreamedMessagePart, TextPart } from '#message';
+import { createUserMessage, extractText } from '#message';
 import { MockChatProvider } from '../fixtures/mock-provider';
-import type { ChatProvider, ThinkingEffort } from '#/provider';
+import type { ChatProvider, ThinkingEffort } from '#provider';
 import { describe, expect, it } from 'vitest';
 
 /**

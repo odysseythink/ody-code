@@ -13,7 +13,7 @@ import {
   readLines,
   readText,
   writeText,
-} from '#/index';
+} from '#index';
 
 describe('getCurrentKaos', () => {
   it('returns the LocalKaos bound by the test setup', () => {

@@ -4,8 +4,8 @@ import { join } from 'node:path';
 import type * as KosongModule from '@odysseythink/kosong';
 import { afterEach, beforeEach, describe, expect, expectTypeOf, it, vi } from 'vitest';
 
-import type { Event, OdyError, SkillActivatedEvent, SkillSummary } from '#/index';
-import type { SDKRpcClient } from '#/rpc';
+import type { Event, OdyError, SkillActivatedEvent, SkillSummary } from '#index';
+import type { SDKRpcClient } from '#rpc';
 
 import {
   makeTempDir,
@@ -52,7 +52,7 @@ vi.mock('@odysseythink/kosong', async (importOriginal) => {
   };
 });
 
-const { KimiHarness, Session } = await import('#/index');
+const { KimiHarness, Session } = await import('#index');
 
 const tempDirs: string[] = [];
 

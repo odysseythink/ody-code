@@ -20,7 +20,7 @@ import {
 import { UsagePanelComponent } from '../components/messages/usage-panel';
 import { formatErrorMessage } from '../utils/event-payload';
 import { formatPluginSourceLabel } from '../utils/plugin-source-label';
-import { loadPluginMarketplace } from '#/utils/plugin-marketplace';
+import { loadPluginMarketplace } from '#utils/plugin-marketplace';
 import type { SlashCommandHost } from './dispatch';
 
 interface ShowPluginsPickerOptions {

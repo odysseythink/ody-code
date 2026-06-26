@@ -71,7 +71,7 @@ This is a TypeScript monorepo built for agent-assisted development. Keep the roo
 - Do not submit vague AI-generated PR text. The human author must understand the change well enough to explain the code, edge cases, and why the approach fits this repository.
 - After finishing a task and before submitting a PR, generate a changeset under `.changeset/` using `pnpm changeset`.
 - When generating a changeset, **never** decide on a `major` bump on your own. When you judge a change to meet the major criteria (breaking changes, incompatible user configuration, renamed or removed commands/arguments, changed behavior semantics, etc.), you must stop and explain it to the user and ask for confirmation. **Only write `major` after the user has explicitly agreed.** Otherwise default to `minor` (and fall back to `patch` if `minor` is unclear).
-- Prefer importing via `import ... from '#/...'`, which serves the same purpose as `import ... from '@/...'`.
+- Prefer importing via `import ... from '#...'`, which serves the same purpose as `import ... from '@/...'`.
 
 ## 调试与修复问题规范
 
