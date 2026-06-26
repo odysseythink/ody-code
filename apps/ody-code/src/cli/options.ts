@@ -123,6 +123,9 @@ export function validateOptions(opts: CLIOptions): ValidatedOptions {
   if (!['inproc', 'rust'].includes(opts.host)) {
     throw new OptionConflictError(`Invalid --host: ${opts.host}. Must be inproc or rust.`);
   }
+  if (opts.smokeTest && opts.host !== 'rust') {
+    throw new OptionConflictError('--smoke-test requires --host=rust.');
+  }
   if (opts.host === 'rust') {
     if (opts.prompt !== undefined) {
       throw new OptionConflictError('Cannot combine --host=rust with --prompt.');

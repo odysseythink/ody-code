@@ -485,5 +485,15 @@ describe('CLI options parsing', () => {
         validateOptions({ ...base(), host: 'rust', hostStdio: true, hostTcp: '127.0.0.1:9000' }),
       ).toThrow('Cannot combine --host-stdio with --host-tcp.');
     });
+
+    it('rejects --smoke-test without --host=rust', () => {
+      expect(() => validateOptions({ ...base(), smokeTest: true })).toThrow(OptionConflictError);
+      expect(() => validateOptions({ ...base(), smokeTest: true })).toThrow('--smoke-test requires --host=rust.');
+    });
+
+    it('allows --smoke-test with --host=rust', () => {
+      const result = validateOptions({ ...base(), host: 'rust', hostStdio: true, smokeTest: true });
+      expect(result.uiMode).toBe('shell');
+    });
   });
 });
