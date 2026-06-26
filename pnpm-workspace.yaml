@@ -12,3 +12,5 @@ engineStrict: false
 overrides:
   "ssh2@1.17.0>cpu-features": "-"
   "ssh2@1.17.0>nan": "-"
+patchedDependencies:
+  '@microsoft/api-extractor@7.58.7': patches/@microsoft__api-extractor@7.58.7.patch

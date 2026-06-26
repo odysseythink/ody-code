@@ -601,7 +601,7 @@ export class TurnFlow {
               await this.agent.normalModeTaskCheckpoint.beforeStep(stepSignal);
               await this.agent.injection.inject();
               deduper.beginStep();
-              return;
+              return undefined;
             },
             afterStep: async ({ usage }) => {
               this.agent.usage.record(model, usage, 'turn');

@@ -1,4 +1,4 @@
-export { KimiHarness } from '#kimi-harness';
+export { KimiHarness } from '#ody-harness';
 export { Session } from '#session';
 export { KimiAuthFacade } from '#auth';
 export { KimiForCodingProvider } from '#kimi-code-model-provider';

@@ -38,7 +38,7 @@ const workspacePackageNames = Array.from(workspacePackages.keys())
   .map((name) => escapeRegExp(name.slice('@odysseythink/'.length)))
   .join('|');
 const workspaceSpecifierRe = new RegExp(
-  `(["'])((?:#\\/[^"']+)|(?:@odysseythink\\/(?:${workspacePackageNames})(?:\\/[^"']+)?))\\1`,
+  `(["'])((?:#[\\/]?[^"']+)|(?:@odysseythink\\/(?:${workspacePackageNames})(?:\\/[^"']+)?))\\1`,
   'g',
 );
 
@@ -174,10 +174,11 @@ function packageDirForFile(file) {
 
 function resolveSpecifier({ currentFile, emittedFiles, packageDir, specifier }) {
   if (specifier.startsWith('#')) {
+    const subpath = specifier.startsWith('#/') ? specifier.slice(2) : specifier.slice(1);
     return resolvePackageSubpath({
       emittedFiles,
       packageDir,
-      subpath: specifier.slice(2),
+      subpath,
       originalSpecifier: specifier,
     });
   }

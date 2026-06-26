@@ -24,6 +24,7 @@ describe('runTurn — beforeStep hook', () => {
     const hooks: LoopHooks = {
       beforeStep: async () => {
         calls += 1;
+        return undefined;
       },
     };
     const { result } = await runTurn({
@@ -83,6 +84,7 @@ describe('runTurn — beforeStep hook', () => {
           modelName: ctx.llm.modelName,
           chat: ctx.llm.chat,
         });
+        return undefined;
       },
     };
     await runTurn({
@@ -464,6 +466,7 @@ describe('runTurn — shouldContinueAfterStop hook', () => {
     const hooks: LoopHooks = {
       shouldContinueAfterStop: async () => {
         calls += 1;
+        return undefined;
       },
     };
     const { result } = await runTurn({

@@ -1,0 +1,49 @@
+diff --git a/lib-commonjs/analyzer/AstSymbolTable.js b/lib-commonjs/analyzer/AstSymbolTable.js
+index 37d5bae8442011e74e7719f0ba14a915934db2c9..ea8bba1caea7a4877ce959f76a030948117b12ef 100644
+--- a/lib-commonjs/analyzer/AstSymbolTable.js
++++ b/lib-commonjs/analyzer/AstSymbolTable.js
+@@ -138,6 +138,15 @@ class AstSymbolTable {
+         }
+         const childAstDeclaration = this._astDeclarationsByDeclaration.get(node);
+         if (!childAstDeclaration) {
++            // Work around API Extractor's inability to construct AstDeclarations for destructured
++            // variable declarations. These are local bindings; treating them as part of the parent
++            // declaration allows DTS generation to continue.
++            if (node.kind === ts.SyntaxKind.VariableDeclaration &&
++                node.name !== undefined &&
++                (node.name.kind === ts.SyntaxKind.ArrayBindingPattern ||
++                    node.name.kind === ts.SyntaxKind.ObjectBindingPattern)) {
++                return parentAstDeclaration;
++            }
+             throw new Error('Child declaration not found for the specified node');
+         }
+         if (childAstDeclaration.parent !== parentAstDeclaration) {
+@@ -296,6 +305,12 @@ class AstSymbolTable {
+                     // so do a depth-first search for it:
+                     const identifierNode = TypeScriptHelpers_1.TypeScriptHelpers.findFirstChildNode(node, ts.SyntaxKind.Identifier);
+                     if (identifierNode) {
++                        // Work around API Extractor's inability to follow the `const` keyword in
++                        // `as const` assertions (the token is parsed as an identifier in this
++                        // context but has no symbol).
++                        if (identifierNode.text === 'const') {
++                            break;
++                        }
+                         let referencedAstEntity = this._entitiesByNode.get(identifierNode);
+                         if (!referencedAstEntity) {
+                             const symbol = this._typeChecker.getSymbolAtLocation(identifierNode);
+@@ -408,6 +423,15 @@ class AstSymbolTable {
+         if (!AstDeclaration_1.AstDeclaration.isSupportedSyntaxKind(node.kind)) {
+             return undefined;
+         }
++        // Work around API Extractor's inability to get a symbol for destructured variable
++        // declarations (e.g. `const { a, b } = ...` or `const [a, b] = ...`). These are local
++        // bindings and don't represent API surface that needs to be analyzed as declarations.
++        if (node.kind === ts.SyntaxKind.VariableDeclaration &&
++            node.name !== undefined &&
++            (node.name.kind === ts.SyntaxKind.ArrayBindingPattern ||
++                node.name.kind === ts.SyntaxKind.ObjectBindingPattern)) {
++            return undefined;
++        }
+         const symbol = TypeScriptHelpers_1.TypeScriptHelpers.getSymbolForDeclaration(node, this._typeChecker);
+         if (!symbol) {
+             throw new node_core_library_1.InternalError('Unable to find symbol for node');

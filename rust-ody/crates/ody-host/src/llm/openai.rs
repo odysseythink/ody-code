@@ -16,11 +16,20 @@ impl OpenAiProvider {
         let base_url = config
             .base_url
             .unwrap_or_else(|| "https://api.openai.com/v1".to_string());
+        // Tests use a local mock server; skip system proxies so the request
+        // actually reaches the mock instead of being intercepted.
+        #[cfg(test)]
+        let client = Client::builder()
+            .no_proxy()
+            .build()
+            .expect("reqwest client without proxy should build");
+        #[cfg(not(test))]
+        let client = Client::new();
         Self {
             api_key: config.api_key,
             base_url,
             default_model: config.default_model.unwrap_or_else(|| "gpt-4o-mini".to_string()),
-            client: Client::new(),
+            client,
         }
     }
 }
