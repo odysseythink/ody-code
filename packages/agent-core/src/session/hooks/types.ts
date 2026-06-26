@@ -1,6 +1,6 @@
 import type { ContentPart } from '@odysseythink/kosong';
 
-import { HOOK_EVENT_TYPES, type HookEventType } from '@odysseythink/agent-core-shared';
+import { type HookEventType } from '@odysseythink/agent-core-shared';
 
 export { HOOK_EVENT_TYPES, type HookEventType } from '@odysseythink/agent-core-shared';
 

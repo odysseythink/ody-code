@@ -10,8 +10,6 @@ const WASM_PATH = fileURLToPath(
 );
 
 const GLOB_FLAG: WasmFlagId = 'wasm-glob';
-const GLOB_ERROR = 0xFFFFFFFF;
-
 export type GlobMatcher = (value: string, pattern: string, options?: { nocase?: boolean }) => boolean;
 
 let wasmGlobMatcher: GlobMatcher | undefined;
