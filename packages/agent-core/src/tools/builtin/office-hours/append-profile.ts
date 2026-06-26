@@ -1,5 +1,5 @@
 import type { Agent } from '#/agent';
-import type { BuilderProfileEntry } from '#/office-hours/state';
+import type { BuilderProfileEntry } from '@odysseythink/agent-core-shared';
 import { z } from 'zod';
 
 import { t } from '../../../i18n';

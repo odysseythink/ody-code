@@ -159,3 +159,5 @@ export {
   callWasmU32Function,
   type StringAllocation,
 } from './wasm-string';
+
+export * from './office-hours-state';

@@ -69,8 +69,8 @@ import { UsageRecorder } from './usage';
 import { resolveCompletionBudget } from '../utils/completion-budget';
 import type { Kaos } from '@odysseythink/kaos';
 import type { ToolServices } from '../tools/support/services';
-import type { OfficeHoursStateStore, GameDesignStateStore } from '#/office-hours/state';
-import { NoopOfficeHoursStateStore, NoopGameDesignStateStore } from '#/office-hours/state';
+import type { OfficeHoursStateStore, GameDesignStateStore } from '@odysseythink/agent-core-shared';
+import { NoopOfficeHoursStateStore, NoopGameDesignStateStore } from '@odysseythink/agent-core-shared';
 import type { SupportedLanguage } from '#/i18n';
 
 

@@ -53,7 +53,7 @@ import type { ToolServices } from '../tools/support/services';
 import {
   FileSystemOfficeHoursStateStore,
   type OfficeHoursStateStore,
-} from '#/office-hours/state';
+} from '@odysseythink/agent-core-shared';
 
 export interface SessionOptions {
   readonly kaos: Kaos;

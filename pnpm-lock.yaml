@@ -335,9 +335,15 @@ importers:
 
   packages/agent-core-shared:
     dependencies:
+      '@odysseythink/kaos':
+        specifier: workspace:^
+        version: link:../kaos
       '@odysseythink/kosong':
         specifier: workspace:^
         version: link:../kosong
+      pathe:
+        specifier: ^2.0.3
+        version: 2.0.3
       picomatch:
         specifier: ^4.0.4
         version: 4.0.4

@@ -3,7 +3,7 @@ import { join } from 'pathe';
 import {
   FileSystemGameDesignStateStore,
   NoopGameDesignStateStore,
-} from '../../../../src/office-hours/state';
+} from '@odysseythink/agent-core-shared';
 
 describe('GameDesignStateStore', () => {
   const mockKaos = () => ({

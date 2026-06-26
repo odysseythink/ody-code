@@ -1,5 +1,5 @@
 import type { Agent } from '#/agent';
-import type { GameDesignLearningEntry } from '#/office-hours/state';
+import type { GameDesignLearningEntry } from '@odysseythink/agent-core-shared';
 import { z } from 'zod';
 import { t } from '../../../i18n';
 import type { BuiltinTool } from '../../../agent/tool';

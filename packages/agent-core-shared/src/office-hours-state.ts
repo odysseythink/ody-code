@@ -93,8 +93,8 @@ export class FileSystemOfficeHoursStateStore implements OfficeHoursStateStore {
       const text = await this.kaos.readText(this.profilePath());
       return text
         .split('\n')
-        .filter((line) => line.trim().length > 0)
-        .map((line) => JSON.parse(line) as BuilderProfileEntry);
+        .filter((line: string) => line.trim().length > 0)
+        .map((line: string) => JSON.parse(line) as BuilderProfileEntry);
     } catch {
       return [];
     }
@@ -122,8 +122,8 @@ export class FileSystemOfficeHoursStateStore implements OfficeHoursStateStore {
       const text = await this.kaos.readText(this.learningsPath());
       const entries = text
         .split('\n')
-        .filter((line) => line.trim().length > 0)
-        .map((line) => JSON.parse(line) as LearningEntry);
+        .filter((line: string) => line.trim().length > 0)
+        .map((line: string) => JSON.parse(line) as LearningEntry);
       return entries.slice(-options.limit).reverse();
     } catch {
       return [];
@@ -256,8 +256,8 @@ export class FileSystemGameDesignStateStore implements GameDesignStateStore {
       const text = await this.kaos.readText(this.profilePath());
       return text
         .split('\n')
-        .filter((line) => line.trim().length > 0)
-        .map((line) => JSON.parse(line) as GameDesignProfileEntry);
+        .filter((line: string) => line.trim().length > 0)
+        .map((line: string) => JSON.parse(line) as GameDesignProfileEntry);
     } catch {
       return [];
     }
@@ -276,10 +276,10 @@ export class FileSystemGameDesignStateStore implements GameDesignStateStore {
   }): Promise<readonly GameDesignLearningEntry[]> {
     try {
       const text = await this.kaos.readText(this.learningsPath());
-      let entries = text
+      let entries: GameDesignLearningEntry[] = text
         .split('\n')
-        .filter((line) => line.trim().length > 0)
-        .map((line) => JSON.parse(line) as GameDesignLearningEntry);
+        .filter((line: string) => line.trim().length > 0)
+        .map((line: string) => JSON.parse(line) as GameDesignLearningEntry);
       if (options.branch !== undefined) {
         entries = entries.filter((e) => e.branch === options.branch);
       }

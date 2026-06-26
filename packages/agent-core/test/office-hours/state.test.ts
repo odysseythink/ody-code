@@ -5,8 +5,8 @@ import {
   NoopOfficeHoursStateStore,
   computeTier,
   selectResources,
-} from '#/office-hours/state';
-import type { BuilderProfileEntry } from '#/office-hours/state';
+} from '@odysseythink/agent-core-shared';
+import type { BuilderProfileEntry } from '@odysseythink/agent-core-shared';
 
 function mockKaos() {
   const files: Record<string, string> = {};

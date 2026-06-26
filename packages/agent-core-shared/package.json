@@ -21,7 +21,9 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
+    "@odysseythink/kaos": "workspace:^",
     "@odysseythink/kosong": "workspace:^",
+    "pathe": "^2.0.3",
     "picomatch": "^4.0.4",
     "zod": "catalog:"
   },
