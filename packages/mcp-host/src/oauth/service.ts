@@ -26,7 +26,6 @@ import {
   discoverOAuthServerInfo,
   exchangeAuthorization,
   registerClient,
-  type OAuthClientProvider,
 } from '@modelcontextprotocol/sdk/client/auth.js';
 import type { OAuthClientInformationMixed } from '@modelcontextprotocol/sdk/shared/auth.js';
 import { getOdyCrypto } from '@odysseythink/ody-crypto';
