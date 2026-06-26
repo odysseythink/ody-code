@@ -101,7 +101,8 @@ export function createProgram(
     .option('--host-stdio', 'Launch Rust host in stdio mode.', false)
     .addOption(new Option('--host-socket <path>', 'Launch Rust host listening on a Unix socket.'))
     .addOption(new Option('--host-tcp <host:port>', 'Launch Rust host listening on TCP.'))
-    .addOption(new Option('--host-binary <path>', 'Path to the Rust host executable (defaults to ody-host on PATH).'));
+    .addOption(new Option('--host-binary <path>', 'Path to the Rust host executable (defaults to ody-host on PATH).'))
+    .option('--smoke-test', 'Non-interactive smoke test: create a session and exit.', false);
 
   registerExportCommand(program);
   registerProviderCommand(program);
@@ -150,6 +151,7 @@ export function createProgram(
       hostSocket: raw['hostSocket'] as string | undefined,
       hostTcp: raw['hostTcp'] as string | undefined,
       hostBinary: raw['hostBinary'] as string | undefined,
+      smokeTest: (raw['smokeTest'] as boolean) ?? false,
     };
 
     onMain(opts);

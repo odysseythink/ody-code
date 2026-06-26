@@ -50,6 +50,7 @@ function base(): CLIOptions {
     hostSocket: undefined,
     hostTcp: undefined,
     hostBinary: undefined,
+    smokeTest: false,
   };
 }
 
@@ -435,6 +436,16 @@ describe('CLI options parsing', () => {
       ]) {
         expect(() => parse([arg])).toThrow();
       }
+    });
+  });
+
+    describe('--smoke-test', () => {
+    it('--smoke-test sets smokeTest to true', () => {
+      expect(parse(['--smoke-test']).smokeTest).toBe(true);
+    });
+
+    it('--smoke-test defaults to false', () => {
+      expect(parse([]).smokeTest).toBe(false);
     });
   });
 

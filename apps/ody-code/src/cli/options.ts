@@ -21,6 +21,8 @@ export interface CLIOptions {
   hostSocket: string | undefined;
   hostTcp: string | undefined;
   hostBinary: string | undefined;
+  /** Non-interactive smoke test: create a session and exit without rendering the TUI. */
+  smokeTest?: boolean;
 }
 
 export interface ValidatedOptions {
