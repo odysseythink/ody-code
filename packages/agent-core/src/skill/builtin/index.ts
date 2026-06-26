@@ -15,6 +15,7 @@ import { TEST_DRIVEN_DEVELOPMENT_SKILL } from './test-driven-development';
 import { USING_GIT_WORKTREES_SKILL } from './using-git-worktrees';
 import { VERIFICATION_BEFORE_COMPLETION_SKILL } from './verification-before-completion';
 import { DEBT_LEDGER_SKILL } from './debt-ledger';
+import { ROADMAP_ARCHITECT_SKILL } from './roadmap-architect';
 import { registerGameDesignSkills } from './game-design-skills';
 
 export function registerBuiltinSkills(registry: SkillRegistry): void {
@@ -34,6 +35,7 @@ export function registerBuiltinSkills(registry: SkillRegistry): void {
   registry.registerBuiltinSkill(USING_GIT_WORKTREES_SKILL);
   registry.registerBuiltinSkill(VERIFICATION_BEFORE_COMPLETION_SKILL);
   registry.registerBuiltinSkill(DEBT_LEDGER_SKILL);
+  registry.registerBuiltinSkill(ROADMAP_ARCHITECT_SKILL);
   registerGameDesignSkills(registry);
 }
 
@@ -54,4 +56,5 @@ export {
   USING_GIT_WORKTREES_SKILL,
   VERIFICATION_BEFORE_COMPLETION_SKILL,
   DEBT_LEDGER_SKILL,
+  ROADMAP_ARCHITECT_SKILL,
 };
