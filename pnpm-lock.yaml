@@ -424,6 +424,9 @@ importers:
       '@odysseythink/mcp-host':
         specifier: workspace:^
         version: link:../mcp-host
+      '@odysseythink/ody-code-sdk':
+        specifier: workspace:^
+        version: link:../node-sdk
       pathe:
         specifier: ^2.0.3
         version: 2.0.3

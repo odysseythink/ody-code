@@ -22,7 +22,7 @@ import {
   WorkerCoreAPI,
 } from '@odysseythink/agent-core';
 import { KosongLLM } from '@odysseythink/agent-core';
-import { SDKRpcClient } from '@odysseythink/ody-code-sdk';
+import { SDKRpcClient, type SDKRpcClientConnectOptions } from '@odysseythink/ody-code-sdk';
 import type { LLMFactoryConfig } from '@odysseythink/agent-core';
 import type { ChatProvider } from '@odysseythink/kosong';
 
@@ -110,9 +110,29 @@ export async function makeTsBackend(config: TsBackendConfig): Promise<ParityBack
   };
 }
 
-export async function makeRustBackend(_config: RustBackendConfig): Promise<ParityBackend> {
-  // Implemented in Task A5.
-  throw new Error('makeRustBackend not implemented yet');
+export async function makeRustBackend(config: RustBackendConfig): Promise<ParityBackend> {
+  const transport: SDKRpcClientConnectOptions['transport'] =
+    config.transport === 'stdio'
+      ? 'stdio'
+      : 'socketPath' in config.transport
+        ? { socketPath: config.transport.socketPath, spawn: true }
+        : { host: config.transport.host, port: config.transport.port, spawn: true };
+
+  const client = await SDKRpcClient.connect({
+    transport,
+    binaryPath: config.binaryPath,
+    homeDir: config.homeDir,
+    extraArgs: config.extraArgs,
+  });
+
+  return {
+    kind: 'rust' as BackendKind,
+    client,
+    homeDir: config.homeDir,
+    close: async () => {
+      await client.close?.().catch(() => {});
+    },
+  };
 }
 
 export async function createTempHome(prefix = 'parity-'): Promise<string> {
