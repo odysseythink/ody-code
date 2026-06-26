@@ -10,7 +10,7 @@
     "build:native:crypto": "pnpm --filter @odysseythink/ody-crypto run build:native",
     "build:host": "cd rust-ody && cargo build -p ody-host --release",
     "test:host": "cd rust-ody && cargo test -p ody-host",
-    "proto:rust-host": "pnpm run build:host && pnpm -C apps/ody-code run dev:cli-only -- --host=rust --host-stdio",
+    "proto:rust-host": "pnpm run build:host && ODY_HOST_BINARY_PATH=$(pwd)/rust-ody/target/release/ody-host pnpm -C apps/ody-code run dev:cli-only --host=rust --host-stdio",
     "dev:cli": "pnpm -C apps/ody-code run dev",
     "build:plugin-marketplace": "pnpm -C apps/ody-code run build:plugin-marketplace",
     "vis": "pnpm -C apps/vis run dev",
