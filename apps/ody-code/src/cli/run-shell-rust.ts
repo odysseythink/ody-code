@@ -91,24 +91,34 @@ export async function runShellWithRustHost(opts: CLIOptions, version: string): P
   };
 
   const binaryPath = await resolveHostBinary(opts);
-  try {
-    await access(binaryPath);
-  } catch {
-    if (opts.hostBinary) {
-      throw new Error(`Rust host binary not found: ${binaryPath}`);
+  if (!opts.smokeTest) {
+    try {
+      await access(binaryPath);
+    } catch {
+      if (opts.hostBinary) {
+        throw new Error(`Rust host binary not found: ${binaryPath}`);
+      }
+      // If no explicit path, assume it is on PATH and let spawn fail loudly if not.
     }
-    // If no explicit path, assume it is on PATH and let spawn fail loudly if not.
   }
 
   const connector = new RustHostConnector();
   const launchOptions = buildRustHostLaunchOptions({ ...opts, hostBinary: binaryPath });
-  const client = await connector.connect(launchOptions as RustHostConnectorOptions);
-  const harness = new RustHostHarness({ client, telemetry: telemetryClient });
 
   if (opts.smokeTest) {
-    await runSmokeTestBranch(harness, opts);
+    try {
+      const client = await connector.connect(launchOptions as RustHostConnectorOptions);
+      const harness = new RustHostHarness({ client, telemetry: telemetryClient });
+      await runSmokeTestBranch(harness, opts);
+    } catch (error) {
+      process.stderr.write(`SMOKE_FAIL ${launchOptions.mode}: ${error instanceof Error ? error.message : String(error)}\n`);
+      process.exit(1);
+    }
     return;
   }
+
+  const client = await connector.connect(launchOptions as RustHostConnectorOptions);
+  const harness = new RustHostHarness({ client, telemetry: telemetryClient });
 
   await harness.ensureConfigFile();
   const config = await harness.getConfig();

@@ -9,7 +9,7 @@ import {
 } from '@odysseythink/ody-telemetry';
 import { KimiHarness, log, type TelemetryClient } from '@odysseythink/ody-code-sdk';
 import type { OdyHarness } from '#/tui/types';
-import { RustHostConnector, RustHostHarness } from '#/host';
+import { RustHostConnector, RustHostHarness } from '#/host/index';
 
 import { CLI_SHUTDOWN_TIMEOUT_MS, CLI_UI_MODE } from '#/constant/app';
 import type { TuiConfig } from '#/tui/config';
