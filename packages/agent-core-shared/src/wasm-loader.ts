@@ -43,7 +43,7 @@ export async function loadWasmModule<T>(
 
   try {
     const bytes = wasmBytes ?? new Uint8Array(await readFile(config.wasmPath));
-    const { instance } = await WebAssembly.instantiate(bytes, {});
+    const { instance } = await WebAssembly.instantiate(bytes, {}) as unknown as { instance: WebAssembly.Instance };
     const wasmResult = config.factory(instance.exports as unknown as WasmExports);
     // When the factory returns a function (tokenizer, glob), wrap it so runtime
     // errors fall back to the JS implementation. Object-type factories (diff)
