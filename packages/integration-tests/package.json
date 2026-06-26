@@ -16,6 +16,9 @@
   },
   "scripts": {
     "test": "vitest run",
+    "test:parity": "vitest run test/parity",
+    "test:parity:ts-vs-ts": "vitest run test/parity/ts-vs-ts.test.ts",
+    "test:parity:ts-vs-rust": "vitest run test/parity/ts-vs-rust.test.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "clean": "rm -rf dist"
   },
