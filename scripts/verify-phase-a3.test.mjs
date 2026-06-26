@@ -1,7 +1,10 @@
 // scripts/verify-phase-a3.test.mjs
 import { describe, it } from 'node:test';
 import assert from 'node:assert';
-import { ensureNodeVersion, parseConfig, redact, executeCommand, buildStepRegistry, buildSummary, buildMetadata, buildEnvironment, updateAdr } from './verify-phase-a3.mjs';
+import { writeFileSync, readFileSync, mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { ensureNodeVersion, parseConfig, redact, executeCommand, buildStepRegistry, buildSummary, buildMetadata, buildEnvironment, updateAdr, runVerification } from './verify-phase-a3.mjs';
 
 describe('ensureNodeVersion', () => {
   it('rejects Node older than 24.15.0', () => {
@@ -249,5 +252,19 @@ describe('updateAdr', () => {
     assert.match(updated, /\| SEA full build \| FAIL \|/);
     assert.match(updated, /\| Native smoke \| BLOCKED \|/);
     assert.match(updated, /\| Workspace typecheck \| PASS \|/);
+  });
+});
+
+describe('main dry run', () => {
+  it('writes a valid JSON report with --dry-run --skip-sea', async () => {
+    const reportDir = mkdtempSync(join(tmpdir(), 'phase-a3-dry-'));
+    const reportPath = join(reportDir, 'phase-a3-report.json');
+    const report = await runVerification(parseConfig(['--dry-run', '--skip-sea'], process.cwd(), { ODY_CODE_REPORT_DIR: reportDir }));
+    assert.strictEqual(report.summary.overallStatus, 'passed');
+    const written = JSON.parse(readFileSync(reportPath, 'utf-8'));
+    assert.strictEqual(written.summary.overallStatus, 'passed');
+    assert.ok(written.metadata.nodeVersion);
+    assert.ok(Array.isArray(written.steps));
+    rmSync(reportDir, { recursive: true, force: true });
   });
 });

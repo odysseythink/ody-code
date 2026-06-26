@@ -25,6 +25,8 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "clean": "pnpm -r run clean",
+    "verify:phase-a3": "node scripts/verify-phase-a3.mjs",
+    "verify:phase-a3:local": "node scripts/verify-phase-a3.mjs --keep-temp",
     "gen:rpc-schema": "tsx scripts/gen-rpc-schema.ts",
     "changeset": "changeset",
     "version": "changeset version",

@@ -1,5 +1,5 @@
 // scripts/verify-phase-a3.mjs
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { rm, mkdtemp } from 'node:fs/promises';
 import { resolve, join } from 'node:path';
 import { spawn, execSync } from 'node:child_process';
@@ -39,7 +39,8 @@ export function parseConfig(argv, workspaceRoot, env = process.env, platform = p
   const stepTimeoutsMs = parseStepTimeouts(env.ODY_CODE_STEP_TIMEOUTS);
   const skipSea = args.has('--skip-sea') || env.ODY_CODE_SKIP_SEA === '1' || platform === 'win32';
   const keepTemp = args.has('--keep-temp') || env.ODY_CODE_KEEP_TEMP === '1';
-  return { hostBinaryPath, reportDir, defaultTimeoutMs, stepTimeoutsMs, skipSea, keepTemp };
+  const dryRun = args.has('--dry-run');
+  return { hostBinaryPath, reportDir, defaultTimeoutMs, stepTimeoutsMs, skipSea, keepTemp, dryRun };
 }
 
 function parseStepTimeouts(value) {
@@ -132,6 +133,23 @@ export async function buildContext(config) {
 }
 
 export function buildStepRegistry(config) {
+  if (config.dryRun) {
+    return [{
+      id: 'dry-run',
+      name: 'Dry run',
+      run: () => Promise.resolve({
+        status: 'passed',
+        command: 'echo',
+        args: ['dry-run'],
+        cwd: process.cwd(),
+        exitCode: 0,
+        signal: null,
+        durationMs: 0,
+        stdoutRedacted: '',
+        stderrRedacted: '',
+      }),
+    }];
+  }
   const steps = [
     { id: 'rust-test', name: 'Rust host unit tests' },
     { id: 'cross-lang-rpc', name: 'Cross-language RPC test' },
@@ -230,7 +248,7 @@ export function buildSummary(results, totalDurationMs) {
 
 export async function runVerification(config) {
   ensureNodeVersion('24.15.0');
-  if (!existsSync(config.hostBinaryPath)) {
+  if (!config.dryRun && !existsSync(config.hostBinaryPath)) {
     throw new Error(`ody-host binary not found at ${config.hostBinaryPath}. Build with "pnpm run build:host" or set ODY_HOST_BINARY_PATH.`);
   }
   const ctx = await buildContext(config);
@@ -249,12 +267,16 @@ export async function runVerification(config) {
       await rm(ctx.tempHomeDir, { recursive: true, force: true }).catch(() => {});
     }
   }
-  return {
+  const report = {
     metadata: buildMetadata(config),
     environment: buildEnvironment(),
     steps: results,
     summary: buildSummary(results, Date.now() - startedAt),
   };
+  mkdirSync(config.reportDir, { recursive: true });
+  const reportPath = join(config.reportDir, 'phase-a3-report.json');
+  writeFileSync(reportPath, JSON.stringify(report, null, 2));
+  return report;
 }
 
 const ADR_STEP_LABELS = {
@@ -286,4 +308,29 @@ function statusToAdr(status) {
   if (status === 'passed') return 'PASS';
   if (status === 'failed') return 'FAIL';
   return 'BLOCKED';
+}
+
+export async function main(argv) {
+  const config = parseConfig(argv, process.cwd());
+  ensureNodeVersion('24.15.0');
+  if (!existsSync(config.hostBinaryPath) && !argv.includes('--dry-run')) {
+    throw new Error(`ody-host binary not found at ${config.hostBinaryPath}. Build with "pnpm run build:host" or set ODY_HOST_BINARY_PATH.`);
+  }
+  const report = await runVerification(config);
+  updateAdrFile(report);
+  process.exit(report.summary.overallStatus === 'passed' ? 0 : 1);
+}
+
+function updateAdrFile(report) {
+  const adrPath = join(process.cwd(), 'docs', 'designs', 'rust-host-reversal-adr.md');
+  if (!existsSync(adrPath)) return;
+  const text = readFileSync(adrPath, 'utf-8');
+  writeFileSync(adrPath, updateAdr(text, report));
+}
+
+if (import.meta.url === `file://${process.argv[1]}`) {
+  main(process.argv.slice(2)).catch((error) => {
+    console.error(error.message);
+    process.exit(1);
+  });
 }
