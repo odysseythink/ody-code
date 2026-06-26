@@ -1,11 +1,14 @@
 import { tmpdir } from 'node:os';
 
+import type { ChatProvider } from '@odysseythink/kosong';
+
+import { assertParity } from './assert-parity';
 import { createTempHome, cleanupHome, makeTsBackend } from './backends';
 import type { AgentEvent } from '@odysseythink/agent-core';
 import { ParityDriver } from './driver';
 import { normalize } from './normalize';
 import { scenarios } from './scenarios';
-import type { NormalizedSnapshot, ScenarioSnapshot } from './types';
+import type { ParityBackend, ParityDiff, Scenario, ScenarioSnapshot } from './types';
 
 const IGNORE_EVENT_TYPES = new Set<AgentEvent['type']>([
   'mcp.server.status',
@@ -14,63 +17,68 @@ const IGNORE_EVENT_TYPES = new Set<AgentEvent['type']>([
 ]);
 
 export interface RunParityOptions {
+  readonly scenario: Scenario;
+  readonly mockLlm: ChatProvider;
+  readonly makeA: (homeDir: string) => Promise<ParityBackend>;
+  readonly makeB: (homeDir: string) => Promise<ParityBackend>;
   readonly timeoutMs?: number;
 }
 
 export interface RunParityResult {
   readonly scenarioName: string;
-  readonly first: NormalizedSnapshot;
-  readonly second: NormalizedSnapshot;
   readonly equal: boolean;
 }
 
 async function runOnce(
-  scenarioName: string,
+  scenario: Scenario,
+  makeBackend: (homeDir: string) => Promise<ParityBackend>,
   timeoutMs: number,
 ): Promise<{ readonly snapshot: ScenarioSnapshot; readonly homeDir: string }> {
-  const entry = scenarios.find((s) => s.scenario.name === scenarioName);
-  if (entry === undefined) {
-    throw new Error(`Unknown scenario: ${scenarioName}`);
-  }
-  const homeDir = await createTempHome(`parity-${scenarioName}-`);
-  const backend = await makeTsBackend({ homeDir, mockLlm: entry.mockLlm });
+  const homeDir = await createTempHome(`parity-${scenario.name}-`);
+  const backend = await makeBackend(homeDir);
   try {
     const driver = new ParityDriver({ timeoutMs });
-    const snapshot = await driver.runScenario(backend, entry.scenario);
+    const snapshot = await driver.runScenario(backend, scenario);
     return { snapshot, homeDir };
   } finally {
     await backend.close();
   }
 }
 
-export async function runTsVsTs(options: RunParityOptions = {}): Promise<RunParityResult[]> {
+export async function runParity(options: RunParityOptions): Promise<ParityDiff | null> {
+  const { scenario, makeA, makeB, timeoutMs = 30000 } = options;
+  const { snapshot: firstSnapshot, homeDir: firstHomeDir } = await runOnce(scenario, makeA, timeoutMs);
+  const { snapshot: secondSnapshot, homeDir: secondHomeDir } = await runOnce(scenario, makeB, timeoutMs);
+  try {
+    const first = normalize(firstSnapshot, {
+      homeDir: firstHomeDir,
+      tmpDir: tmpdir(),
+      ignoreEventTypes: IGNORE_EVENT_TYPES,
+    });
+    const second = normalize(secondSnapshot, {
+      homeDir: secondHomeDir,
+      tmpDir: tmpdir(),
+      ignoreEventTypes: IGNORE_EVENT_TYPES,
+    });
+    return assertParity(scenario.name, first, second);
+  } finally {
+    await cleanupHome(firstHomeDir);
+    await cleanupHome(secondHomeDir);
+  }
+}
+
+export async function runTsVsTs(options: { readonly timeoutMs?: number } = {}): Promise<RunParityResult[]> {
   const timeoutMs = options.timeoutMs ?? 30000;
   const results: RunParityResult[] = [];
-  for (const { scenario } of scenarios) {
-    const { snapshot: firstSnapshot, homeDir: firstHomeDir } = await runOnce(scenario.name, timeoutMs);
-    const { snapshot: secondSnapshot, homeDir: secondHomeDir } = await runOnce(
-      scenario.name,
+  for (const { scenario, mockLlm } of scenarios) {
+    const diff = await runParity({
+      scenario,
+      mockLlm,
+      makeA: (homeDir) => makeTsBackend({ homeDir, mockLlm }),
+      makeB: (homeDir) => makeTsBackend({ homeDir, mockLlm }),
       timeoutMs,
-    );
-    try {
-      const first = normalize(firstSnapshot, {
-        homeDir: firstHomeDir,
-        tmpDir: tmpdir(),
-        ignoreEventTypes: IGNORE_EVENT_TYPES,
-      });
-      const second = normalize(secondSnapshot, {
-        homeDir: secondHomeDir,
-        tmpDir: tmpdir(),
-        ignoreEventTypes: IGNORE_EVENT_TYPES,
-      });
-      const equal = JSON.stringify(first) === JSON.stringify(second);
-      results.push({ scenarioName: scenario.name, first, second, equal });
-    } finally {
-      await cleanupHome(firstHomeDir);
-      await cleanupHome(secondHomeDir);
-    }
+    });
+    results.push({ scenarioName: scenario.name, equal: diff === null });
   }
   return results;
 }
-
-
