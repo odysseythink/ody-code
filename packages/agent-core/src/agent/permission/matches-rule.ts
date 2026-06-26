@@ -1,6 +1,6 @@
 import picomatch from 'picomatch';
 
-import { parsePattern, type ParsedPattern } from '@odysseythink/agent-core-shared';
+import { parsePattern } from '@odysseythink/agent-core-shared';
 import type { RunnableToolExecution } from '../../loop/types';
 import type { PermissionRule } from './types';
 

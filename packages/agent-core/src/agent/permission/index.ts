@@ -322,7 +322,7 @@ export class PermissionManager {
    */
   async requestSetupScriptApproval(
     scriptPath: string,
-    signal?: AbortSignal,
+    _signal?: AbortSignal,
   ): Promise<{ decision: 'approved' | 'rejected' | 'cancelled' }> {
     if (this.mode === 'yolo' || this.mode === 'auto') {
       return { decision: 'approved' };
