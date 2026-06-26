@@ -4,6 +4,7 @@ import { join } from 'pathe';
 
 import {
   createRPC,
+  KosongLLM,
   type CoreAPI,
   type SDKAPI,
   type SDKAgentRPC,
@@ -19,11 +20,10 @@ import {
   type ChatStreamInitPayload,
   type ChatStreamInitResponse,
   type ChatStreamCancelPayload,
+  type LLMFactoryConfig,
   WorkerCoreAPI,
 } from '@odysseythink/agent-core';
-import { KosongLLM } from '@odysseythink/agent-core';
 import { SDKRpcClient, type SDKRpcClientConnectOptions } from '@odysseythink/ody-code-sdk';
-import type { LLMFactoryConfig } from '@odysseythink/agent-core';
 import type { ChatProvider } from '@odysseythink/kosong';
 
 import type { BackendKind, ParityBackend } from './types';
@@ -159,7 +159,9 @@ export async function cleanupHome(dir: string): Promise<void> {
       if (code !== 'ENOTEMPTY' && code !== 'EBUSY' && code !== 'EPERM') {
         throw error;
       }
-      await new Promise((resolve) => setTimeout(resolve, 10));
+      await new Promise((resolve) => {
+        setTimeout(resolve, 10);
+      });
     }
   }
   await rm(dir, { recursive: true, force: true });
