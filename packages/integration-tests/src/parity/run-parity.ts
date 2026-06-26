@@ -6,6 +6,7 @@ import { assertParity } from './assert-parity';
 import { createTempHome, cleanupHome, makeTsBackend } from './backends';
 import type { AgentEvent } from '@odysseythink/agent-core';
 import { ParityDriver } from './driver';
+import { checkGapState, findGap, type KnownGap } from './known-gaps';
 import { normalize } from './normalize';
 import { scenarios } from './scenarios';
 import type { ParityBackend, ParityDiff, Scenario, ScenarioSnapshot } from './types';
@@ -81,4 +82,32 @@ export async function runTsVsTs(options: { readonly timeoutMs?: number } = {}): 
     results.push({ scenarioName: scenario.name, equal: diff === null });
   }
   return results;
+}
+
+export interface RunParityWithGapsResult {
+  readonly diff: ParityDiff | null;
+  readonly gapReason: string | undefined;
+  readonly passed: boolean;
+}
+
+export async function runParityWithGaps(
+  options: RunParityOptions & { readonly knownGaps: readonly KnownGap[] },
+): Promise<RunParityWithGapsResult> {
+  const { knownGaps, scenario } = options;
+  const diff = await runParity(options);
+
+  const l3Reason = findGap(knownGaps, scenario.name, 'L3');
+  const l4Reason = findGap(knownGaps, scenario.name, 'L4');
+  const gapReason = l3Reason ?? l4Reason;
+
+  if (diff === null) {
+    if (l3Reason !== undefined) checkGapState(knownGaps, scenario.name, 'L3', true);
+    if (l4Reason !== undefined) checkGapState(knownGaps, scenario.name, 'L4', true);
+  }
+
+  return {
+    diff,
+    gapReason,
+    passed: diff === null || gapReason !== undefined,
+  };
 }
