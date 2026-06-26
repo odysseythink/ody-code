@@ -182,6 +182,66 @@ type ExternalTransportResult = {
   proc?: import('node:child_process').ChildProcess | undefined;
 };
 
+interface SpawnHostOptions {
+  binaryPath: string;
+  argv: string[];
+  stdio: ['pipe' | 'ignore', 'pipe' | 'ignore', 'pipe'];
+  predicate: (msg: ReadyMessage) => boolean;
+}
+
+async function spawnHost(
+  options: SpawnHostOptions,
+): Promise<{ proc: import('node:child_process').ChildProcess; readyMessage: ReadyMessage }> {
+  const { spawn } = await import('node:child_process');
+  const proc = spawn(options.binaryPath, options.argv, {
+    stdio: options.stdio,
+  });
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    const cleanup = (): void => {
+      proc.off('error', onError);
+    };
+    const onError = (err: Error): void => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      reject(
+        new Error(
+          `Failed to spawn host ${options.binaryPath} with args ${JSON.stringify(options.argv)}: ${err.message}`,
+        ),
+      );
+    };
+    proc.once('error', onError);
+    if (proc.stderr === null || proc.stderr === undefined) {
+      proc.once('exit', (code, signal) => {
+        if (settled) return;
+        settled = true;
+        cleanup();
+        const detail = signal !== null ? `signal ${signal}` : `code ${String(code)}`;
+        reject(
+          new Error(
+            `Failed to spawn host ${options.binaryPath} with args ${JSON.stringify(options.argv)}: host exited with ${detail} before ready message`,
+          ),
+        );
+      });
+      return;
+    }
+    waitForReadyMessage(proc, proc.stderr, options.predicate, options.binaryPath)
+      .then((msg) => {
+        if (settled) return;
+        settled = true;
+        cleanup();
+        resolve({ proc, readyMessage: msg });
+      })
+      .catch((err) => {
+        if (settled) return;
+        settled = true;
+        cleanup();
+        reject(err);
+      });
+  });
+}
+
 async function createExternalTransport(
   options: SDKRpcClientConnectOptions,
   dispatch: Dispatch,
@@ -196,11 +256,12 @@ async function createExternalTransport(
   }
 
   if (options.transport === 'stdio') {
-    const { spawn } = await import('node:child_process');
-    const proc = spawn(binaryPath, ['serve', '--stdio', ...extraArgs], {
+    const { proc } = await spawnHost({
+      binaryPath,
+      argv: ['serve', '--stdio', ...extraArgs],
       stdio: ['pipe', 'pipe', 'pipe'],
+      predicate: (msg) => msg.stdio === true,
     });
-    await waitForReadyMessage(proc.stderr, (msg) => msg.stdio === true);
     return {
       transport: createStreamTransport(proc.stdout!, proc.stdin!, dispatch, { framing: 'length-prefixed' }),
       proc,
@@ -211,11 +272,12 @@ async function createExternalTransport(
     const { socketPath, spawn: shouldSpawn } = options.transport;
     let proc: import('node:child_process').ChildProcess | undefined;
     if (shouldSpawn) {
-      const { spawn } = await import('node:child_process');
-      proc = spawn(binaryPath, ['serve', '--socket-path', socketPath, ...extraArgs], {
+      ({ proc } = await spawnHost({
+        binaryPath,
+        argv: ['serve', '--socket-path', socketPath, ...extraArgs],
         stdio: ['ignore', 'ignore', 'pipe'],
-      });
-      await waitForReadyMessage(proc.stderr!, (msg) => msg.socketPath === socketPath);
+        predicate: (msg) => msg.socketPath === socketPath,
+      }));
     }
     const socket: Socket = connectNet(socketPath);
     await new Promise<void>((resolve, reject) => {
@@ -232,11 +294,12 @@ async function createExternalTransport(
 
   let proc: import('node:child_process').ChildProcess | undefined;
   if (shouldSpawn) {
-    const { spawn } = await import('node:child_process');
-    proc = spawn(binaryPath, ['serve', '--tcp-host', host, '--tcp-port', String(port), ...extraArgs], {
+    ({ proc } = await spawnHost({
+      binaryPath,
+      argv: ['serve', '--tcp-host', host, '--tcp-port', String(port), ...extraArgs],
       stdio: ['ignore', 'ignore', 'pipe'],
-    });
-    await waitForReadyMessage(proc.stderr!, (msg) => msg.host === host && msg.port === port);
+      predicate: (msg) => msg.host === host && msg.port === port,
+    }));
   }
 
   if (webSocket) {
@@ -275,18 +338,29 @@ async function createExternalTransport(
 }
 
 async function waitForReadyMessage(
+  proc: import('node:child_process').ChildProcess,
   stderr: NodeJS.ReadableStream,
   predicate: (msg: ReadyMessage) => boolean,
+  binaryPath: string,
 ): Promise<ReadyMessage> {
   return new Promise<ReadyMessage>((resolve, reject) => {
-    const onData = (chunk: Buffer): void => {
-      const lines = chunk.toString('utf8').split('\n');
-      for (const line of lines) {
+    let buf = '';
+    const cleanup = (): void => {
+      stderr.off('data', onData);
+      proc.off('error', onError);
+      proc.off('exit', onExit);
+    };
+    const processBuf = (): void => {
+      for (;;) {
+        const idx = buf.indexOf('\n');
+        if (idx === -1) break;
+        const line = buf.slice(0, idx);
+        buf = buf.slice(idx + 1);
         if (!line.trim()) continue;
         try {
           const msg = JSON.parse(line) as ReadyMessage;
           if (msg.type === 'ready' && predicate(msg)) {
-            stderr.off('data', onData);
+            cleanup();
             resolve(msg);
             return;
           }
@@ -295,7 +369,22 @@ async function waitForReadyMessage(
         }
       }
     };
+    const onData = (chunk: Buffer): void => {
+      buf += chunk.toString('utf8');
+      processBuf();
+    };
+    const onError = (err: Error): void => {
+      cleanup();
+      reject(new Error(`Failed to spawn host ${proc.spawnfile ?? binaryPath}: ${err.message}`));
+    };
+    const onExit = (code: number | null, signal: NodeJS.Signals | null): void => {
+      cleanup();
+      const detail = signal !== null ? `signal ${signal}` : `code ${String(code)}`;
+      reject(new Error(`Host ${proc.spawnfile ?? binaryPath} exited with ${detail} before ready message`));
+    };
     stderr.on('data', onData);
+    proc.on('error', onError);
+    proc.on('exit', onExit);
   });
 }
 
@@ -309,6 +398,9 @@ export class SDKRpcClient {
   private readonly questionHandlers = new Map<string, QuestionHandler>();
   private readonly openExternalHandlers = new Map<string, OpenExternalHandler>();
   private readonly codeReviewProgressHandlers = new Map<string, (progress: { requestId: string; stage: string; modelAlias: string; detail?: string; meta?: { estimatedTokens?: number; filePath?: string; fileCount?: number } }) => void>();
+
+  /** Close the client and terminate the external host process (if any). */
+  close?(): Promise<void>;
 
   constructor(options: SDKRpcClientOptions = {}, _external?: boolean) {
     if (_external) {

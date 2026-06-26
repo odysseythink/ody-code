@@ -11,6 +11,7 @@ import type { TelemetryClient } from '@odysseythink/ody-code-sdk';
 
 import { CLI_SHUTDOWN_TIMEOUT_MS, CLI_UI_MODE } from '#/constant/app';
 import { RustHostConnector, RustHostHarness, type RustHostConnectorOptions } from '#/host/index';
+import { getHostBinaryPath } from '#/native/native-assets';
 import type { TuiConfig } from '#/tui/config';
 import { loadTuiConfig, TuiConfigParseError } from '#/tui/config';
 import { CHROME_GUTTER } from '#/tui/constant/rendering';
@@ -31,10 +32,12 @@ export interface RustHostLaunchOptions {
 }
 
 export async function resolveHostBinary(opts: Pick<CLIOptions, 'hostBinary'>): Promise<string> {
-  if (opts.hostBinary !== undefined) {
+  if (opts.hostBinary) {
     return opts.hostBinary;
   }
-  return 'ody-host';
+  // In a SEA build the Rust host is embedded as a native asset; extract it to
+  // the cache and use that absolute path. Fall back to PATH lookup otherwise.
+  return getHostBinaryPath() ?? 'ody-host';
 }
 
 export function buildRustHostLaunchOptions(
@@ -79,14 +82,14 @@ export async function runShellWithRustHost(opts: CLIOptions, version: string): P
   try {
     await access(binaryPath);
   } catch {
-    if (opts.hostBinary !== undefined) {
+    if (opts.hostBinary) {
       throw new Error(`Rust host binary not found: ${binaryPath}`);
     }
     // If no explicit path, assume it is on PATH and let spawn fail loudly if not.
   }
 
   const connector = new RustHostConnector();
-  const launchOptions = buildRustHostLaunchOptions(opts);
+  const launchOptions = buildRustHostLaunchOptions({ ...opts, hostBinary: binaryPath });
   const client = await connector.connect(launchOptions as RustHostConnectorOptions);
   const harness = new RustHostHarness({ client, telemetry: telemetryClient });
 

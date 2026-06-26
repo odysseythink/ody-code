@@ -24,12 +24,16 @@ export function formatStartupError(
   }
 
   const info = ODY_ERROR_INFO[error.code];
+  const title = info?.title ?? 'Unexpected error';
   const lines = [
-    errorStyle(`error: ${info.title}`),
+    errorStyle(`error: ${title}`),
     '',
     errorStyle('message:'),
     errorStyle(error.message),
   ];
+  if (info?.action !== undefined) {
+    lines.push('', errorStyle('action:'), errorStyle(info.action));
+  }
 
   return `${lines.join('\n')}\n`;
 }

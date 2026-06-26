@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use clap::Parser;
+use clap::{Args, Parser, Subcommand};
 use serde::Deserialize;
 
 use crate::error::HostError;
@@ -38,9 +38,8 @@ pub struct HostConfig {
     pub provider: ProviderConfig,
 }
 
-#[derive(Debug, Parser)]
-#[command(name = "ody-host", version)]
-struct Cli {
+#[derive(Debug, Args)]
+struct SharedArgs {
     #[arg(long)]
     stdio: bool,
     #[arg(long)]
@@ -55,6 +54,26 @@ struct Cli {
     home: Option<PathBuf>,
     #[arg(long, default_value = "info")]
     log_level: String,
+}
+
+#[derive(Debug, Parser)]
+#[command(name = "ody-host", version)]
+struct Cli {
+    #[command(flatten)]
+    shared: SharedArgs,
+    #[command(subcommand)]
+    command: Option<Command>,
+}
+
+#[derive(Debug, Subcommand)]
+enum Command {
+    Serve(ServeArgs),
+}
+
+#[derive(Debug, Args)]
+struct ServeArgs {
+    #[command(flatten)]
+    shared: SharedArgs,
 }
 
 #[derive(Debug, Deserialize)]
@@ -77,9 +96,18 @@ impl HostConfig {
         I: Iterator<Item = T>,
         T: Into<std::ffi::OsString> + Clone,
     {
-        let cli = Cli::parse_from(args);
-        let home_dir = cli.home.unwrap_or_else(default_home_dir);
-        let config_path = cli.config.clone().or_else(|| {
+        let cli = Cli::try_parse_from(args).map_err(|e| {
+            let message = e.to_string();
+            match e.kind() {
+                clap::error::ErrorKind::DisplayHelp => HostError::CliHelp { message },
+                clap::error::ErrorKind::DisplayVersion => HostError::CliVersion { message },
+                _ => HostError::config_invalid(message),
+            }
+        })?;
+        let active = active_args(&cli)?;
+
+        let home_dir = active.home.clone().unwrap_or_else(default_home_dir);
+        let config_path = active.config.clone().or_else(|| {
             let toml = home_dir.join("ody.toml");
             if toml.exists() { Some(toml) } else {
                 let json = home_dir.join("ody.json");
@@ -92,15 +120,15 @@ impl HostConfig {
             None => RawConfigFile { home_dir: None, log_level: None, provider: None },
         };
 
-        let transport = if let Some(path) = cli.socket_path {
+        let transport = if let Some(path) = active.socket_path.clone() {
             TransportMode::UnixSocket { path }
-        } else if let (Some(host), Some(port)) = (cli.tcp_host, cli.tcp_port) {
+        } else if let (Some(host), Some(port)) = (active.tcp_host.clone(), active.tcp_port) {
             TransportMode::TcpSocket { host, port }
         } else {
             TransportMode::Stdio
         };
 
-        let log_level = parse_log_level(&cli.log_level)?;
+        let log_level = parse_log_level(&active.log_level)?;
 
         let provider = ProviderConfig {
             provider_id: "openai".to_string(),
@@ -116,6 +144,27 @@ impl HostConfig {
             log_level,
             provider,
         })
+    }
+}
+
+fn active_args(cli: &Cli) -> Result<&SharedArgs, HostError> {
+    match &cli.command {
+        Some(Command::Serve(serve)) => {
+            let has_global_flags = cli.shared.stdio
+                || cli.shared.socket_path.is_some()
+                || cli.shared.tcp_host.is_some()
+                || cli.shared.tcp_port.is_some()
+                || cli.shared.config.is_some()
+                || cli.shared.home.is_some()
+                || cli.shared.log_level != "info";
+            if has_global_flags {
+                return Err(HostError::config_invalid(
+                    "cannot use global flags together with the `serve` subcommand".to_string(),
+                ));
+            }
+            Ok(&serve.shared)
+        }
+        None => Ok(&cli.shared),
     }
 }
 
@@ -168,5 +217,42 @@ mod tests {
         let args = vec!["ody-host", "--log-level", "verbose"];
         let err = HostConfig::from_cli(args.into_iter()).unwrap_err();
         assert!(err.to_string().contains("verbose"));
+    }
+
+    #[test]
+    fn serve_subcommand_stdio() {
+        let args = vec!["ody-host", "serve", "--stdio"];
+        let config = HostConfig::from_cli(args.into_iter()).unwrap();
+        assert!(matches!(config.transport, TransportMode::Stdio));
+        assert_eq!(config.log_level, LogLevel::Info);
+    }
+
+    #[test]
+    fn serve_subcommand_socket_path() {
+        let args = vec!["ody-host", "serve", "--socket-path", "/tmp/ody-serve.sock"];
+        let config = HostConfig::from_cli(args.into_iter()).unwrap();
+        assert_eq!(
+            config.transport,
+            TransportMode::UnixSocket { path: std::path::PathBuf::from("/tmp/ody-serve.sock") }
+        );
+    }
+
+    #[test]
+    fn global_flags_stdio_still_works() {
+        let args = vec!["ody-host", "--stdio"];
+        let config = HostConfig::from_cli(args.into_iter()).unwrap();
+        assert!(matches!(config.transport, TransportMode::Stdio));
+        assert_eq!(config.log_level, LogLevel::Info);
+    }
+
+    #[test]
+    fn global_flags_conflict_with_serve_rejected() {
+        let args = vec!["ody-host", "--stdio", "serve", "--socket-path", "/tmp/ody.sock"];
+        let err = HostConfig::from_cli(args.into_iter()).unwrap_err();
+        let msg = err.to_string();
+        assert!(
+            msg.contains("global flags") || msg.contains("serve"),
+            "expected conflict error, got: {msg}"
+        );
     }
 }

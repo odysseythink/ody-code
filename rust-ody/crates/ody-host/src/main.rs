@@ -1,14 +1,27 @@
 use std::sync::Arc;
 
 use ody_host::config::{HostConfig, LogLevel};
+use ody_host::error::HostError;
 use ody_host::host::CoreHost;
 use ody_host::llm::openai::OpenAiProvider;
 use ody_host::transport::{build_transport, RpcRouter};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let config = HostConfig::from_cli(std::env::args()).map_err(|e| e.to_string())?;
+    let config = match HostConfig::from_cli(std::env::args()) {
+        Ok(config) => config,
+        Err(HostError::CliHelp { message }) => {
+            println!("{message}");
+            return Ok(());
+        }
+        Err(HostError::CliVersion { message }) => {
+            println!("{message}");
+            return Ok(());
+        }
+        Err(e) => return Err(e.to_string().into()),
+    };
     let subscriber = tracing_subscriber::fmt()
+        .with_writer(std::io::stderr)
         .with_max_level(match config.log_level {
             LogLevel::Debug => tracing::Level::DEBUG,
             LogLevel::Info => tracing::Level::INFO,

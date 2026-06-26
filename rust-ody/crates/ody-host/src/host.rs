@@ -63,9 +63,16 @@ impl CoreHost {
             "listSessions" => Ok(self.list_sessions(payload).await.map_err(|e| e.to_string())?),
             "closeSession" => Ok(self.close_session(payload).await.map_err(|e| e.to_string())?),
             "chat" => Ok(self.chat(payload).await.map_err(|e| e.to_string())?),
-            "getConfig" => Ok(self.get_config().map_err(|e| e.to_string())?),
-            "setConfig" => Ok(self.set_config(payload).await.map_err(|e| e.to_string())?),
+            "getConfig" | "getOdyConfig" => Ok(self.get_config().map_err(|e| e.to_string())?),
+            "setConfig" | "setOdyConfig" => Ok(self.set_config(payload).await.map_err(|e| e.to_string())?),
             "getExperimentalFlags" => Ok(serde_json::json!({})),
+            "getContext" => Ok(self.get_context()),
+            "getPermission" => Ok(self.get_permission()),
+            "getPlan" => Ok(self.get_plan()),
+            "getUsage" => Ok(self.get_usage()),
+            "getUserLanguage" => Ok(self.get_user_language()),
+            "listMcpServers" => Ok(self.list_mcp_servers()),
+            "getMcpStartupMetrics" => Ok(self.get_mcp_startup_metrics()),
             _ => Err(format!("unknown method: {method}").into()),
         }
     }
@@ -84,8 +91,15 @@ impl CoreHost {
             .and_then(|v| v.as_str())
             .unwrap_or(".");
         let title = payload.get("title").and_then(|v| v.as_str());
-        let summary = self.session_manager.create(Path::new(work_dir), title).await
-            .map_err(|e| crate::error::HostError::config_invalid(e.to_string()))?;
+        let id = payload
+            .get("id")
+            .and_then(|v| v.as_str())
+            .filter(|s| !s.is_empty());
+        let summary = match id {
+            Some(id) => self.session_manager.create_with_id(id, Path::new(work_dir), title).await,
+            None => self.session_manager.create(Path::new(work_dir), title).await,
+        }
+        .map_err(|e| crate::error::HostError::config_invalid(e.to_string()))?;
         self.sink.emit(AgentEvent::SessionCreated {
             session_id: summary.id.clone(),
             work_dir: work_dir.to_string(),
@@ -101,7 +115,7 @@ impl CoreHost {
 
     async fn resume_session(&self, payload: serde_json::Value) -> Result<serde_json::Value, String> {
         let id = payload
-            .get("id")
+            .get("sessionId")
             .and_then(|v| v.as_str())
             .ok_or("missing session id")?;
         let session = self.session_manager.get(id.to_string()).await
@@ -133,7 +147,7 @@ impl CoreHost {
 
     async fn close_session(&self, payload: serde_json::Value) -> Result<serde_json::Value, String> {
         let id = payload
-            .get("id")
+            .get("sessionId")
             .and_then(|v| v.as_str())
             .ok_or("missing session id")?;
         self.session_manager.close(id.to_string()).await
@@ -224,6 +238,43 @@ impl CoreHost {
         // Prototype: return existing config unchanged
         self.get_config()
     }
+
+    fn get_context(&self) -> serde_json::Value {
+        // Prototype: the Rust host does not yet maintain agent context history.
+        serde_json::json!({
+            "history": [],
+            "tokenCount": 0,
+        })
+    }
+
+    fn get_permission(&self) -> serde_json::Value {
+        serde_json::json!({
+            "mode": "manual",
+            "rules": [],
+        })
+    }
+
+    fn get_plan(&self) -> serde_json::Value {
+        // Prototype: plan/design mode is not yet implemented in the Rust host.
+        serde_json::Value::Null
+    }
+
+    fn get_usage(&self) -> serde_json::Value {
+        serde_json::json!({})
+    }
+
+    fn get_user_language(&self) -> serde_json::Value {
+        serde_json::json!("en")
+    }
+
+    fn list_mcp_servers(&self) -> serde_json::Value {
+        // Prototype: no MCP servers configured in the Rust host.
+        serde_json::json!([])
+    }
+
+    fn get_mcp_startup_metrics(&self) -> serde_json::Value {
+        serde_json::json!({ "durationMs": 0 })
+    }
 }
 
 #[cfg(test)]
@@ -307,5 +358,103 @@ mod tests {
         let result = host.dispatch("chat", serde_json::json!({"sessionId": "s1", "prompt": "hi"})).await.unwrap();
         assert_eq!(result["content"], "ok");
         assert_eq!(result["finishReason"], "stop");
+    }
+
+    #[tokio::test]
+    async fn create_session_with_provided_id() {
+        let host = make_host();
+        let work_dir = tempfile::tempdir().unwrap().path().to_string_lossy().to_string();
+        let result = host
+            .dispatch("createSession", serde_json::json!({"workDir": work_dir, "id": "custom-1"}))
+            .await
+            .unwrap();
+        assert_eq!(result["id"], "custom-1");
+        assert_eq!(result["workDir"], work_dir);
+    }
+
+    #[tokio::test]
+    async fn create_session_without_id_uses_uuid() {
+        let host = make_host();
+        let work_dir = tempfile::tempdir().unwrap().path().to_string_lossy().to_string();
+        let a = host
+            .dispatch("createSession", serde_json::json!({"workDir": work_dir}))
+            .await
+            .unwrap();
+        let b = host
+            .dispatch("createSession", serde_json::json!({"workDir": work_dir}))
+            .await
+            .unwrap();
+        assert!(a["id"].as_str().unwrap().len() > 10);
+        assert!(b["id"].as_str().unwrap().len() > 10);
+        assert_ne!(a["id"], b["id"]);
+    }
+
+    #[tokio::test]
+    async fn create_session_duplicate_id_fails() {
+        let host = make_host();
+        let work_dir = tempfile::tempdir().unwrap().path().to_string_lossy().to_string();
+        let first = host
+            .dispatch("createSession", serde_json::json!({"workDir": work_dir, "id": "dup-1"}))
+            .await
+            .unwrap();
+        assert_eq!(first["id"], "dup-1");
+        let err = host
+            .dispatch("createSession", serde_json::json!({"workDir": work_dir, "id": "dup-1"}))
+            .await
+            .unwrap_err();
+        assert!(err.to_string().contains("already exists"));
+    }
+
+    #[tokio::test]
+    async fn get_context_returns_empty_context() {
+        let host = make_host();
+        let result = host.dispatch("getContext", serde_json::json!({"sessionId": "s1", "agentId": "main"})).await.unwrap();
+        assert!(result["history"].is_array());
+        assert_eq!(result["history"].as_array().unwrap().len(), 0);
+        assert_eq!(result["tokenCount"], 0);
+    }
+
+    #[tokio::test]
+    async fn get_permission_returns_manual_mode() {
+        let host = make_host();
+        let result = host.dispatch("getPermission", serde_json::json!({"sessionId": "s1", "agentId": "main"})).await.unwrap();
+        assert_eq!(result["mode"], "manual");
+        assert!(result["rules"].is_array());
+    }
+
+    #[tokio::test]
+    async fn get_plan_returns_null() {
+        let host = make_host();
+        let result = host.dispatch("getPlan", serde_json::json!({"sessionId": "s1", "agentId": "main"})).await.unwrap();
+        assert!(result.is_null());
+    }
+
+    #[tokio::test]
+    async fn get_usage_returns_empty_object() {
+        let host = make_host();
+        let result = host.dispatch("getUsage", serde_json::json!({"sessionId": "s1", "agentId": "main"})).await.unwrap();
+        assert!(result.is_object());
+    }
+
+    #[tokio::test]
+    async fn get_user_language_returns_en() {
+        let host = make_host();
+        let result = host.dispatch("getUserLanguage", serde_json::json!({"sessionId": "s1", "agentId": "main"})).await.unwrap();
+        assert_eq!(result, "en");
+    }
+
+    #[tokio::test]
+    async fn list_mcp_servers_returns_empty_array() {
+        let host = make_host();
+        let result = host.dispatch("listMcpServers", serde_json::json!({"sessionId": "s1"})).await.unwrap();
+        assert!(result.is_array());
+        assert_eq!(result.as_array().unwrap().len(), 0);
+    }
+
+    #[tokio::test]
+    async fn get_mcp_startup_metrics_returns_zero() {
+        let host = make_host();
+        let result = host.dispatch("getMcpStartupMetrics", serde_json::json!({"sessionId": "s1"})).await.unwrap();
+        assert_eq!(result["durationMs"], 0);
     }
 }

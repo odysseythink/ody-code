@@ -143,15 +143,15 @@ export function getNativeCacheBase(options: NativeAssetOptions = {}): string {
   const cacheDirEnv = optionalEnvValue(env, 'ODY_CODE_CACHE_DIR');
   if (cacheDirEnv !== null) return cacheDirEnv;
 
-  if (platform === 'darwin') return join(home, 'Library', 'Caches', 'kimi-code');
+  if (platform === 'darwin') return join(home, 'Library', 'Caches', 'ody-code');
   if (platform === 'win32') {
     const localAppData = optionalEnvValue(env, 'LOCALAPPDATA');
     return localAppData !== null
-      ? pathWin32.join(localAppData, 'kimi-code')
-      : pathWin32.join(home, 'AppData', 'Local', 'kimi-code', 'Cache');
+      ? pathWin32.join(localAppData, 'ody-code')
+      : pathWin32.join(home, 'AppData', 'Local', 'ody-code', 'Cache');
   }
 
-  return join(optionalEnvValue(env, 'XDG_CACHE_HOME') ?? join(home, '.cache'), 'kimi-code');
+  return join(optionalEnvValue(env, 'XDG_CACHE_HOME') ?? join(home, '.cache'), 'ody-code');
 }
 
 export function getNativeAssetCacheRoot(

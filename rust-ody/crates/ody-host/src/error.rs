@@ -35,6 +35,8 @@ pub enum HostError {
     ConfigInvalid { message: String },
     Io { source: std::io::Error, path: PathBuf },
     IoGeneric { message: String },
+    CliHelp { message: String },
+    CliVersion { message: String },
 }
 
 impl fmt::Display for HostError {
@@ -43,6 +45,7 @@ impl fmt::Display for HostError {
             HostError::ConfigInvalid { message } => write!(f, "invalid config: {message}"),
             HostError::Io { source, path } => write!(f, "io error at {}: {source}", path.display()),
             HostError::IoGeneric { message } => write!(f, "io error: {message}"),
+            HostError::CliHelp { message } | HostError::CliVersion { message } => write!(f, "{message}"),
         }
     }
 }

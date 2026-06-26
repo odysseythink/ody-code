@@ -35,7 +35,7 @@ impl RpcRouter {
                 value: serde_json::Value::Null,
                 error: Some(RpcErrorJson {
                     message: e.to_string(),
-                    code: None,
+                    code: Some("internal".to_string()),
                 }),
             },
         };

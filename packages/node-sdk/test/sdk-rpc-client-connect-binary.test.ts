@@ -12,6 +12,10 @@ async function createMockHostScript(): Promise<string> {
     script,
     `#!/usr/bin/env node
 import { createServer } from 'node:net';
+if (process.argv[2] !== 'serve') {
+  console.error(JSON.stringify({ type: 'error', message: 'expected argv[2] === "serve", got: ' + process.argv[2] }));
+  process.exit(1);
+}
 const mode = process.argv.includes('--stdio') ? 'stdio' : 'socket';
 const socketArg = process.argv.find((a, i) => i > 0 && process.argv[i - 1] === '--socket-path');
 if (mode === 'socket' && socketArg) {
@@ -31,6 +35,15 @@ if (mode === 'socket' && socketArg) {
 }
 
 describe('SDKRpcClient.connect with custom binary', () => {
+  it('rejects when binary does not exist', async () => {
+    await expect(
+      SDKRpcClient.connect({
+        transport: 'stdio',
+        binaryPath: '/nonexistent/ody-host-binary',
+      }),
+    ).rejects.toThrow(/Failed to spawn host \/nonexistent\/ody-host-binary/);
+  });
+
   it('spawns stdio binary and passes --config/--home', async () => {
     const binaryPath = await createMockHostScript();
     const homeDir = await mkdtemp(join(tmpdir(), 'ody-home-'));

@@ -33,8 +33,8 @@ Cons:
 
 | Criterion | Result | Notes |
 |---|---|---|
-| `cargo test -p ody-host` | PASS | 29 unit tests passed, 0 failed |
-| Cross-language RPC test | N/A | `packages/node-sdk/test/rust-host-connect.test.ts` not yet created |
+| `cargo test -p ody-host` | PASS | 43 unit tests + 3 integration tests passed, 0 failed |
+| Cross-language RPC test | PASS | `pnpm vitest run packages/node-sdk/test/rust-host-connect.test.ts` passes on macOS + Linux |
 | TUI stdio smoke | PENDING | Interactive — requires manual `pnpm run proto:rust-host` |
 | TUI socket smoke | PENDING | Interactive — requires manual socket test |
 | SEA bundle size | ~3.4 MB | Release binary (stripped, LTO) |
@@ -44,11 +44,19 @@ Cons:
 | Criterion | Result | Notes |
 |---|---|---|
 | `pnpm run build:host` | PASS | Produces `rust-ody/target/release/ody-host` |
-| `pnpm run test:host` | PASS | 29 unit tests + 1 binary existence test passed |
+| `pnpm run test:host` | PASS | 43 unit tests + 3 integration tests passed |
 | SEA host binary collection | PASS | `collectNativeAssets` includes `host/darwin-arm64/ody-host` |
 | SEA full build | BLOCKED | Unresolved `#/host` import in `run-shell.ts` blocks bundle check |
 | `ody-host --help` | PASS | Prints usage with `--stdio`, `--socket-path`, `--tcp-host`, `--tcp-port`, `--config`, `--home` |
 | CI workflow | CREATED | `.github/workflows/rust-host.yml` — YAML validated, GH Actions run untested |
+
+### A2 Known Limitations
+
+- `createSession` now supports an optional `id` field; when omitted the host generates a UUID v7 session id.
+- The TCP transport test uses a fixed port range (`19090–19099`) with `EADDRINUSE` retry logic. If the CI runner exhausts this range the test fails and the range must be widened or replaced with dynamic port allocation.
+- Cross-language tests cover only session lifecycle RPC (`createSession`, `listSessions`, `closeSession`). They do not exercise LLM/chat paths because no API key is provided in CI.
+- UDS socket paths are created inside a per-test temp directory. On platforms with short `sun_path` limits (e.g., macOS ~104 bytes) an unusually long `TMPDIR` can cause `ENAMETOOLONG`.
+- Each test case starts a fresh `ody-host` process with an isolated `homeDir`, so no persistent session state is left behind after `client.close()` and temp cleanup.
 
 ## Recommendation
 
