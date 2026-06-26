@@ -51,6 +51,13 @@ jobs:
           ODY_HOST_BINARY_PATH: ${{ github.workspace }}/rust-ody/target/release/ody-host
           ODY_CODE_REPORT_DIR: ${{ github.workspace }}/.ody-code/reports
 
+      - name: Parity smoke tests
+        id: parity-smoke
+        run: pnpm run test:parity:ts-vs-rust
+        shell: bash
+        env:
+          ODY_HOST_BINARY_PATH: ${{ github.workspace }}/rust-ody/target/release/ody-host
+
       - name: Upload Phase A3 report
         if: always()
         uses: actions/upload-artifact@v4
