@@ -63,9 +63,7 @@ function encodeJson(value: unknown): Uint8Array {
   return new TextEncoder().encode(JSON.stringify(value));
 }
 
-function decodeJson(bytes: Uint8Array): unknown {
-  return JSON.parse(new TextDecoder().decode(bytes));
-}
+
 
 function toBytes(value: unknown): Uint8Array {
   if (value instanceof Uint8Array) return value;

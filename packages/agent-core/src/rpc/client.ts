@@ -151,7 +151,7 @@ export function createRPC<Left extends Record<string, any>, Right extends Record
     }
   }
 
-  function mapRpcFunction(methodName: string, fn: Function, transport: Transport): Function {
+  function mapRpcFunction(methodName: string, _fn: Function, transport: Transport): Function {
     return async (payload: any, options?: RPCCallOptions) => {
       const signal = options?.signal;
       signal?.throwIfAborted();
