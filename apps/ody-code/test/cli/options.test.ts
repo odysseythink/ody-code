@@ -1,5 +1,5 @@
 import { CommanderError } from 'commander';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { createProgram } from '#cli/commands';
 import type { CLIOptions } from '#cli/options';
@@ -45,7 +45,7 @@ function base(): CLIOptions {
     skillsDirs: [],
     loginProvider: undefined,
     logoutProvider: undefined,
-    host: 'inproc',
+    host: 'ts',
     hostStdio: false,
     hostSocket: undefined,
     hostTcp: undefined,
@@ -450,8 +450,20 @@ describe('CLI options parsing', () => {
   });
 
   describe('rust host options', () => {
-    it('defaults host to inproc', () => {
-      expect(parse([]).host).toBe('inproc');
+    it('defaults host to ts', () => {
+      expect(parse([]).host).toBe('ts');
+    });
+
+    it('falls back to ODY_BACKEND when --host is not given', () => {
+      vi.stubEnv('ODY_BACKEND', 'rust');
+      expect(parse([]).host).toBe('rust');
+      vi.unstubAllEnvs();
+    });
+
+    it('prefers explicit --host over ODY_BACKEND', () => {
+      vi.stubEnv('ODY_BACKEND', 'rust');
+      expect(parse(['--host=ts']).host).toBe('ts');
+      vi.unstubAllEnvs();
     });
 
     it('accepts --host=rust with stdio', () => {

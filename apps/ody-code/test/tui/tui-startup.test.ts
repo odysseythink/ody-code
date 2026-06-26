@@ -62,7 +62,7 @@ function makeStartupInput(
       prompt: undefined,
       skillsDirs: [],
       loginProvider: undefined,
-    host: 'inproc',
+    host: 'ts',
     hostStdio: false,
     hostSocket: undefined,
     hostTcp: undefined,

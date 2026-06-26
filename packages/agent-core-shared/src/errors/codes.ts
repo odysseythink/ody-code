@@ -447,7 +447,7 @@ export const ODY_ERROR_INFO = {
     title: 'Core worker spawn failed',
     retryable: false,
     public: true,
-    action: 'Check the worker entry path or set transport to inproc.',
+    action: 'Check the worker entry path or set transport to ts.',
   },
   'worker.exited': {
     title: 'Core worker exited unexpectedly',

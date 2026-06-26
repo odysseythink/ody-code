@@ -97,7 +97,11 @@ export function createProgram(
         'Interactive logout for providers of the given type.',
       ),
     )
-    .addOption(new Option('--host <mode>', 'Run core in-process (inproc) or in external Rust host (rust).').choices(['inproc', 'rust']).default('inproc'))
+    .addOption(
+      new Option('--host <mode>', 'Run core in TypeScript in-process (ts) or external Rust host (rust).')
+        .choices(['ts', 'rust'])
+        .default('ts'),
+    )
     .option('--host-stdio', 'Launch Rust host in stdio mode.', false)
     .addOption(new Option('--host-socket <path>', 'Launch Rust host listening on a Unix socket.'))
     .addOption(new Option('--host-tcp <host:port>', 'Launch Rust host listening on TCP.'))
@@ -146,7 +150,10 @@ export function createProgram(
       skillsDirs: raw['skillsDir'] as string[],
       loginProvider: raw['login'] as string | undefined,
       logoutProvider: raw['logout'] as string | undefined,
-      host: (raw['host'] as CLIOptions['host']) ?? 'inproc',
+      host:
+        program.getOptionValueSource('host') === 'cli'
+          ? (raw['host'] as CLIOptions['host'])
+          : (process.env['ODY_BACKEND'] as CLIOptions['host']) ?? 'ts',
       hostStdio: (raw['hostStdio'] as boolean) ?? false,
       hostSocket: raw['hostSocket'] as string | undefined,
       hostTcp: raw['hostTcp'] as string | undefined,

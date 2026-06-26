@@ -55,7 +55,7 @@ function makeStartupInput(mode: EffectiveMode = 'normal'): OdyTUIStartupInput {
       prompt: undefined,
       skillsDirs: [],
       loginProvider: undefined,
-    host: 'inproc',
+    host: 'ts',
     hostStdio: false,
     hostSocket: undefined,
     hostTcp: undefined,

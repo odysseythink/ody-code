@@ -143,7 +143,7 @@ function defaultOpts(): CLIOptions {
     skillsDirs: [],
     loginProvider: undefined,
     logoutProvider: undefined,
-    host: 'inproc',
+    host: 'ts',
     hostStdio: false,
     hostSocket: undefined,
     hostTcp: undefined,

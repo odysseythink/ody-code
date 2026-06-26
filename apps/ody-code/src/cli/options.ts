@@ -16,7 +16,7 @@ export interface CLIOptions {
   skillsDirs: string[];
   loginProvider: string | undefined;
   logoutProvider: string | undefined;
-  host: 'inproc' | 'rust';
+  host: 'ts' | 'rust';
   hostStdio: boolean;
   hostSocket: string | undefined;
   hostTcp: string | undefined;
@@ -120,8 +120,8 @@ export function validateOptions(opts: CLIOptions): ValidatedOptions {
     return { options: opts, uiMode: 'shell' };
   }
 
-  if (!['inproc', 'rust'].includes(opts.host)) {
-    throw new OptionConflictError(`Invalid --host: ${opts.host}. Must be inproc or rust.`);
+  if (!['ts', 'rust'].includes(opts.host)) {
+    throw new OptionConflictError(`Invalid --host: ${opts.host}. Must be ts or rust.`);
   }
   if (opts.smokeTest && opts.host !== 'rust') {
     throw new OptionConflictError('--smoke-test requires --host=rust.');

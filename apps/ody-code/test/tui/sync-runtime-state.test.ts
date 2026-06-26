@@ -70,7 +70,7 @@ function makeStartupInput(officeHours = false): OdyTUIStartupInput {
       prompt: undefined,
       skillsDirs: [],
       loginProvider: undefined,
-    host: 'inproc',
+    host: 'ts',
     hostStdio: false,
     hostSocket: undefined,
     hostTcp: undefined,
