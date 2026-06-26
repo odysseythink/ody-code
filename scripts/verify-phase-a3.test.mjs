@@ -1,7 +1,7 @@
 // scripts/verify-phase-a3.test.mjs
 import { describe, it } from 'node:test';
 import assert from 'node:assert';
-import { ensureNodeVersion, parseConfig, redact } from './verify-phase-a3.mjs';
+import { ensureNodeVersion, parseConfig, redact, executeCommand } from './verify-phase-a3.mjs';
 
 describe('ensureNodeVersion', () => {
   it('rejects Node older than 24.15.0', () => {
@@ -101,5 +101,51 @@ describe('redact', () => {
   it('preserves a log line that merely contains the word secret', () => {
     const input = 'this is a secret not in a JSON value';
     assert.strictEqual(redact(input), input);
+  });
+});
+
+describe('executeCommand', () => {
+  it('returns passed for exit 0 and redacts stdout', async () => {
+    const result = await executeCommand('node', ['-e', 'console.log("hi")'], {
+      cwd: '.',
+      env: process.env,
+      timeoutMs: 5000,
+    });
+    assert.strictEqual(result.status, 'passed');
+    assert.strictEqual(result.exitCode, 0);
+    assert.strictEqual(result.stdoutRedacted, 'hi\n');
+  });
+
+  it('returns failed for non-zero exit', async () => {
+    const result = await executeCommand('node', ['-e', 'process.exit(1)'], {
+      cwd: '.',
+      env: process.env,
+      timeoutMs: 5000,
+    });
+    assert.strictEqual(result.status, 'failed');
+    assert.strictEqual(result.exitCode, 1);
+  });
+
+  it('returns failed and kills the process on timeout', async () => {
+    const start = Date.now();
+    const result = await executeCommand('node', ['-e', 'setTimeout(()=>{}, 60000)'], {
+      cwd: '.',
+      env: process.env,
+      timeoutMs: 100,
+    });
+    const elapsed = Date.now() - start;
+    assert.strictEqual(result.status, 'failed');
+    assert.ok(elapsed < 2000, `timeout took ${elapsed}ms`);
+    assert.ok(result.signal === 'SIGTERM' || (result.errorMessage ?? '').includes('timeout'));
+  });
+
+  it('redacts secrets in captured output', async () => {
+    const result = await executeCommand('node', ['-e', 'console.log({"api_key":"sk-leaked"})'], {
+      cwd: '.',
+      env: process.env,
+      timeoutMs: 5000,
+    });
+    assert(result.stdoutRedacted.includes('***'));
+    assert(!result.stdoutRedacted.includes('leaked'));
   });
 });

@@ -1,6 +1,7 @@
 // scripts/verify-phase-a3.mjs
 import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { spawn } from 'node:child_process';
 
 export function ensureNodeVersion(minVersion, currentVersion = process.version) {
   const current = parseSemver(currentVersion);
@@ -57,4 +58,56 @@ export function redact(text) {
     .replace(/"secret"\s*:\s*"([^"]{4,})"/gi, (_, value) => `"secret":"${value.slice(0, 4)}***"`)
     .replace(/authorization:\s*bearer\s+(\S+)/gi, (_, token) => `authorization: bearer ${token.slice(0, 4)}***`)
     .replace(/(api[_-]?key)([=:])\s*(\S+)/gi, (_, key, sep, value) => `${key}${sep}${value.slice(0, 4)}***`);
+}
+
+export function executeCommand(command, args, options) {
+  return new Promise((resolve) => {
+    const startedAt = Date.now();
+    const child = spawn(command, args, {
+      cwd: options.cwd,
+      env: options.env,
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+
+    const stdoutChunks = [];
+    const stderrChunks = [];
+    child.stdout.on('data', (chunk) => stdoutChunks.push(chunk));
+    child.stderr.on('data', (chunk) => stderrChunks.push(chunk));
+
+    let timedOut = false;
+    const timeout = setTimeout(() => {
+      timedOut = true;
+      child.kill('SIGTERM');
+      // Escalate to SIGKILL if the child refuses to die.
+      setTimeout(() => {
+        if (!child.killed) child.kill('SIGKILL');
+      }, 5000).unref();
+    }, options.timeoutMs);
+
+    const finish = (fields) => {
+      clearTimeout(timeout);
+      resolve({
+        status: fields.status,
+        exitCode: fields.exitCode ?? null,
+        signal: fields.signal ?? null,
+        durationMs: Date.now() - startedAt,
+        stdoutRedacted: redact(Buffer.concat(stdoutChunks).toString()),
+        stderrRedacted: redact(Buffer.concat(stderrChunks).toString()),
+        ...(fields.errorMessage ? { errorMessage: fields.errorMessage } : {}),
+      });
+    };
+
+    child.on('error', (error) => {
+      finish({ status: 'failed', errorMessage: error.message });
+    });
+
+    child.on('exit', (exitCode, signal) => {
+      if (timedOut) {
+        finish({ status: 'failed', signal, errorMessage: `Step timed out after ${options.timeoutMs}ms` });
+        return;
+      }
+      const status = exitCode === 0 ? 'passed' : 'failed';
+      finish({ status, exitCode, signal });
+    });
+  });
 }
