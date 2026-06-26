@@ -48,3 +48,13 @@ function parseStepTimeouts(value) {
   }
   return result;
 }
+
+export function redact(text) {
+  return text
+    .replace(/"api_key"\s*:\s*"([^"]{4,})"/gi, (_, value) => `"api_key":"${value.slice(0, 4)}***"`)
+    .replace(/"access_token"\s*:\s*"([^"]{4,})"/gi, (_, value) => `"access_token":"${value.slice(0, 4)}***"`)
+    .replace(/"password"\s*:\s*"([^"]*)"/gi, (_, value) => `"password":"${value.slice(0, 4)}***"`)
+    .replace(/"secret"\s*:\s*"([^"]{4,})"/gi, (_, value) => `"secret":"${value.slice(0, 4)}***"`)
+    .replace(/authorization:\s*bearer\s+(\S+)/gi, (_, token) => `authorization: bearer ${token.slice(0, 4)}***`)
+    .replace(/(api[_-]?key)([=:])\s*(\S+)/gi, (_, key, sep, value) => `${key}${sep}${value.slice(0, 4)}***`);
+}
