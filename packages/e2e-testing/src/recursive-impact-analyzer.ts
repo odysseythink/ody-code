@@ -301,7 +301,7 @@ function collectSourceFiles(
   root: string,
   extensions: string[],
   excludePatterns: string[],
-  existsSync: typeof import('node:fs').existsSync,
+  _existsSync: typeof import('node:fs').existsSync,
   readdirSync: typeof import('node:fs').readdirSync,
 ): Set<string> {
   const results = new Set<string>();

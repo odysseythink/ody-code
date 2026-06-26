@@ -51,7 +51,7 @@ export class E2ETestResultCache {
   private stats: CacheStats = { hits: 0, misses: 0 };
 
   constructor(
-    private readonly kaos: Kaos,
+    _kaos: Kaos,
     private readonly config: ResolvedE2EConfig,
   ) {}
 

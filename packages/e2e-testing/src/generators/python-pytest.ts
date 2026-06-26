@@ -1,4 +1,4 @@
-import { join, extname } from 'pathe';
+import { join } from 'pathe';
 import type {
   E2ETestGenerator,
   Feature,
