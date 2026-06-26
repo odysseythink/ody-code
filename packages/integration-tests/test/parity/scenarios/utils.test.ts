@@ -4,14 +4,14 @@ import { MockChatProvider } from '../../../src/parity/fixtures/mock-provider';
 import { waitForEvent, waitForTurnEnded } from '../../../src/parity/scenarios/utils';
 
 function fakeClient(eventsToEmit: AgentEvent[] = []) {
-  const listeners = new Set<(event: { event: AgentEvent }) => void>();
+  const listeners = new Set<(event: AgentEvent) => void>();
   return {
-    onEvent(listener: (event: { event: AgentEvent }) => void) {
+    onEvent(listener: (event: AgentEvent) => void) {
       listeners.add(listener);
       return () => listeners.delete(listener);
     },
     emit(event: AgentEvent) {
-      listeners.forEach((l) => l({ event }));
+      listeners.forEach((l) => l(event));
     },
   } as any;
 }

@@ -1,4 +1,4 @@
-import type { AgentEvent, Event } from '@odysseythink/agent-core';
+import type { AgentEvent } from '@odysseythink/agent-core';
 import type { SDKRpcClient } from '@odysseythink/ody-code-sdk';
 
 export interface WaitOptions {
@@ -17,8 +17,7 @@ export function waitForEvent(
       reject(new Error(`Timeout after ${timeoutMs}ms waiting for event`));
     }, timeoutMs);
 
-    const unsubscribe = client.onEvent((wrapper: Event) => {
-      const event = wrapper.event;
+    const unsubscribe = client.onEvent((event: AgentEvent) => {
       if (predicate(event)) {
         clearTimeout(timer);
         unsubscribe();

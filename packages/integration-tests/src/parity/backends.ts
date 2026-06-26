@@ -1,4 +1,4 @@
-import { mkdir, rm } from 'node:fs/promises';
+import { mkdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'pathe';
 
@@ -78,6 +78,14 @@ class ParityClientAPI implements SDKAPI {
 export async function makeTsBackend(config: TsBackendConfig): Promise<ParityBackend> {
   const [connectCore, connectSdk] = createRPC<CoreAPI, SDKAPI>();
 
+  // Write a minimal config.toml so the agent can resolve the active model.
+  // The actual LLM is injected via llmFactory, so the provider is never used.
+  await writeFile(
+    join(config.homeDir, 'config.toml'),
+    `default_model = "mock"\n\n[providers.local]\ntype = "kimi"\napi_key = "test"\n\n[models.mock]\nprovider = "local"\nmodel = "mock"\nmax_context_size = 4096\n`,
+    'utf8',
+  );
+
   const llmFactory = config.mockLlm !== undefined
     ? (_rpc: Partial<SDKAgentRPC>, factoryConfig: LLMFactoryConfig) =>
         new KosongLLM({
@@ -142,5 +150,17 @@ export async function createTempHome(prefix = 'parity-'): Promise<string> {
 }
 
 export async function cleanupHome(dir: string): Promise<void> {
+  for (let attempt = 0; attempt < 10; attempt++) {
+    try {
+      await rm(dir, { recursive: true, force: true });
+      return;
+    } catch (error) {
+      const code = (error as NodeJS.ErrnoException).code;
+      if (code !== 'ENOTEMPTY' && code !== 'EBUSY' && code !== 'EPERM') {
+        throw error;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 10));
+    }
+  }
   await rm(dir, { recursive: true, force: true });
 }
