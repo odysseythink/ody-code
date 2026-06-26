@@ -144,6 +144,8 @@ export interface OdyTUIStartupInput {
   readonly authIntent?: { readonly kind: 'login' | 'logout'; readonly providerType: string };
   readonly officeHours: boolean;
   readonly gameDesign: boolean;
+  /** If true, bypass the interactive terminal UI (smoke-test mode). */
+  readonly smokeTest?: boolean;
 }
 
 type EffectiveActivityPaneMode = ActivityPaneMode | 'idle' | 'session';
@@ -191,6 +193,19 @@ interface SendMessageOptions {
   readonly parts?: readonly PromptPart[];
   readonly imageAttachmentIds?: readonly number[];
   readonly hasMedia?: boolean;
+}
+
+export interface SmokeTestResult {
+  readonly success: boolean;
+  readonly sessionId: string | undefined;
+  readonly transport: 'stdio' | 'socket' | 'tcp';
+  readonly error?: string;
+}
+
+function resolveSmokeTransport(opts: CLIOptions): 'stdio' | 'socket' | 'tcp' {
+  if (opts.hostSocket !== undefined) return 'socket';
+  if (opts.hostTcp !== undefined) return 'tcp';
+  return 'stdio';
 }
 
 export class OdyTUI {
@@ -266,6 +281,7 @@ export class OdyTUI {
         authIntent: startupInput.authIntent,
       },
       resolvedTheme: startupInput.resolvedTheme,
+      smokeTest: startupInput.smokeTest,
     };
     this.options = tuiOptions;
     this.authIntent = startupInput.authIntent;
@@ -372,6 +388,9 @@ export class OdyTUI {
   // =========================================================================
 
   async start(): Promise<void> {
+    if (this.options.smokeTest) {
+      return;
+    }
     // Signal handlers must be installed before raw mode to avoid EIO loops.
     this.registerSignalHandlers();
     // Outer try rolls back signal listeners on startup failure.
@@ -1920,6 +1939,39 @@ export class OdyTUI {
   private hideQuestionDialog(): void {
     this.patchLivePane({ pendingQuestion: null });
     this.restoreEditor();
+  }
+
+  static async runSmokeTest(harness: OdyHarness, opts: CLIOptions): Promise<SmokeTestResult> {
+    try {
+      await harness.ensureConfigFile();
+      const flags = await harness.getExperimentalFlags();
+      setExperimentalFlags(flags);
+
+      const workDir = process.cwd();
+      const session = await harness.createSession({ workDir });
+
+      if (session.id === undefined || session.id.length === 0) {
+        throw new Error('createSession returned empty session id');
+      }
+
+      const sessions = await harness.listSessions({ workDir });
+      if (!sessions.some((s) => s.id === session.id)) {
+        throw new Error('created session not found in listSessions');
+      }
+
+      return {
+        success: true,
+        sessionId: session.id,
+        transport: resolveSmokeTransport(opts),
+      };
+    } catch (error) {
+      return {
+        success: false,
+        sessionId: undefined,
+        transport: resolveSmokeTransport(opts),
+        error: error instanceof Error ? error.message : String(error),
+      };
+    }
   }
 
 }

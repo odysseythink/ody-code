@@ -208,6 +208,8 @@ export interface OdyTUIOptions {
   initialAppState: AppState;
   startup: TUIStartupOptions;
   resolvedTheme?: ResolvedTheme;
+  /** If true, bypass the interactive terminal UI (smoke-test mode). */
+  smokeTest?: boolean;
 }
 
 export interface PendingExit {
