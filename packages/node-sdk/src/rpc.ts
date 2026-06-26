@@ -28,6 +28,7 @@ import {
   type ChatStreamResult,
   type CodeReviewReportData,
   type CoreAPI,
+  type CreateSessionPayload,
   type DesignReviewData,
   type Dispatch,
   type Event,
@@ -581,8 +582,14 @@ export class SDKRpcClient {
 
   async createSession(input: CreateSessionOptions): Promise<SessionSummary> {
     const rpc = await this.getRpc();
-    const { sessionMode, ...coreInput } = input;
-    void sessionMode;
+    const coreInput: CreateSessionPayload = {
+      id: input.id,
+      workDir: input.workDir,
+      model: input.model,
+      thinking: input.thinking,
+      permission: input.permission,
+      metadata: input.metadata,
+    };
     return rpc.createSession(coreInput);
   }
 

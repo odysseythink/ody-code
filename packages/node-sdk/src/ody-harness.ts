@@ -100,8 +100,7 @@ export class KimiHarness {
   }
 
   async createSession(options: CreateSessionOptions): Promise<Session> {
-    const { sessionMode, ...coreOptions } = options;
-    const summary = await this.rpc.createSession(coreOptions);
+    const summary = await this.rpc.createSession(options);
     const session = new Session({
       id: summary.id,
       workDir: summary.workDir,
@@ -112,13 +111,13 @@ export class KimiHarness {
       },
     });
     this.activeSessions.set(session.id, session);
-    if (sessionMode === 'plan') {
+    if (options.sessionMode === 'plan') {
       await session.setSessionMode('plan');
-    } else if (sessionMode === 'design') {
+    } else if (options.sessionMode === 'design') {
       await session.setSessionMode('design');
-    } else if (sessionMode === 'office-hours') {
+    } else if (options.sessionMode === 'office-hours') {
       await session.setSessionMode('office-hours');
-    } else if (sessionMode === 'game-design') {
+    } else if (options.sessionMode === 'game-design') {
       await session.setSessionMode('game-design');
     }
     this.trackSessionStarted(summary.id, false);
