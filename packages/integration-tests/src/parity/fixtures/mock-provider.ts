@@ -13,12 +13,24 @@ export class MockChatProvider implements ChatProvider {
   readonly name = 'mock';
   readonly modelName: string;
   readonly thinkingEffort: ThinkingEffort | null = null;
+  private callIndex = 0;
 
   constructor(
-    private readonly parts: StreamedMessagePart[],
+    private readonly partsOrResponses: StreamedMessagePart[] | StreamedMessagePart[][],
     private readonly options: MockChatProviderOptions = {},
   ) {
     this.modelName = options.modelName ?? 'mock';
+  }
+
+  private currentParts(): StreamedMessagePart[] {
+    const first = (this.partsOrResponses as StreamedMessagePart[][])[0];
+    if (Array.isArray(first)) {
+      const responses = this.partsOrResponses as StreamedMessagePart[][];
+      const parts = responses[this.callIndex % responses.length];
+      this.callIndex++;
+      return parts;
+    }
+    return this.partsOrResponses as StreamedMessagePart[];
   }
 
   async generate(
@@ -27,11 +39,11 @@ export class MockChatProvider implements ChatProvider {
     _history: Message[],
     _options?: GenerateOptions,
   ): Promise<StreamedMessage> {
+    const parts = this.currentParts();
     const id = this.options.id ?? 'mock';
     const finishReason = this.options.finishReason ?? 'completed';
     const rawFinishReason = this.options.rawFinishReason ?? 'stop';
     const usage = this.options.usage ?? null;
-    const parts = this.parts;
     return {
       id,
       usage,
@@ -50,6 +62,6 @@ export class MockChatProvider implements ChatProvider {
   }
 
   withThinking(_effort: ThinkingEffort): MockChatProvider {
-    return new MockChatProvider([...this.parts], this.options);
+    return new MockChatProvider([...(this.partsOrResponses as StreamedMessagePart[][])], this.options);
   }
 }
