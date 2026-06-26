@@ -43,32 +43,26 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build workspace packages
-        run: pnpm run build:packages
-
-      - name: Run Rust host unit tests
-        run: pnpm run test:host
+      - name: Phase A3 verification
+        id: phase-a3
+        run: pnpm run verify:phase-a3
         shell: bash
+        env:
+          ODY_HOST_BINARY_PATH: ${{ github.workspace }}/rust-ody/target/release/ody-host
+          ODY_CODE_REPORT_DIR: ${{ github.workspace }}/.ody-code/reports
 
-      - name: Build Rust host release binary
-        run: pnpm run build:host
-        shell: bash
-
-      # Cross-language connector test (requires packages/node-sdk/test/rust-host-connect.test.ts).
-      - name: Run cross-language connector test
-        run: pnpm vitest run packages/node-sdk/test/rust-host-connect.test.ts
-        shell: bash
-
-      - name: Upload cross-language failure logs
-        if: failure()
+      - name: Upload Phase A3 report
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: rust-host-cross-lang-logs-${{ matrix.target }}
+          name: phase-a3-report-${{ matrix.target }}
           path: |
-            /tmp/ody-rust-host-*/**
-            rust-ody/target/release/ody-host
+            .ody-code/reports/phase-a3-report.json
+            .ody-code/reports/phase-a3-logs/**
+          if-no-files-found: ignore
 
       - name: Upload ody-host artifact
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: ody-host-${{ matrix.target }}

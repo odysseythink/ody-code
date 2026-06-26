@@ -196,7 +196,7 @@ function wrapResult(result, command, args, cwd) {
 }
 
 async function runTuiSmoke(transport, ctx, timeoutMs) {
-  const baseArgs = ['--filter', 'ody-code', 'run', 'dev:cli-only', '--', '--host=rust', '--smoke-test'];
+  const baseArgs = ['--filter', 'ody-code', 'run', 'dev:cli-only', '--host=rust', '--smoke-test'];
   if (transport === 'stdio') {
     baseArgs.push('--host-stdio');
   } else if (transport === 'socket') {
