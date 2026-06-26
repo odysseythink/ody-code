@@ -1,5 +1,5 @@
 import type { AgentEvent } from '@odysseythink/agent-core';
-import type { NormalizedMeta, NormalizedSnapshot, NormalizerOptions, ScenarioSnapshot } from './types';
+import type { NormalizedSnapshot, NormalizerOptions, ScenarioSnapshot } from './types';
 
 const UUID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi;
 const LONG_NUMBER_RE = /\d{13,}/g;
@@ -147,7 +147,11 @@ export function normalize(
   snapshot: ScenarioSnapshot,
   options: NormalizerOptions,
 ): NormalizedSnapshot {
+  const ignoreEventTypes = options.ignoreEventTypes;
   let events = walk(snapshot.events, options, '$.events') as AgentEvent[];
+  if (ignoreEventTypes !== undefined) {
+    events = events.filter((event) => !ignoreEventTypes.has(event.type));
+  }
   const { events: joinedEvents, joinedCount } = joinAssistantDeltas(events);
   events = joinedEvents;
 

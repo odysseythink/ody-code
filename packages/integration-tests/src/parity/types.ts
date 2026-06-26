@@ -51,4 +51,5 @@ export interface NormalizerOptions {
   readonly homeDir: string;
   readonly tmpDir: string;
   readonly fixedIds?: ReadonlyMap<string, string> | undefined;
+  readonly ignoreEventTypes?: ReadonlySet<string> | undefined;
 }
