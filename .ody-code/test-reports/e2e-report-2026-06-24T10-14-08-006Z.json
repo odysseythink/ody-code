@@ -1,0 +1,163 @@
+{
+  "generatedAt": "2026-06-24T10:14:08.006Z",
+  "durationMs": 6355,
+  "passed": 0,
+  "failed": 11,
+  "skipped": 0,
+  "suites": [
+    {
+      "file": "<vitest crash>",
+      "status": "failed",
+      "duration": 0,
+      "tests": [
+        {
+          "name": "vitest process failed",
+          "status": "failed",
+          "failureMessages": [
+            ""
+          ]
+        }
+      ]
+    },
+    {
+      "file": "<vitest crash>",
+      "status": "failed",
+      "duration": 0,
+      "tests": [
+        {
+          "name": "vitest process failed",
+          "status": "failed",
+          "failureMessages": [
+            ""
+          ]
+        }
+      ]
+    },
+    {
+      "file": "<vitest crash>",
+      "status": "failed",
+      "duration": 0,
+      "tests": [
+        {
+          "name": "vitest process failed",
+          "status": "failed",
+          "failureMessages": [
+            ""
+          ]
+        }
+      ]
+    },
+    {
+      "file": "<vitest crash>",
+      "status": "failed",
+      "duration": 0,
+      "tests": [
+        {
+          "name": "vitest process failed",
+          "status": "failed",
+          "failureMessages": [
+            ""
+          ]
+        }
+      ]
+    },
+    {
+      "file": "<vitest crash>",
+      "status": "failed",
+      "duration": 0,
+      "tests": [
+        {
+          "name": "vitest process failed",
+          "status": "failed",
+          "failureMessages": [
+            ""
+          ]
+        }
+      ]
+    },
+    {
+      "file": "<vitest crash>",
+      "status": "failed",
+      "duration": 0,
+      "tests": [
+        {
+          "name": "vitest process failed",
+          "status": "failed",
+          "failureMessages": [
+            ""
+          ]
+        }
+      ]
+    },
+    {
+      "file": "<vitest crash>",
+      "status": "failed",
+      "duration": 0,
+      "tests": [
+        {
+          "name": "vitest process failed",
+          "status": "failed",
+          "failureMessages": [
+            ""
+          ]
+        }
+      ]
+    },
+    {
+      "file": "<vitest crash>",
+      "status": "failed",
+      "duration": 0,
+      "tests": [
+        {
+          "name": "vitest process failed",
+          "status": "failed",
+          "failureMessages": [
+            ""
+          ]
+        }
+      ]
+    },
+    {
+      "file": "<vitest crash>",
+      "status": "failed",
+      "duration": 0,
+      "tests": [
+        {
+          "name": "vitest process failed",
+          "status": "failed",
+          "failureMessages": [
+            ""
+          ]
+        }
+      ]
+    },
+    {
+      "file": "<vitest crash>",
+      "status": "failed",
+      "duration": 0,
+      "tests": [
+        {
+          "name": "vitest process failed",
+          "status": "failed",
+          "failureMessages": [
+            ""
+          ]
+        }
+      ]
+    },
+    {
+      "file": "<vitest crash>",
+      "status": "failed",
+      "duration": 0,
+      "tests": [
+        {
+          "name": "vitest process failed",
+          "status": "failed",
+          "failureMessages": [
+            ""
+          ]
+        }
+      ]
+    }
+  ]
+}

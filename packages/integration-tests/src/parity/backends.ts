@@ -41,10 +41,7 @@ export interface RustBackendConfig {
 }
 
 class ParityClientAPI implements SDKAPI {
-  constructor(
-    private readonly client: SDKRpcClient,
-    private readonly getRpc: () => Promise<unknown>,
-  ) {}
+  constructor(private readonly client: SDKRpcClient) {}
 
   emitEvent(event: Event): void {
     this.client.receiveEvent(event);
@@ -82,7 +79,7 @@ export async function makeTsBackend(config: TsBackendConfig): Promise<ParityBack
   // The actual LLM is injected via llmFactory, so the provider is never used.
   await writeFile(
     join(config.homeDir, 'config.toml'),
-    `default_model = "mock"\n\n[providers.local]\ntype = "kimi"\napi_key = "test"\n\n[models.mock]\nprovider = "local"\nmodel = "mock"\nmax_context_size = 4096\n`,
+    `default_model = "mock"\n\n[providers.local]\ntype = "kimi"\napi_key = "test"\n\n[models.mock]\nprovider = "local"\nmodel = "mock"\nmax_context_size = 4096\n\n[models.gpt-4o]\nprovider = "local"\nmodel = "gpt-4o"\nmax_context_size = 4096\n`,
     'utf8',
   );
 
@@ -97,14 +94,15 @@ export async function makeTsBackend(config: TsBackendConfig): Promise<ParityBack
         })
     : undefined;
 
-  const core = new WorkerCoreAPI(connectCore, {
+  // WorkerCoreAPI owns the CoreAPI endpoint side of the RPC pair. It is kept alive
+  // for the lifetime of the backend, while the client uses coreProxy to call into it.
+  const _core = new WorkerCoreAPI(connectCore, {
     homeDir: config.homeDir,
     llmFactory,
   });
-  void core;
 
   const client = new SDKRpcClient({ homeDir: config.homeDir }, true);
-  const clientApi = new ParityClientAPI(client, () => Promise.resolve(coreProxy));
+  const clientApi = new ParityClientAPI(client);
   const coreProxy = await connectSdk(clientApi);
   Object.assign(client, { rpc: coreProxy, ready: Promise.resolve() });
 

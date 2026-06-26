@@ -3,7 +3,7 @@ import { runParityWithGaps } from '../../src/parity/run-parity';
 import { StaleGapError } from '../../src/parity/known-gaps';
 import type { ParityBackend, Scenario } from '../../src/parity/types';
 
-function fakeBackend(homeDir: string, kind: 'ts' | 'rust'): ParityBackend {
+function fakeBackend(homeDir: string, kind: 'ts' | 'rust'): ParityBackend & { emitEvent(event: unknown): void } {
   const listeners = new Set<(event: unknown) => void>();
   return {
     kind,
@@ -15,6 +15,9 @@ function fakeBackend(homeDir: string, kind: 'ts' | 'rust'): ParityBackend {
       },
     } as any,
     close: async () => {},
+    emitEvent(event: unknown) {
+      for (const listener of listeners) listener(event);
+    },
   };
 }
 
@@ -25,10 +28,18 @@ const passingScenario: Scenario = {
   },
 };
 
-const failingScenario: Scenario = {
-  name: 'failing',
+const l3FailingScenario: Scenario = {
+  name: 'l3-failing',
   async run(backend) {
-    return { responses: [backend.kind], events: [] };
+    (backend as ReturnType<typeof fakeBackend>).emitEvent({ type: 'turn.ended', turnId: 1, reason: (backend as { kind: string }).kind });
+    return { responses: [], events: [] };
+  },
+};
+
+const l4FailingScenario: Scenario = {
+  name: 'l4-failing',
+  async run(backend) {
+    return { responses: [], events: [], records: [`${backend.kind}-record`] };
   },
 };
 
@@ -55,27 +66,54 @@ describe('runParityWithGaps', () => {
 
   it('passes when diff exists but an L3 gap is registered', async () => {
     const result = await runParityWithGaps({
-      scenario: failingScenario,
+      scenario: l3FailingScenario,
       mockLlm: {} as any,
       makeA: (homeDir) => Promise.resolve(fakeBackend(homeDir, 'ts')),
       makeB: (homeDir) => Promise.resolve(fakeBackend(homeDir, 'rust')),
-      knownGaps: [{ scenario: 'failing', layer: 'L3', reason: 'mock mismatch' }],
+      knownGaps: [{ scenario: 'l3-failing', layer: 'L3', reason: 'mock mismatch' }],
     });
     expect(result.passed).toBe(true);
     expect(result.diff).not.toBeNull();
     expect(result.gapReason).toBe('mock mismatch');
   });
 
-  it('passes when diff exists but an L4 wildcard gap is registered', async () => {
+  it('does not let L4 wildcard cover an L3 diff', async () => {
     const result = await runParityWithGaps({
-      scenario: failingScenario,
+      scenario: l3FailingScenario,
       mockLlm: {} as any,
       makeA: (homeDir) => Promise.resolve(fakeBackend(homeDir, 'ts')),
       makeB: (homeDir) => Promise.resolve(fakeBackend(homeDir, 'rust')),
       knownGaps: [{ scenario: '*', layer: 'L4', reason: 'records not migrated' }],
     });
+    expect(result.passed).toBe(false);
+    expect(result.diff).not.toBeNull();
+    expect(result.gapReason).toBeUndefined();
+  });
+
+  it('does not let an L3 gap cover an L4 diff', async () => {
+    const result = await runParityWithGaps({
+      scenario: l4FailingScenario,
+      mockLlm: {} as any,
+      makeA: (homeDir) => Promise.resolve(fakeBackend(homeDir, 'ts')),
+      makeB: (homeDir) => Promise.resolve(fakeBackend(homeDir, 'rust')),
+      knownGaps: [{ scenario: 'l4-failing', layer: 'L3', reason: 'mock mismatch' }],
+    });
+    expect(result.passed).toBe(false);
+    expect(result.diff).not.toBeNull();
+    expect(result.gapReason).toBeUndefined();
+  });
+
+  it('passes when diff exists but an L4 gap is registered for an L4 diff', async () => {
+    const result = await runParityWithGaps({
+      scenario: l4FailingScenario,
+      mockLlm: {} as any,
+      makeA: (homeDir) => Promise.resolve(fakeBackend(homeDir, 'ts')),
+      makeB: (homeDir) => Promise.resolve(fakeBackend(homeDir, 'rust')),
+      knownGaps: [{ scenario: 'l4-failing', layer: 'L4', reason: 'records not migrated' }],
+    });
     expect(result.passed).toBe(true);
     expect(result.diff).not.toBeNull();
+    expect(result.gapReason).toBe('records not migrated');
   });
 
   it('throws StaleGapError when diff is null but gap is registered', async () => {
@@ -86,6 +124,18 @@ describe('runParityWithGaps', () => {
         makeA: (homeDir) => Promise.resolve(fakeBackend(homeDir, 'ts')),
         makeB: (homeDir) => Promise.resolve(fakeBackend(homeDir, 'ts')),
         knownGaps: [{ scenario: 'passing', layer: 'L3', reason: 'mock mismatch' }],
+      }),
+    ).rejects.toBeInstanceOf(StaleGapError);
+  });
+
+  it('throws StaleGapError at L2 when diff is null and an L2 gap is registered', async () => {
+    await expect(
+      runParityWithGaps({
+        scenario: passingScenario,
+        mockLlm: {} as any,
+        makeA: (homeDir) => Promise.resolve(fakeBackend(homeDir, 'ts')),
+        makeB: (homeDir) => Promise.resolve(fakeBackend(homeDir, 'ts')),
+        knownGaps: [{ scenario: 'passing', layer: 'L2', reason: 'session id prefix' }],
       }),
     ).rejects.toBeInstanceOf(StaleGapError);
   });

@@ -6,6 +6,12 @@ import { makeTsBackend, makeRustBackend } from '../../src/parity/backends';
 import { parseKnownGaps } from '../../src/parity/known-gaps';
 import { runParityWithGaps } from '../../src/parity/run-parity';
 import {
+  sessionLifecycleScenario,
+  sessionLifecycleMockLlm,
+  setModelScenario,
+  setModelMockLlm,
+  mockPromptScenario,
+  mockPromptMockLlm,
   helloWorldScenario,
   helloWorldMockLlm,
   fileEditScenario,
@@ -29,7 +35,18 @@ const binaryPath = (() => {
   }
 })();
 
+const rustTransportEnv = process.env['ODY_HOST_TRANSPORT'] ?? 'stdio';
+const rustTransport = (homeDir: string): 'stdio' | { socketPath: string } => {
+  if (rustTransportEnv === 'uds') {
+    return { socketPath: join(homeDir, 'ody-host.sock') };
+  }
+  return 'stdio';
+};
+
 const cases = [
+  { name: sessionLifecycleScenario.name, scenario: sessionLifecycleScenario, mockLlm: sessionLifecycleMockLlm },
+  { name: setModelScenario.name, scenario: setModelScenario, mockLlm: setModelMockLlm },
+  { name: mockPromptScenario.name, scenario: mockPromptScenario, mockLlm: mockPromptMockLlm },
   { name: helloWorldScenario.name, scenario: helloWorldScenario, mockLlm: helloWorldMockLlm },
   { name: fileEditScenario.name, scenario: fileEditScenario, mockLlm: fileEditMockLlm },
   { name: multiTurnToolScenario.name, scenario: multiTurnToolScenario, mockLlm: multiTurnToolMockLlm },
@@ -47,13 +64,16 @@ describe.skipIf(binaryPath === null)('TS-vs-Rust parity', () => {
           makeRustBackend({
             homeDir,
             binaryPath: binaryPath!,
-            transport: 'stdio',
+            transport: rustTransport(homeDir),
             extraArgs: ['--mock-provider'],
           }),
         knownGaps,
         timeoutMs: 60000,
       });
       expect(result.passed).toBe(true);
+      if (result.gapReason === undefined) {
+        expect(result.diff, `scenario "${scenario.name}" has no known gap, so diff must be null`).toBeNull();
+      }
     },
     120000,
   );

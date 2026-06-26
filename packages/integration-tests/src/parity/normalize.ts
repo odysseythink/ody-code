@@ -2,7 +2,7 @@ import type { AgentEvent } from '@odysseythink/agent-core';
 import type { NormalizedSnapshot, NormalizerOptions, ScenarioSnapshot } from './types';
 
 const UUID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi;
-const LONG_NUMBER_RE = /\d{13,}/g;
+const LONG_NUMBER_RE = /\d{10,}/g;
 
 const TIMESTAMPISH_KEYS = new Set([
   'timestamp', 'time', 'startedAt', 'endedAt', 'duration', 'latency', 'hrtime',
@@ -40,22 +40,37 @@ function escapeRegExp(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+function normpath(value: string): string {
+  return value.replace(/\\/g, '/');
+}
+
 function replaceDir(value: string, dir: string, placeholder: string): string {
   if (dir.length < 2) return value;
-  const re = new RegExp(`(^|[^\\w/-])${escapeRegExp(dir)}`, 'g');
+  // Normalize separators so POSIX homeDir can match Windows-style paths and vice versa.
+  const normalizedDir = normpath(dir);
+  if (normalizedDir.length < 2) return value;
+  // Match the dir only when it is not embedded inside a path component.
+  // Allowed preceding characters: start of string or any char that cannot be part of a file/path name.
+  // Path separators (/ or \) are explicitly allowed as prefixes so /tmp/home matches /tmp/home/file.
+  const pattern = normalizedDir.split('/').map(escapeRegExp).join('[\\\\/]');
+  const prefix = '(^|(?<![\\w.-]))';
+  const suffix = '(?![\\w.-])';
+  const re = new RegExp(`${prefix}${pattern}${suffix}`, 'g');
   return value.replace(re, `$1${placeholder}`);
 }
 
 function normalizeString(value: string, options: NormalizerOptions, path: string): string {
   let s = value;
-  s = replaceDir(s, options.homeDir, '<HOME>');
-  s = replaceDir(s, options.tmpDir, '<TMP>');
-
+  // fixedIds must run before UUID replacement so that a UUID-shaped fixed id
+  // is replaced by its stable placeholder (e.g. <id:0>) rather than <id>.
   if (options.fixedIds !== undefined) {
     for (const [id, placeholder] of options.fixedIds) {
       s = s.split(id).join(placeholder);
     }
   }
+
+  s = replaceDir(s, options.homeDir, '<HOME>');
+  s = replaceDir(s, options.tmpDir, '<TMP>');
 
   s = s.replace(UUID_RE, '<id>');
 
@@ -68,7 +83,9 @@ function normalizeString(value: string, options: NormalizerOptions, path: string
   if (isPortLike(path)) {
     s = s.replace(/\b\d{1,5}\b/g, '<port>');
   }
-  if (isPathLike(path)) {
+  // Normalize path separators for explicit path fields and for any string that
+  // already contained a home/tmp placeholder (which implies it is path-like).
+  if (isPathLike(path) || s.includes('<HOME>') || s.includes('<TMP>')) {
     s = s.replace(/\\/g, '/');
   }
   return s;

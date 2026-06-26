@@ -9,11 +9,12 @@ on:
 
 jobs:
   rust-host-smoke:
-    name: rust-host-${{ matrix.target }}
+    name: rust-host-${{ matrix.target }}-${{ matrix.transport }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
+        transport: [stdio, uds]
         include:
           - target: darwin-arm64
             os: macos-14
@@ -57,12 +58,21 @@ jobs:
         shell: bash
         env:
           ODY_HOST_BINARY_PATH: ${{ github.workspace }}/rust-ody/target/release/ody-host
+          ODY_HOST_TRANSPORT: ${{ matrix.transport }}
+
+      - name: Upload parity diff artifacts
+        if: failure() && steps.parity-smoke.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: parity-diffs-${{ matrix.target }}-${{ matrix.transport }}
+          path: .ody-code/reports/parity/**
+          if-no-files-found: ignore
 
       - name: Upload Phase A3 report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: phase-a3-report-${{ matrix.target }}
+          name: phase-a3-report-${{ matrix.target }}-${{ matrix.transport }}
           path: |
             .ody-code/reports/phase-a3-report.json
             .ody-code/reports/phase-a3-logs/**
@@ -72,6 +82,6 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ody-host-${{ matrix.target }}
+          name: ody-host-${{ matrix.target }}-${{ matrix.transport }}
           path: rust-ody/target/release/ody-host*
           if-no-files-found: error

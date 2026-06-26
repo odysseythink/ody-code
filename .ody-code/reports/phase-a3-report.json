@@ -1,0 +1,40 @@
+{
+  "metadata": {
+    "nodeVersion": "v24.16.0",
+    "platform": "darwin",
+    "arch": "arm64",
+    "timestamp": "2026-06-26T06:48:39.794Z",
+    "hostBinaryPath": "/Users/ranwei/workspace/ody-code/rust-ody/target/release/ody-host"
+  },
+  "environment": {
+    "cwd": "/Users/ranwei/workspace/ody-code",
+    "pnpmVersion": "10.33.0",
+    "cargoVersion": "cargo 1.96.0 (30a34c682 2026-05-25)",
+    "rustcVersion": "rustc 1.96.0 (ac68faa20 2026-05-25)"
+  },
+  "steps": [
+    {
+      "status": "failed",
+      "exitCode": 101,
+      "signal": null,
+      "durationMs": 5245,
+      "stdoutRedacted": "\n> @odysseythink/monorepo@0.1.1 test:host /Users/ranwei/workspace/ody-code\n> cd rust-ody && cargo test -p ody-host\n\n\nrunning 52 tests\ntest config::tests::defaults_to_stdio_transport ... ok\ntest config::tests::socket_path_from_cli ... ok\ntest config::tests::global_flags_stdio_still_works ... ok\ntest config::tests::serve_subcommand_stdio ... ok\ntest config::tests::serve_subcommand_socket_path ... ok\ntest config::tests::global_flags_conflict_with_serve_rejected ... ok\ntest config::tests::mock_provider_flag_is_parsed ... ok\ntest config::tests::invalid_log_level_fails ... ok\ntest host::tests::chat_returns_content ... ok\ntest host::tests::get_mcp_startup_metrics_returns_zero ... ok\ntest host::tests::get_core_info_returns_version ... ok\ntest host::tests::get_context_returns_empty_context ... ok\ntest host::tests::get_plan_returns_null ... ok\ntest host::tests::create_session_returns_summary ... ok\ntest host::tests::list_mcp_servers_returns_empty_array ... ok\ntest host::tests::get_user_language_returns_en ... ok\ntest host::tests::get_ody_config_returns_host_config ... ok\ntest host::tests::get_usage_returns_empty_object ... ok\ntest host::tests::list_skills_returns_empty_array ... ok\ntest host::tests::unknown_method_returns_error ... ok\ntest host::tests::create_session_with_provided_id ... ok\ntest session::store::tests::empty_slug_becomes_workspace ... ok\ntest session::store::tests::encodes_work_dir_key_like_ts ... ok\ntest session::store::tests::slugifies_special_characters ... ok\ntest host::tests::create_session_duplicate_id_fails ... ok\ntest host::tests::get_agent_config_returns_session_scoped_config ... ok\ntest tools::bash::tests::bash_tool_rejected_returns_cancelled ... ok\ntest host::tests::get_permission_returns_manual_mode ... ok\ntest transport::connection::tests::request_response_roundtrip ... ok\ntest transport::connection::tests::reverse_request_roundtrip ... ok\ntest transport::rpc::tests::returns_error_for_unknown_method ... ok\ntest transport::socket::tests::ready_message_tcp_matches_ts_shape ... ok\ntest transport::socket::tests::ready_message_unix_matches_ts_shape ... ok\ntest transport::wire::tests::decodes_bytes_as_numeric_object_like_ts_uint8array ... ok\ntest transport::wire::tests::handshake_rejects_invalid_framing ... ok\ntest transport::wire::tests::handshake_roundtrip ... ok\ntest transport::rpc::tests::routes_get_core_info ... ok\ntest transport::wire::tests::length_prefixed_roundtrip ... ok\ntest session::store::tests::state_json_roundtrip ... ok\ntest host::tests::create_session_without_id_uses_uuid ... ok\ntest transport::wire::tests::ndjson_roundtrip ... ok\ntest host::tests::prompt_emits_turn_events_and_returns_ok ... ok\ntest host::tests::steer_emits_turn_events ... ok\ntest host::tests::set_permission_updates_session_permission ... ok\ntest host::tests::set_model_updates_session_model ... ok\ntest session::manager::tests::close_removes_active_but_keeps_disk ... ok\ntest host::tests::set_thinking_updates_session_thinking ... ok\ntest session::manager::tests::create_then_list_returns_session ... ok\ntest session::manager::tests::duplicate_id_fails ... ok\ntest tools::bash::tests::bash_tool_approved_executes_command ... ok\ntest llm::openai::tests::streams_text_deltas_from_sse ... FAILED\ntest transport::wire::tests::rejects_frame_too_large ... ok\n\nfailures:\n\n---- llm::openai::tests::streams_text_deltas_from_sse stdout ----\n\nthread 'llm::openai::tests::streams_text_deltas_from_sse' (487516) panicked at crates/ody-host/src/llm/openai.rs:196:18:\ncalled `Result::unwrap()` on an `Err` value: ApiError { status: 502, body: \"\" }\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace\nhttptest: Unexpected number of requests for matcher 'MethodPath { method: \"POST\", path: \"/v1/chat/completions\" }'; received 0; expected Exactly(1). (no other unexpected requests)\n\n\nfailures:\n    llm::openai::tests::streams_text_deltas_from_sse\n\ntest result: FAILED. 51 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.77s\n\n ELIFECYCLE  Command failed with exit code 101.\n",
+      "stderrRedacted": "warning: field `log_level` is never read\n  --> crates/ody-host/src/config.rs:85:5\n   |\n83 | struct RawConfigFile {\n   |        ------------- field in this struct\n84 |     home_dir: Option<PathBuf>,\n85 |     log_level: Option<String>,\n   |     ^^^^^^^^^\n   |\n   = note: `RawConfigFile` has a derived impl for the trait `Debug`, but this is intentionally ignored during dead code analysis\n   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default\n\nwarning: field `default_model` is never read\n  --> crates/ody-host/src/llm/openai.rs:10:5\n   |\n 7 | pub struct OpenAiProvider {\n   |            -------------- field in this struct\n...\n10 |     default_model: String,\n   |     ^^^^^^^^^^^^^\n\nwarning: field `role` is never read\n   --> crates/ody-host/src/llm/openai.rs:138:5\n    |\n136 | struct SseDelta {\n    |        -------- field in this struct\n137 |     content: Option<String>,\n138 |     role: Option<String>,\n    |     ^^^^\n    |\n    = note: `SseDelta` has a derived impl for the trait `Debug`, but this is intentionally ignored during dead code analysis\n\nwarning: field `call_type` is never read\n   --> crates/ody-host/src/llm/openai.rs:146:5\n    |\n143 | struct SseToolCall {\n    |        ----------- field in this struct\n...\n146 |     call_type: Option<String>,\n    |     ^^^^^^^^^\n    |\n    = note: `SseToolCall` has a derived impl for the trait `Debug`, but this is intentionally ignored during dead code analysis\n\nwarning: `ody-host` (lib) generated 4 warnings\nwarning: `ody-host` (lib test) generated 4 warnings (4 duplicates)\n    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.07s\n     Running unittests src/lib.rs (target/debug/deps/ody_host-cee23f99cd0ab05f)\nerror: test failed, to rerun pass `-p ody-host --lib`\n",
+      "command": "pnpm",
+      "args": [
+        "run",
+        "test:host"
+      ],
+      "cwd": "/Users/ranwei/workspace/ody-code",
+      "id": "rust-test",
+      "name": "Rust host unit tests"
+    }
+  ],
+  "summary": {
+    "overallStatus": "failed",
+    "passedCount": 0,
+    "failedCount": 1,
+    "skippedCount": 0,
+    "totalDurationMs": 5618
+  }
+}

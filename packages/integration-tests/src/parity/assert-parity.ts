@@ -6,12 +6,19 @@ export function assertParity(
   rust: NormalizedSnapshot,
 ): ParityDiff | null {
   const diffs: FieldDiff[] = [];
-  collectDiffs(ts, rust, '$', diffs);
+  const seen = new WeakSet<object>();
+  collectDiffs(ts, rust, '$', diffs, seen);
   if (diffs.length === 0) return null;
   return { scenarioName, ts, rust, diffs };
 }
 
-function collectDiffs(a: unknown, b: unknown, path: string, diffs: FieldDiff[]): void {
+function collectDiffs(
+  a: unknown,
+  b: unknown,
+  path: string,
+  diffs: FieldDiff[],
+  seen: WeakSet<object>,
+): void {
   if (Object.is(a, b)) return;
 
   const typeA = typeof a;
@@ -32,13 +39,20 @@ function collectDiffs(a: unknown, b: unknown, path: string, diffs: FieldDiff[]):
     return;
   }
 
+  // Guard against cyclic references in snapshots.
+  if (seen.has(a as object) || seen.has(b as object)) {
+    return;
+  }
+  seen.add(a as object);
+  seen.add(b as object);
+
   if (Array.isArray(a) && Array.isArray(b)) {
     if (a.length !== b.length) {
-      diffs.push({ path, tsValue: a.length, rustValue: b.length });
-      return;
+      diffs.push({ path: `${path}.length`, tsValue: a.length, rustValue: b.length });
     }
-    for (let i = 0; i < a.length; i++) {
-      collectDiffs(a[i], b[i], `${path}[${i}]`, diffs);
+    const commonLength = Math.min(a.length, b.length);
+    for (let i = 0; i < commonLength; i++) {
+      collectDiffs(a[i], b[i], `${path}[${i}]`, diffs, seen);
     }
     return;
   }
@@ -50,6 +64,7 @@ function collectDiffs(a: unknown, b: unknown, path: string, diffs: FieldDiff[]):
       (b as Record<string, unknown>)[key],
       `${path}.${key}`,
       diffs,
+      seen,
     );
   }
 }

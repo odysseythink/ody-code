@@ -3,13 +3,14 @@ import { tmpdir } from 'node:os';
 import type { ChatProvider } from '@odysseythink/kosong';
 
 import { assertParity } from './assert-parity';
+import { writeParityArtifacts, writeParityErrorArtifacts } from './artifacts';
 import { createTempHome, cleanupHome, makeTsBackend } from './backends';
 import type { AgentEvent } from '@odysseythink/agent-core';
 import { ParityDriver } from './driver';
-import { checkGapState, findGap, type KnownGap } from './known-gaps';
+import { affectedLayers, checkGapState, findGapForLayers, type KnownGap } from './known-gaps';
 import { normalize } from './normalize';
 import { scenarios } from './scenarios';
-import type { ParityBackend, ParityDiff, Scenario, ScenarioSnapshot } from './types';
+import type { NormalizedSnapshot, ParityBackend, ParityDiff, Scenario, ScenarioSnapshot } from './types';
 
 const IGNORE_EVENT_TYPES = new Set<AgentEvent['type']>([
   'mcp.server.status',
@@ -50,22 +51,34 @@ export async function runParity(options: RunParityOptions): Promise<ParityDiff |
   const { scenario, makeA, makeB, timeoutMs = 30000 } = options;
   const { snapshot: firstSnapshot, homeDir: firstHomeDir } = await runOnce(scenario, makeA, timeoutMs);
   const { snapshot: secondSnapshot, homeDir: secondHomeDir } = await runOnce(scenario, makeB, timeoutMs);
+  let first: NormalizedSnapshot;
+  let second: NormalizedSnapshot;
   try {
-    const first = normalize(firstSnapshot, {
+    first = normalize(firstSnapshot, {
       homeDir: firstHomeDir,
       tmpDir: tmpdir(),
       ignoreEventTypes: IGNORE_EVENT_TYPES,
     });
-    const second = normalize(secondSnapshot, {
+    second = normalize(secondSnapshot, {
       homeDir: secondHomeDir,
       tmpDir: tmpdir(),
       ignoreEventTypes: IGNORE_EVENT_TYPES,
     });
-    return assertParity(scenario.name, first, second);
   } finally {
     await cleanupHome(firstHomeDir);
     await cleanupHome(secondHomeDir);
   }
+
+  const diff = assertParity(scenario.name, first, second);
+  if (diff !== null) {
+    await writeParityArtifacts(
+      scenario.name,
+      { snapshot: firstSnapshot, normalized: first },
+      { snapshot: secondSnapshot, normalized: second },
+      diff,
+    );
+  }
+  return diff;
 }
 
 export async function runTsVsTs(options: { readonly timeoutMs?: number } = {}): Promise<RunParityResult[]> {
@@ -99,10 +112,12 @@ export async function runParityWithGaps(
   try {
     diff = await runParity(options);
   } catch (error) {
-    const l3Reason = findGap(knownGaps, scenario.name, 'L3');
-    const l4Reason = findGap(knownGaps, scenario.name, 'L4');
-    const gapReason = l3Reason ?? l4Reason;
-    if (gapReason !== undefined) {
+    const layers = affectedLayers(['$.error.runParity']);
+    const match = findGapForLayers(knownGaps, scenario.name, layers);
+    await writeParityErrorArtifacts(scenario.name, 'runParity', error);
+    if (match !== undefined) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorStack = error instanceof Error ? error.stack : undefined;
       return {
         diff: {
           scenarioName: scenario.name,
@@ -110,31 +125,31 @@ export async function runParityWithGaps(
           rust: { responses: [], events: [] },
           diffs: [
             {
-              path: '$.error',
+              path: '$.error.runParity',
               tsValue: null,
-              rustValue: error instanceof Error ? error.message : String(error),
+              rustValue: { message: errorMessage, stack: errorStack },
             },
           ],
         },
-        gapReason,
+        gapReason: match.reason,
         passed: true,
       };
     }
     throw error;
   }
 
-  const l3Reason = findGap(knownGaps, scenario.name, 'L3');
-  const l4Reason = findGap(knownGaps, scenario.name, 'L4');
-  const gapReason = l3Reason ?? l4Reason;
+  const layers = diff === null ? ['L2', 'L3', 'L4'] as const : affectedLayers(diff.diffs.map((d) => d.path));
+  const match = findGapForLayers(knownGaps, scenario.name, layers);
 
   if (diff === null) {
-    if (l3Reason !== undefined) checkGapState(knownGaps, scenario.name, 'L3', true);
-    if (l4Reason !== undefined) checkGapState(knownGaps, scenario.name, 'L4', true);
+    for (const layer of layers) {
+      checkGapState(knownGaps, scenario.name, layer, true);
+    }
   }
 
   return {
     diff,
-    gapReason,
-    passed: diff === null || gapReason !== undefined,
+    gapReason: match?.reason,
+    passed: diff === null || match !== undefined,
   };
 }

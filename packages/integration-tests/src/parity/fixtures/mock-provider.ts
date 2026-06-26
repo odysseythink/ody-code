@@ -1,6 +1,19 @@
 import type { ChatProvider, FinishReason, GenerateOptions, Message, ModelCapability, StreamedMessage, StreamedMessagePart, ThinkingEffort, Tool, TokenUsage } from '@odysseythink/kosong';
 import { UNKNOWN_CAPABILITY } from '@odysseythink/kosong';
 
+function normalizeResponses(
+  partsOrResponses: StreamedMessagePart[] | StreamedMessagePart[][],
+): StreamedMessagePart[][] {
+  if (partsOrResponses.length === 0) {
+    return [[]];
+  }
+  const first = partsOrResponses[0];
+  if (Array.isArray(first)) {
+    return (partsOrResponses as StreamedMessagePart[][]).map((parts) => [...parts]);
+  }
+  return [[...(partsOrResponses as StreamedMessagePart[])]];
+}
+
 export interface MockChatProviderOptions {
   id?: string;
   modelName?: string;
@@ -14,23 +27,20 @@ export class MockChatProvider implements ChatProvider {
   readonly modelName: string;
   readonly thinkingEffort: ThinkingEffort | null = null;
   private callIndex = 0;
+  private readonly responses: StreamedMessagePart[][];
 
   constructor(
-    private readonly partsOrResponses: StreamedMessagePart[] | StreamedMessagePart[][],
+    partsOrResponses: StreamedMessagePart[] | StreamedMessagePart[][],
     private readonly options: MockChatProviderOptions = {},
   ) {
     this.modelName = options.modelName ?? 'mock';
+    this.responses = normalizeResponses(partsOrResponses);
   }
 
   private currentParts(): StreamedMessagePart[] {
-    const first = (this.partsOrResponses as StreamedMessagePart[][])[0];
-    if (Array.isArray(first)) {
-      const responses = this.partsOrResponses as StreamedMessagePart[][];
-      const parts = responses[this.callIndex % responses.length];
-      this.callIndex++;
-      return parts ?? [];
-    }
-    return this.partsOrResponses as StreamedMessagePart[];
+    const parts = this.responses[this.callIndex % this.responses.length];
+    this.callIndex++;
+    return parts ?? [];
   }
 
   async generate(
@@ -62,6 +72,6 @@ export class MockChatProvider implements ChatProvider {
   }
 
   withThinking(_effort: ThinkingEffort): MockChatProvider {
-    return new MockChatProvider([...(this.partsOrResponses as StreamedMessagePart[][])], this.options);
+    return new MockChatProvider(this.responses.map((parts) => [...parts]), this.options);
   }
 }
