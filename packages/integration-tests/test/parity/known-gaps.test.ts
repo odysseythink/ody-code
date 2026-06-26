@@ -18,9 +18,9 @@ describe('parseKnownGaps', () => {
     const source = readFileSync(knownGapsPath, 'utf8');
     const gaps = parseKnownGaps(source);
     expect(gaps).toContainEqual({
-      scenario: 'mock prompt',
+      scenario: 'hello-world',
       layer: 'L3',
-      reason: 'Rust mock provider 事件 payload 未实现对齐',
+      reason: 'Rust 后端 mock provider 未注入，事件 payload 暂不对齐',
     });
     expect(gaps.some((g) => g.scenario === '*' && g.layer === 'L4')).toBe(true);
   });

@@ -32,6 +32,13 @@ const failingScenario: Scenario = {
   },
 };
 
+const errorScenario: Scenario = {
+  name: 'error',
+  async run() {
+    throw new Error('backend failed');
+  },
+};
+
 describe('runParityWithGaps', () => {
   it('passes when diff is null and no gap is registered', async () => {
     const result = await runParityWithGaps({
@@ -81,5 +88,30 @@ describe('runParityWithGaps', () => {
         knownGaps: [{ scenario: 'passing', layer: 'L3', reason: 'mock mismatch' }],
       }),
     ).rejects.toBeInstanceOf(StaleGapError);
+  });
+
+  it('passes when runParity throws but a gap is registered', async () => {
+    const result = await runParityWithGaps({
+      scenario: errorScenario,
+      mockLlm: {} as any,
+      makeA: (homeDir) => Promise.resolve(fakeBackend(homeDir, 'ts')),
+      makeB: (homeDir) => Promise.resolve(fakeBackend(homeDir, 'rust')),
+      knownGaps: [{ scenario: 'error', layer: 'L3', reason: 'backend unstable' }],
+    });
+    expect(result.passed).toBe(true);
+    expect(result.diff).not.toBeNull();
+    expect(result.gapReason).toBe('backend unstable');
+  });
+
+  it('re-throws when runParity throws and no gap is registered', async () => {
+    await expect(
+      runParityWithGaps({
+        scenario: errorScenario,
+        mockLlm: {} as any,
+        makeA: (homeDir) => Promise.resolve(fakeBackend(homeDir, 'ts')),
+        makeB: (homeDir) => Promise.resolve(fakeBackend(homeDir, 'rust')),
+        knownGaps: [],
+      }),
+    ).rejects.toThrow('backend failed');
   });
 });

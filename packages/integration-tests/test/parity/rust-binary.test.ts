@@ -20,12 +20,14 @@ describe('resolveRustBinaryPath', () => {
   });
 
   it('throws a helpful error when no candidate exists', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'parity-root-'));
     const prev = process.env['ODY_HOST_BINARY_PATH'];
     delete process.env['ODY_HOST_BINARY_PATH'];
     try {
-      expect(() => resolveRustBinaryPath()).toThrow('Rust host binary not found');
+      expect(() => resolveRustBinaryPath(dir)).toThrow('Rust host binary not found');
     } finally {
       process.env['ODY_HOST_BINARY_PATH'] = prev;
+      rmSync(dir, { recursive: true, force: true });
     }
   });
 });

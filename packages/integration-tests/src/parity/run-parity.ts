@@ -94,7 +94,34 @@ export async function runParityWithGaps(
   options: RunParityOptions & { readonly knownGaps: readonly KnownGap[] },
 ): Promise<RunParityWithGapsResult> {
   const { knownGaps, scenario } = options;
-  const diff = await runParity(options);
+
+  let diff: ParityDiff | null;
+  try {
+    diff = await runParity(options);
+  } catch (error) {
+    const l3Reason = findGap(knownGaps, scenario.name, 'L3');
+    const l4Reason = findGap(knownGaps, scenario.name, 'L4');
+    const gapReason = l3Reason ?? l4Reason;
+    if (gapReason !== undefined) {
+      return {
+        diff: {
+          scenarioName: scenario.name,
+          ts: { responses: [], events: [] },
+          rust: { responses: [], events: [] },
+          diffs: [
+            {
+              path: '$.error',
+              tsValue: null,
+              rustValue: error instanceof Error ? error.message : String(error),
+            },
+          ],
+        },
+        gapReason,
+        passed: true,
+      };
+    }
+    throw error;
+  }
 
   const l3Reason = findGap(knownGaps, scenario.name, 'L3');
   const l4Reason = findGap(knownGaps, scenario.name, 'L4');

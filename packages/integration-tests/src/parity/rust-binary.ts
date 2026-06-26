@@ -1,14 +1,27 @@
 import { existsSync } from 'node:fs';
-import { join } from 'pathe';
+import { dirname, join } from 'pathe';
+import { fileURLToPath } from 'node:url';
 
-const CANDIDATES: Array<() => string | undefined> = [
-  () => process.env['ODY_HOST_BINARY_PATH'],
-  () => join(process.cwd(), 'rust-ody', 'target', 'release', 'ody-host'),
-  () => join(process.cwd(), 'rust-ody', 'target', 'debug', 'ody-host'),
-];
+function findProjectRoot(): string {
+  let current = dirname(fileURLToPath(import.meta.url));
+  while (current !== dirname(current)) {
+    if (existsSync(join(current, '.git'))) {
+      return current;
+    }
+    current = dirname(current);
+  }
+  return process.cwd();
+}
 
-export function resolveRustBinaryPath(): string {
-  for (const candidate of CANDIDATES) {
+export function resolveRustBinaryPath(searchRoot?: string): string {
+  const root = searchRoot ?? findProjectRoot();
+  const candidates: Array<() => string | undefined> = [
+    () => process.env['ODY_HOST_BINARY_PATH'],
+    () => join(root, 'rust-ody', 'target', 'release', 'ody-host'),
+    () => join(root, 'rust-ody', 'target', 'debug', 'ody-host'),
+  ];
+
+  for (const candidate of candidates) {
     const path = candidate();
     if (path !== undefined && existsSync(path)) {
       return path;
