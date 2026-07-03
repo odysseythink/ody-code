@@ -1,0 +1,26 @@
+{
+  "systemPrompt": "",
+  "tools": [
+    {"name":"read","description":"read file","parameters":{"type":"object","properties":{"path":{"type":"string"}}}},
+    {"name":"write","description":"write file","parameters":{"type":"object","properties":{"path":{"type":"string"},"content":{"type":"string"}}}}
+  ],
+  "history": [
+    { "role": "user", "content": [{"type":"text","text":"parallel"}], "toolCalls": [] }
+  ],
+  "options": { "stream": true },
+  "providerStep": {
+    "events": [
+      {"type":"message_start","message":{"id":"msg_stream_parallel","usage":{"input_tokens":25,"output_tokens":0,"cache_read_input_tokens":0,"cache_creation_input_tokens":0}}},
+      {"type":"content_block_start","index":0,"content_block":{"type":"tool_use","id":"tc_read","name":"read","input":{}}},
+      {"type":"content_block_start","index":1,"content_block":{"type":"tool_use","id":"tc_write","name":"write","input":{}}},
+      {"type":"content_block_delta","index":0,"delta":{"type":"input_json_delta","partial_json":"{\"path\":\""}},
+      {"type":"content_block_delta","index":1,"delta":{"type":"input_json_delta","partial_json":"{\"path\":\""}},
+      {"type":"content_block_delta","index":0,"delta":{"type":"input_json_delta","partial_json":"/etc/passwd\"}"}},
+      {"type":"content_block_delta","index":1,"delta":{"type":"input_json_delta","partial_json":"/tmp/out\",\"content\":\"x\"}"}},
+      {"type":"content_block_stop","index":0},
+      {"type":"content_block_stop","index":1},
+      {"type":"message_delta","delta":{"stop_reason":"tool_use"},"usage":{"output_tokens":20,"cache_read_input_tokens":0,"cache_creation_input_tokens":0,"input_tokens":25}},
+      {"type":"message_stop"}
+    ]
+  }
+}

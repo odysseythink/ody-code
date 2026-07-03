@@ -1,0 +1,82 @@
+{
+  "operations": [
+    {
+      "operation": "inferWireType",
+      "cases": [
+        { "name": "explicit type", "input": { "entry": { "type": "deepseek" } } },
+        { "name": "infer from id claude", "input": { "entry": { "id": "claude-3-5-sonnet" } } },
+        { "name": "infer from npm google", "input": { "entry": { "npm": "@ai-sdk/google" } } },
+        { "name": "vertex from id", "input": { "entry": { "id": "vertex-something" } } },
+        { "name": "unknown", "input": { "entry": { "id": "foo" } } }
+      ]
+    },
+    {
+      "operation": "catalogBaseUrl",
+      "cases": [
+        {
+          "name": "anthropic strips trailing v1",
+          "input": { "entry": { "api": "https://api.anthropic.com/v1" }, "wire": "anthropic" }
+        },
+        {
+          "name": "openai keeps v1",
+          "input": { "entry": { "api": "https://api.openai.com/v1" }, "wire": "openai" }
+        },
+        {
+          "name": "missing api returns null",
+          "input": { "entry": {}, "wire": "openai" }
+        }
+      ]
+    },
+    {
+      "operation": "catalogModelToCapability",
+      "cases": [
+        {
+          "name": "embedding skipped",
+          "input": {
+            "model": {
+              "id": "text-embedding-3",
+              "family": "embedding",
+              "limit": { "context": 8192, "output": 1536 },
+              "modalities": { "input": ["text"], "output": ["text"] }
+            }
+          }
+        },
+        {
+          "name": "valid model parsed",
+          "input": {
+            "model": {
+              "id": "gpt-4o",
+              "limit": { "context": 128000, "output": 16384 },
+              "tool_call": true,
+              "modalities": { "input": ["text", "image"], "output": ["text"] }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "operation": "catalogProviderModels",
+      "cases": [
+        {
+          "name": "filters invalid returns valid",
+          "input": {
+            "entry": {
+              "models": {
+                "gpt-4o": {
+                  "id": "gpt-4o",
+                  "limit": { "context": 128000, "output": 16384 },
+                  "tool_call": true,
+                  "modalities": { "input": ["text"], "output": ["text"] }
+                },
+                "bad": {
+                  "id": "",
+                  "limit": { "context": 0 }
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

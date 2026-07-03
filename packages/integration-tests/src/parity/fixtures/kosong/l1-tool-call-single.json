@@ -1,0 +1,19 @@
+{
+  "systemPrompt": "",
+  "tools": [
+    { "name": "get_weather", "description": "weather", "parameters": { "type": "object", "properties": {} } }
+  ],
+  "history": [
+    { "role": "user", "content": [{ "type": "text", "text": "get weather" }], "toolCalls": [] }
+  ],
+  "providerStep": {
+    "id": "resp_1",
+    "parts": [
+      { "type": "function", "id": "call_1", "name": "get_weather", "arguments": null, "_streamIndex": 0 },
+      { "type": "tool_call_part", "argumentsPart": "{\"city\": \"Beijing\"}", "index": 0 }
+    ],
+    "usage": { "inputOther": 12, "output": 6, "inputCacheRead": 0, "inputCacheCreation": 0 },
+    "finishReason": "tool_calls"
+  },
+  "expectError": null
+}

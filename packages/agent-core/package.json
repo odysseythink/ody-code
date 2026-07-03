@@ -48,6 +48,74 @@
     "./test/helpers": {
       "types": "./test/helpers/index.ts",
       "default": "./test/helpers/index.ts"
+    },
+    "./tools/policies/path-access": {
+      "types": "./src/tools/policies/path-access.ts",
+      "default": "./src/tools/policies/path-access.ts"
+    },
+    "./tools/policies/sensitive": {
+      "types": "./src/tools/policies/sensitive.ts",
+      "default": "./src/tools/policies/sensitive.ts"
+    },
+    "./tools/support/rule-match": {
+      "types": "./src/tools/support/rule-match.ts",
+      "default": "./src/tools/support/rule-match.ts"
+    },
+    "./tools/args-validator": {
+      "types": "./src/tools/args-validator.ts",
+      "default": "./src/tools/args-validator.ts"
+    },
+    "./tools/support/result-builder": {
+      "types": "./src/tools/support/result-builder.ts",
+      "default": "./src/tools/support/result-builder.ts"
+    },
+    "./tools/support/file-type": {
+      "types": "./src/tools/support/file-type.ts",
+      "default": "./src/tools/support/file-type.ts"
+    },
+    "./tools/support/rg-locator": {
+      "types": "./src/tools/support/rg-locator.ts",
+      "default": "./src/tools/support/rg-locator.ts"
+    },
+    "./tools/support/list-directory": {
+      "types": "./src/tools/support/list-directory.ts",
+      "default": "./src/tools/support/list-directory.ts"
+    },
+    "./tools/support/workspace": {
+      "types": "./src/tools/support/workspace.ts",
+      "default": "./src/tools/support/workspace.ts"
+    },
+    "./loop/tool-access": {
+      "types": "./src/loop/tool-access.ts",
+      "default": "./src/loop/tool-access.ts"
+    },
+    "./loop/types": {
+      "types": "./src/loop/types.ts",
+      "default": "./src/loop/types.ts"
+    },
+    "./agent/context": {
+      "types": "./src/agent/context/index.ts",
+      "default": "./src/agent/context/index.ts"
+    },
+    "./agent/context/notification-xml": {
+      "types": "./src/agent/context/notification-xml.ts",
+      "default": "./src/agent/context/notification-xml.ts"
+    },
+    "./tools/builtin/file/grep": {
+      "types": "./src/tools/builtin/file/grep.ts",
+      "default": "./src/tools/builtin/file/grep.ts"
+    },
+    "./tools/builtin/code-quality/harvest-ody-markers": {
+      "types": "./src/tools/builtin/code-quality/harvest-ody-markers.ts",
+      "default": "./src/tools/builtin/code-quality/harvest-ody-markers.ts"
+    },
+    "./tools/builtin/idea/report-helpers": {
+      "types": "./src/tools/builtin/idea/report-helpers.ts",
+      "default": "./src/tools/builtin/idea/report-helpers.ts"
+    },
+    "./tools/builtin/test-review/review-tests": {
+      "types": "./src/tools/builtin/test-review/review-tests.ts",
+      "default": "./src/tools/builtin/test-review/review-tests.ts"
     }
   },
   "scripts": {

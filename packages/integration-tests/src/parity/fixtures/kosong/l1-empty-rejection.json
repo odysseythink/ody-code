@@ -1,0 +1,13 @@
+{
+  "systemPrompt": "",
+  "tools": [],
+  "history": [
+    { "role": "user", "content": [{ "type": "text", "text": "hi" }], "toolCalls": [] }
+  ],
+  "providerStep": {
+    "parts": [],
+    "finishReason": "completed",
+    "rawFinishReason": "stop"
+  },
+  "expectError": "empty"
+}

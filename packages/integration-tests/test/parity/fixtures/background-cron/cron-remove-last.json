@@ -1,0 +1,11 @@
+{
+  "name": "cron-remove-last",
+  "responses": [],
+  "actions": [
+    { "op": "advance_clock_to", "epoch_ms": 0 },
+    { "op": "cron_add", "cron": "* * * * *", "prompt": "ping", "recurring": true },
+    { "op": "cron_remove_last" },
+    { "op": "advance_clock_to", "epoch_ms": 60000 },
+    { "op": "cron_tick" }
+  ]
+}

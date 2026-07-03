@@ -1,0 +1,125 @@
+{
+  "version": 1,
+  "cases": [
+    {
+      "name": "stat file vs directory",
+      "op": {
+        "type": "stat",
+        "path": "stat_file.txt",
+        "files": { "stat_file.txt": [104, 101, 108, 108, 111] }
+      },
+      "expected": { "result": { "isDir": false, "size": 5 } }
+    },
+    {
+      "name": "stat directory",
+      "op": {
+        "type": "stat",
+        "path": "stat_dir",
+        "files": { "stat_dir/": [] }
+      },
+      "expected": { "result": { "isDir": true, "size": 0 } }
+    },
+    {
+      "name": "stat not found",
+      "op": {
+        "type": "stat",
+        "path": "stat_missing.txt"
+      },
+      "expected": { "error": "not found" }
+    },
+    {
+      "name": "iterdir returns sorted entries",
+      "op": {
+        "type": "iterdir",
+        "path": "dir_iter",
+        "files": { "dir_iter/": [], "dir_iter/a.txt": [], "dir_iter/b.txt": [] }
+      },
+      "expected": { "result": ["dir_iter/a.txt", "dir_iter/b.txt"] }
+    },
+    {
+      "name": "glob star txt",
+      "op": {
+        "type": "glob",
+        "path": "dir_glob_star",
+        "pattern": "*.txt",
+        "caseSensitive": true,
+        "files": { "dir_glob_star/": [], "dir_glob_star/a.txt": [], "dir_glob_star/b.log": [] }
+      },
+      "expected": { "result": ["dir_glob_star/a.txt"] }
+    },
+    {
+      "name": "glob double star recursion",
+      "op": {
+        "type": "glob",
+        "path": "dir_glob_double",
+        "pattern": "**/*.txt",
+        "caseSensitive": true,
+        "files": { "dir_glob_double/": [], "dir_glob_double/a.txt": [], "dir_glob_double/sub/c.txt": [] }
+      },
+      "expected": { "result": ["dir_glob_double/a.txt", "dir_glob_double/sub/c.txt"] }
+    },
+    {
+      "name": "glob char class negation",
+      "op": {
+        "type": "glob",
+        "path": "dir_glob_class",
+        "pattern": "[!a].*",
+        "caseSensitive": true,
+        "files": { "dir_glob_class/": [], "dir_glob_class/a.txt": [], "dir_glob_class/b.log": [] }
+      },
+      "expected": { "result": ["dir_glob_class/b.log"] }
+    },
+    {
+      "name": "glob case insensitive",
+      "op": {
+        "type": "glob",
+        "path": "dir_glob_case",
+        "pattern": "*.TXT",
+        "caseSensitive": false,
+        "files": { "dir_glob_case/": [], "dir_glob_case/a.txt": [] }
+      },
+      "expected": { "result": ["dir_glob_case/a.txt"] }
+    },
+    {
+      "name": "mkdir nested with parents",
+      "op": {
+        "type": "mkdir",
+        "path": "a/b/c",
+        "parents": true,
+        "existOk": false
+      },
+      "expected": { "result": { "created": true } }
+    },
+    {
+      "name": "mkdir existing without existOk fails",
+      "op": {
+        "type": "mkdir",
+        "path": "mkdir_existing",
+        "parents": false,
+        "existOk": false,
+        "files": { "mkdir_existing/": [] }
+      },
+      "expected": { "error": "already exists" }
+    },
+    {
+      "name": "mkdir file collision with existOk fails",
+      "op": {
+        "type": "mkdir",
+        "path": "mkdir_collision.txt",
+        "parents": false,
+        "existOk": true,
+        "files": { "mkdir_collision.txt": [120] }
+      },
+      "expected": { "error": "mkdir_collision.txt already exists but is not a directory" }
+    },
+    {
+      "name": "chdir to file fails",
+      "op": {
+        "type": "chdir",
+        "path": "chdir_collision.txt",
+        "files": { "chdir_collision.txt": [120] }
+      },
+      "expected": { "error": "not a directory" }
+    }
+  ]
+}

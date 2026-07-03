@@ -1,0 +1,70 @@
+{
+  "version": 1,
+  "cases": [
+    {
+      "name": "read_small_file",
+      "op": {
+        "type": "read_text",
+        "path": "hello.txt",
+        "files": { "hello.txt": [104, 101, 108, 108, 111, 10, 119, 111, 114, 108, 100, 10] }
+      },
+      "expected": null
+    },
+    {
+      "name": "read_with_offset",
+      "op": {
+        "type": "read_text",
+        "path": "lines.txt",
+        "line_offset": 2,
+        "n_lines": 2,
+        "files": { "lines.txt": [97, 10, 98, 10, 99, 10] }
+      },
+      "expected": null
+    },
+    {
+      "name": "write_file_overwrite",
+      "op": {
+        "type": "write_file",
+        "path": "out.txt",
+        "content": "new content",
+        "files": { "out.txt": [111, 108, 100] }
+      },
+      "expected": null
+    },
+    {
+      "name": "edit_replace_once",
+      "op": {
+        "type": "edit_file",
+        "path": "edit.txt",
+        "old_string": "foo",
+        "new_string": "bar",
+        "files": { "edit.txt": [104, 101, 108, 108, 111, 32, 102, 111, 111, 32, 119, 111, 114, 108, 100] }
+      },
+      "expected": null
+    },
+    {
+      "name": "glob_txt_files",
+      "op": {
+        "type": "glob_search",
+        "pattern": "*.txt",
+        "path": ".",
+        "include_dirs": false,
+        "files": {
+          "a.txt": [],
+          "b.md": [],
+          "c.txt": []
+        }
+      },
+      "expected": null
+    },
+    {
+      "name": "bash_echo",
+      "op": {
+        "type": "bash_exec",
+        "command": "echo hello world",
+        "files": {}
+      },
+      "expected": null
+    }
+  ]
+}

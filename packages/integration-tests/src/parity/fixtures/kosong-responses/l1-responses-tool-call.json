@@ -1,0 +1,1 @@
+{"systemPrompt":"","history":[{"role":"user","content":[{"type":"text","text":"Read"}],"toolCalls":[]}],"providerOptions":{"model":"gpt-4o-mini"},"response":{"status":200,"stream":false,"body":"{\"id\":\"resp-tool\",\"status\":\"completed\",\"output\":[{\"type\":\"function_call\",\"id\":\"fc-1\",\"call_id\":\"call_1\",\"name\":\"read\",\"arguments\":\"{\\\"a\\\":1}\"}]}"}}

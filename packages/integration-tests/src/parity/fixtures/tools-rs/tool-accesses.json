@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "cases": [
+    {
+      "name": "read read same path does not conflict",
+      "op": {
+        "type": "access_conflict",
+        "left": [{ "kind": "file", "operation": "read", "path": "/repo/src/main.rs" }],
+        "right": [{ "kind": "file", "operation": "read", "path": "/repo/src/main.rs" }]
+      },
+      "expected": { "result": false }
+    },
+    {
+      "name": "write read same path conflicts",
+      "op": {
+        "type": "access_conflict",
+        "left": [{ "kind": "file", "operation": "write", "path": "/repo/src/main.rs" }],
+        "right": [{ "kind": "file", "operation": "read", "path": "/repo/src/main.rs" }]
+      },
+      "expected": { "result": true }
+    },
+    {
+      "name": "recursive write conflicts with descendant read",
+      "op": {
+        "type": "access_conflict",
+        "left": [{ "kind": "file", "operation": "write", "path": "/repo", "recursive": true }],
+        "right": [{ "kind": "file", "operation": "read", "path": "/repo/src/main.rs" }]
+      },
+      "expected": { "result": true }
+    },
+    {
+      "name": "all conflicts with everything",
+      "op": {
+        "type": "access_conflict",
+        "left": [{ "kind": "all" }],
+        "right": [{ "kind": "file", "operation": "read", "path": "/repo/src/main.rs" }]
+      },
+      "expected": { "result": true }
+    }
+  ]
+}

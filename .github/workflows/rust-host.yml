@@ -44,6 +44,80 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: kaos-rs unit tests
+        run: cargo test -p kaos-rs
+        working-directory: rust-ody
+
+      - name: tools-rs unit tests
+        run: cargo test -p tools-rs
+        working-directory: rust-ody
+
+      - name: Build tools-golden binary
+        run: cargo build -p tools-rs --bin tools-golden
+        working-directory: rust-ody
+
+      - name: tools-rs L1 golden parity
+        run: pnpm --filter @odysseythink/integration-tests test:parity:tools-rs
+        env:
+          ODY_TOOLS_RS_GOLDEN_BINARY_PATH: ${{ github.workspace }}/rust-ody/target/debug/tools-golden
+
+      - name: Build kaos-golden binary
+        run: cargo build -p kaos-rs --bin kaos-golden
+        working-directory: rust-ody
+
+      - name: kaos L1 golden parity
+        run: pnpm --filter @odysseythink/integration-tests test:parity:kaos
+        env:
+          ODY_KAOS_GOLDEN_BINARY_PATH: ${{ github.workspace }}/rust-ody/target/debug/kaos-golden
+
+      - name: Build background_cron_l3 binary
+        run: cargo build -p agent-rs --bin background_cron_l3
+        working-directory: rust-ody
+
+      - name: background-cron L3 parity
+        id: background-cron-parity
+        run: pnpm --filter @odysseythink/integration-tests test:parity:background-cron
+        shell: bash
+        env:
+          ODY_BACKGROUND_CRON_BINARY_PATH: ${{ github.workspace }}/rust-ody/target/debug/background_cron_l3
+
+      - name: Run Compaction L1/L3 TS-Rust parity tests
+        run: |
+          cd rust-ody && cargo build --release --bin compaction_l1 --bin turn_l3
+          cd ../packages/integration-tests && pnpm vitest run \
+            test/parity/compaction-l1-parity.test.ts \
+            test/parity/compaction-l3-parity.test.ts --reporter verbose
+
+      - name: Build ody-host (release)
+        run: cargo build --release -p ody-host --bin ody-host
+        working-directory: rust-ody
+
+      - name: ody-host unit tests
+        run: cargo test -p ody-host
+        working-directory: rust-ody
+
+      - name: kaos L2 RPC parity
+        run: pnpm --filter @odysseythink/integration-tests exec vitest run test/parity/kaos/l2-rpc.test.ts
+        shell: bash
+        env:
+          ODY_HOST_BINARY_PATH: ${{ github.workspace }}/rust-ody/target/release/ody-host
+          ODY_HOST_TRANSPORT: stdio
+
+      - name: kaos ops benchmark
+        if: matrix.os == 'ubuntu-24.04'
+        run: |
+          mkdir -p .ody-code/reports
+          node rust-ody/ts/bench-kaos.ts 2000 | tee .ody-code/reports/kaos-bench.log
+        shell: bash
+
+      - name: Upload benchmark log
+        if: matrix.os == 'ubuntu-24.04' && always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: kaos-bench-${{ matrix.target }}-${{ matrix.transport }}
+          path: .ody-code/reports/kaos-bench.log
+          if-no-files-found: ignore
+
       - name: Phase A3 verification
         id: phase-a3
         run: pnpm run verify:phase-a3
@@ -60,11 +134,52 @@ jobs:
           ODY_HOST_BINARY_PATH: ${{ github.workspace }}/rust-ody/target/release/ody-host
           ODY_HOST_TRANSPORT: ${{ matrix.transport }}
 
+      - name: Provider routing benchmark
+        if: matrix.os == 'ubuntu-24.04'
+        run: |
+          mkdir -p .ody-code/reports
+          export ODY_MOCK_RESPONSE="$(node -e 'console.log(Array.from({length:50},(_,i)=>"tok"+i).join(" "))')"
+          pnpm --filter @odysseythink/integration-tests exec vitest run test/parity/benchmark.test.ts | tee .ody-code/reports/provider-bench.log
+        shell: bash
+        env:
+          ODY_HOST_BINARY_PATH: ${{ github.workspace }}/rust-ody/target/release/ody-host
+
+      - name: Host benchmark
+        if: matrix.os == 'ubuntu-24.04'
+        run: |
+          mkdir -p .ody-code/reports
+          pnpm tsx rust-ody/ts/bench-host.ts ${{ github.workspace }}/rust-ody/target/release/ody-host | tee .ody-code/reports/host-bench.log
+        shell: bash
+
+      - name: Upload host benchmark log
+        if: matrix.os == 'ubuntu-24.04' && always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: host-bench-${{ matrix.target }}-${{ matrix.transport }}
+          path: .ody-code/reports/host-bench.log
+          if-no-files-found: ignore
+
+      - name: Upload provider benchmark log
+        if: matrix.os == 'ubuntu-24.04' && always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: provider-bench-${{ matrix.target }}-${{ matrix.transport }}
+          path: .ody-code/reports/provider-bench.log
+          if-no-files-found: ignore
+
       - name: Upload parity diff artifacts
         if: failure() && steps.parity-smoke.outcome == 'failure'
         uses: actions/upload-artifact@v4
         with:
           name: parity-diffs-${{ matrix.target }}-${{ matrix.transport }}
+          path: .ody-code/reports/parity/**
+          if-no-files-found: ignore
+
+      - name: Upload background-cron parity diff artifacts
+        if: failure() && steps.background-cron-parity.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: background-cron-parity-diffs-${{ matrix.target }}-${{ matrix.transport }}
           path: .ody-code/reports/parity/**
           if-no-files-found: ignore
 

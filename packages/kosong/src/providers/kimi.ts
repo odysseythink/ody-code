@@ -180,10 +180,12 @@ function convertMessage(message: Message): OpenAIMessage {
 }
 function convertTool(tool: Tool): OpenAIToolParam {
   if (tool.name.startsWith('$')) {
-    // Kimi builtin functions start with `$`
+    // Kimi builtin functions start with `$`; the `$` is a kosong marker and
+    // must be stripped before sending to Moonshot's `builtin_function` wire
+    // format.
     return {
       type: 'builtin_function',
-      function: { name: tool.name },
+      function: { name: tool.name.slice(1) },
     };
   }
   const converted = toolToOpenAI(tool);

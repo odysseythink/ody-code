@@ -18,6 +18,16 @@ import {
   fileEditMockLlm,
   multiTurnToolScenario,
   multiTurnToolMockLlm,
+  hostConfigScenario,
+  hostConfigMockLlm,
+  sessionModeHandoffScenario,
+  sessionModeHandoffMockLlm,
+  backgroundCronScenario,
+  backgroundCronMockLlm,
+  webSearchScenario,
+  webSearchMockLlm,
+  bashToolCallScenario,
+  bashToolCallMockLlm,
 } from '../../src/parity/scenarios';
 import { resolveRustBinaryPath } from '../../src/parity/rust-binary';
 
@@ -43,6 +53,13 @@ const rustTransport = (homeDir: string): 'stdio' | { socketPath: string } => {
   return 'stdio';
 };
 
+const mockSearcher = {
+  name: 'mock',
+  async search(query: string) {
+    return [{ title: `Mock result for ${query}`, url: 'https://example.test/1', snippet: 'mock snippet' }];
+  },
+};
+
 const cases = [
   { name: sessionLifecycleScenario.name, scenario: sessionLifecycleScenario, mockLlm: sessionLifecycleMockLlm },
   { name: setModelScenario.name, scenario: setModelScenario, mockLlm: setModelMockLlm },
@@ -50,6 +67,11 @@ const cases = [
   { name: helloWorldScenario.name, scenario: helloWorldScenario, mockLlm: helloWorldMockLlm },
   { name: fileEditScenario.name, scenario: fileEditScenario, mockLlm: fileEditMockLlm },
   { name: multiTurnToolScenario.name, scenario: multiTurnToolScenario, mockLlm: multiTurnToolMockLlm },
+  { name: hostConfigScenario.name, scenario: hostConfigScenario, mockLlm: hostConfigMockLlm },
+  { name: sessionModeHandoffScenario.name, scenario: sessionModeHandoffScenario, mockLlm: sessionModeHandoffMockLlm },
+  { name: backgroundCronScenario.name, scenario: backgroundCronScenario, mockLlm: backgroundCronMockLlm },
+  { name: webSearchScenario.name, scenario: webSearchScenario, mockLlm: webSearchMockLlm },
+  { name: bashToolCallScenario.name, scenario: bashToolCallScenario, mockLlm: bashToolCallMockLlm },
 ];
 
 describe.skipIf(binaryPath === null)('TS-vs-Rust parity', () => {
@@ -59,7 +81,12 @@ describe.skipIf(binaryPath === null)('TS-vs-Rust parity', () => {
       const result = await runParityWithGaps({
         scenario,
         mockLlm,
-        makeA: (homeDir) => makeTsBackend({ homeDir, mockLlm }),
+        makeA: (homeDir) =>
+          makeTsBackend({
+            homeDir,
+            mockLlm,
+            runtime: scenario.name === 'web-search' ? { webSearcher: mockSearcher } : undefined,
+          }),
         makeB: (homeDir) =>
           makeRustBackend({
             homeDir,

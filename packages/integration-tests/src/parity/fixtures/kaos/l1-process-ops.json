@@ -1,0 +1,83 @@
+{
+  "version": 1,
+  "cases": [
+    {
+      "name": "exec echo captures stdout",
+      "op": {
+        "type": "exec",
+        "command": "/bin/echo",
+        "args": ["-n", "hello"]
+      },
+      "expected": {
+        "result": {
+          "stdout": [104, 101, 108, 108, 111],
+          "stderr": [],
+          "exitCode": 0
+        }
+      }
+    },
+    {
+      "name": "exec exit code is propagated",
+      "op": {
+        "type": "exec",
+        "command": "/bin/sh",
+        "args": ["-c", "exit 7"]
+      },
+      "expected": {
+        "result": {
+          "stdout": [],
+          "stderr": [],
+          "exitCode": 7
+        }
+      }
+    },
+    {
+      "name": "exec with env variable",
+      "op": {
+        "type": "exec",
+        "command": "/bin/sh",
+        "args": ["-c", "printf '%s' \"$KAOS_VAR\""],
+        "env": { "KAOS_VAR": "golden" }
+      },
+      "expected": {
+        "result": {
+          "stdout": [103, 111, 108, 100, 101, 110],
+          "stderr": [],
+          "exitCode": 0
+        }
+      }
+    },
+    {
+      "name": "exec with stdin",
+      "op": {
+        "type": "exec",
+        "command": "/bin/cat",
+        "args": [],
+        "stdin": [104, 101, 108, 108, 111]
+      },
+      "expected": {
+        "result": {
+          "stdout": [104, 101, 108, 108, 111],
+          "stderr": [],
+          "exitCode": 0
+        }
+      }
+    },
+    {
+      "name": "kill tree terminates grandchild",
+      "op": {
+        "type": "kill_tree",
+        "command": "/bin/sh",
+        "args": [
+          "-c",
+          "echo $$ >> pids.txt; sleep 60 & echo $! >> pids.txt; wait"
+        ],
+        "files": { "pids.txt": [] },
+        "sleepMs": 300
+      },
+      "expected": {
+        "result": { "killed": true }
+      }
+    }
+  ]
+}

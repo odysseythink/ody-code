@@ -6,7 +6,10 @@
   "license": "MIT",
   "type": "module",
   "imports": {
-    "#*": ["./src/*.ts", "./src/*/index.ts"]
+    "#*": [
+      "./src/*.ts",
+      "./src/*/index.ts"
+    ]
   },
   "exports": {
     ".": {
@@ -17,12 +20,24 @@
   "scripts": {
     "test": "vitest run",
     "test:parity": "vitest run test/parity",
+    "test:parity:kaos": "vitest run test/parity/kaos",
+    "test:parity:tools-rs": "vitest run test/parity/tools-rs/l1-golden.test.ts",
+    "test:parity:kosong:openai": "vitest run test/parity/kosong/l1-openai-golden.test.ts",
+    "test:parity:kosong:responses": "vitest run test/parity/kosong/l1-responses-golden.test.ts",
+    "test:parity:kosong:kimi": "vitest run test/parity/kosong/l1-kimi-golden.test.ts test/parity/kosong/kimi-golden-runner.test.ts",
+    "test:parity:kosong:glm": "vitest run test/parity/kosong/l1-glm-golden.test.ts test/parity/kosong/glm-golden-runner.test.ts",
+    "test:parity:kosong:deepseek": "vitest run test/parity/kosong/l1-deepseek-golden.test.ts test/parity/kosong/deepseek-golden-runner.test.ts",
+    "test:parity:loop": "vitest run test/parity/loop-l3.test.ts",
+    "test:parity:turn": "vitest run test/parity/turn-l3.test.ts test/parity/turn-fixtures-valid.test.ts",
+    "test:parity:turn-l3": "vitest run test/parity/turn-l3-parity.test.ts",
     "test:parity:ts-vs-ts": "vitest run test/parity/ts-vs-ts.test.ts",
     "test:parity:ts-vs-rust": "vitest run test/parity/ts-vs-rust.test.ts",
+    "test:parity:background-cron": "vitest run test/parity/background-cron-l3-parity.test.ts test/parity/background-cron-normalize.test.ts test/parity/background-cron-ts-vs-ts.test.ts test/parity/background-cron-cross.test.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "clean": "rm -rf dist"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "@odysseythink/agent-core": "workspace:^",
     "@odysseythink/agent-core-shared": "workspace:^",
     "@odysseythink/code-review": "workspace:^",
@@ -31,8 +46,10 @@
     "@odysseythink/kosong": "workspace:^",
     "@odysseythink/mcp-host": "workspace:^",
     "@odysseythink/ody-code-sdk": "workspace:^",
-    "@modelcontextprotocol/sdk": "^1.29.0",
     "pathe": "^2.0.3",
     "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@anthropic-ai/sdk": "^0.95.2"
   }
 }

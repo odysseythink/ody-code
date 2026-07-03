@@ -1,0 +1,72 @@
+{
+  "version": 1,
+  "cases": [
+    {
+      "name": "detect target darwin arm64",
+      "op": {
+        "type": "detect_target",
+        "arch": "aarch64",
+        "platform": "darwin"
+      },
+      "expected": {
+        "result": "aarch64-apple-darwin"
+      }
+    },
+    {
+      "name": "detect target linux x64",
+      "op": {
+        "type": "detect_target",
+        "arch": "x86_64",
+        "platform": "linux"
+      },
+      "expected": {
+        "result": "x86_64-unknown-linux-musl"
+      }
+    },
+    {
+      "name": "detect target windows x64",
+      "op": {
+        "type": "detect_target",
+        "arch": "x86_64",
+        "platform": "windows"
+      },
+      "expected": {
+        "result": "x86_64-pc-windows-msvc"
+      }
+    },
+    {
+      "name": "find existing rg in PATH",
+      "op": {
+        "type": "find_existing_rg",
+        "pathEnv": ["/tmp/fake-bin"],
+        "shareDir": "/tmp/fake-share",
+        "files": {
+          "/tmp/fake-bin/rg": [35, 33, 47, 98, 105, 110, 47, 98, 97, 115, 104, 10]
+        }
+      },
+      "expected": {
+        "result": {
+          "path": "/tmp/fake-bin/rg",
+          "source": "system-path"
+        }
+      }
+    },
+    {
+      "name": "find existing rg in share bin cached",
+      "op": {
+        "type": "find_existing_rg",
+        "pathEnv": [],
+        "shareDir": "/tmp/fake-share",
+        "files": {
+          "/tmp/fake-share/bin/rg": [35, 33, 47, 98, 105, 110, 47, 98, 97, 115, 104, 10]
+        }
+      },
+      "expected": {
+        "result": {
+          "path": "/tmp/fake-share/bin/rg",
+          "source": "share-bin-cached"
+        }
+      }
+    }
+  ]
+}

@@ -14,6 +14,7 @@ function fakeBackend(homeDir: string, kind: 'ts' | 'rust'): ParityBackend {
         return () => {};
       },
     } as any,
+    envCall: async () => ({}),
     close: async () => {},
   };
 }

@@ -374,6 +374,13 @@ mod glob_tests {
         let v = value.as_bytes();
         let p = pattern.as_bytes();
         let o = opts.as_bytes();
-        glob_match(v.as_ptr(), v.len(), p.as_ptr(), p.len(), o.as_ptr(), o.len())
+        glob_match(
+            v.as_ptr(),
+            v.len(),
+            p.as_ptr(),
+            p.len(),
+            o.as_ptr(),
+            o.len(),
+        )
     }
 }

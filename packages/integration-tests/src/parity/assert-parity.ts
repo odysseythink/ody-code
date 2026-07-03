@@ -21,6 +21,10 @@ function collectDiffs(
 ): void {
   if (Object.is(a, b)) return;
 
+  // Treat null/undefined as equivalent at leaf level.
+  if (a === undefined && b === null) return;
+  if (a === null && b === undefined) return;
+
   const typeA = typeof a;
   const typeB = typeof b;
 

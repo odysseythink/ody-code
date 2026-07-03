@@ -48,7 +48,9 @@ async function collectEntries(
   }
   all.sort((a, b) => {
     if (a.isDir !== b.isDir) return a.isDir ? -1 : 1;
-    return a.name.localeCompare(b.name);
+    const na = a.name;
+    const nb = b.name;
+    return na < nb ? -1 : na > nb ? 1 : 0;
   });
   return { entries: all.slice(0, maxWidth), total: all.length, readable: true };
 }

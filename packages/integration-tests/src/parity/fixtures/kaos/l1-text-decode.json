@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "cases": [
+    {
+      "name": "strict rejects invalid utf8",
+      "op": { "type": "decode", "encoding": "utf-8", "mode": "strict", "bytes": [104,101,108,108,111,32,255,32,119,111,114,108,100] },
+      "expected": { "error": "decode error" }
+    },
+    {
+      "name": "replace substitutes invalid utf8",
+      "op": { "type": "decode", "encoding": "utf-8", "mode": "replace", "bytes": [104,101,108,108,111,32,255,32,119,111,114,108,100] },
+      "expected": { "result": "hello \uFFFD world" }
+    },
+    {
+      "name": "ignore drops invalid utf8 but preserves valid replacement char",
+      "op": { "type": "decode", "encoding": "utf-8", "mode": "ignore", "bytes": [255,239,191,189,32,104,101,108,108,111] },
+      "expected": { "result": "\uFFFD hello" }
+    },
+    {
+      "name": "replace substitutes invalid utf16le surrogate",
+      "op": { "type": "decode", "encoding": "utf-16le", "mode": "replace", "bytes": [0,216,65,0] },
+      "expected": { "result": "\uFFFDA" }
+    }
+  ]
+}

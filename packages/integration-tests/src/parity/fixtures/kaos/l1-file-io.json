@@ -1,0 +1,142 @@
+{
+  "version": 1,
+  "cases": [
+    {
+      "name": "readBytes reads entire file",
+      "op": {
+        "type": "read_bytes",
+        "path": "hello.txt",
+        "files": { "hello.txt": [104, 101, 108, 108, 111] }
+      },
+      "expected": { "result": [104, 101, 108, 108, 111] }
+    },
+    {
+      "name": "readBytes with n limit",
+      "op": {
+        "type": "read_bytes",
+        "path": "hello.txt",
+        "n": 3,
+        "files": { "hello.txt": [104, 101, 108, 108, 111] }
+      },
+      "expected": { "result": [104, 101, 108] }
+    },
+    {
+      "name": "readBytes partial exceeds file size",
+      "op": {
+        "type": "read_bytes",
+        "path": "hi.txt",
+        "n": 100,
+        "files": { "hi.txt": [104, 105] }
+      },
+      "expected": { "result": [104, 105] }
+    },
+    {
+      "name": "readText utf8 strict success",
+      "op": {
+        "type": "read_text",
+        "path": "hello.txt",
+        "encoding": "utf-8",
+        "mode": "strict",
+        "files": { "hello.txt": [104, 101, 108, 108, 111] }
+      },
+      "expected": { "result": "hello" }
+    },
+    {
+      "name": "readText utf8 replace substitutes U+FFFD",
+      "op": {
+        "type": "read_text",
+        "path": "bad.txt",
+        "encoding": "utf-8",
+        "mode": "replace",
+        "files": { "bad.txt": [104, 101, 108, 108, 111, 32, 255, 32, 119, 111, 114, 108, 100] }
+      },
+      "expected": { "result": "hello \uFFFD world" }
+    },
+    {
+      "name": "readText utf8 ignore drops invalid preserves valid U+FFFD",
+      "op": {
+        "type": "read_text",
+        "path": "mixed.txt",
+        "encoding": "utf-8",
+        "mode": "ignore",
+        "files": { "mixed.txt": [255, 239, 191, 189, 32, 104, 101, 108, 108, 111] }
+      },
+      "expected": { "result": "\uFFFD hello" }
+    },
+    {
+      "name": "readLines with trailing newline",
+      "op": {
+        "type": "read_lines",
+        "path": "lines-trailing.txt",
+        "encoding": "utf-8",
+        "mode": "strict",
+        "files": { "lines-trailing.txt": [97, 10, 98, 10] }
+      },
+      "expected": { "result": ["a\n", "b\n"] }
+    },
+    {
+      "name": "readLines without trailing newline",
+      "op": {
+        "type": "read_lines",
+        "path": "lines-no-trailing.txt",
+        "encoding": "utf-8",
+        "mode": "strict",
+        "files": { "lines-no-trailing.txt": [97, 10, 98] }
+      },
+      "expected": { "result": ["a\n", "b"] }
+    },
+    {
+      "name": "readLines single line no newline",
+      "op": {
+        "type": "read_lines",
+        "path": "single.txt",
+        "encoding": "utf-8",
+        "mode": "strict",
+        "files": { "single.txt": [104, 101, 108, 108, 111] }
+      },
+      "expected": { "result": ["hello"] }
+    },
+    {
+      "name": "writeBytes writes raw bytes",
+      "op": {
+        "type": "write_bytes",
+        "path": "out.bin",
+        "data": [104, 101, 108, 108, 111]
+      },
+      "expected": { "result": { "written": 5, "content": [104, 101, 108, 108, 111] } }
+    },
+    {
+      "name": "writeText mode w overwrites",
+      "op": {
+        "type": "write_text",
+        "path": "out.txt",
+        "data": "hello world",
+        "writeMode": "w",
+        "encoding": "utf-8"
+      },
+      "expected": { "result": { "written": 11, "content": [104, 101, 108, 108, 111, 32, 119, 111, 114, 108, 100] } }
+    },
+    {
+      "name": "writeText mode a appends",
+      "op": {
+        "type": "write_text",
+        "path": "out.txt",
+        "data": " world",
+        "writeMode": "a",
+        "encoding": "utf-8"
+      },
+      "expected": { "result": { "written": 6, "content": [104, 101, 108, 108, 111, 32, 119, 111, 114, 108, 100, 32, 119, 111, 114, 108, 100] } }
+    },
+    {
+      "name": "writeText utf-16le encodes",
+      "op": {
+        "type": "write_text",
+        "path": "out-utf16le.txt",
+        "data": "hello",
+        "writeMode": "w",
+        "encoding": "utf-16le"
+      },
+      "expected": { "result": { "written": 5, "content": [104, 0, 101, 0, 108, 0, 108, 0, 111, 0] } }
+    }
+  ]
+}

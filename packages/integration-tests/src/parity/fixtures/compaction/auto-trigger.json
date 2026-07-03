@@ -1,0 +1,16 @@
+{
+  "name": "auto-trigger",
+  "history": [
+    {"role":"user","content":[{"type":"text","text":"u1"}],"origin":{"kind":"user"},"toolCalls":[],"toolCallId":null},
+    {"role":"assistant","content":[{"type":"text","text":"a1 with enough tokens to trigger compaction at low max size"}],"origin":null,"toolCalls":[],"toolCallId":null},
+    {"role":"user","content":[{"type":"text","text":"u2"}],"origin":{"kind":"user"},"toolCalls":[],"toolCallId":null},
+    {"role":"assistant","content":[{"type":"text","text":"a2"}],"origin":null,"toolCalls":[],"toolCallId":null}
+  ],
+  "strategy": {"max_size": 10},
+  "begin": {"source": "auto", "instruction": null},
+  "generate_one_off_result": {
+    "text": "auto summary",
+    "finishReason": "completed",
+    "usage": {"inputOther":5,"output":3,"inputCacheRead":0,"inputCacheCreation":0}
+  }
+}

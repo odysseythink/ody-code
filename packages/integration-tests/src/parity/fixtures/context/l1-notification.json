@@ -1,0 +1,14 @@
+{
+  "kind": "notification",
+  "data": {
+    "id": "task-1",
+    "category": "task",
+    "type": "terminated",
+    "source_kind": "background_task",
+    "source_id": "bg-1",
+    "title": "Task done",
+    "severity": "info",
+    "body": "Body line",
+    "tail_output": "line1\nline2\n...\nline21"
+  }
+}

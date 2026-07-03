@@ -43,9 +43,13 @@ pub struct HandshakeMessage {
 }
 
 pub fn encode_frame(msg: &WireMessage, framing: Framing) -> Result<Vec<u8>, TransportError> {
-    let payload = serde_json::to_vec(msg).map_err(|e| TransportError::InvalidFraming(e.to_string()))?;
+    let payload =
+        serde_json::to_vec(msg).map_err(|e| TransportError::InvalidFraming(e.to_string()))?;
     if payload.len() > MAX_FRAME_SIZE {
-        return Err(TransportError::InvalidFraming(format!("frame too large: {}", payload.len())));
+        return Err(TransportError::InvalidFraming(format!(
+            "frame too large: {}",
+            payload.len()
+        )));
     }
     match framing {
         Framing::LengthPrefixed => {
@@ -62,40 +66,58 @@ pub fn encode_frame(msg: &WireMessage, framing: Framing) -> Result<Vec<u8>, Tran
     }
 }
 
-pub fn decode_frame(buf: &[u8], framing: Framing, offset: &mut usize) -> Result<WireMessage, TransportError> {
+pub fn decode_frame(
+    buf: &[u8],
+    framing: Framing,
+    offset: &mut usize,
+) -> Result<WireMessage, TransportError> {
     match framing {
         Framing::LengthPrefixed => {
             if buf.len() < *offset + 4 {
-                return Err(TransportError::InvalidFraming("incomplete length header".to_string()));
+                return Err(TransportError::InvalidFraming(
+                    "incomplete length header".to_string(),
+                ));
             }
             let len = u32::from_le_bytes([
-                buf[*offset], buf[*offset + 1], buf[*offset + 2], buf[*offset + 3],
+                buf[*offset],
+                buf[*offset + 1],
+                buf[*offset + 2],
+                buf[*offset + 3],
             ]) as usize;
             if len > MAX_FRAME_SIZE {
-                return Err(TransportError::InvalidFraming(format!("frame too large: {len}")));
+                return Err(TransportError::InvalidFraming(format!(
+                    "frame too large: {len}"
+                )));
             }
             if buf.len() < *offset + 4 + len {
-                return Err(TransportError::InvalidFraming("incomplete payload".to_string()));
+                return Err(TransportError::InvalidFraming(
+                    "incomplete payload".to_string(),
+                ));
             }
             *offset += 4;
             let payload = &buf[*offset..*offset + len];
             *offset += len;
-            serde_json::from_slice(payload).map_err(|e| TransportError::InvalidFraming(e.to_string()))
+            serde_json::from_slice(payload)
+                .map_err(|e| TransportError::InvalidFraming(e.to_string()))
         }
         Framing::NdJson => {
             let start = *offset;
-            let end = buf[start..].iter().position(|&b| b == b'\n')
+            let end = buf[start..]
+                .iter()
+                .position(|&b| b == b'\n')
                 .map(|i| start + i)
                 .ok_or_else(|| TransportError::InvalidFraming("missing newline".to_string()))?;
             let payload = &buf[start..end];
             *offset = end + 1;
-            serde_json::from_slice(payload).map_err(|e| TransportError::InvalidFraming(e.to_string()))
+            serde_json::from_slice(payload)
+                .map_err(|e| TransportError::InvalidFraming(e.to_string()))
         }
     }
 }
 
 pub fn encode_handshake(msg: &HandshakeMessage) -> Result<Vec<u8>, TransportError> {
-    let mut payload = serde_json::to_vec(msg).map_err(|e| TransportError::InvalidFraming(e.to_string()))?;
+    let mut payload =
+        serde_json::to_vec(msg).map_err(|e| TransportError::InvalidFraming(e.to_string()))?;
     payload.push(b'\n');
     Ok(payload)
 }
@@ -115,16 +137,24 @@ where
     use serde::de::Error;
     let value = serde_json::Value::deserialize(deserializer)?;
     match value {
-        serde_json::Value::Array(arr) => {
-            arr.into_iter()
-                .map(|v| v.as_u64().map(|n| n as u8).ok_or_else(|| D::Error::custom("byte array contains non-u8")))
-                .collect()
-        }
+        serde_json::Value::Array(arr) => arr
+            .into_iter()
+            .map(|v| {
+                v.as_u64()
+                    .map(|n| n as u8)
+                    .ok_or_else(|| D::Error::custom("byte array contains non-u8"))
+            })
+            .collect(),
         serde_json::Value::Object(obj) => {
             let mut pairs: Vec<(usize, u8)> = Vec::with_capacity(obj.len());
             for (k, v) in obj.into_iter() {
-                let idx: usize = k.parse().map_err(|_| D::Error::custom("non-numeric byte object key"))?;
-                let byte = v.as_u64().map(|n| n as u8).ok_or_else(|| D::Error::custom("byte object value not u8"))?;
+                let idx: usize = k
+                    .parse()
+                    .map_err(|_| D::Error::custom("non-numeric byte object key"))?;
+                let byte = v
+                    .as_u64()
+                    .map(|n| n as u8)
+                    .ok_or_else(|| D::Error::custom("byte object value not u8"))?;
                 pairs.push((idx, byte));
             }
             pairs.sort_by_key(|(i, _)| *i);
@@ -136,7 +166,9 @@ where
             Ok(bytes)
         }
         serde_json::Value::Null => Ok(Vec::new()),
-        _ => Err(D::Error::custom("bytes field must be array or numeric object")),
+        _ => Err(D::Error::custom(
+            "bytes field must be array or numeric object",
+        )),
     }
 }
 
@@ -149,16 +181,26 @@ where
     match value {
         serde_json::Value::Null => Ok(None),
         serde_json::Value::Array(arr) => {
-            let bytes: Vec<u8> = arr.into_iter()
-                .map(|v| v.as_u64().map(|n| n as u8).ok_or_else(|| D::Error::custom("byte array contains non-u8")))
+            let bytes: Vec<u8> = arr
+                .into_iter()
+                .map(|v| {
+                    v.as_u64()
+                        .map(|n| n as u8)
+                        .ok_or_else(|| D::Error::custom("byte array contains non-u8"))
+                })
                 .collect::<Result<Vec<u8>, _>>()?;
             Ok(Some(bytes))
         }
         serde_json::Value::Object(obj) => {
             let mut pairs: Vec<(usize, u8)> = Vec::with_capacity(obj.len());
             for (k, v) in obj.into_iter() {
-                let idx: usize = k.parse().map_err(|_| D::Error::custom("non-numeric byte object key"))?;
-                let byte = v.as_u64().map(|n| n as u8).ok_or_else(|| D::Error::custom("byte object value not u8"))?;
+                let idx: usize = k
+                    .parse()
+                    .map_err(|_| D::Error::custom("non-numeric byte object key"))?;
+                let byte = v
+                    .as_u64()
+                    .map(|n| n as u8)
+                    .ok_or_else(|| D::Error::custom("byte object value not u8"))?;
                 pairs.push((idx, byte));
             }
             pairs.sort_by_key(|(i, _)| *i);
@@ -169,7 +211,9 @@ where
             }
             Ok(Some(bytes))
         }
-        _ => Err(D::Error::custom("bytes field must be array, numeric object, or null")),
+        _ => Err(D::Error::custom(
+            "bytes field must be array, numeric object, or null",
+        )),
     }
 }
 
@@ -208,7 +252,11 @@ mod tests {
         let mut offset = 0usize;
         let decoded = decode_frame(&frame, Framing::NdJson, &mut offset).unwrap();
         match decoded {
-            WireMessage::Response { req_id, bytes, error } => {
+            WireMessage::Response {
+                req_id,
+                bytes,
+                error,
+            } => {
                 assert_eq!(req_id, "r2");
                 assert_eq!(bytes.unwrap(), b"world");
                 assert!(error.is_none());
@@ -220,7 +268,10 @@ mod tests {
     #[test]
     fn decodes_bytes_as_numeric_object_like_ts_uint8array() {
         // First verify what serde serializes variant fields as
-        let debug_msg = WireMessage::Request { req_id: "r3".to_string(), bytes: vec![1, 2, 3] };
+        let debug_msg = WireMessage::Request {
+            req_id: "r3".to_string(),
+            bytes: vec![1, 2, 3],
+        };
         let debug_json = serde_json::to_string(&debug_msg).unwrap();
         // Use the same field naming that serde actually produces
         let payload = format!("{debug_json}\n");
@@ -244,7 +295,10 @@ mod tests {
 
     #[test]
     fn handshake_roundtrip() {
-        let msg = HandshakeMessage { framing: Framing::LengthPrefixed, token: Some("tok".to_string()) };
+        let msg = HandshakeMessage {
+            framing: Framing::LengthPrefixed,
+            token: Some("tok".to_string()),
+        };
         let line = encode_handshake(&msg).unwrap();
         assert!(line.ends_with(b"\n"));
         let decoded = decode_handshake(&line).unwrap();

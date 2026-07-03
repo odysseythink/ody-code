@@ -1,0 +1,75 @@
+[package]
+name = "agent-rs"
+version = "0.1.0"
+edition = "2021"
+description = "Rust implementation of the Agent orchestration core"
+license = "MIT"
+
+[dependencies]
+anyhow = "1"
+async-stream = "0.3"
+async-trait = "0.1"
+base64 = "0.22"
+futures-util = { version = "0.3", default-features = false, features = ["std"] }
+hex = "0.4"
+indexmap = "2"
+jsonschema = "0.29"
+kosong-rs = { path = "../kosong-rs" }
+regex = "1"
+serde = { workspace = true }
+serde_json = { workspace = true, features = ["preserve_order"] }
+sha2 = "0.10"
+chrono = { version = "0.4", features = ["serde"] }
+rand = "0.8"
+kaos-rs = { path = "../kaos-rs" }
+tools-rs = { path = "../tools-rs" }
+thiserror = "1"
+tokio = { workspace = true }
+tracing = "0.1"
+uuid = { version = "1", features = ["v4"] }
+globset = { version = "0.4", default-features = false }
+lazy_static = "1"
+
+[dev-dependencies]
+tempfile = "3"
+tokio-test = "0.4"
+
+[[bin]]
+name = "generate-fixtures"
+path = "src/bin/generate_fixtures.rs"
+
+[[bin]]
+name = "generate-config-fixture"
+path = "src/bin/generate_config_fixture.rs"
+
+[[bin]]
+name = "generate-usage-fixture"
+path = "src/bin/generate_usage_fixture.rs"
+
+[[bin]]
+name = "generate-tool-fixture"
+path = "src/bin/generate_tool_fixture.rs"
+
+[[bin]]
+name = "context-golden"
+path = "src/bin/context_golden.rs"
+
+[[bin]]
+name = "generate-permission-fixture"
+path = "src/bin/generate_permission_fixture.rs"
+
+[[bin]]
+name = "turn_l3"
+path = "src/bin/turn_l3.rs"
+
+[[bin]]
+name = "session_mode_l3"
+path = "src/bin/session_mode_l3.rs"
+
+[[bin]]
+name = "compaction_l1"
+path = "src/bin/compaction_l1.rs"
+
+[[bin]]
+name = "background_cron_l3"
+path = "src/bin/background_cron_l3.rs"

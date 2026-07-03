@@ -1,0 +1,15 @@
+{
+  "name": "compaction-events",
+  "loop_control": {"max_steps": 3},
+  "actions": [
+    {"op":"prompt","input":[{"type":"text","text":"compact"}],"origin":{"kind":"user"}}
+  ],
+  "responses": [
+    {
+      "toolCalls":[],
+      "finishReason":"completed",
+      "usage":{"inputOther":100,"output":10,"inputCacheRead":0,"inputCacheCreation":0}
+    }
+  ],
+  "tools": []
+}

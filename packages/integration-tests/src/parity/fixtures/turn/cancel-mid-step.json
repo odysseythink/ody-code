@@ -1,0 +1,17 @@
+{
+  "name": "cancel-mid-step",
+  "actions": [
+    { "op": "prompt", "input": [{ "type": "text", "text": "Long request" }], "origin": { "kind": "user" } },
+    { "op": "cancel", "reason": "user cancellation" },
+    { "op": "wait" }
+  ],
+  "responses": [
+    {
+      "toolCalls": [],
+      "finishReason": "completed",
+      "rawFinishReason": "stop",
+      "usage": { "inputOther": 5, "output": 3, "inputCacheRead": 0, "inputCacheCreation": 0 }
+    }
+  ],
+  "tools": []
+}

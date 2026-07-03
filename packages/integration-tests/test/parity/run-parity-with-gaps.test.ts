@@ -14,6 +14,7 @@ function fakeBackend(homeDir: string, kind: 'ts' | 'rust'): ParityBackend & { em
         return () => listeners.delete(listener);
       },
     } as any,
+    envCall: async () => ({}),
     close: async () => {},
     emitEvent(event: unknown) {
       for (const listener of listeners) listener(event);

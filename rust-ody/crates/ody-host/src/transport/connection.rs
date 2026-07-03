@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use tokio::io::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt};
-use tokio::sync::{Mutex, mpsc, oneshot};
+use tokio::sync::{mpsc, oneshot, Mutex};
 
 use crate::error::{RpcError, TransportError};
 use crate::events::{AgentEvent, EventSink};
@@ -11,8 +11,14 @@ use crate::transport::ByteDispatch;
 
 #[derive(Debug)]
 enum OutboundItem {
-    Response { req_id: String, result: Result<Vec<u8>, RpcError> },
-    Request { req_id: String, payload: Vec<u8> },
+    Response {
+        req_id: String,
+        result: Result<Vec<u8>, RpcError>,
+    },
+    Request {
+        req_id: String,
+        payload: Vec<u8>,
+    },
 }
 
 #[derive(Clone)]
@@ -38,11 +44,7 @@ impl ConnectionHandle {
             .map_err(|_| TransportError::Closed)
     }
 
-    pub async fn send_request(
-        &self,
-        _method: &str,
-        payload: Vec<u8>,
-    ) -> Result<Vec<u8>, RpcError> {
+    pub async fn send_request(&self, _method: &str, payload: Vec<u8>) -> Result<Vec<u8>, RpcError> {
         let req_id = uuid::Uuid::new_v4().to_string();
         let (tx, rx) = oneshot::channel();
         self.inner.pending.lock().await.insert(req_id.clone(), tx);
@@ -50,9 +52,12 @@ impl ConnectionHandle {
             .outbound_tx
             .send(OutboundItem::Request { req_id, payload })
             .await
-            .map_err(|_| RpcError::Transport { message: "transport closed".to_string() })?;
-        rx.await
-            .map_err(|_| RpcError::Transport { message: "transport closed".to_string() })?
+            .map_err(|_| RpcError::Transport {
+                message: "transport closed".to_string(),
+            })?;
+        rx.await.map_err(|_| RpcError::Transport {
+            message: "transport closed".to_string(),
+        })?
     }
 }
 
@@ -75,7 +80,8 @@ impl EventSink for ConnectionHandle {
 }
 
 fn wrap_rpc_request(method: &str, payload: Vec<u8>) -> Vec<u8> {
-    let payload_value: serde_json::Value = serde_json::from_slice(&payload).unwrap_or(serde_json::Value::Null);
+    let payload_value: serde_json::Value =
+        serde_json::from_slice(&payload).unwrap_or(serde_json::Value::Null);
     let wrapper = serde_json::json!({
         "method": method,
         "args": [payload_value],
@@ -92,7 +98,10 @@ impl StreamConnection {
     pub fn new() -> (Self, ConnectionHandle) {
         let (outbound_tx, outbound_rx) = mpsc::channel::<OutboundItem>(128);
         let pending = Arc::new(Mutex::new(HashMap::new()));
-        let inner = Arc::new(ConnectionInner { outbound_tx, pending });
+        let inner = Arc::new(ConnectionInner {
+            outbound_tx,
+            pending,
+        });
         let conn = Self {
             inner: Arc::clone(&inner),
             outbound_rx: Some(outbound_rx),
@@ -192,7 +201,11 @@ where
                             .await;
                     });
                 }
-                WireMessage::Response { req_id, bytes, error } => {
+                WireMessage::Response {
+                    req_id,
+                    bytes,
+                    error,
+                } => {
                     let result = match error {
                         Some(e) => Err(RpcError::Handler { message: e.message }),
                         None => Ok(bytes.unwrap_or_default()),
@@ -216,7 +229,10 @@ struct FrameDecoder {
 
 impl FrameDecoder {
     fn new(framing: Framing) -> Self {
-        Self { buf: Vec::new(), framing }
+        Self {
+            buf: Vec::new(),
+            framing,
+        }
     }
 
     fn push(&mut self, chunk: &[u8]) {
@@ -229,7 +245,8 @@ impl FrameDecoder {
                 if self.buf.len() < 4 {
                     return Ok(None);
                 }
-                let len = u32::from_le_bytes([self.buf[0], self.buf[1], self.buf[2], self.buf[3]]) as usize;
+                let len = u32::from_le_bytes([self.buf[0], self.buf[1], self.buf[2], self.buf[3]])
+                    as usize;
                 if self.buf.len() < 4 + len {
                     return Ok(None);
                 }
@@ -293,7 +310,11 @@ mod tests {
             let mut offset = 0usize;
             let resp = decode_frame(&buf[..n], Framing::LengthPrefixed, &mut offset).unwrap();
             match resp {
-                WireMessage::Response { req_id, bytes, error } => {
+                WireMessage::Response {
+                    req_id,
+                    bytes,
+                    error,
+                } => {
                     assert_eq!(req_id, "c1");
                     assert_eq!(bytes.unwrap(), b"hello");
                     assert!(error.is_none());
@@ -344,7 +365,10 @@ mod tests {
             drop(client_write);
         });
 
-        let response = handle.send_request("myMethod", b"call".to_vec()).await.unwrap();
+        let response = handle
+            .send_request("myMethod", b"call".to_vec())
+            .await
+            .unwrap();
         assert_eq!(response, b"ok");
 
         client.await.unwrap();

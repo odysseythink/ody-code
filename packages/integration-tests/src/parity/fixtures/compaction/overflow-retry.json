@@ -1,0 +1,16 @@
+{
+  "name": "overflow-retry",
+  "history": [
+    {"role":"user","content":[{"type":"text","text":"u1 overflow trigger"}],"origin":{"kind":"user"},"toolCalls":[],"toolCallId":null},
+    {"role":"assistant","content":[{"type":"text","text":"a1 with many many tokens to fill context for overflow test"}],"origin":null,"toolCalls":[],"toolCallId":null},
+    {"role":"user","content":[{"type":"text","text":"u2"}],"origin":{"kind":"user"},"toolCalls":[],"toolCallId":null},
+    {"role":"assistant","content":[{"type":"text","text":"a2"}],"origin":null,"toolCalls":[],"toolCallId":null}
+  ],
+  "strategy": {"max_size": 10},
+  "begin": {"source": "auto", "instruction": null},
+  "generate_one_off_result": {
+    "text": "retry summary",
+    "finishReason": "completed",
+    "usage": {"inputOther":5,"output":3,"inputCacheRead":0,"inputCacheCreation":0}
+  }
+}

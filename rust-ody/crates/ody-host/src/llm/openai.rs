@@ -28,7 +28,9 @@ impl OpenAiProvider {
         Self {
             api_key: config.api_key,
             base_url,
-            default_model: config.default_model.unwrap_or_else(|| "gpt-4o-mini".to_string()),
+            default_model: config
+                .default_model
+                .unwrap_or_else(|| "gpt-4o-mini".to_string()),
             client,
         }
     }
@@ -166,7 +168,7 @@ struct SseFunction {
 mod tests {
     use super::*;
     use crate::config::ProviderConfig;
-    use crate::llm::{ChatRequest, FinishReason, Message, Role};
+    use crate::llm::{ChatRequest, ContentPart, FinishReason, Message, Role};
 
     #[tokio::test]
     async fn streams_text_deltas_from_sse() {
@@ -194,15 +196,25 @@ mod tests {
 
         let request = ChatRequest {
             model: "gpt-4o-mini".to_string(),
-            messages: vec![Message { role: Role::User, content: "hi".to_string() }],
+            messages: vec![Message {
+                role: Role::User,
+                content: vec![ContentPart::Text {
+                    text: "hi".to_string(),
+                }],
+            }],
             tools: vec![],
             stream: true,
         };
 
         let mut deltas = Vec::new();
-        let reason = provider.chat_stream(request, &mut |d| {
-            if let Some(c) = d.content { deltas.push(c); }
-        }).await.unwrap();
+        let reason = provider
+            .chat_stream(request, &mut |d| {
+                if let Some(c) = d.content {
+                    deltas.push(c);
+                }
+            })
+            .await
+            .unwrap();
 
         assert_eq!(deltas, vec!["Hello", " world"]);
         assert_eq!(reason, FinishReason::Stop);

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ScenarioSnapshot } from '../../src/parity/types';
-import { normalize } from '../../src/parity/normalize';
+import { normalize, normalizeTurnEvents } from '../../src/parity/normalize';
 
 function snapshot(input: Partial<ScenarioSnapshot> = {}): ScenarioSnapshot {
   return {
@@ -202,5 +202,19 @@ describe('normalize', () => {
     expect((result.events[0] as any).delta).toBe('first');
     expect((result.events[1] as any).delta).toBe('second');
     expect(result.meta).toBeUndefined();
+  });
+
+  it('maps Rust tool.call to TS tool.call.started', () => {
+    const rust = [
+      { type: 'tool.call', turnId: 1, toolCallId: 'c1', toolName: 'Read', args: { path: 'x' } },
+    ];
+    const out = normalizeTurnEvents(rust as any);
+    expect(out[0]).toMatchObject({
+      type: 'tool.call.started',
+      turnId: 1,
+      toolCallId: 'c1',
+      name: 'Read',
+      args: { path: 'x' },
+    });
   });
 });

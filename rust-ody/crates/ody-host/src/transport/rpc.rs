@@ -126,11 +126,7 @@ mod tests {
     struct MockSink;
     #[async_trait::async_trait]
     impl EventSink for MockSink {
-        async fn request(
-            &self,
-            _method: &str,
-            _payload: Vec<u8>,
-        ) -> Result<Vec<u8>, RpcError> {
+        async fn request(&self, _method: &str, _payload: Vec<u8>) -> Result<Vec<u8>, RpcError> {
             Err(RpcError::MethodNotFound("mock".to_string()))
         }
         fn emit(&self, _event: AgentEvent) {}
@@ -150,9 +146,7 @@ mod tests {
             },
             mock_provider: false,
         };
-        Arc::new(
-            CoreHost::new(config, Box::new(MockSink), Box::new(MockProvider)).unwrap(),
-        )
+        Arc::new(CoreHost::new(config, Arc::new(MockSink), Arc::new(MockProvider)).unwrap())
     }
 
     #[tokio::test]
@@ -172,6 +166,9 @@ mod tests {
         let response = router.route(request).await.unwrap();
         let json: serde_json::Value = serde_json::from_slice(&response).unwrap();
         assert_eq!(json["ok"], false);
-        assert!(json["error"]["message"].as_str().unwrap().contains("unknown"));
+        assert!(json["error"]["message"]
+            .as_str()
+            .unwrap()
+            .contains("unknown"));
     }
 }

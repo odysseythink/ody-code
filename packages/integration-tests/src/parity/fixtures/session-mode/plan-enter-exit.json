@@ -1,0 +1,13 @@
+{
+  "description": "Enter plan mode then exit — verifies model switch, WAL records, mode restore",
+  "steps": [
+    { "action": "enter", "kind": "plan", "id": "plan-fixture-1" },
+    { "action": "assert", "isActive": true, "kind": "plan" },
+    { "action": "exit" },
+    { "action": "assert", "isActive": false, "kind": null }
+  ],
+  "expectedEvents": [
+    { "type": "session_mode.enter", "id": "plan-fixture-1", "kind": "plan" },
+    { "type": "session_mode.exit", "id": "plan-fixture-1" }
+  ]
+}

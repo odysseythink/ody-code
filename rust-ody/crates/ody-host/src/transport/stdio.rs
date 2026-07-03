@@ -20,7 +20,9 @@ impl StdioTransportServer {
         eprintln!("{}", ready);
         let (conn, handle) = StreamConnection::new();
         (
-            Self { conn: Mutex::new(Some(conn)) },
+            Self {
+                conn: Mutex::new(Some(conn)),
+            },
             Box::new(handle),
         )
     }
@@ -37,6 +39,7 @@ impl TransportServer for StdioTransportServer {
             .expect("serve() called more than once");
         let stdin = tokio::io::stdin();
         let stdout = tokio::io::stdout();
-        conn.start(stdin, stdout, Framing::LengthPrefixed, dispatch).await
+        conn.start(stdin, stdout, Framing::LengthPrefixed, dispatch)
+            .await
     }
 }

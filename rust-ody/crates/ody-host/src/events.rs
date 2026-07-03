@@ -118,6 +118,41 @@ pub enum AgentEvent {
         #[serde(rename = "sessionModeFilePath")]
         session_mode_file_path: Option<String>,
     },
+    #[serde(rename = "thinking.delta")]
+    ThinkingDelta {
+        #[serde(rename = "sessionId")]
+        session_id: String,
+        #[serde(rename = "agentId")]
+        agent_id: String,
+        #[serde(rename = "turnId")]
+        turn_id: i64,
+        delta: String,
+    },
+    #[serde(rename = "background.task.started")]
+    BackgroundTaskStarted {
+        #[serde(rename = "sessionId")]
+        session_id: String,
+        #[serde(rename = "agentId")]
+        agent_id: String,
+        info: serde_json::Value,
+    },
+    #[serde(rename = "background.task.terminated")]
+    BackgroundTaskTerminated {
+        #[serde(rename = "sessionId")]
+        session_id: String,
+        #[serde(rename = "agentId")]
+        agent_id: String,
+        info: serde_json::Value,
+    },
+    #[serde(rename = "cron.fired")]
+    CronFired {
+        #[serde(rename = "sessionId")]
+        session_id: String,
+        #[serde(rename = "agentId")]
+        agent_id: String,
+        origin: PromptOrigin,
+        prompt: String,
+    },
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -132,10 +167,28 @@ pub enum PromptOrigin {
     },
     Injection,
     CompactionSummary,
-    SystemTrigger,
-    BackgroundTask,
-    CronJob,
-    CronMissed,
+    SystemTrigger {
+        name: String,
+    },
+    BackgroundTask {
+        #[serde(rename = "taskId")]
+        task_id: String,
+        status: String,
+        #[serde(rename = "notificationId")]
+        notification_id: String,
+    },
+    CronJob {
+        #[serde(rename = "jobId")]
+        job_id: String,
+        cron: String,
+        recurring: bool,
+        #[serde(rename = "coalescedCount")]
+        coalesced_count: i64,
+        stale: bool,
+    },
+    CronMissed {
+        count: i64,
+    },
     HookResult {
         event: String,
         blocked: Option<bool>,

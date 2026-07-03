@@ -1,0 +1,101 @@
+{
+  "version": 1,
+  "cases": [
+    {
+      "name": "normpath collapses dot segments",
+      "op": { "type": "normpath", "input": "/foo/bar/../baz" },
+      "expected": { "result": "/foo/baz" }
+    },
+    {
+      "name": "normpath collapses leading dot",
+      "op": { "type": "normpath", "input": "/foo/./bar" },
+      "expected": { "result": "/foo/bar" }
+    },
+    {
+      "name": "normpath collapses double slashes",
+      "op": { "type": "normpath", "input": "foo//bar/../baz" },
+      "expected": { "result": "foo/baz" }
+    },
+    {
+      "name": "normpath keeps leading dotdot above root",
+      "op": { "type": "normpath", "input": "../../foo" },
+      "expected": { "result": "../../foo" }
+    },
+    {
+      "name": "detect environment on posix with bash",
+      "op": {
+        "type": "detect_environment",
+        "platform": "darwin",
+        "arch": "arm64",
+        "release": "23.0.0",
+        "env": {},
+        "files": ["/bin/bash"],
+        "executables": {}
+      },
+      "expected": {
+        "osKind": "macOS",
+        "osArch": "arm64",
+        "osVersion": "23.0.0",
+        "shellName": "bash",
+        "shellPath": "/bin/bash"
+      }
+    },
+    {
+      "name": "detect environment on windows with override",
+      "op": {
+        "type": "detect_environment",
+        "platform": "win32",
+        "arch": "x86_64",
+        "release": "10.0.0",
+        "env": { "ODY_SHELL_PATH": "D:\\custom\\bash.exe" },
+        "files": ["D:\\custom\\bash.exe"],
+        "executables": {}
+      },
+      "expected": {
+        "osKind": "Windows",
+        "osArch": "x86_64",
+        "osVersion": "10.0.0",
+        "shellName": "bash",
+        "shellPath": "D:\\custom\\bash.exe"
+      }
+    },
+    {
+      "name": "detect environment falls back to sh when bash missing",
+      "op": {
+        "type": "detect_environment",
+        "platform": "linux",
+        "arch": "x86_64",
+        "release": "6.0.0",
+        "env": {},
+        "files": [],
+        "executables": {}
+      },
+      "expected": {
+        "osKind": "Linux",
+        "osArch": "x86_64",
+        "osVersion": "6.0.0",
+        "shellName": "sh",
+        "shellPath": "/bin/sh"
+      }
+    },
+    {
+      "name": "detect environment infers git bash from git exe",
+      "op": {
+        "type": "detect_environment",
+        "platform": "win32",
+        "arch": "x86_64",
+        "release": "10.0.0",
+        "env": {},
+        "files": ["C:\\Program Files\\Git\\bin\\bash.exe"],
+        "executables": { "git.exe": "C:\\Program Files\\Git\\cmd\\git.exe" }
+      },
+      "expected": {
+        "osKind": "Windows",
+        "osArch": "x86_64",
+        "osVersion": "10.0.0",
+        "shellName": "bash",
+        "shellPath": "C:\\Program Files\\Git\\bin\\bash.exe"
+      }
+    }
+  ]
+}

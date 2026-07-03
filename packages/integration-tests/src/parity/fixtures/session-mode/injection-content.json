@@ -1,0 +1,15 @@
+{
+  "description": "Verify injection produces correct plan-mode entry/exit reminders",
+  "steps": [
+    { "action": "enter", "kind": "plan", "id": "inj-plan-1" },
+    { "action": "inject" },
+    { "action": "exit" },
+    { "action": "inject" }
+  ],
+  "expectedEvents": [
+    { "type": "session_mode.enter", "id": "inj-plan-1", "kind": "plan" },
+    { "type": "injection", "variant": "plan_mode", "contains": "Plan mode" },
+    { "type": "session_mode.exit", "id": "inj-plan-1" },
+    { "type": "injection", "variant": "plan_mode", "contains": "Plan mode" }
+  ]
+}

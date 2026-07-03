@@ -1,0 +1,21 @@
+{
+  "systemPrompt": "",
+  "tools": [
+    { "name": "get_weather", "description": "weather", "parameters": { "type": "object", "properties": {} } }
+  ],
+  "history": [
+    { "role": "user", "content": [{ "type": "text", "text": "weather in two cities" }], "toolCalls": [] }
+  ],
+  "providerStep": {
+    "id": "resp_1",
+    "parts": [
+      { "type": "function", "id": "call_a", "name": "get_weather", "arguments": null, "_streamIndex": 0 },
+      { "type": "tool_call_part", "argumentsPart": "{\"city\": \"Beijing\"}", "index": 0 },
+      { "type": "function", "id": "call_b", "name": "get_weather", "arguments": null, "_streamIndex": 1 },
+      { "type": "tool_call_part", "argumentsPart": "{\"city\": \"Shanghai\"}", "index": 1 }
+    ],
+    "usage": { "inputOther": 15, "output": 10, "inputCacheRead": 0, "inputCacheCreation": 0 },
+    "finishReason": "tool_calls"
+  },
+  "expectError": null
+}

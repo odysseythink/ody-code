@@ -1,0 +1,60 @@
+{
+  "name": "single-tool-call",
+  "turnId": "turn-single-tool",
+  "maxSteps": 10,
+  "maxRetryAttempts": 1,
+  "messages": [
+    {
+      "role": "user",
+      "content": [{ "type": "text", "text": "Call echo" }],
+      "toolCalls": []
+    }
+  ],
+  "responses": [
+    {
+      "toolCalls": [
+        {
+          "type": "function",
+          "id": "call_echo_1",
+          "name": "echo",
+          "arguments": "{\"message\":\"hello\"}"
+        }
+      ],
+      "finishReason": "tool_calls",
+      "rawFinishReason": "tool_calls",
+      "usage": {
+        "inputOther": 10,
+        "output": 5,
+        "inputCacheRead": 0,
+        "inputCacheCreation": 0
+      }
+    },
+    {
+      "toolCalls": [],
+      "finishReason": "completed",
+      "rawFinishReason": "stop",
+      "usage": {
+        "inputOther": 8,
+        "output": 4,
+        "inputCacheRead": 0,
+        "inputCacheCreation": 0
+      }
+    }
+  ],
+  "tools": [
+    {
+      "name": "echo",
+      "description": "Echoes the input back.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "message": { "type": "string" }
+        },
+        "required": ["message"]
+      },
+      "result": {
+        "output": "hello"
+      }
+    }
+  ]
+}

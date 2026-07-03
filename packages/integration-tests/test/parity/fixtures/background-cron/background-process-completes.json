@@ -1,0 +1,16 @@
+{
+  "name": "background-process-completes",
+  "responses": [
+    {
+      "toolCalls": [],
+      "finishReason": "completed",
+      "rawFinishReason": "stop",
+      "usage": { "inputOther": 0, "output": 0, "inputCacheRead": 0, "inputCacheCreation": 0 }
+    }
+  ],
+  "actions": [
+    { "op": "background_run_process", "args": ["/bin/sh", "-c", "echo done"], "description": "echo done" },
+    { "op": "background_wait_last", "timeout_ms": 5000 },
+    { "op": "wait" }
+  ]
+}

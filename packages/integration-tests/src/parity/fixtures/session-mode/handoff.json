@@ -1,0 +1,13 @@
+{
+  "description": "Design→plan handoff — design exit chains into plan enter with artifact",
+  "steps": [
+    { "action": "enter", "kind": "design", "id": "handoff-design-1" },
+    { "action": "assert", "isActive": true, "kind": "design" },
+    { "action": "handoff", "target": "plan" },
+    { "action": "assert", "isActive": false, "kind": null }
+  ],
+  "expectedEvents": [
+    { "type": "session_mode.enter", "id": "handoff-design-1", "kind": "design" },
+    { "type": "session_mode.exit", "id": "handoff-design-1" }
+  ]
+}

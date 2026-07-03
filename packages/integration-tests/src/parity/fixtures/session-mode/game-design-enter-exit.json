@@ -1,0 +1,13 @@
+{
+  "description": "Enter game-design mode then exit — verifies model switch, WAL records, mode restore",
+  "steps": [
+    { "action": "enter", "kind": "game-design", "id": "gd-fixture-1" },
+    { "action": "assert", "isActive": true, "kind": "game-design" },
+    { "action": "exit" },
+    { "action": "assert", "isActive": false, "kind": null }
+  ],
+  "expectedEvents": [
+    { "type": "session_mode.enter", "id": "gd-fixture-1", "kind": "game-design" },
+    { "type": "session_mode.exit", "id": "gd-fixture-1" }
+  ]
+}

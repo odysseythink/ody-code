@@ -1,5 +1,6 @@
 import type { AgentEvent } from '@odysseythink/agent-core';
 import type { NormalizedSnapshot, NormalizerOptions, ScenarioSnapshot } from './types';
+import { normalizeTurnEvents } from './normalize-turn-events';
 
 const UUID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi;
 const LONG_NUMBER_RE = /\d{10,}/g;
@@ -14,6 +15,10 @@ const PORT_KEYS = new Set(['port', 'tcpPort', 'listenPort']);
 const PATH_KEYS = new Set([
   'path', 'file', 'dir', 'cwd', 'workDir', 'homeDir', 'tmpDir', 'socketPath',
   'sourceFilePath', 'outputPath', 'configPath',
+]);
+
+const STAT_METADATA_KEYS = new Set([
+  'stIno', 'stDev', 'stNlink', 'stUid', 'stGid', 'stAtime', 'stMtime', 'stCtime',
 ]);
 
 function isTimestampish(path: string): boolean {
@@ -34,6 +39,11 @@ function isPortLike(path: string): boolean {
 function isPathLike(path: string): boolean {
   const key = path.slice(path.lastIndexOf('.') + 1).replace(/\[\d+\]/g, '');
   return PATH_KEYS.has(key);
+}
+
+function isStatMetadata(path: string): boolean {
+  const key = path.slice(path.lastIndexOf('.') + 1).replace(/\[\d+\]/g, '');
+  return STAT_METADATA_KEYS.has(key);
 }
 
 function escapeRegExp(s: string): string {
@@ -136,16 +146,41 @@ function joinAssistantDeltas(events: AgentEvent[]): { events: AgentEvent[]; join
   return { events: result, joinedCount };
 }
 
+function normalizeToolDefinitions(value: unknown[]): unknown[] {
+  if (value.length === 0) return value;
+  if (
+    typeof value[0] === 'object' &&
+    value[0] !== null &&
+    ('source' in (value[0] as object) || 'active' in (value[0] as object))
+  ) {
+    const sorted = [...value].sort((a, b) => {
+      const na = String((a as Record<string, unknown>)['name'] ?? '');
+      const nb = String((b as Record<string, unknown>)['name'] ?? '');
+      return na.localeCompare(nb);
+    });
+    return sorted.map((t) => {
+      const item = t as Record<string, unknown>;
+      const out: Record<string, unknown> = {};
+      if (typeof item['name'] === 'string') out['name'] = item['name'];
+      if (typeof item['active'] === 'boolean') out['active'] = item['active'];
+      if (typeof item['source'] === 'string') out['source'] = item['source'];
+      return out;
+    });
+  }
+  return value;
+}
+
 function walk(value: unknown, options: NormalizerOptions, path: string): unknown {
   if (typeof value === 'string') {
     return normalizeString(value, options, path);
   }
   if (typeof value === 'number') {
-    if (isTimestampish(path)) return 0;
+    if (isTimestampish(path) || isStatMetadata(path)) return 0;
     return value;
   }
   if (Array.isArray(value)) {
-    return value.map((item, i) => walk(item, options, `${path}[${i}]`));
+    const mapped = value.map((item, i) => walk(item, options, `${path}[${i}]`));
+    return normalizeToolDefinitions(mapped);
   }
   if (isErrorObject(value)) {
     return normalizeError(value, options, path);
@@ -169,6 +204,8 @@ export function normalize(
   if (ignoreEventTypes !== undefined) {
     events = events.filter((event) => !ignoreEventTypes.has(event.type));
   }
+  // Normalize turn/tool event shapes between Rust and TS
+  events = normalizeTurnEvents(events);
   const { events: joinedEvents, joinedCount } = joinAssistantDeltas(events);
   events = joinedEvents;
 
@@ -185,3 +222,5 @@ export function normalize(
   };
   return normalized;
 }
+
+export { normalizeTurnEvents } from './normalize-turn-events';

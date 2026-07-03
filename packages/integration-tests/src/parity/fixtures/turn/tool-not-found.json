@@ -1,0 +1,24 @@
+{
+  "name": "tool-not-found",
+  "actions": [
+    { "op": "prompt", "input": [{ "type": "text", "text": "Call missing tool" }], "origin": { "kind": "user" } },
+    { "op": "wait" }
+  ],
+  "responses": [
+    {
+      "toolCalls": [
+        { "type": "function", "id": "call_missing_1", "name": "missing_tool", "arguments": "{}" }
+      ],
+      "finishReason": "tool_calls",
+      "rawFinishReason": "tool_calls",
+      "usage": { "inputOther": 6, "output": 4, "inputCacheRead": 0, "inputCacheCreation": 0 }
+    },
+    {
+      "toolCalls": [],
+      "finishReason": "completed",
+      "rawFinishReason": "stop",
+      "usage": { "inputOther": 5, "output": 3, "inputCacheRead": 0, "inputCacheCreation": 0 }
+    }
+  ],
+  "tools": []
+}

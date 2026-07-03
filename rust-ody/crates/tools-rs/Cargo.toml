@@ -1,0 +1,41 @@
+[package]
+name = "tools-rs"
+version = "0.1.0"
+edition = "2021"
+description = "Shared tool infrastructure for ody-code builtin tools"
+license = "MIT"
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = "1"
+anyhow = "1"
+async-trait = "0.1"
+uuid = { version = "1", features = ["v4"] }
+futures = "0.3"
+tokio = { workspace = true }
+kaos-rs = { path = "../kaos-rs" }
+regex = "1"
+globset = "0.4"
+jsonschema = "0.29"
+reqwest = { workspace = true }
+dirs = "5"
+tar = "0.4"
+zip = "2"
+sha2 = "0.10"
+hex = "0.4"
+flate2 = "1"
+tempfile = "3"
+infer = "0.16"
+image = { version = "0.25", default-features = false, features = ["png", "jpeg", "gif", "webp"] }
+base64 = "0.22"
+chrono = { version = "0.4", features = ["serde", "clock"] }
+serde_yaml = "0.9"
+url = "2"
+
+[[bin]]
+name = "tools-golden"
+path = "src/bin/tools-golden.rs"
+
+[dev-dependencies]
+tokio-test = "0.4"

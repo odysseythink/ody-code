@@ -1,0 +1,23 @@
+{
+  "systemPrompt": "",
+  "tools": [
+    {"name":"read","description":"read file","parameters":{"type":"object","properties":{"path":{"type":"string"}}}}
+  ],
+  "history": [
+    { "role": "user", "content": [{"type":"text","text":"read"}], "toolCalls": [] }
+  ],
+  "options": { "stream": false },
+  "providerStep": {
+    "response": {
+      "id": "msg_nonstream",
+      "type": "message",
+      "role": "assistant",
+      "stop_reason": "tool_use",
+      "usage": {"input_tokens": 15, "output_tokens": 10, "cache_read_input_tokens": 0, "cache_creation_input_tokens": 0},
+      "content": [
+        {"type":"text","text":"I will read it."},
+        {"type":"tool_use","id":"tc_1","name":"read","input":{"path":"/etc/passwd"}}
+      ]
+    }
+  }
+}

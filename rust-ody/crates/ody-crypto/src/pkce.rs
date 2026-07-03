@@ -1,6 +1,6 @@
+use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine as _};
 use rand::Rng;
 use sha2::{Digest, Sha256};
-use base64::{Engine as _, engine::general_purpose::URL_SAFE_NO_PAD};
 
 const PKCE_ALPHABET: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~";
 
@@ -23,7 +23,10 @@ pub fn pkce_challenge(length: Option<u32>) -> Result<PkceChallenge, String> {
     hasher.update(verifier.as_bytes());
     let challenge = URL_SAFE_NO_PAD.encode(&hasher.finalize());
 
-    Ok(PkceChallenge { code_verifier: verifier, code_challenge: challenge })
+    Ok(PkceChallenge {
+        code_verifier: verifier,
+        code_challenge: challenge,
+    })
 }
 
 #[cfg(test)]
@@ -41,8 +44,8 @@ mod tests {
     fn pkce_challenge_s256_matches() {
         let result = pkce_challenge(None).unwrap();
         let expected = {
+            use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine as _};
             use sha2::{Digest, Sha256};
-            use base64::{Engine as _, engine::general_purpose::URL_SAFE_NO_PAD};
             let mut hasher = Sha256::new();
             hasher.update(result.code_verifier.as_bytes());
             URL_SAFE_NO_PAD.encode(&hasher.finalize())

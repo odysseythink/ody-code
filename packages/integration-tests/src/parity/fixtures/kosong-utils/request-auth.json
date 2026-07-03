@@ -1,0 +1,46 @@
+{
+  "operations": [
+    {
+      "operation": "requireProviderApiKey",
+      "cases": [
+        {
+          "name": "returns request apiKey",
+          "input": { "providerName": "openai", "auth": { "apiKey": "sk-req" } }
+        },
+        {
+          "name": "prefers request over default",
+          "input": { "providerName": "openai", "auth": { "apiKey": "sk-req" }, "defaultApiKey": "sk-def" }
+        },
+        {
+          "name": "falls back to default",
+          "input": { "providerName": "openai", "defaultApiKey": "sk-def" }
+        },
+        {
+          "name": "rejects missing key",
+          "input": { "providerName": "openai" }
+        }
+      ]
+    },
+    {
+      "operation": "mergeRequestHeaders",
+      "cases": [
+        {
+          "name": "merges maps",
+          "input": { "defaultHeaders": { "a": "1" }, "requestHeaders": { "b": "2" } }
+        },
+        {
+          "name": "request overrides default",
+          "input": { "defaultHeaders": { "a": "1" }, "requestHeaders": { "a": "2" } }
+        },
+        {
+          "name": "empty maps return null",
+          "input": { "defaultHeaders": {}, "requestHeaders": {} }
+        },
+        {
+          "name": "single map works",
+          "input": { "defaultHeaders": { "a": "1" } }
+        }
+      ]
+    }
+  ]
+}

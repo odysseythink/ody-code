@@ -277,6 +277,38 @@ describe('GLMChatProvider', () => {
     });
   });
 
+  describe('request parameters', () => {
+    it('includes stream_options only when streaming', async () => {
+      const streamProvider = makeProvider({ stream: true });
+      const nonStreamProvider = makeProvider({ stream: false });
+      const history: Message[] = [
+        { role: 'user', content: [{ type: 'text', text: 'Hello' }], toolCalls: [] },
+      ];
+
+      for (const [provider, shouldHaveStreamOptions] of [
+        [streamProvider, true],
+        [nonStreamProvider, false],
+      ] as const) {
+        const createSpy = vi.fn().mockResolvedValue({
+          id: 'resp-1',
+          choices: [{ message: { content: 'ok' }, finish_reason: 'stop' }],
+          usage: null,
+        });
+        const mockClient = { chat: { completions: { create: createSpy } } } as unknown as import('openai').default;
+        vi.spyOn(provider as any, '_createClient').mockReturnValue(mockClient);
+
+        await provider.generate('', [], history);
+
+        const callArgs = (createSpy.mock.calls[0]!)[0] as Record<string, unknown>;
+        if (shouldHaveStreamOptions) {
+          expect(callArgs['stream_options']).toEqual({ include_usage: true });
+        } else {
+          expect(callArgs['stream_options']).toBeUndefined();
+        }
+      }
+    });
+  });
+
   describe('stream response parsing', () => {
     it('extracts reasoning_content from stream chunks', async () => {
       const provider = makeProvider({ stream: true });

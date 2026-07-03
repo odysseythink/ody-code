@@ -1,0 +1,15 @@
+{
+  "kind": "tokens",
+  "messages": [
+    {
+      "role": "user",
+      "content": [{ "type": "text", "text": "hello" }],
+      "toolCalls": []
+    },
+    {
+      "role": "assistant",
+      "content": [{ "type": "text", "text": "world" }],
+      "toolCalls": []
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "cases": [
+    {
+      "name": "two level tree with truncation hint",
+      "op": {
+        "type": "list_directory",
+        "path": ".",
+        "files": {
+          "README.md": [35, 32, 72, 101, 108, 108, 111, 10],
+          "src/main.rs": [102, 110, 32, 109, 97, 105, 110, 40, 41, 32, 123, 125, 10],
+          "src/lib.rs": [112, 117, 98, 32, 109, 111, 100, 32, 108, 105, 98, 59, 10],
+          "tests/smoke.rs": [35, 91, 116, 101, 115, 116, 93, 10],
+          "package.json": [123, 125, 10]
+        }
+      },
+      "expected": {
+        "result": "├── src/\n│   ├── lib.rs\n│   └── main.rs\n├── tests/\n│   └── smoke.rs\n├── README.md\n└── package.json"
+      }
+    }
+  ]
+}

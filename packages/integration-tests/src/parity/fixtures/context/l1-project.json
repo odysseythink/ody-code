@@ -1,0 +1,17 @@
+{
+  "kind": "project",
+  "history": [
+    {
+      "role": "user",
+      "content": [{ "type": "text", "text": "hello" }],
+      "toolCalls": [],
+      "origin": { "kind": "user" }
+    },
+    {
+      "role": "user",
+      "content": [{ "type": "text", "text": "world" }],
+      "toolCalls": [],
+      "origin": { "kind": "user" }
+    }
+  ]
+}

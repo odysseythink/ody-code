@@ -1,0 +1,1 @@
+{"systemPrompt":"","history":[{"role":"user","content":[{"type":"text","text":"Hi"}],"toolCalls":[]}],"providerOptions":{"model":"gpt-4o-mini"},"response":{"status":200,"stream":true,"body":"{\"type\":\"error\",\"code\":\"rate_limit_exceeded\",\"message\":\"Rate limited\",\"param\":null}"}}

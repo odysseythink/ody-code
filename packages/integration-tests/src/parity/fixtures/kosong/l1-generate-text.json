@@ -1,0 +1,18 @@
+{
+  "systemPrompt": "",
+  "tools": [],
+  "history": [
+    { "role": "user", "content": [{ "type": "text", "text": "hello" }], "toolCalls": [] }
+  ],
+  "providerStep": {
+    "id": "resp_1",
+    "parts": [
+      { "type": "text", "text": "Hi! " },
+      { "type": "text", "text": "How can I help?" }
+    ],
+    "usage": { "inputOther": 10, "output": 8, "inputCacheRead": 0, "inputCacheCreation": 0 },
+    "finishReason": "completed",
+    "rawFinishReason": "stop"
+  },
+  "expectError": null
+}

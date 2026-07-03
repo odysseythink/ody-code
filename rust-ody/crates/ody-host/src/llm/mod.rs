@@ -1,5 +1,7 @@
 use serde::{Deserialize, Serialize};
 
+pub use kosong_rs::ContentPart;
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChatRequest {
     pub model: String,
@@ -12,7 +14,7 @@ pub struct ChatRequest {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Message {
     pub role: Role,
-    pub content: String,
+    pub content: Vec<ContentPart>,
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
@@ -58,6 +60,7 @@ pub enum LlmError {
     ApiError { status: u16, body: String },
     StreamParse { message: String },
     RequestFailed { source: reqwest::Error },
+    Provider { message: String },
 }
 
 impl std::fmt::Display for LlmError {
@@ -66,6 +69,7 @@ impl std::fmt::Display for LlmError {
             LlmError::ApiError { status, body } => write!(f, "LLM API error {status}: {body}"),
             LlmError::StreamParse { message } => write!(f, "LLM stream parse error: {message}"),
             LlmError::RequestFailed { source } => write!(f, "LLM request failed: {source}"),
+            LlmError::Provider { message } => write!(f, "LLM provider error: {message}"),
         }
     }
 }
@@ -81,5 +85,6 @@ pub trait LlmProvider: Send + Sync {
     ) -> Result<FinishReason, LlmError>;
 }
 
+pub mod chat_provider_adapter;
 pub mod mock;
 pub mod openai;

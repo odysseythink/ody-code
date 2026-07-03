@@ -1,0 +1,82 @@
+{
+  "version": 1,
+  "cases": [
+    {
+      "name": "agent_foreground_success",
+      "op": {
+        "type": "agent_call",
+        "prompt": "Refactor this function",
+        "description": "Refactor helper",
+        "subagent_type": "coder",
+        "run_in_background": false,
+        "timeout": null,
+        "host_response": "success",
+        "result": "Refactored.",
+        "agent_id": "agent-123",
+        "profile_name": "coder"
+      },
+      "expected": null
+    },
+    {
+      "name": "agent_foreground_failure",
+      "op": {
+        "type": "agent_call",
+        "prompt": "Do something impossible",
+        "description": "Impossible task",
+        "run_in_background": false,
+        "timeout": null,
+        "host_response": "fail",
+        "error": "not allowed",
+        "agent_id": "agent-456",
+        "profile_name": "coder"
+      },
+      "expected": null
+    },
+    {
+      "name": "agent_foreground_timeout",
+      "op": {
+        "type": "agent_call",
+        "prompt": "Sleep forever",
+        "description": "Slow task",
+        "run_in_background": false,
+        "timeout": 1,
+        "host_response": "timeout",
+        "agent_id": "agent-789",
+        "profile_name": "coder"
+      },
+      "expected": null
+    },
+    {
+      "name": "agent_resume_conflict",
+      "op": {
+        "type": "agent_call",
+        "prompt": "Continue",
+        "description": "Resume task",
+        "subagent_type": "coder",
+        "resume": "agent-123",
+        "run_in_background": false,
+        "timeout": null,
+        "host_response": "success",
+        "result": "Resumed.",
+        "agent_id": "agent-123",
+        "profile_name": "subagent"
+      },
+      "expected": null
+    },
+    {
+      "name": "agent_background_success",
+      "op": {
+        "type": "agent_call",
+        "prompt": "Run in background",
+        "description": "Background task",
+        "run_in_background": true,
+        "timeout": null,
+        "registrar_response": "ok",
+        "task_id": "agent-00000001",
+        "agent_id": "agent-abc",
+        "profile_name": "coder"
+      },
+      "expected": null
+    }
+  ]
+}

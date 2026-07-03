@@ -14,6 +14,8 @@ import {
 } from './types';
 
 export * from './types';
+export { dropOrphanToolResults, project } from './projector';
+export { estimateTokensForMessages } from '../../utils/tokens';
 
 const TOOL_ERROR_STATUS = '<system>ERROR: Tool execution failed.</system>';
 const TOOL_EMPTY_STATUS = '<system>Tool output is empty.</system>';

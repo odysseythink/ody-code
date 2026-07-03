@@ -3,7 +3,7 @@
 > **Document Type**: Phase 4 Detailed Execution Roadmap
 > **Parent**: `.ody-code/roadmaps/backend-architecture-evolution-roadmap.md`(Phase 4 节)
 > **Predecessor**: `.ody-code/roadmaps/backend-architecture-evolution-phase3-fixup-roadmap.md`
-> **Status**: DRAFT(awaiting approval) · **Last Updated**: 2026-06-26(after 4.1–4.5 split & execution-mode audit + unified mode rubric §3.0)
+> **Status**: DRAFT(awaiting approval) · **Last Updated**: 2026-06-29(after 4.3.x full-implementation audit + 4.4.0–4.4.3 completion)
 > **Precondition**: **仅当 G3 = Go** 才执行本路线图。No-Go 则停在「Node 宿主 + Wasm 模块 + 瘦身 agent-core」终态。
 
 ---
@@ -25,19 +25,20 @@
 
 ---
 
-## 1. 当前已迁移面盘点(Phase 3 产出,2026-06-26 实测)
+## 1. 当前已迁移面盘点(经 2026-06-29 源码审计)
 
-| 维度 | TS 后端(基线) | Rust Host(`ody-host`,~3.5K LOC) |
+| 维度 | TS 后端(基线) | Rust Host(`ody-host`,~3.5K LOC + `agent-rs` ~23K LOC + `tools-rs` ~9K LOC) |
 |---|---|---|
 | 传输 | InProc / MessagePort / Socket(stdio/uds/tcp) | stdio / uds / tcp(`transport/`) |
 | Session 生命周期 | `agent-core` session(5.8K) | `session/{store,manager}.rs`(~450 行,内存+落盘) |
 | CoreAPI 方法 | 全量(`rpc/core-api.ts:437`) | ~25 个(`host.rs:63-86`):session CRUD / chat / prompt / steer / setModel / setThinking / setPermission / getStatus 组件 / config |
 | LLM provider | `kosong` 8 家(7.4K) | mock + openai(`llm/{mock,openai}.rs`,~240 行) |
-| 工具 | `tools/builtin` 全量(13.3K) | 仅 `bash`(`tools/bash.rs`,112 行) |
+| 工具 | `tools/builtin` 全量(13.3K) | tools-rs: Read/Write/Edit/Glob/Grep/ReadMedia/Bash/FetchURL/WebSearch + TaskList/TaskOutput/TaskStop/CronCreate/CronList/CronDelete (L1 golden ✓); tool_registry in ody-host |
+| agent 核心(4.3) | `agent-core/src/agent/*` (~15.7K) | **全部 10 子阶段已实现** — records/context/config/usage/tool/skill/permission/agent_loop/turn/compaction/session_mode/injection/replay/background/cron + Agent 组装 + CoreHost 集成 |
 | 执行环境(kaos) | `kaos` 全量(2.3K,含 ssh 915 行) | 内联在 bash 工具里,无独立抽象 |
 | 对照测试 | — | `rust-host-connect.test.ts`(仅 session 生命周期 + mock provider 基本面,**非逐字段对照**) |
 
-**结论**:Phase 3 证明了「协议级可互换」,但 Rust 侧只是**最薄骨架**。Phase 4 = 把 kaos / kosong / agent / tools 的**真实逻辑**搬进 Rust,且每搬一块都用对照测试钉死等价性。
+**结论**:Phase 3 证明了「协议级可互换」,4.3 agent 核心已全部 Rust 化。4.4 工具已迁移 4.4.0–4.4.3(基础+文件+Web+后台管理)。**当前阶段已具备切换到 Rust 后端的条件,剩余 4.4.4–4.4.8 是增量完善。**
 
 ---
 
@@ -133,7 +134,7 @@ expect(rust).toEqual(ts);          // 逐字段;失败时打印结构化 diff + 
 | 4.1.0 | kaos crate 骨架 + 路径/环境操作 | — | `kaos-rs` | L1 | 低 | G4-1-0 | **plan** |
 | 4.1.1 | 目录操作（stat/iterdir/glob/mkdir） | — | `kaos-rs` | L1 | 中 | G4-1-1 | normal |
 | 4.1.2 | 文件读写操作（含编码错误模式） | — | `kaos-rs` | L1 | 中 | G4-1-2 | normal |
-| 4.1.3 | 进程执行（exec / KaosProcess / kill） | — | `kaos-rs` | L1 | 中 | G4-1-3 | **plan** |
+| 4.1.3 | 进程执行（exec / KaosProcess / kill） | — | `kaos-rs` | L1 | 中 | G4-1-3 | **plan ✅** |
 | 4.1.4 | CoreHost 集成 / RPC 暴露 / bash 迁移 | — | `ody-host` | L2 | 中 | G4-1 | **plan** |
 | **4.2** | `kosong` LLM 层（拆为 8 子阶段，见 §4.2） | 7.4K | `ody-host/src/llm/`(扩)+ `kosong-rs` crate | L1(SSE 重放)+ L3 | 高 | G4-2 | — |
 | 4.2.0 | kosong 共享数据模型 + generate 循环 | 1.8K | `kosong-rs` | L1 | 高 | G4-2-0 | **plan** |
@@ -144,27 +145,27 @@ expect(rust).toEqual(ts);          // 逐字段;失败时打印结构化 diff + 
 | 4.2.5 | Chat-Completions 兼容三兄弟（Kimi / DeepSeek / GLM） | 1.3K | `kosong-rs` | L1 SSE | 高 | G4-2-5 | normal |
 | 4.2.6 | Google GenAI provider | 0.9K | `kosong-rs` | L1 SSE | 高 | G4-2-6 | normal |
 | 4.2.7 | CoreHost provider factory + L2/L3 门 | 0.8K | `ody-host` | L2 + L3 | 高 | G4-2 | **plan** |
-| **4.3** | `agent` 编排核心（拆为 10 子阶段，见 §4.3） | ~15.7K | `ody-host/src/agent/`(新) + `agent-rs` crate | L3 + L4 | 最高 | G4-3 | — |
-| 4.3.0 | Records & persistence foundation | — | `agent-rs` | L4 | 中 | G4-3-0 | **plan** |
-| 4.3.1 | Context & projection(依赖 4.3.0 + injection 生命周期接口) | — | `agent-rs` | L1 + L3 | 中 | G4-3-1 | normal |
-| 4.3.2 | Config / usage / tool & skill registry(Skill prompt 路径依赖 4.3.5) | — | `agent-rs` | L2 | 中 | G4-3-2 | normal |
-| 4.3.3 | Permission system(依赖 4.3.0 + 4.3.2 tool 信息) | — | `agent-rs` | L3 | 中 | G4-3-3 | **plan** |
-| 4.3.4 | Stateless loop engine(可与 4.3.1/4.3.2/4.3.3 并行) | — | `agent-rs` | L3 | 高 | G4-3-4 | **plan** |
-| 4.3.5 | Turn flow & LLM adapter(依赖 4.3.1+4.3.2+4.3.3+4.3.4) | — | `agent-rs` | L3 | 最高 | G4-3-5 | **plan** |
-| 4.3.6 | Compaction strategies(依赖 4.3.1+4.3.2+4.3.5) | — | `agent-rs` | L1 + L3 | 高 | G4-3-6 | normal |
-| 4.3.7 | Session modes & prompt injection(依赖 4.3.1+4.3.2+4.3.5) | — | `agent-rs` | L3 | 高 | G4-3-7 | **plan** |
-| 4.3.8 | Background tasks & cron(依赖 4.3.5) | — | `agent-rs` | L3 | 中 | G4-3-8 | normal |
-| 4.3.9 | Agent orchestrator & CoreHost integration(依赖 4.3.0–4.3.8) | — | `ody-host` | L2 + L3 + L4 | 最高 | G4-3-9 | **plan** |
-| **4.4** | `tools/builtin` 拆分 9 子阶段（见 §4.4） | ~7.3K(工具体,不含 support/providers/cron) | `ody-host/src/tools/` | L1 + L3 | 中 | G4-4 | — |
-| 4.4.0 | Tool infrastructure & shared support | — | `ody-host/src/tools/` | L1 | 低 | G4-4-0 | **plan** |
-| 4.4.1 | File & shell core tools | — | `ody-host/src/tools/` | L1 + L3 | 中 | G4-4-1 | normal |
-| 4.4.2 | Web tools | — | `ody-host/src/tools/` | L1 + L3 | 低 | G4-4-2 | normal |
-| 4.4.3 | Background & cron management tools | — | `ody-host/src/tools/` | L3 | 中 | G4-4-3 | normal |
-| 4.4.4 | Collaboration tools | — | `ody-host/src/tools/` | L3 | 高 | G4-4-4 | **plan** |
-| 4.4.5 | Session-mode workflow tools | — | `ody-host/src/tools/` | L3 | 高 | G4-4-5 | **plan** |
-| 4.4.6 | Goal & state tools | — | `ody-host/src/tools/` | L2 + L3 | 中 | G4-4-6 | **plan** |
-| 4.4.7 | Quality & specialized tools | — | `ody-host/src/tools/` | L1 + L3 | 中 | G4-4-7 | normal |
-| 4.4.8 | Tool registration integration & L2/L3 gate | — | `ody-host` | L2 + L3 | 中 | G4-4 | **plan** |
+| **4.3** | `agent` 编排核心（拆为 10 子阶段，见 §4.3） | ~15.7K | `agent-rs` crate | L3 + L4 | 最高 | G4-3 | ✅ 全 10 子阶段已实现 (2026-06-29 审计, ~27.5K LOC + 50 test files) |
+| 4.3.0 | Records & persistence foundation | 2,764 | `agent-rs/src/records/` (6 files) | L4 | 中 | G4-3-0 | ✅ done — `AgentRecords`/`FileSystemPersistence`/`BlobStore`/`WireMigration` |
+| 4.3.1 | Context & projection(依赖 4.3.0 + injection 生命周期接口) | 842 | `agent-rs/src/context/` (6 files) | L1 + L3 | 中 | G4-3-1 | ✅ done — `ContextMemory`/`project()`/token count/notification-xml |
+| 4.3.2 | Config / usage / tool & skill registry(Skill prompt 路径依赖 4.3.5) | 1,403 | `agent-rs/src/{config,usage,tool,skill}/` | L2 | 中 | G4-3-2 | ✅ done — `ConfigState`/`UsageRecorder`/`ToolManager`/`SkillManager` |
+| 4.3.3 | Permission system(依赖 4.3.0 + 4.3.2 tool 信息) | 2,020 | `agent-rs/src/permission/` (15 policies) | L3 | 中 | G4-3-3 | ✅ done — `PermissionManager` + 全部 policy |
+| 4.3.4 | Stateless loop engine(与 4.3.1/4.3.2/4.3.3 可并行) | 2,498 | `agent-rs/src/agent_loop/` (10 files) | L3 | 高 | G4-3-4 | ✅ done — `runTurn`/`executeLoopStep`/`ToolScheduler`/`LoopHooks` |
+| 4.3.5 | Turn flow & LLM adapter(依赖 4.3.1+4.3.2+4.3.3+4.3.4) | 5,266 | `agent-rs/src/turn/` (11 files) | L3 | 最高 | G4-3-5 | ✅ done — `TurnFlow`/`KosongLLM`/`RemoteKosongLLM`/`ToolCallDeduplicator` |
+| 4.3.6 | Compaction strategies(依赖 4.3.1+4.3.2+4.3.5) | 1,948 | `agent-rs/src/compaction/` (10 files) | L1 + L3 | 高 | G4-3-6 | ✅ done — `FullCompaction`/`MicroCompaction`/`SplitPlanCheckpoint`/budget |
+| 4.3.7 | Session modes & prompt injection(依赖 4.3.1+4.3.2+4.3.5) | 2,346 | `agent-rs/src/{session_mode,injection,replay}/` | L3 | 高 | G4-3-7 | ✅ done — `SessionModeManager`(4 behaviors)/`InjectionManager`(9 injectors)/`ReplayBuilder` |
+| 4.3.8 | Background tasks & cron(依赖 4.3.5) | 3,683 | `agent-rs/src/{background,cron}/` (13 files) | L3 | 中 | G4-3-8 | ✅ done — `BackgroundManager`(real)/`CronManager`(real)/persistence/scheduler/jitter |
+| 4.3.9 | Agent orchestrator & CoreHost integration(依赖 4.3.0–4.3.8) | ~3,700 | `agent-rs/src/agent.rs` + `ody-host/src/{host,agent_bridge}.rs` | L2 + L3 + L4 | 最高 | G4-3-9 | ✅ done — `Agent`/`AgentBuilder`/`CoreHost`/`SessionManager`/RPC routing |
+| **4.4** | `tools/builtin` 拆分 9 子阶段（见 §4.4） | ~7.3K(工具体,不含 support/providers/cron) | `tools-rs` crate | L1 + L3 | 中 | G4-4 | — |
+| 4.4.0 | Tool infrastructure & shared support | — | `tools-rs` | L1 | 低 | G4-4-0 | ✅ done |
+| 4.4.1 | File & shell core tools | — | `tools-rs` | L1 + L3 | 中 | G4-4-1 | ✅ done |
+| 4.4.2 | Web tools | — | `tools-rs` | L1 + L3 | 低 | G4-4-2 | ✅ done |
+| 4.4.3 | Background & cron management tools | — | `tools-rs/src/builtin/{background,cron}/` | L1(已覆盖) + L3 | 中 | G4-4-3 | ✅ done(6 tools, L1 golden parity 绿) |
+| 4.4.4 | Collaboration tools | — | `tools-rs` | L3 | 高 | G4-4-4 | ⬜ pending — 依赖 4.3.5/4.3.7/4.3.8 ✅ 就绪 |
+| 4.4.5 | Session-mode workflow tools | — | `tools-rs` | L3 | 高 | G4-4-5 | ⬜ pending — 依赖 4.3.7 ✅ 就绪 |
+| 4.4.6 | Goal & state tools | — | `tools-rs` | L2 + L3 | 中 | G4-4-6 | ⬜ pending — 依赖 4.3.2 ✅ 就绪 + SessionGoalStore 缺口需补齐 |
+| 4.4.7 | Quality & specialized tools | — | `tools-rs` | L1 + L3 | 中 | G4-4-7 | ⬜ pending — 叶子工具，依赖 4.4.1/4.3.7 等 |
+| 4.4.8 | Tool registration integration & L2/L3 gate | — | `ody-host` | L2 + L3 | 中 | G4-4 | ⬜ pending — 依赖 4.3.9 ✅ + 4.4.4–4.4.7 ⬜ |
 | **4.5** | 收官与终态固化（拆为 8 子阶段，见 §4.5） | — | — | L4 全量 | 中 | G4-final | — |
 | 4.5.0 | Final gap inventory & triage | — | — | — | 高 | G4-final-0 | **design** |
 | 4.5.1 | Migrate deferred kaos gaps | — | `kaos-rs` | L1 | 高 | G4-final-1 | **plan** |
@@ -551,7 +552,7 @@ expect(rust).toEqual(ts);          // 逐字段;失败时打印结构化 diff + 
 - **4.3.6 还额外依赖 Phase 1-A 真分词器一致**:此点保持。
 - **4.3.9 是 G4-3 真正硬门**:只有全部子模块组装进 `Agent` 并接入 `CoreHost` 后,L2/L3/L4 才绿。
 
-**Rust 落地**:新建 `agent-rs` crate(与 `kaos-rs`/`kosong-rs` 并列),`ody-host` 依赖它并持有 `Agent` 实例。`agent-rs` 内部复刻 TS 的模块边界:records/context/config/permission/loop/turn/compaction/session-mode/background/cron,最后由 `ody-host` 的 `CoreHost` 把 `AgentAPI` RPC 路由过来。
+**Rust 落地**(实际) `agent-rs` crate(23K LOC,与 `kaos-rs`/`kosong-rs` 并列) + 模块命名 `agent_loop/`(替代 `loop/`,Rust 关键字回避)。`ody-host` 依赖 `agent-rs` 并持有 `Agent` 实例。全部 10 子阶段已实现 — 路线图规划时预估 `ody-host/src/agent/`,实际独立为 `agent-rs` crate。
 
 **建议执行模式**（见 §3 表格列）:
 - **4.3.0 / 4.3.3 / 4.3.4 / 4.3.5 / 4.3.7 / 4.3.9 → plan 模式**：records schema 是全部子模块的契约；permission 是安全边界；loop engine 事件模型与 hooks 决定并发语义；turn flow 是核心集成面；session-mode + injection 是多模式工作流架构；4.3.9 是最终组装与 CoreHost 集成。这六处先做 plan 可避免结构性返工。

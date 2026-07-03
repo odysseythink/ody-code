@@ -1,0 +1,15 @@
+{
+  "name": "overflow-compaction",
+  "loop_control": {"max_steps": 5},
+  "actions": [
+    {"op":"prompt","input":[{"type":"text","text":"test"}],"origin":{"kind":"user"}}
+  ],
+  "responses": [
+    {
+      "toolCalls":[],
+      "finishReason":"completed",
+      "usage":{"inputOther":999999,"output":10,"inputCacheRead":0,"inputCacheCreation":0}
+    }
+  ],
+  "tools": []
+}

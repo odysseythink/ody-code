@@ -1,0 +1,82 @@
+{
+  "version": 1,
+  "cases": [
+    {
+      "name": "validate empty object with defaults passes",
+      "op": {
+        "type": "validate_args",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "activeOnly": { "type": "boolean", "default": true }
+          },
+          "additionalProperties": false
+        },
+        "args": {}
+      },
+      "expected": { "result": null }
+    },
+    {
+      "name": "validate missing required reports ajv message",
+      "op": {
+        "type": "validate_args",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "name": { "type": "string" },
+            "count": { "type": "integer" }
+          },
+          "required": ["name"],
+          "additionalProperties": false
+        },
+        "args": { "count": 5 }
+      },
+      "expected": { "error": "must have required property 'name'" }
+    },
+    {
+      "name": "validate additional property reports ajv message",
+      "op": {
+        "type": "validate_args",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "activeOnly": { "type": "boolean" }
+          },
+          "additionalProperties": false
+        },
+        "args": { "bogus": true }
+      },
+      "expected": { "error": "must NOT have additional property 'bogus'" }
+    },
+    {
+      "name": "validate nested additional property reports ajv message",
+      "op": {
+        "type": "validate_args",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "question": {
+              "type": "object",
+              "properties": {
+                "question": { "type": "string" },
+                "options": { "type": "array", "items": { "type": "string" }, "minItems": 2 }
+              },
+              "required": ["question", "options"],
+              "additionalProperties": false
+            }
+          },
+          "required": ["question"],
+          "additionalProperties": false
+        },
+        "args": {
+          "question": {
+            "question": "Which?",
+            "options": ["A", "B"],
+            "bogus": true
+          }
+        }
+      },
+      "expected": { "error": "must NOT have additional property 'bogus'" }
+    }
+  ]
+}

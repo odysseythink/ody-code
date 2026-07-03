@@ -1,0 +1,40 @@
+{
+  "name": "goal-continuation",
+  "initialGoal": { "status": "active", "budget": {} },
+  "actions": [
+    { "op": "prompt", "input": [{ "type": "text", "text": "Keep going" }], "origin": { "kind": "user" } },
+    { "op": "wait" }
+  ],
+  "responses": [
+    {
+      "toolCalls": [
+        { "type": "function", "id": "call_active_1", "name": "UpdateGoal", "arguments": "{\"status\":\"active\"}" }
+      ],
+      "finishReason": "tool_calls",
+      "rawFinishReason": "tool_calls",
+      "usage": { "inputOther": 10, "output": 5, "inputCacheRead": 0, "inputCacheCreation": 0 }
+    },
+    {
+      "toolCalls": [
+        { "type": "function", "id": "call_complete_1", "name": "UpdateGoal", "arguments": "{\"status\":\"complete\"}" }
+      ],
+      "finishReason": "tool_calls",
+      "rawFinishReason": "tool_calls",
+      "usage": { "inputOther": 10, "output": 5, "inputCacheRead": 0, "inputCacheCreation": 0 }
+    },
+    {
+      "toolCalls": [],
+      "finishReason": "completed",
+      "rawFinishReason": "stop",
+      "usage": { "inputOther": 8, "output": 4, "inputCacheRead": 0, "inputCacheCreation": 0 }
+    }
+  ],
+  "tools": [
+    {
+      "name": "UpdateGoal",
+      "description": "Updates the current goal status.",
+      "parameters": { "type": "object", "properties": { "status": { "type": "string", "enum": ["active", "complete", "paused", "blocked"] } }, "required": ["status"] },
+      "result": { "output": "ok" }
+    }
+  ]
+}

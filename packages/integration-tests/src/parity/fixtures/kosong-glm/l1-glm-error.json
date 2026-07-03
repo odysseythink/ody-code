@@ -1,0 +1,1 @@
+{"systemPrompt":"","history":[{"role":"user","content":[{"type":"text","text":"Hi"}],"toolCalls":[]}],"providerOptions":{"model":"glm-4-flash","stream":false},"response":{"status":401,"error":{"message":"Invalid auth"}},"expectError":true}

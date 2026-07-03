@@ -1,0 +1,178 @@
+{
+  "version": 1,
+  "cases": [
+    {
+      "name": "HarvestOdyMarkers emits ledger",
+      "op": {
+        "type": "harvest_ody_markers",
+        "files": {
+          "src/foo.rs": [
+            47,
+            47,
+            32,
+            111,
+            100,
+            121,
+            58,
+            32,
+            104,
+            97,
+            114,
+            100,
+            99,
+            111,
+            100,
+            101,
+            100,
+            32,
+            116,
+            105,
+            109,
+            101,
+            111,
+            117,
+            116,
+            44,
+            32,
+            117,
+            115,
+            101,
+            32,
+            99,
+            111,
+            110,
+            102,
+            105,
+            103,
+            10
+          ]
+        },
+        "args": {}
+      },
+      "expected": {}
+    },
+    {
+      "name": "SaveIdeaReport writes report",
+      "op": {
+        "type": "save_idea_report",
+        "files": {},
+        "existingReports": [],
+        "active": true,
+        "args": {
+          "title": "Test Idea",
+          "content": "# Idea\nDetails",
+          "type": "generator"
+        }
+      },
+      "expected": {}
+    },
+    {
+      "name": "ShowDesignMockup writes HTML",
+      "op": {
+        "type": "show_design_mockup",
+        "files": {},
+        "args": {
+          "html": "<html><body>Hi</body></html>",
+          "title": "Mockup"
+        }
+      },
+      "expected": {}
+    },
+    {
+      "name": "ReviewTests formats findings",
+      "op": {
+        "type": "review_tests",
+        "files": {
+          "add.test.ts": [
+            116,
+            101,
+            115,
+            116,
+            40,
+            97,
+            100,
+            100,
+            115,
+            44,
+            32,
+            40,
+            41,
+            32,
+            61,
+            62,
+            32,
+            101,
+            120,
+            112,
+            101,
+            99,
+            116,
+            40,
+            97,
+            100,
+            100,
+            40,
+            49,
+            44,
+            50,
+            41,
+            41,
+            46,
+            116,
+            111,
+            66,
+            101,
+            40,
+            51,
+            41,
+            41,
+            59,
+            10
+          ]
+        },
+        "reviewResult": {
+          "auditLevel": "Standard",
+          "findings": [
+            {
+              "severity": "high",
+              "confidence": "certain",
+              "title": "Tautology",
+              "detail": "asserts result==result",
+              "location": "add.test.ts:1",
+              "suggestedFix": "assert exact value"
+            }
+          ],
+          "mutationProbes": [
+            {
+              "location": "add.ts:1",
+              "mutation": "return 0;",
+              "expectedCatch": "adds"
+            }
+          ],
+          "ok": true
+        },
+        "args": {}
+      },
+      "expected": {}
+    },
+    {
+      "name": "RunE2ETests reports result",
+      "op": {
+        "type": "run_e2e_tests",
+        "files": {},
+        "e2eResult": {
+          "passed": 3,
+          "failed": 0,
+          "skipped": 0,
+          "summary": "3 passed, 0 failed, 0 skipped",
+          "failurePolicy": "warn",
+          "testFiles": [
+            "generated.test.ts"
+          ]
+        },
+        "args": {}
+      },
+      "expected": {}
+    }
+  ]
+}

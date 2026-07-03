@@ -65,6 +65,7 @@ export interface GLMOptions {
   maxTokens?: number | undefined;
   httpClient?: unknown;
   defaultHeaders?: Record<string, string>;
+  clientFactory?: ((auth: ProviderRequestAuth) => OpenAI) | undefined;
 }
 
 export interface GLMGenerationKwargs {
@@ -303,6 +304,7 @@ export class GLMChatProvider implements ChatProvider {
   private _generationKwargs: GLMGenerationKwargs;
   private _httpClient: unknown;
   private _client: OpenAI | undefined;
+  private _clientFactory: ((auth: ProviderRequestAuth) => OpenAI) | undefined;
 
   constructor(options: GLMOptions) {
     const apiKey = options.apiKey ?? process.env['GLM_API_KEY'];
@@ -317,6 +319,7 @@ export class GLMChatProvider implements ChatProvider {
     }
     this._defaultHeaders = options.defaultHeaders;
     this._httpClient = options.httpClient;
+    this._clientFactory = options.clientFactory;
     this._client = this._apiKey === undefined ? undefined : this._buildClient(this._apiKey);
   }
 
@@ -433,7 +436,7 @@ export class GLMChatProvider implements ChatProvider {
 
   private _createClient(auth: ProviderRequestAuth | undefined): OpenAI {
     return resolveAuthBackedClient(
-      { cachedClient: this._client, clientFactory: undefined },
+      { cachedClient: this._client, clientFactory: this._clientFactory },
       auth,
       (a) => this._buildClient(requireProviderApiKey('GLMChatProvider', a, this._apiKey), a),
     );

@@ -3,6 +3,13 @@ use std::sync::Arc;
 use async_trait::async_trait;
 
 pub mod bash;
+pub mod builtin_adapter;
+pub mod e2e_runner;
+pub mod fetch_url;
+pub mod local_fetch_url;
+pub mod providers;
+pub mod review_tests;
+pub mod web_search;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "lowercase")]
@@ -28,15 +35,24 @@ pub struct ApprovalResponse {
 
 #[derive(Debug)]
 pub enum ToolError {
-    ExecutionFailed { message: String, source: Box<dyn std::error::Error + Send> },
-    ApprovalFailed { source: Box<dyn std::error::Error + Send> },
-    NotFound { tool_name: String },
+    ExecutionFailed {
+        message: String,
+        source: Box<dyn std::error::Error + Send>,
+    },
+    ApprovalFailed {
+        source: Box<dyn std::error::Error + Send>,
+    },
+    NotFound {
+        tool_name: String,
+    },
 }
 
 impl std::fmt::Display for ToolError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            ToolError::ExecutionFailed { message, source } => write!(f, "tool exec failed: {message}: {source}"),
+            ToolError::ExecutionFailed { message, source } => {
+                write!(f, "tool exec failed: {message}: {source}")
+            }
             ToolError::ApprovalFailed { source } => write!(f, "tool approval failed: {source}"),
             ToolError::NotFound { tool_name } => write!(f, "tool not found: {tool_name}"),
         }
@@ -54,7 +70,11 @@ pub trait Tool: Send + Sync {
     fn parameters(&self) -> serde_json::Value {
         serde_json::Value::Null
     }
-    async fn execute(&self, args: serde_json::Value, approval: &dyn ApprovalClient) -> Result<ToolResult, ToolError>;
+    async fn execute(
+        &self,
+        args: serde_json::Value,
+        approval: &dyn ApprovalClient,
+    ) -> Result<ToolResult, ToolError>;
 }
 
 #[async_trait]
@@ -85,8 +105,15 @@ impl ToolRegistry {
         &self.tools
     }
 
-    pub async fn execute(&self, name: &str, args: serde_json::Value, approval: &dyn ApprovalClient) -> Result<ToolResult, ToolError> {
-        let tool = self.get(name).ok_or_else(|| ToolError::NotFound { tool_name: name.to_string() })?;
+    pub async fn execute(
+        &self,
+        name: &str,
+        args: serde_json::Value,
+        approval: &dyn ApprovalClient,
+    ) -> Result<ToolResult, ToolError> {
+        let tool = self.get(name).ok_or_else(|| ToolError::NotFound {
+            tool_name: name.to_string(),
+        })?;
         tool.execute(args, approval).await
     }
 
@@ -101,3 +128,10 @@ impl ToolRegistry {
             .collect()
     }
 }
+
+pub use builtin_adapter::BuiltinToolAdapter;
+pub use e2e_runner::HostE2ETestRunner;
+pub use fetch_url::FetchURLTool;
+pub use local_fetch_url::LocalFetchURLProvider;
+pub use review_tests::LlmTestReviewer;
+pub use web_search::WebSearchTool;

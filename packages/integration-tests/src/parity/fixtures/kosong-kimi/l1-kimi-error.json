@@ -1,0 +1,1 @@
+{"systemPrompt":"","history":[{"role":"user","content":[{"type":"text","text":"Hi"}],"toolCalls":[]}],"providerOptions":{"model":"kimi-k2-0711","stream":false},"response":{"status":401,"error":{"message":"Incorrect API key provided"}},"expectError":true}

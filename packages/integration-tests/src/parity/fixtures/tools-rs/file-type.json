@@ -1,0 +1,79 @@
+{
+  "version": 1,
+  "cases": [
+    {
+      "name": "png magic",
+      "op": {
+        "type": "sniff_media_from_magic",
+        "header": [137, 80, 78, 71, 13, 10, 26, 10]
+      },
+      "expected": {
+        "result": { "kind": "image", "mimeType": "image/png" }
+      }
+    },
+    {
+      "name": "jpeg extension without header",
+      "op": {
+        "type": "detect_file_type",
+        "path": "photo.JPG",
+        "header": null
+      },
+      "expected": {
+        "result": { "kind": "image", "mimeType": "image/jpeg" }
+      }
+    },
+    {
+      "name": "typescript suffix is text",
+      "op": {
+        "type": "detect_file_type",
+        "path": "app.ts",
+        "header": null
+      },
+      "expected": {
+        "result": { "kind": "text", "mimeType": "text/plain" }
+      }
+    },
+    {
+      "name": "zip suffix is unknown",
+      "op": {
+        "type": "detect_file_type",
+        "path": "archive.zip",
+        "header": null
+      },
+      "expected": {
+        "result": { "kind": "unknown", "mimeType": "" }
+      }
+    },
+    {
+      "name": "extension sniff kind mismatch",
+      "op": {
+        "type": "detect_file_type",
+        "path": "mismatch.mp4",
+        "header": [255, 216, 255, 224]
+      },
+      "expected": {
+        "result": { "kind": "unknown", "mimeType": "" }
+      }
+    },
+    {
+      "name": "png dimensions",
+      "op": {
+        "type": "sniff_image_dimensions",
+        "header": [137, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 13, 73, 72, 68, 82, 0, 0, 3, 32, 0, 0, 2, 88]
+      },
+      "expected": {
+        "result": { "width": 800, "height": 600 }
+      }
+    },
+    {
+      "name": "gif dimensions",
+      "op": {
+        "type": "sniff_image_dimensions",
+        "header": [71, 73, 70, 56, 57, 97, 64, 1, 240, 0]
+      },
+      "expected": {
+        "result": { "width": 320, "height": 240 }
+      }
+    }
+  ]
+}

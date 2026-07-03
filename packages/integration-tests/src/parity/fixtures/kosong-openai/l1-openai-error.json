@@ -1,0 +1,1 @@
+{"systemPrompt":"","history":[{"role":"user","content":[{"type":"text","text":"Hi"}],"toolCalls":[]}],"providerOptions":{"model":"gpt-4o-mini","stream":false},"response":{"status":401,"error":{"message":"Incorrect API key provided"}},"expectError":true}

@@ -1,0 +1,39 @@
+{
+  "name": "cross-step-dedup",
+  "actions": [
+    { "op": "prompt", "input": [{ "type": "text", "text": "Run duplicates across steps" }], "origin": { "kind": "user" } },
+    { "op": "wait" }
+  ],
+  "responses": [
+    {
+      "toolCalls": [
+        { "type": "function", "id": "call_dup_1", "name": "Bash", "arguments": "{\"command\":\"printf dup\",\"timeout\":60}" }
+      ],
+      "finishReason": "tool_calls",
+      "rawFinishReason": "tool_calls",
+      "usage": { "inputOther": 10, "output": 5, "inputCacheRead": 0, "inputCacheCreation": 0 }
+    },
+    {
+      "toolCalls": [
+        { "type": "function", "id": "call_dup_2", "name": "Bash", "arguments": "{\"command\":\"printf dup\",\"timeout\":60}" }
+      ],
+      "finishReason": "tool_calls",
+      "rawFinishReason": "tool_calls",
+      "usage": { "inputOther": 10, "output": 5, "inputCacheRead": 0, "inputCacheCreation": 0 }
+    },
+    {
+      "toolCalls": [],
+      "finishReason": "completed",
+      "rawFinishReason": "stop",
+      "usage": { "inputOther": 8, "output": 4, "inputCacheRead": 0, "inputCacheCreation": 0 }
+    }
+  ],
+  "tools": [
+    {
+      "name": "Bash",
+      "description": "Runs a shell command.",
+      "parameters": { "type": "object", "properties": { "command": { "type": "string" }, "timeout": { "type": "number" } }, "required": ["command"] },
+      "result": { "output": "dup" }
+    }
+  ]
+}

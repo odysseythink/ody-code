@@ -4,9 +4,9 @@ pub mod crypto;
 pub mod jwt;
 pub mod pkce;
 
-use std::collections::HashMap;
 use napi::bindgen_prelude::*;
 use napi_derive::napi;
+use std::collections::HashMap;
 
 #[napi(object)]
 pub struct PkceChallenge {
@@ -47,17 +47,28 @@ pub fn sha256(input: Either<String, Buffer>) -> String {
 #[napi]
 pub fn pkce_challenge(length: Option<u32>) -> Result<PkceChallenge> {
     pkce::pkce_challenge(length)
-        .map(|c| PkceChallenge { code_verifier: c.code_verifier, code_challenge: c.code_challenge })
+        .map(|c| PkceChallenge {
+            code_verifier: c.code_verifier,
+            code_challenge: c.code_challenge,
+        })
         .map_err(|e| Error::new(Status::GenericFailure, e))
 }
 
 #[napi]
-pub fn verify_id_token(jwt: String, jwk_json: String, expected: IdTokenExpected) -> Result<IdTokenClaims> {
-    jwt::verify_id_token(&jwt, &jwk_json, &jwt::IdTokenExpected {
-        issuer: expected.issuer.clone(),
-        audience: expected.audience.clone(),
-        max_age_seconds: expected.max_age_seconds,
-    })
+pub fn verify_id_token(
+    jwt: String,
+    jwk_json: String,
+    expected: IdTokenExpected,
+) -> Result<IdTokenClaims> {
+    jwt::verify_id_token(
+        &jwt,
+        &jwk_json,
+        &jwt::IdTokenExpected {
+            issuer: expected.issuer.clone(),
+            audience: expected.audience.clone(),
+            max_age_seconds: expected.max_age_seconds,
+        },
+    )
     .map(|c| IdTokenClaims {
         sub: c.sub,
         iss: c.iss,

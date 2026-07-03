@@ -1,9 +1,9 @@
-use std::collections::HashMap;
-use std::time::{SystemTime, UNIX_EPOCH};
-use base64::{Engine as _, engine::general_purpose::URL_SAFE_NO_PAD};
+use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine as _};
 use jsonwebtoken::{decode, Algorithm, DecodingKey, Validation};
 use serde::Deserialize;
 use serde_json::Value;
+use std::collections::HashMap;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 pub struct IdTokenExpected {
     pub issuer: String,
@@ -42,7 +42,9 @@ struct JwtPayload {
 }
 
 fn b64url_decode(input: &str) -> Result<Vec<u8>, String> {
-    URL_SAFE_NO_PAD.decode(input).map_err(|e| format!("base64url decode failed: {}", e))
+    URL_SAFE_NO_PAD
+        .decode(input)
+        .map_err(|e| format!("base64url decode failed: {}", e))
 }
 
 fn current_unix_seconds() -> i64 {
@@ -60,7 +62,11 @@ fn check_audience(aud: &Value, expected: &str) -> Result<(), String> {
     }
 }
 
-pub fn verify_id_token(jwt: &str, jwk_json: &str, expected: &IdTokenExpected) -> Result<IdTokenClaims, String> {
+pub fn verify_id_token(
+    jwt: &str,
+    jwk_json: &str,
+    expected: &IdTokenExpected,
+) -> Result<IdTokenClaims, String> {
     let parts: Vec<&str> = jwt.split('.').collect();
     if parts.len() != 3 {
         return Err("malformed JWT".into());
@@ -75,8 +81,8 @@ pub fn verify_id_token(jwt: &str, jwk_json: &str, expected: &IdTokenExpected) ->
         other => return Err(format!("unsupported or rejected algorithm: {}", other)),
     };
 
-    let jwk: Value = serde_json::from_str(jwk_json)
-        .map_err(|e| format!("invalid JWK JSON: {}", e))?;
+    let jwk: Value =
+        serde_json::from_str(jwk_json).map_err(|e| format!("invalid JWK JSON: {}", e))?;
     let kty = jwk.get("kty").and_then(|v| v.as_str()).unwrap_or("");
     match alg {
         Algorithm::RS256 if kty == "RSA" => {}
@@ -85,8 +91,8 @@ pub fn verify_id_token(jwt: &str, jwk_json: &str, expected: &IdTokenExpected) ->
     }
 
     let payload_raw = b64url_decode(parts[1])?;
-    let payload: JwtPayload = serde_json::from_slice(&payload_raw)
-        .map_err(|e| format!("invalid JWT payload: {}", e))?;
+    let payload: JwtPayload =
+        serde_json::from_slice(&payload_raw).map_err(|e| format!("invalid JWT payload: {}", e))?;
 
     if payload.iss != expected.issuer {
         return Err("issuer mismatch".into());
@@ -103,10 +109,10 @@ pub fn verify_id_token(jwt: &str, jwk_json: &str, expected: &IdTokenExpected) ->
         }
     }
 
-    let jwk_struct: jsonwebtoken::jwk::Jwk = serde_json::from_str(jwk_json)
-        .map_err(|e| format!("invalid JWK: {}", e))?;
-    let decoding_key = DecodingKey::from_jwk(&jwk_struct)
-        .map_err(|e| format!("failed to load JWK: {}", e))?;
+    let jwk_struct: jsonwebtoken::jwk::Jwk =
+        serde_json::from_str(jwk_json).map_err(|e| format!("invalid JWK: {}", e))?;
+    let decoding_key =
+        DecodingKey::from_jwk(&jwk_struct).map_err(|e| format!("failed to load JWK: {}", e))?;
     let mut validation = Validation::new(alg);
     validation.validate_exp = false;
     validation.validate_nbf = false;
@@ -121,7 +127,9 @@ pub fn verify_id_token(jwt: &str, jwk_json: &str, expected: &IdTokenExpected) ->
     let aud = match payload.aud {
         Value::String(s) => StringOrStrings::Single(s),
         Value::Array(arr) => StringOrStrings::Multiple(
-            arr.into_iter().filter_map(|v| v.as_str().map(String::from)).collect()
+            arr.into_iter()
+                .filter_map(|v| v.as_str().map(String::from))
+                .collect(),
         ),
         _ => StringOrStrings::Single(String::new()),
     };
@@ -152,8 +160,8 @@ pub fn verify_id_token(jwt: &str, jwk_json: &str, expected: &IdTokenExpected) ->
 mod tests {
     use super::*;
     use jsonwebtoken::{encode, Algorithm, EncodingKey, Header};
-    use rsa::{RsaPrivateKey, pkcs8::EncodePrivateKey, pkcs8::LineEnding};
     use rsa::traits::PublicKeyParts;
+    use rsa::{pkcs8::EncodePrivateKey, pkcs8::LineEnding, RsaPrivateKey};
     use serde::Serialize;
     use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -167,11 +175,14 @@ mod tests {
     }
 
     fn now() -> i64 {
-        SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() as i64
+        SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_secs() as i64
     }
 
     fn rsa_jwk(private_key: &RsaPrivateKey) -> String {
-        use base64::{Engine as _, engine::general_purpose::URL_SAFE_NO_PAD};
+        use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine as _};
         let n = URL_SAFE_NO_PAD.encode(private_key.n().to_bytes_be());
         let e = URL_SAFE_NO_PAD.encode(private_key.e().to_bytes_be());
         format!(r#"{{"kty":"RSA","n":"{}","e":"{}"}}"#, n, e)
@@ -246,7 +257,7 @@ mod tests {
         // 修改 payload 中一个字符（第二个 segment 是 payload）
         let parts: Vec<&str> = jwt.split('.').collect();
         let tampered_payload = parts[1].replacen('u', "v", 1);
-        jwt = format!("{}.{}.{}" , parts[0], tampered_payload, parts[2]);
+        jwt = format!("{}.{}.{}", parts[0], tampered_payload, parts[2]);
 
         let expected = IdTokenExpected {
             issuer: "https://issuer.example".into(),

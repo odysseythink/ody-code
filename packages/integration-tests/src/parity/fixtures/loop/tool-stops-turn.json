@@ -1,0 +1,46 @@
+{
+  "name": "tool-stops-turn",
+  "turnId": "turn-tool-stops",
+  "maxSteps": 10,
+  "maxRetryAttempts": 1,
+  "messages": [
+    {
+      "role": "user",
+      "content": [{ "type": "text", "text": "Stop after tool" }],
+      "toolCalls": []
+    }
+  ],
+  "responses": [
+    {
+      "toolCalls": [
+        {
+          "type": "function",
+          "id": "call_stop_1",
+          "name": "stopper",
+          "arguments": "{}"
+        }
+      ],
+      "finishReason": "tool_calls",
+      "rawFinishReason": "tool_calls",
+      "usage": {
+        "inputOther": 7,
+        "output": 3,
+        "inputCacheRead": 0,
+        "inputCacheCreation": 0
+      }
+    }
+  ],
+  "tools": [
+    {
+      "name": "stopper",
+      "description": "Stops the turn after running.",
+      "parameters": {
+        "type": "object"
+      },
+      "result": {
+        "output": "stopped",
+        "stopTurn": true
+      }
+    }
+  ]
+}

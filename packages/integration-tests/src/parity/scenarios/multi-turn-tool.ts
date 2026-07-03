@@ -1,4 +1,4 @@
-import { writeFile } from 'node:fs/promises';
+import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'pathe';
 
 import type { ChatProvider } from '@odysseythink/kosong';
@@ -42,6 +42,9 @@ export const multiTurnToolScenario: Scenario = {
       input: [{ type: 'text', text: 'Read input.txt and write its meaning to output.txt' }],
     });
     await waitForTurnEnded(backend.client, { timeoutMs: 10000 });
-    return { responses: [{ sessionId: summary.id }], events: [] };
+
+    const outputText = await readFile(join(backend.homeDir, 'output.txt'), 'utf8').catch(() => '');
+
+    return { responses: [{ sessionId: summary.id, outputText }], events: [] };
   },
 };

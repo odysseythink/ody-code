@@ -78,7 +78,9 @@ mod tests {
     fn alloc_dealloc_roundtrip() {
         let ptr = alloc(5);
         assert!(!ptr.is_null());
-        unsafe { std::ptr::write_bytes(ptr, 0xAB, 5); }
+        unsafe {
+            std::ptr::write_bytes(ptr, 0xAB, 5);
+        }
         dealloc(ptr, 5);
     }
 

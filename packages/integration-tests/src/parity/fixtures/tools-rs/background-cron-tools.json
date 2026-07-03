@@ -1,0 +1,126 @@
+{
+  "version": 1,
+  "cases": [
+    {
+      "name": "task_list_empty",
+      "op": {
+        "type": "task_list",
+        "active_only": false,
+        "limit": 20,
+        "tasks": []
+      },
+      "expected": null
+    },
+    {
+      "name": "task_list_active_only",
+      "op": {
+        "type": "task_list",
+        "active_only": true,
+        "limit": 20,
+        "tasks": [
+          { "taskId": "task-001", "description": "running task", "status": "running", "startedAt": 1000 },
+          { "taskId": "task-002", "description": "done task", "status": "completed", "startedAt": 2000, "endedAt": 3000 }
+        ]
+      },
+      "expected": null
+    },
+    {
+      "name": "task_output_snapshot",
+      "op": {
+        "type": "task_output",
+        "task_id": "task-001",
+        "block": false,
+        "tasks": [
+          {
+            "taskId": "task-001",
+            "description": "test task",
+            "status": "running",
+            "startedAt": 1000,
+            "outputSnapshot": {
+              "outputPath": "/tmp/output.log",
+              "outputSizeBytes": 100,
+              "previewBytes": 11,
+              "truncated": false,
+              "fullOutputAvailable": true,
+              "preview": "hello world"
+            }
+          }
+        ]
+      },
+      "expected": null
+    },
+    {
+      "name": "task_stop_running",
+      "op": {
+        "type": "task_stop",
+        "task_id": "task-001",
+        "reason": "test stop",
+        "tasks": [
+          { "taskId": "task-001", "description": "running task", "status": "running", "startedAt": 1000 }
+        ]
+      },
+      "expected": null
+    },
+    {
+      "name": "task_stop_already_terminal",
+      "op": {
+        "type": "task_stop",
+        "task_id": "task-001",
+        "tasks": [
+          { "taskId": "task-001", "description": "done task", "status": "completed", "startedAt": 1000, "endedAt": 2000 }
+        ]
+      },
+      "expected": null
+    },
+    {
+      "name": "cron_create_valid",
+      "op": {
+        "type": "cron_create",
+        "cron": "0 9 * * *",
+        "prompt": "daily check",
+        "recurring": true,
+        "existing_tasks": []
+      },
+      "expected": null
+    },
+    {
+      "name": "cron_create_invalid_expression",
+      "op": {
+        "type": "cron_create",
+        "cron": "60 * * * *",
+        "prompt": "bad cron",
+        "recurring": true,
+        "existing_tasks": []
+      },
+      "expected": null
+    },
+    {
+      "name": "cron_list_empty",
+      "op": {
+        "type": "cron_list",
+        "tasks": []
+      },
+      "expected": null
+    },
+    {
+      "name": "cron_list_with_tasks",
+      "op": {
+        "type": "cron_list",
+        "tasks": [
+          { "cron": "0 9 * * *", "prompt": "daily check", "recurring": true, "createdAt": 1700000000000 },
+          { "cron": "*/5 * * * *", "prompt": "poll status", "recurring": true, "createdAt": 1700000000000 }
+        ]
+      },
+      "expected": null
+    },
+    {
+      "name": "cron_delete_not_found",
+      "op": {
+        "type": "cron_delete",
+        "id": "deadbeef",
+        "tasks": []
+      },
+      "expected": null
+    }
+  ]
+}

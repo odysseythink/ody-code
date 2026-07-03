@@ -7,6 +7,7 @@ export interface ParityBackend {
   readonly kind: BackendKind;
   readonly client: SDKRpcClient;
   readonly homeDir: string;
+  envCall(method: string, payload: unknown): Promise<unknown>;
   close(): Promise<void>;
 }
 

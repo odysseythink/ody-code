@@ -1,0 +1,140 @@
+{
+  "version": 1,
+  "cases": [
+    {
+      "name": "canonicalize relative posix",
+      "op": {
+        "type": "canonicalize_path",
+        "path": "src/../main.rs",
+        "cwd": "/workspace",
+        "pathClass": "posix"
+      },
+      "expected": { "result": "/workspace/main.rs" }
+    },
+    {
+      "name": "rejects empty path",
+      "op": {
+        "type": "canonicalize_path",
+        "path": "",
+        "cwd": "/workspace",
+        "pathClass": "posix"
+      },
+      "expected": { "error": "PathInvalid" }
+    },
+    {
+      "name": "is within workspace uses segment boundaries",
+      "op": {
+        "type": "is_within_directory",
+        "candidate": "/workspace-evil/secrets.txt",
+        "base": "/workspace",
+        "pathClass": "posix"
+      },
+      "expected": { "result": false }
+    },
+    {
+      "name": "workspace prefix does not falsely match sibling",
+      "op": {
+        "type": "is_within_directory",
+        "candidate": "/workspace/file.txt",
+        "base": "/workspace-evil",
+        "pathClass": "posix"
+      },
+      "expected": { "result": false }
+    },
+    {
+      "name": "normalize user path on win32",
+      "op": {
+        "type": "normalize_user_path",
+        "path": "/c/Users/foo/file.txt",
+        "pathClass": "win32"
+      },
+      "expected": { "result": "C:/Users/foo/file.txt" }
+    },
+    {
+      "name": "resolve path access rejects relative escape",
+      "op": {
+        "type": "resolve_path_access",
+        "path": "../../outside.txt",
+        "cwd": "/workspace/project",
+        "workspaceDir": "/workspace",
+        "additionalDirs": [],
+        "operation": "read",
+        "pathClass": "posix"
+      },
+      "expected": { "error": "PathOutsideWorkspace" }
+    },
+    {
+      "name": "resolve path access allows absolute outside workspace",
+      "op": {
+        "type": "resolve_path_access",
+        "path": "/etc/hosts",
+        "cwd": "/workspace",
+        "workspaceDir": "/workspace",
+        "additionalDirs": [],
+        "operation": "read",
+        "pathClass": "posix"
+      },
+      "expected": {
+        "result": { "path": "/etc/hosts", "outsideWorkspace": true }
+      }
+    },
+    {
+      "name": "resolve path access expands tilde",
+      "op": {
+        "type": "resolve_path_access",
+        "path": "~/notes/today.txt",
+        "cwd": "/workspace",
+        "workspaceDir": "/workspace",
+        "additionalDirs": [],
+        "operation": "read",
+        "pathClass": "posix",
+        "homeDir": "/home/test"
+      },
+      "expected": {
+        "result": { "path": "/home/test/notes/today.txt", "outsideWorkspace": true }
+      }
+    },
+    {
+      "name": "resolve path access rejects sensitive file",
+      "op": {
+        "type": "resolve_path_access",
+        "path": "/tmp/.env",
+        "cwd": "/workspace",
+        "workspaceDir": "/workspace",
+        "additionalDirs": [],
+        "operation": "read",
+        "pathClass": "posix"
+      },
+      "expected": { "error": "PathSensitive" }
+    },
+    {
+      "name": "assert path allowed returns canonical path",
+      "op": {
+        "type": "assert_path_allowed",
+        "path": "src/../main.rs",
+        "cwd": "/workspace/project",
+        "workspaceDir": "/workspace",
+        "additionalDirs": [],
+        "mode": "read",
+        "pathClass": "posix"
+      },
+      "expected": { "result": "/workspace/project/main.rs" }
+    },
+    {
+      "name": "is sensitive file flags basenames",
+      "op": {
+        "type": "is_sensitive_file",
+        "path": "/app/.env"
+      },
+      "expected": { "result": true }
+    },
+    {
+      "name": "is sensitive file must survive inputs",
+      "op": {
+        "type": "is_sensitive_file",
+        "path": ".env.example"
+      },
+      "expected": { "result": false }
+    }
+  ]
+}

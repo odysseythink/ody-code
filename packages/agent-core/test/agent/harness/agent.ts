@@ -154,6 +154,10 @@ export class AgentTestContext {
   readonly allEvents: EventSnapshotEntry[] = [];
   readonly agent: Agent;
   readonly rpc: PromiseAgentAPI;
+  get records(): AgentRecord[] {
+    return this.recordHistory;
+  }
+
   readonly llmCalls = this.scriptedGenerate.calls;
   readonly lastLlmInput = this.scriptedGenerate.lastInput;
   readonly llmInputs = this.scriptedGenerate.inputs;

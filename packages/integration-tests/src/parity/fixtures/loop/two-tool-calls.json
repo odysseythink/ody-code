@@ -1,0 +1,66 @@
+{
+  "name": "two-tool-calls",
+  "turnId": "turn-two-tools",
+  "maxSteps": 10,
+  "maxRetryAttempts": 1,
+  "messages": [
+    {
+      "role": "user",
+      "content": [{ "type": "text", "text": "Call two tools" }],
+      "toolCalls": []
+    }
+  ],
+  "responses": [
+    {
+      "toolCalls": [
+        {
+          "type": "function",
+          "id": "call_a_1",
+          "name": "echo",
+          "arguments": "{\"message\":\"a\"}"
+        },
+        {
+          "type": "function",
+          "id": "call_b_1",
+          "name": "echo",
+          "arguments": "{\"message\":\"b\"}"
+        }
+      ],
+      "finishReason": "tool_calls",
+      "rawFinishReason": "tool_calls",
+      "usage": {
+        "inputOther": 12,
+        "output": 6,
+        "inputCacheRead": 0,
+        "inputCacheCreation": 0
+      }
+    },
+    {
+      "toolCalls": [],
+      "finishReason": "completed",
+      "rawFinishReason": "stop",
+      "usage": {
+        "inputOther": 8,
+        "output": 4,
+        "inputCacheRead": 0,
+        "inputCacheCreation": 0
+      }
+    }
+  ],
+  "tools": [
+    {
+      "name": "echo",
+      "description": "Echoes the input back.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "message": { "type": "string" }
+        },
+        "required": ["message"]
+      },
+      "result": {
+        "output": "echoed"
+      }
+    }
+  ]
+}

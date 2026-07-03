@@ -17,6 +17,7 @@ function fakeBackend(eventsToEmit: any[] = []): ParityBackend {
         return { id: 'session-123' };
       },
     } as any,
+    envCall: async () => ({}),
     close: async () => {},
   };
 }

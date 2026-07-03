@@ -1,0 +1,62 @@
+{
+  "version": 1,
+  "cases": [
+    {
+      "name": "literal rule pattern escapes glob special",
+      "op": {
+        "type": "literal_rule_pattern",
+        "toolName": "read",
+        "subject": "/tmp/*.txt"
+      },
+      "expected": { "result": "read(/tmp/\\*.txt)" }
+    },
+    {
+      "name": "escape rule subject literal",
+      "op": {
+        "type": "escape_rule_subject_literal",
+        "subject": "a[b]c"
+      },
+      "expected": { "result": "a\\[b\\]c" }
+    },
+    {
+      "name": "matches glob rule subject positive",
+      "op": {
+        "type": "matches_glob_rule_subject",
+        "ruleArgs": "*.ts",
+        "subject": "main.ts"
+      },
+      "expected": { "result": true }
+    },
+    {
+      "name": "matches glob rule subject negative",
+      "op": {
+        "type": "matches_glob_rule_subject",
+        "ruleArgs": "!*.ts",
+        "subject": "main.ts"
+      },
+      "expected": { "result": false }
+    },
+    {
+      "name": "matches path rule subject with canonical cwd",
+      "op": {
+        "type": "matches_path_rule_subject",
+        "ruleArgs": "src/**/*.ts",
+        "subject": "src/deep/main.ts",
+        "cwd": "/workspace",
+        "pathClass": "posix"
+      },
+      "expected": { "result": true }
+    },
+    {
+      "name": "matches path rule subject leading dot slash",
+      "op": {
+        "type": "matches_path_rule_subject",
+        "ruleArgs": "*.ts",
+        "subject": "./main.ts",
+        "cwd": "/workspace",
+        "pathClass": "posix"
+      },
+      "expected": { "result": true }
+    }
+  ]
+}

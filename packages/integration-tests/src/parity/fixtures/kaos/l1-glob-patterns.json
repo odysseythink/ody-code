@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "cases": [
+    {
+      "name": "star matches any chars except slash",
+      "op": { "type": "pattern_to_regex", "pattern": "*.txt", "caseSensitive": true, "inputs": ["a.txt", "a/b.txt"] },
+      "expected": { "regex": "^[^/]*\\.txt$", "matches": [true, false] }
+    },
+    {
+      "name": "question matches single char",
+      "op": { "type": "pattern_to_regex", "pattern": "file?.log", "caseSensitive": true, "inputs": ["file1.log", "file12.log"] },
+      "expected": { "regex": "^file[^/]\\.log$", "matches": [true, false] }
+    },
+    {
+      "name": "char class negation with bang",
+      "op": { "type": "pattern_to_regex", "pattern": "[!a].txt", "caseSensitive": true, "inputs": ["b.txt", "a.txt"] },
+      "expected": { "regex": "^[^a]\\.txt$", "matches": [true, false] }
+    },
+    {
+      "name": "char class literal caret is escaped",
+      "op": { "type": "pattern_to_regex", "pattern": "[a^].txt", "caseSensitive": true, "inputs": ["^.txt", "a.txt"] },
+      "expected": { "regex": "^[a^]\\.txt$", "matches": [true, true] }
+    },
+    {
+      "name": "case insensitive flag works",
+      "op": { "type": "pattern_to_regex", "pattern": "*.TXT", "caseSensitive": false, "inputs": ["a.txt"] },
+      "expected": { "regex": "(?i)^[^/]*\\.TXT$", "matches": [true] }
+    }
+  ]
+}

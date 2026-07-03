@@ -1,0 +1,118 @@
+{
+  "operations": [
+    {
+      "operation": "sanitizeToolCallId",
+      "cases": [
+        {
+          "name": "safe chars pass through",
+          "input": { "id": "call_123-abc", "maxLength": 64 }
+        },
+        {
+          "name": "unsafe chars become underscores",
+          "input": { "id": "a|b/c@d#e", "maxLength": 64 }
+        },
+        {
+          "name": "truncates to maxLength",
+          "input": { "id": "abcdefghij", "maxLength": 5 }
+        },
+        {
+          "name": "empty id stays empty",
+          "input": { "id": "", "maxLength": 64 }
+        }
+      ]
+    },
+    {
+      "operation": "sanitizeOpenAIResponsesCallId",
+      "cases": [
+        {
+          "name": "splits at pipe",
+          "input": { "id": "call_123|extra", "maxLength": 64 }
+        },
+        {
+          "name": "truncates after split",
+          "input": { "id": "abcdef|gh", "maxLength": 4 }
+        },
+        {
+          "name": "no pipe passes through",
+          "input": { "id": "safe-id", "maxLength": 64 }
+        }
+      ]
+    },
+    {
+      "operation": "normalizeToolCallIdsForProvider",
+      "cases": [
+        {
+          "name": "openai normalizes matching ids",
+          "input": {
+            "provider": "openai",
+            "messages": [
+              {
+                "role": "assistant",
+                "content": [],
+                "toolCalls": [
+                  { "type": "function", "id": "a|b", "name": "read", "arguments": null }
+                ]
+              },
+              {
+                "role": "tool",
+                "content": [{ "type": "text", "text": "ok" }],
+                "toolCalls": [],
+                "toolCallId": "a|b"
+              }
+            ]
+          }
+        },
+        {
+          "name": "openai_responses splits pipe",
+          "input": {
+            "provider": "openai_responses",
+            "messages": [
+              {
+                "role": "assistant",
+                "content": [],
+                "toolCalls": [
+                  { "type": "function", "id": "call_123|extra", "name": "read", "arguments": null }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "duplicate normalized ids get suffixes",
+          "input": {
+            "provider": "openai",
+            "messages": [
+              {
+                "role": "assistant",
+                "content": [],
+                "toolCalls": [
+                  { "type": "function", "id": "a|b", "name": "read", "arguments": null }
+                ]
+              },
+              {
+                "role": "assistant",
+                "content": [],
+                "toolCalls": [
+                  { "type": "function", "id": "a/b", "name": "write", "arguments": null }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "no tool calls returns unchanged",
+          "input": {
+            "provider": "openai",
+            "messages": [
+              {
+                "role": "user",
+                "content": [{ "type": "text", "text": "hello" }],
+                "toolCalls": []
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

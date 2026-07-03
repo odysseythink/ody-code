@@ -3,7 +3,9 @@ use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 
 use async_trait::async_trait;
-use tokio::net::{TcpListener, TcpStream, UnixListener, UnixStream};
+use tokio::net::{TcpListener, TcpStream};
+#[cfg(unix)]
+use tokio::net::{UnixListener, UnixStream};
 
 use crate::error::HostError;
 use crate::transport::connection::StreamConnection;
@@ -49,13 +51,17 @@ fn print_ready(msg: ReadyMessage) {
     eprintln!("{}", serde_json::to_string(&msg).unwrap_or_default());
 }
 
+#[cfg(unix)]
 pub struct UnixSocketTransportServer {
     conn: Mutex<Option<StreamConnection>>,
     stream: Mutex<Option<UnixStream>>,
 }
 
+#[cfg(unix)]
 impl UnixSocketTransportServer {
-    pub async fn bind(path: PathBuf) -> Result<(Self, Box<dyn crate::events::EventSink>), HostError> {
+    pub async fn bind(
+        path: PathBuf,
+    ) -> Result<(Self, Box<dyn crate::events::EventSink>), HostError> {
         if path.exists() {
             std::fs::remove_file(&path).map_err(|e| HostError::IoGeneric {
                 message: format!("cannot remove stale socket {}: {e}", path.display()),
@@ -79,13 +85,25 @@ impl UnixSocketTransportServer {
     }
 }
 
+#[cfg(unix)]
 #[async_trait]
 impl TransportServer for UnixSocketTransportServer {
     async fn serve(&self, dispatch: Arc<ByteDispatch>) -> Result<(), TransportError> {
-        let conn = self.conn.lock().unwrap().take().expect("serve() called more than once");
-        let stream = self.stream.lock().unwrap().take().expect("serve() called more than once");
+        let conn = self
+            .conn
+            .lock()
+            .unwrap()
+            .take()
+            .expect("serve() called more than once");
+        let stream = self
+            .stream
+            .lock()
+            .unwrap()
+            .take()
+            .expect("serve() called more than once");
         let (read, write) = stream.into_split();
-        conn.start(read, write, Framing::LengthPrefixed, dispatch).await
+        conn.start(read, write, Framing::LengthPrefixed, dispatch)
+            .await
     }
 }
 
@@ -95,17 +113,28 @@ pub struct TcpSocketTransportServer {
 }
 
 impl TcpSocketTransportServer {
-    pub async fn bind(host: String, port: u16) -> Result<(Self, Box<dyn crate::events::EventSink>), HostError> {
-        let addr: SocketAddr = format!("{host}:{port}")
-            .parse()
-            .map_err(|e| HostError::IoGeneric { message: format!("invalid tcp address: {e}") })?;
-        let listener = TcpListener::bind(&addr).await.map_err(|e| HostError::IoGeneric {
-            message: format!("cannot bind tcp socket {addr}: {e}"),
-        })?;
+    pub async fn bind(
+        host: String,
+        port: u16,
+    ) -> Result<(Self, Box<dyn crate::events::EventSink>), HostError> {
+        let addr: SocketAddr =
+            format!("{host}:{port}")
+                .parse()
+                .map_err(|e| HostError::IoGeneric {
+                    message: format!("invalid tcp address: {e}"),
+                })?;
+        let listener = TcpListener::bind(&addr)
+            .await
+            .map_err(|e| HostError::IoGeneric {
+                message: format!("cannot bind tcp socket {addr}: {e}"),
+            })?;
         let local_addr = listener.local_addr().map_err(|e| HostError::IoGeneric {
             message: format!("cannot get local addr: {e}"),
         })?;
-        print_ready(ReadyMessage::tcp(local_addr.ip().to_string(), local_addr.port()));
+        print_ready(ReadyMessage::tcp(
+            local_addr.ip().to_string(),
+            local_addr.port(),
+        ));
         let (stream, _) = listener.accept().await.map_err(|e| HostError::IoGeneric {
             message: format!("tcp socket accept failed: {e}"),
         })?;
@@ -123,10 +152,21 @@ impl TcpSocketTransportServer {
 #[async_trait]
 impl TransportServer for TcpSocketTransportServer {
     async fn serve(&self, dispatch: Arc<ByteDispatch>) -> Result<(), TransportError> {
-        let conn = self.conn.lock().unwrap().take().expect("serve() called more than once");
-        let stream = self.stream.lock().unwrap().take().expect("serve() called more than once");
+        let conn = self
+            .conn
+            .lock()
+            .unwrap()
+            .take()
+            .expect("serve() called more than once");
+        let stream = self
+            .stream
+            .lock()
+            .unwrap()
+            .take()
+            .expect("serve() called more than once");
         let (read, write) = stream.into_split();
-        conn.start(read, write, Framing::LengthPrefixed, dispatch).await
+        conn.start(read, write, Framing::LengthPrefixed, dispatch)
+            .await
     }
 }
 

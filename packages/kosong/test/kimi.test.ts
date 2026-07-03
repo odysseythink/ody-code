@@ -538,7 +538,7 @@ describe('KimiChatProvider', () => {
       expect(body['tools']).toEqual([
         {
           type: 'builtin_function',
-          function: { name: '$web_search' },
+          function: { name: 'web_search' },
         },
       ]);
     });

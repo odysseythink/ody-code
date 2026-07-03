@@ -55,6 +55,8 @@ struct SharedArgs {
     home: Option<PathBuf>,
     #[arg(long, default_value = "info")]
     log_level: String,
+    #[arg(long)]
+    provider: Option<String>,
     #[arg(long, hide = true)]
     mock_provider: bool,
 }
@@ -88,6 +90,7 @@ struct RawConfigFile {
 
 #[derive(Debug, Deserialize)]
 struct RawProvider {
+    provider_id: Option<String>,
     api_key: String,
     base_url: Option<String>,
     default_model: Option<String>,
@@ -112,15 +115,25 @@ impl HostConfig {
         let home_dir = active.home.clone().unwrap_or_else(default_home_dir);
         let config_path = active.config.clone().or_else(|| {
             let toml = home_dir.join("ody.toml");
-            if toml.exists() { Some(toml) } else {
+            if toml.exists() {
+                Some(toml)
+            } else {
                 let json = home_dir.join("ody.json");
-                if json.exists() { Some(json) } else { None }
+                if json.exists() {
+                    Some(json)
+                } else {
+                    None
+                }
             }
         });
 
         let file: RawConfigFile = match &config_path {
             Some(path) => load_raw_config(path)?,
-            None => RawConfigFile { home_dir: None, log_level: None, provider: None },
+            None => RawConfigFile {
+                home_dir: None,
+                log_level: None,
+                provider: None,
+            },
         };
 
         let transport = if let Some(path) = active.socket_path.clone() {
@@ -134,10 +147,23 @@ impl HostConfig {
         let log_level = parse_log_level(&active.log_level)?;
 
         let provider = ProviderConfig {
-            provider_id: "openai".to_string(),
-            api_key: file.provider.as_ref().map(|p| p.api_key.clone()).unwrap_or_default(),
+            provider_id: active
+                .provider
+                .clone()
+                .or_else(|| file.provider.as_ref().and_then(|p| p.provider_id.clone()))
+                .unwrap_or_else(|| "openai".to_string()),
+            api_key: file
+                .provider
+                .as_ref()
+                .map(|p| p.api_key.clone())
+                .unwrap_or_default(),
             base_url: file.provider.as_ref().and_then(|p| p.base_url.clone()),
-            default_model: Some(file.provider.as_ref().and_then(|p| p.default_model.clone()).unwrap_or_else(|| "gpt-4o-mini".to_string())),
+            default_model: Some(
+                file.provider
+                    .as_ref()
+                    .and_then(|p| p.default_model.clone())
+                    .unwrap_or_else(|| "gpt-4o-mini".to_string()),
+            ),
         };
 
         Ok(HostConfig {
@@ -160,6 +186,7 @@ fn active_args(cli: &Cli) -> Result<&SharedArgs, HostError> {
                 || cli.shared.tcp_port.is_some()
                 || cli.shared.config.is_some()
                 || cli.shared.home.is_some()
+                || cli.shared.provider.is_some()
                 || cli.shared.log_level != "info";
             if has_global_flags {
                 return Err(HostError::config_invalid(
@@ -173,7 +200,9 @@ fn active_args(cli: &Cli) -> Result<&SharedArgs, HostError> {
 }
 
 fn default_home_dir() -> PathBuf {
-    dirs::home_dir().unwrap_or_else(|| PathBuf::from(".")).join(".ody")
+    dirs::home_dir()
+        .unwrap_or_else(|| PathBuf::from("."))
+        .join(".ody")
 }
 
 fn parse_log_level(s: &str) -> Result<LogLevel, HostError> {
@@ -187,11 +216,15 @@ fn parse_log_level(s: &str) -> Result<LogLevel, HostError> {
 }
 
 fn load_raw_config(path: &PathBuf) -> Result<RawConfigFile, HostError> {
-    let bytes = std::fs::read(path).map_err(|e| HostError::Io { source: e, path: path.clone() })?;
+    let bytes = std::fs::read(path).map_err(|e| HostError::Io {
+        source: e,
+        path: path.clone(),
+    })?;
     if path.extension().and_then(|s| s.to_str()) == Some("json") {
         serde_json::from_slice(&bytes).map_err(|e| HostError::config_invalid(format!("{e}")))
     } else {
-        let s = std::str::from_utf8(&bytes).map_err(|e| HostError::config_invalid(format!("{e}")))?;
+        let s =
+            std::str::from_utf8(&bytes).map_err(|e| HostError::config_invalid(format!("{e}")))?;
         toml::from_str(s).map_err(|e| HostError::config_invalid(format!("{e}")))
     }
 }
@@ -213,7 +246,12 @@ mod tests {
     fn socket_path_from_cli() {
         let args = vec!["ody-host", "--socket-path", "/tmp/ody.sock"];
         let config = HostConfig::from_cli(args.into_iter()).unwrap();
-        assert_eq!(config.transport, TransportMode::UnixSocket { path: std::path::PathBuf::from("/tmp/ody.sock") });
+        assert_eq!(
+            config.transport,
+            TransportMode::UnixSocket {
+                path: std::path::PathBuf::from("/tmp/ody.sock")
+            }
+        );
     }
 
     #[test]
@@ -237,7 +275,9 @@ mod tests {
         let config = HostConfig::from_cli(args.into_iter()).unwrap();
         assert_eq!(
             config.transport,
-            TransportMode::UnixSocket { path: std::path::PathBuf::from("/tmp/ody-serve.sock") }
+            TransportMode::UnixSocket {
+                path: std::path::PathBuf::from("/tmp/ody-serve.sock")
+            }
         );
     }
 
@@ -251,7 +291,13 @@ mod tests {
 
     #[test]
     fn global_flags_conflict_with_serve_rejected() {
-        let args = vec!["ody-host", "--stdio", "serve", "--socket-path", "/tmp/ody.sock"];
+        let args = vec![
+            "ody-host",
+            "--stdio",
+            "serve",
+            "--socket-path",
+            "/tmp/ody.sock",
+        ];
         let err = HostConfig::from_cli(args.into_iter()).unwrap_err();
         let msg = err.to_string();
         assert!(
@@ -265,5 +311,39 @@ mod tests {
         let args = vec!["ody-host", "--stdio", "--mock-provider"];
         let config = HostConfig::from_cli(args.into_iter()).unwrap();
         assert!(config.mock_provider);
+    }
+}
+
+#[cfg(test)]
+mod provider_config_tests {
+    use super::*;
+
+    #[test]
+    fn cli_provider_overrides_default() {
+        let args = vec!["ody-host", "--provider", "anthropic", "--stdio"];
+        let config = HostConfig::from_cli(args.into_iter()).unwrap();
+        assert_eq!(config.provider.provider_id, "anthropic");
+    }
+
+    #[test]
+    fn config_file_provider_is_parsed() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("ody.toml");
+        std::fs::write(
+            &path,
+            "[provider]\nprovider_id = \"kimi\"\napi_key = \"sk\"\n",
+        )
+        .unwrap();
+        let args = vec!["ody-host", "--config", path.to_str().unwrap(), "--stdio"];
+        let config = HostConfig::from_cli(args.into_iter()).unwrap();
+        assert_eq!(config.provider.provider_id, "kimi");
+        assert_eq!(config.provider.api_key, "sk");
+    }
+
+    #[test]
+    fn default_provider_is_openai() {
+        let args = vec!["ody-host", "--stdio"];
+        let config = HostConfig::from_cli(args.into_iter()).unwrap();
+        assert_eq!(config.provider.provider_id, "openai");
     }
 }

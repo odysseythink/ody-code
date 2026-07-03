@@ -1,0 +1,18 @@
+{
+  "name": "cron-fire",
+  "responses": [
+    {
+      "toolCalls": [],
+      "finishReason": "completed",
+      "rawFinishReason": "stop",
+      "usage": { "inputOther": 0, "output": 0, "inputCacheRead": 0, "inputCacheCreation": 0 }
+    }
+  ],
+  "actions": [
+    { "op": "advance_clock_to", "epoch_ms": 0 },
+    { "op": "cron_add", "cron": "* * * * *", "prompt": "ping", "recurring": true },
+    { "op": "advance_clock_to", "epoch_ms": 120000 },
+    { "op": "cron_tick" },
+    { "op": "wait" }
+  ]
+}

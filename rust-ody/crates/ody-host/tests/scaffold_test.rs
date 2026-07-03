@@ -17,7 +17,10 @@ fn serve_subcommand_help_lists_transport_flags() {
         "ody-host serve --help should exit successfully; stderr: {}",
         String::from_utf8_lossy(&output.stderr)
     );
-    assert!(stdout.contains("serve"), "help should mention serve subcommand");
+    assert!(
+        stdout.contains("serve"),
+        "help should mention serve subcommand"
+    );
     assert!(stdout.contains("--stdio"), "help should list --stdio flag");
 }
 
