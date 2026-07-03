@@ -1,1 +1,0 @@
-Save the current idea-generation or idea-evaluation report to the project under `.ody-code/ideas/`. Only available after the `idea-generator` or `idea-evaluator` skill has been activated in this conversation. The file name is generated automatically from `title`; do not include dates or sensitive words in the title.
