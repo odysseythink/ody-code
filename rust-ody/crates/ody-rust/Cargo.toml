@@ -1,0 +1,14 @@
+[package]
+name = "ody-rust"
+version = "0.1.0"
+edition = "2021"
+description = "PoC: hot-path logic in Rust compiled to Wasm for ody-code"
+license = "MIT"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+similar = "2.6.0"
+globset = "0.4.14"
+

@@ -1,0 +1,44 @@
+[
+  {
+    "name": "Bash",
+    "description": "Execute a shell command.",
+    "active": false,
+    "source": "builtin"
+  },
+  {
+    "name": "Edit",
+    "description": "Apply a targeted edit to a text file.",
+    "active": false,
+    "source": "builtin"
+  },
+  {
+    "name": "Glob",
+    "description": "Find files matching a glob pattern.",
+    "active": false,
+    "source": "builtin"
+  },
+  {
+    "name": "Grep",
+    "description": "Search file contents with a regex.",
+    "active": true,
+    "source": "builtin"
+  },
+  {
+    "name": "Read",
+    "description": "Read a text file from the local filesystem.",
+    "active": true,
+    "source": "builtin"
+  },
+  {
+    "name": "Write",
+    "description": "Write or overwrite a text file.",
+    "active": false,
+    "source": "builtin"
+  },
+  {
+    "name": "custom_user_tool",
+    "description": "A user-registered tool for fixture generation.",
+    "active": true,
+    "source": "user"
+  }
+]

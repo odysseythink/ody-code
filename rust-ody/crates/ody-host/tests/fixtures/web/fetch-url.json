@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "cases": [
+    {
+      "name": "passthrough with content",
+      "op": { "type": "fetch_url", "url": "https://example.com" },
+      "providerResult": { "ok": { "content": "plain text response", "kind": "passthrough" } },
+      "expected": { "output": "plain text response", "isError": false, "message": "The returned content is the full response body, returned verbatim." }
+    },
+    {
+      "name": "extracted with markdown content",
+      "op": { "type": "fetch_url", "url": "https://example.com" },
+      "providerResult": { "ok": { "content": "# Title\n\nArticle body", "kind": "extracted" } },
+      "expected": { "output": "# Title\n\nArticle body", "isError": false, "message": "The returned content is the main text extracted from the page." }
+    },
+    {
+      "name": "empty body",
+      "op": { "type": "fetch_url", "url": "https://example.com" },
+      "providerResult": { "ok": { "content": "", "kind": "passthrough" } },
+      "expected": { "output": "The response body is empty.", "isError": false }
+    },
+    {
+      "name": "http 404 error",
+      "op": { "type": "fetch_url", "url": "https://example.com/404" },
+      "providerResult": { "err": { "status": 404, "message": "Not Found" } },
+      "expected": { "output": "Failed to fetch URL. Status: 404. Not Found", "isError": true }
+    },
+    {
+      "name": "network error",
+      "op": { "type": "fetch_url", "url": "https://bad.example" },
+      "providerResult": { "err": { "status": 0, "message": "connection refused" } },
+      "expected": { "output": "Failed to fetch URL due to network error: https://bad.example. connection refused", "isError": true }
+    }
+  ]
+}

@@ -1,0 +1,55 @@
+[package]
+name = "kosong-rs"
+version = "0.1.0"
+edition = "2021"
+description = "Rust implementation of the Kosong LLM abstraction layer"
+license = "MIT"
+
+[dependencies]
+anyhow = "1"
+async-trait = "0.1"
+bytes = "1"
+futures-util = { version = "0.3", default-features = false, features = ["std"] }
+httptest = "0.16"
+lazy_static = "1"
+regex = "1"
+reqwest = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = "1"
+tokio = { workspace = true }
+
+[dev-dependencies]
+tokio-test = "0.4"
+
+[[bin]]
+name = "kosong-golden"
+path = "src/bin/golden.rs"
+
+[[bin]]
+name = "kosong-utils-golden"
+path = "src/bin/utils_golden.rs"
+
+[[bin]]
+name = "kosong-anthropic-golden"
+path = "src/bin/anthropic_golden.rs"
+
+[[bin]]
+name = "kosong-google-genai-golden"
+path = "src/bin/google_genai_golden.rs"
+
+[[bin]]
+name = "glm_golden"
+path = "src/bin/glm_golden.rs"
+
+[[bin]]
+name = "deepseek_golden"
+path = "src/bin/deepseek_golden.rs"
+
+[[bin]]
+name = "kimi_golden"
+path = "src/bin/kimi_golden.rs"
+
+[[bin]]
+name = "kosong-responses-golden"
+path = "src/bin/responses_golden.rs"

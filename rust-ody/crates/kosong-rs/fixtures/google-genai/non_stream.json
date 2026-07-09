@@ -1,0 +1,17 @@
+{
+  "provider": "google_genai",
+  "model": "gemini-2.0-flash",
+  "systemPrompt": "sys",
+  "history": [{"role":"user","content":[{"type":"text","text":"hi"}],"toolCalls":[]}],
+  "response": {
+    "responseId": "r1",
+    "candidates":[{"content":{"parts":[{"text":"Hi"}]},"finishReason":"STOP"}],
+    "usageMetadata":{"promptTokenCount":3,"candidatesTokenCount":1}
+  },
+  "expected": {
+    "content": [{"type":"text","text":"Hi"}],
+    "id": "r1",
+    "finishReason": "completed",
+    "usage": {"inputOther":3,"output":1,"inputCacheRead":0,"inputCacheCreation":0}
+  }
+}
