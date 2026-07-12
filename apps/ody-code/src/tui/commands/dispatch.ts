@@ -36,8 +36,7 @@ import {
   showSettingsSelector,
 } from './config';
 import { handleDesignReviewCommand, handlePlanReviewCommand } from './design-review';
-import { handleReceiveCodeReviewCommand } from './receive-code-review';
-import { handleRequestCodeReviewCommand } from './request-code-review';
+import { handleReviewCommand } from './review';
 import { handleGoalCommand } from './goal';
 import { handleProviderCommand } from './provider';
 import { handleFeedbackCommand, showMcpServers, showStatusReport, showUsage } from './info';
@@ -189,13 +188,6 @@ async function executeSlashCommand(host: SlashCommandHost, input: string): Promi
         command: intent.commandName,
         skill_name: intent.skillName,
       });
-      // Core code-review skill can run without the RequestCodeReview tool being
-      // exposed in the active profile: dispatch to the direct harness path so
-      // /skill:requesting-code-review behaves identically to /request-code-review.
-      if (intent.skillName === 'requesting-code-review') {
-        await handleRequestCodeReviewCommand(host, intent.args);
-        return;
-      }
       host.sendSkillActivation(session, intent.skillName, intent.args);
       return;
     }
@@ -341,11 +333,8 @@ async function handleBuiltInSlashCommand(
     case 'undo':
       await handleUndoCommand(host, args);
       return;
-    case 'request-code-review':
-      await handleRequestCodeReviewCommand(host, args);
-      return;
-    case 'receive-code-review':
-      await handleReceiveCodeReviewCommand(host, args);
+    case 'review':
+      await handleReviewCommand(host, args);
       return;
     default:
       host.showError(`Unknown slash command: /${String(name)}`);
