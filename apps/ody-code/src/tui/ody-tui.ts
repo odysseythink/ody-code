@@ -58,7 +58,7 @@ import { AuthFlowController } from './controllers/auth-flow';
 import { EditorKeyboardController } from './controllers/editor-keyboard';
 import { SessionEventHandler } from './controllers/session-event-handler';
 import * as slashCommands from './commands/dispatch';
-import { maybeRestoreModelAfterReceiveReview } from './commands/receive-code-review';
+import { maybeRestoreModelAfterReceiveReview } from './commands/review';
 import { SessionReplayRenderer } from './controllers/session-replay';
 import { StreamingUIController } from './controllers/streaming-ui';
 import { TasksBrowserController } from './controllers/tasks-browser';
