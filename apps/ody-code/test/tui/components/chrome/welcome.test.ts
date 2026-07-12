@@ -41,9 +41,9 @@ function truecolorCodes(text: string): Set<string> {
   return codes;
 }
 
-/** The two header rows (logo + title) of the rendered welcome box. */
+/** The header region (logo + welcome text) of the rendered welcome box. */
 function headerOf(lines: string[]): string {
-  return [lines[3], lines[4]].join('\n');
+  return lines.slice(3, 15).join('\n');
 }
 
 function setDanceView(colored: boolean, phase: number): void {
@@ -89,5 +89,19 @@ describe('WelcomeComponent', () => {
     const off = headerOf(new WelcomeComponent(appState, darkColors).render(80));
 
     expect(off).toBe(base);
+  });
+
+  it('shows the logged-out tagline when no model is set', () => {
+    const loggedOut = { ...appState, model: '' };
+    const lines = new WelcomeComponent(loggedOut, darkColors).render(80);
+
+    expect(lines.some((line) => line.includes('Run /login or /provider to get started.'))).toBe(true);
+  });
+
+  it('renders the MCP summary when present', () => {
+    const withMcp = { ...appState, mcpServersSummary: '2 servers' };
+    const lines = new WelcomeComponent(withMcp, darkColors).render(80);
+
+    expect(lines.some((line) => line.includes('MCP:') && line.includes('2 servers'))).toBe(true);
   });
 });

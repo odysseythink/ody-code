@@ -109,26 +109,35 @@ export function isRainbowDancing(): boolean {
   return currentDanceView?.colored === true;
 }
 
+function centerLine(line: string, width: number): string {
+  const vis = visibleWidth(line);
+  if (vis >= width) return line;
+  const leftPad = Math.floor((width - vis) / 2);
+  return ' '.repeat(leftPad) + line;
+}
+
 export function renderDanceWelcomeHeader(
   colors: ColorPalette,
-  logo: readonly [string, string],
-  textWidth: number,
-  rightRow1: string,
+  logoLines: readonly string[],
+  innerWidth: number,
+  _isLoggedOut: boolean,
 ): string[] {
   const phase = currentDanceView?.phase ?? 0;
   const palette = getDanceRainbowPalette(colors);
-  const logoWidth = Math.max(...logo.map((row) => visibleWidth(row)));
-  const gap = '  ';
-  const rightRow0 = truncateToWidth(
-    rainbowText('Welcome to ODY Code!', palette, phase + 2, true),
-    textWidth,
+
+  const renderedLogo = logoLines.map((line) =>
+    centerLine(rainbowText(line, palette, phase), innerWidth),
+  );
+
+  const welcomeLine = truncateToWidth(
+    rainbowText('Welcome to ', palette, phase + 2) +
+      rainbowText('Ody', palette, phase + 5, true) +
+      rainbowText(', command-line coding agent', palette, phase + 2),
+    innerWidth,
     '…',
   );
 
-  return [
-    rainbowText(logo[0].padEnd(logoWidth), palette, phase) + gap + rightRow0,
-    rainbowText(logo[1].padEnd(logoWidth), palette, phase + 3) + gap + rightRow1,
-  ];
+  return [...renderedLogo, '', centerLine(welcomeLine, innerWidth)];
 }
 
 export function renderDanceFooterModel(modelLabel: string, colors: ColorPalette): string {

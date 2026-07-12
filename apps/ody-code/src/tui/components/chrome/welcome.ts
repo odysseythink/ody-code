@@ -11,6 +11,27 @@ import { isRainbowDancing, renderDanceWelcomeHeader } from '#tui/easter-eggs/dan
 import type { ColorPalette } from '#tui/theme/colors';
 import type { AppState } from '#tui/types';
 
+/** Static logo frame borrowed from the ody-rs TUI welcome widget. */
+const LOGO_FRAME = [
+  '               ██       ██               ',
+  '              ████     ████              ',
+  '             █████     █████             ',
+  '            █████       █████            ',
+  '           █████         █████           ',
+  '          █████           █████          ',
+  '           █████         █████           ',
+  '            █████       █████            ',
+  '             █████     █████             ',
+  '              ███       ███              ',
+] as const;
+
+function centerLine(line: string, width: number): string {
+  const vis = visibleWidth(line);
+  if (vis >= width) return line;
+  const leftPad = Math.floor((width - vis) / 2);
+  return ' '.repeat(leftPad) + line;
+}
+
 export class WelcomeComponent implements Component {
   private state: AppState;
   private colors: ColorPalette;
@@ -24,36 +45,40 @@ export class WelcomeComponent implements Component {
 
   render(width: number): string[] {
     const primary = (s: string): string => chalk.hex(this.colors.primary)(s);
+    const primaryBold = (s: string): string => chalk.bold.hex(this.colors.primary)(s);
     const innerWidth = Math.max(10, width - 4);
     const pad = '  ';
 
-    // Logo + side-by-side text.
-    const logo = ['▐█▛█▛█▌', '▐█████▌'] as const;
-    const logoWidth = Math.max(...logo.map((row) => visibleWidth(row)));
-    const gap = '  ';
-    const textWidth = Math.max(4, innerWidth - logoWidth - gap.length);
+    const logoLines = LOGO_FRAME.map((row) => primary(centerLine(row, innerWidth)));
 
-    const rightRow0 = truncateToWidth(
-      chalk.bold.hex(this.colors.primary)('Welcome to ODY Code!'),
-      textWidth,
-      '…',
-    );
     const isLoggedOut = !this.state.model;
-    const dim = chalk.hex(this.colors.textDim);
-    const labelStyle = chalk.bold.hex(this.colors.textDim);
-    const rightRow1 = truncateToWidth(
-      dim(isLoggedOut ? 'Run /login or /provider to get started.' : 'Send /help for help information.'),
-      textWidth,
+    const welcomeLine = truncateToWidth(
+      primary('Welcome to ') + primaryBold('Ody') + primary(', command-line coding agent'),
+      innerWidth,
       '…',
     );
 
     let renderedHeaderLines = [
-      primary(logo[0].padEnd(logoWidth)) + gap + rightRow0,
-      primary(logo[1].padEnd(logoWidth)) + gap + rightRow1,
+      ...logoLines,
+      '',
+      primary(centerLine(welcomeLine, innerWidth)),
     ];
     if (isRainbowDancing()) {
-      renderedHeaderLines = renderDanceWelcomeHeader(this.colors, logo, textWidth, rightRow1);
+      renderedHeaderLines = renderDanceWelcomeHeader(
+        this.colors,
+        LOGO_FRAME,
+        innerWidth,
+        isLoggedOut,
+      );
     }
+
+    const dim = chalk.hex(this.colors.textDim);
+    const labelStyle = chalk.bold.hex(this.colors.textDim);
+    const tagline = truncateToWidth(
+      dim(isLoggedOut ? 'Run /login or /provider to get started.' : 'Send /help for help information.'),
+      innerWidth,
+      '…',
+    );
 
     const activeModel = this.state.availableModels[this.state.model];
     const modelValue = isLoggedOut
@@ -71,7 +96,7 @@ export class WelcomeComponent implements Component {
       infoLines.push(labelStyle('MCP:       ') + this.state.mcpServersSummary);
     }
 
-    const contentLines: string[] = [...renderedHeaderLines, '', ...infoLines];
+    const contentLines: string[] = [...renderedHeaderLines, '', tagline, '', ...infoLines];
 
     const lines: string[] = [
       '',
