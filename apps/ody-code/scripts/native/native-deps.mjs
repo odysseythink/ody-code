@@ -98,12 +98,14 @@ export const nativeDeps = Object.freeze([
     collect: 'js-only',
     parent: null,
   },
-  {
-    id: 'ody-crypto-target',
-    name: (target) => odyCryptoSubpackageByTarget[target],
-    collect: 'native-files',
-    parent: 'ody-crypto-host',
-  },
+  // Native ody-crypto platform binaries are no longer bundled into SEA.
+  // The TS fallback in @odysseythink/ody-crypto covers the same surface.
+  // {
+  //   id: 'ody-crypto-target',
+  //   name: (target) => odyCryptoSubpackageByTarget[target],
+  //   collect: 'native-files',
+  //   parent: 'ody-crypto-host',
+  // },
   {
     id: 'ody-host',
     name: () => 'ody-host',

@@ -68,6 +68,22 @@ describe('resolveTargetDeps', () => {
   it('throws on unsupported target', () => {
     expect(() => resolveTargetDeps('linux-x64-musl')).toThrow(/unsupported/i);
   });
+
+  it('resolves parentName for nested native packages', () => {
+    const linuxClipboard = resolveTargetDeps('linux-x64').find(
+      (d) => d.resolvedName === '@mariozechner/clipboard-linux-x64-gnu',
+    );
+    expect(linuxClipboard?.parentName).toBe('@mariozechner/clipboard');
+    const koffi = resolveTargetDeps('linux-x64').find((d) => d.resolvedName === 'koffi');
+    expect(koffi?.parentName).toBe('@earendil-works/pi-tui');
+  });
+
+  it('gives js-only entries an empty nativeFileRelatives array', () => {
+    const clipboardHost = resolveTargetDeps('linux-x64').find(
+      (d) => d.resolvedName === '@mariozechner/clipboard',
+    );
+    expect(clipboardHost?.nativeFileRelatives).toEqual([]);
+  });
 });
 
 describe('nativeDeps registry shape', () => {
@@ -90,30 +106,30 @@ describe('nativeDeps registry shape', () => {
 });
 
 describe('ody-crypto native deps', () => {
-  it('resolves ody-crypto host and target for darwin-arm64', () => {
+  it('resolves ody-crypto host (JS-only) for darwin-arm64', () => {
     const names = resolveTargetDeps('darwin-arm64').map((d) => d.resolvedName);
     expect(names).toContain('@odysseythink/ody-crypto');
-    expect(names).toContain('@odysseythink/ody-crypto-darwin-arm64');
+    // Platform native binaries are no longer collected into SEA.
+    expect(names).not.toContain('@odysseythink/ody-crypto-darwin-arm64');
   });
 
-  it('picks the right ody-crypto subpackage per target', () => {
+  it('does not pick ody-crypto platform subpackages', () => {
     expect(
       resolveTargetDeps('linux-x64').map((d) => d.resolvedName),
-    ).toContain('@odysseythink/ody-crypto-linux-x64');
+    ).not.toContain('@odysseythink/ody-crypto-linux-x64');
     expect(
       resolveTargetDeps('win32-x64').map((d) => d.resolvedName),
-    ).toContain('@odysseythink/ody-crypto-win32-x64');
+    ).not.toContain('@odysseythink/ody-crypto-win32-x64');
+  });
+
+  it('does not include an ody-crypto-target descriptor', () => {
+    const ids = resolveTargetDeps('linux-x64').map((d) => d.id);
+    expect(ids).not.toContain('ody-crypto-target');
   });
 
   it('has ody-crypto-host (collect=js-only)', () => {
     const host = nativeDeps.find((d) => d.id === 'ody-crypto-host');
     expect(host?.collect).toBe('js-only');
     expect(host?.parent).toBe(null);
-  });
-
-  it('has ody-crypto-target (collect=native-files, parent=ody-crypto-host)', () => {
-    const target = nativeDeps.find((d) => d.id === 'ody-crypto-target');
-    expect(target?.collect).toBe('native-files');
-    expect(target?.parent).toBe('ody-crypto-host');
   });
 });
