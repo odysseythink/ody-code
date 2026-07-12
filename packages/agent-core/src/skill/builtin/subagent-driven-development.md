@@ -369,7 +369,7 @@ Done!
 **Required workflow skills:**
 - **gpowers:using-git-worktrees** - Ensures isolated workspace (creates one or verifies existing)
 - **gpowers:writing-plans** - Creates the plan this skill executes
-- **gpowers:requesting-code-review** - Code review template for reviewer subagents
+- **`/review`** - TUI slash command to request a code review or process received feedback
 - **gpowers:finishing-a-development-branch** - Complete development after all tasks
 
 **Subagents should use:**
