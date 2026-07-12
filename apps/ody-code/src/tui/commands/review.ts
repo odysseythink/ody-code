@@ -18,7 +18,7 @@ const REVIEW_OPTIONS: readonly ChoiceOption[] = [
   {
     value: 'request',
     label: '请求 code review',
-    description: '用第二个模型审查当前 diff（等价于原 /request-code-review）',
+    description: '用第二个模型审查当前 diff',
   },
   {
     value: 'receive',
@@ -89,9 +89,8 @@ function renderReviewSourceLabel(source: CodeReviewDiffSource): string {
 
 /**
  * `/review` is the single entry point for code review flows. With arguments it
- * requests a review directly (mirroring the old `/request-code-review`);
- * without arguments it opens a picker to choose between requesting a review
- * and entering receive-feedback mode (the old `/receive-code-review`).
+ * requests a review directly; without arguments it opens a picker to choose
+ * between requesting a review and entering receive-feedback mode.
  */
 export async function handleReviewCommand(
   host: SlashCommandHost,
@@ -224,7 +223,7 @@ async function runReceiveReview(host: SlashCommandHost): Promise<void> {
     );
   } catch (error) {
     host.showError(
-      `Cannot enter receive-code-review mode: ${error instanceof Error ? error.message : String(error)}`,
+      `Cannot enter receive-feedback mode: ${error instanceof Error ? error.message : String(error)}`,
     );
     return;
   }

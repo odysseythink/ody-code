@@ -50,7 +50,7 @@ export interface AppState {
   mcpServersSummary: string | null;
   /** User language detected in office-hours mode. */
   userLanguage?: 'en' | 'zh' | undefined;
-  /** /receive-code-review 的模型切换状态。当 active 时，下一条普通消息前恢复原模型。 */
+  /** /review 接收反馈分支的模型切换状态。当 active 时，下一条普通消息前恢复原模型。 */
   receiveCodeReview?: {
     originalModelAlias: string;
     reviewModelAlias: string;
