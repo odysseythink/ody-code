@@ -5,8 +5,6 @@ import { FINISHING_A_DEVELOPMENT_BRANCH_SKILL } from './finishing-a-development-
 import { IDEA_EVALUATOR_SKILL } from './idea-evaluator';
 import { IDEA_GENERATOR_SKILL } from './idea-generator';
 import { MCP_CONFIG_SKILL } from '@odysseythink/mcp-host';
-import { RECEIVING_CODE_REVIEW_SKILL } from './receiving-code-review';
-import { REQUESTING_CODE_REVIEW_SKILL } from './requesting-code-review';
 import { SIMPLICITY_FIRST_SKILL } from './simplicity-first';
 import { SUBAGENT_DRIVEN_DEVELOPMENT_SKILL } from './subagent-driven-development';
 import { SYNC_CHANGELOG_SKILL } from './sync-changelog';
@@ -25,8 +23,6 @@ export function registerBuiltinSkills(registry: SkillRegistry): void {
   registry.registerBuiltinSkill(IDEA_EVALUATOR_SKILL);
   registry.registerBuiltinSkill(IDEA_GENERATOR_SKILL);
   registry.registerBuiltinSkill(MCP_CONFIG_SKILL);
-  registry.registerBuiltinSkill(RECEIVING_CODE_REVIEW_SKILL);
-  registry.registerBuiltinSkill(REQUESTING_CODE_REVIEW_SKILL);
   registry.registerBuiltinSkill(SIMPLICITY_FIRST_SKILL);
   registry.registerBuiltinSkill(SUBAGENT_DRIVEN_DEVELOPMENT_SKILL);
   registry.registerBuiltinSkill(SYNC_CHANGELOG_SKILL);
@@ -46,8 +42,6 @@ export {
   IDEA_EVALUATOR_SKILL,
   IDEA_GENERATOR_SKILL,
   MCP_CONFIG_SKILL,
-  RECEIVING_CODE_REVIEW_SKILL,
-  REQUESTING_CODE_REVIEW_SKILL,
   SIMPLICITY_FIRST_SKILL,
   SUBAGENT_DRIVEN_DEVELOPMENT_SKILL,
   SYNC_CHANGELOG_SKILL,
