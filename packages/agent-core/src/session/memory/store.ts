@@ -108,6 +108,63 @@ export async function scanWire(
   }
 }
 
+export function renderSummary(
+  state: WireScanState,
+  meta: SessionMetadata,
+  cfg: SessionMemoryConfig = DEFAULT_SESSION_MEMORY_CONFIG,
+): string {
+  const date = formatDate(meta.startedAt);
+  const started = formatTime(meta.startedAt);
+  const updated = formatTime(Date.now());
+  const tasks = state.userMessages.slice(-cfg.maxUserMessages);
+  const tools = state.toolsUsed.slice(0, cfg.maxTools);
+  const files = state.filesModified.slice(0, cfg.maxFiles);
+
+  const lines: string[] = [
+    `# Session Summary: ${date}`,
+    `**Date:** ${date}`,
+    `**Started:** ${started}`,
+    `**Last Updated:** ${updated}`,
+    `**Project:** ${meta.project}`,
+    `**Branch:** ${meta.branch}`,
+    `**Worktree:** ${meta.worktree}`,
+    `**Session:** ${meta.sessionId}`,
+    '',
+    '---',
+    '',
+    SUMMARY_START,
+    '## Auto Summary',
+    '',
+    '### Tasks',
+    ...tasks.map((t) => `- ${escapeBackticks(t)}`),
+    '',
+    '### Files Modified',
+    ...files.map((f) => `- ${f}`),
+    '',
+    '### Tools Used',
+    ...tools.map((t) => `- ${t}`),
+    '',
+    '### Stats',
+    `- Total user messages: ${state.totalUserMessages}`,
+    SUMMARY_END,
+  ];
+  return lines.join('\n') + '\n';
+}
+
+function escapeBackticks(text: string): string {
+  return text.replace(/`/g, '\\`');
+}
+
+function formatDate(ts: number): string {
+  const d = new Date(ts);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function formatTime(ts: number): string {
+  const d = new Date(ts);
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+}
+
 export function applyRecord(
   rec: unknown,
   state: WireScanState,

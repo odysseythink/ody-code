@@ -7,7 +7,12 @@ import {
   scanWire,
   applyRecord,
   createEmptyScanState,
+  renderSummary,
   DEFAULT_SESSION_MEMORY_CONFIG,
+  SUMMARY_START,
+  SUMMARY_END,
+  type WireScanState,
+  type SessionMetadata,
 } from '../../src/session/memory/store';
 
 function userPrompt(text: string) {
@@ -134,8 +139,63 @@ describe('scanWire / applyRecord', () => {
   });
 });
 
-async function makeTmpDir(): Promise<string> {
-  const dir = join(tmpdir(), `session-memory-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+describe('renderSummary', () => {
+  it('renders the latest user messages and caps all sections', () => {
+    const state: WireScanState = {
+      offset: 0,
+      partialLine: '',
+      userMessages: Array.from({ length: 12 }, (_, i) => `task ${i + 1}`),
+      toolsUsed: Array.from({ length: 25 }, (_, i) => `Tool${i + 1}`),
+      filesModified: Array.from({ length: 35 }, (_, i) => `file${i + 1}.ts`),
+      totalUserMessages: 12,
+    };
+    const meta: SessionMetadata = {
+      startedAt: new Date('2026-07-13T14:02:00Z').getTime(),
+      project: 'ody-code',
+      branch: 'main',
+      worktree: '/Users/ranwei/workspace/ody-code',
+      sessionId: 'session_abc',
+    };
+    const rendered = renderSummary(state, meta, DEFAULT_SESSION_MEMORY_CONFIG);
+    const tasksSection = section(rendered, '### Tasks', '### Files Modified');
+    const filesSection = section(rendered, '### Files Modified', '### Tools Used');
+    const toolsSection = section(rendered, '### Tools Used', '### Stats');
+    expect(tasksSection.match(/^- /gm) ?? []).toHaveLength(10);
+    expect(filesSection.match(/^- /gm) ?? []).toHaveLength(30);
+    expect(toolsSection.match(/^- /gm) ?? []).toHaveLength(20);
+    expect(rendered).toContain('- task 12');
+    expect(rendered).toContain('- task 3');
+    expect(rendered).not.toContain('- task 2');
+    expect(rendered).toContain('Tools Used');
+    expect(rendered).toContain('Files Modified');
+    expect(rendered).toContain('Total user messages: 12');
+    expect(rendered).toContain('**Project:** ody-code');
+    expect(rendered).toContain('**Branch:** main');
+    expect(rendered).toContain(SUMMARY_START);
+    expect(rendered).toContain(SUMMARY_END);
+  });
+
+  it('escapes backticks in user messages', () => {
+    const state = createEmptyScanState();
+    state.userMessages.push('run `git status`');
+    state.totalUserMessages = 1;
+    const meta: SessionMetadata = {
+      startedAt: Date.now(),
+      project: 'p',
+      branch: 'b',
+      worktree: '/w',
+      sessionId: 's',
+    };
+    const rendered = renderSummary(state, meta);
+    expect(rendered).toContain('- run \\`git status\\`');
+  });
+});
+
+function section(rendered: string, from: string, to: string): string {
+  return rendered.slice(rendered.indexOf(from), rendered.indexOf(to));
+}
+
+async function makeTmpDir(): Promise<string> {  const dir = join(tmpdir(), `session-memory-${Date.now()}-${Math.random().toString(36).slice(2)}`);
   await mkdir(dir, { recursive: true });
   return dir;
 }
