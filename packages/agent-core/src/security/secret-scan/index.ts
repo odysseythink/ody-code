@@ -11,3 +11,9 @@ export {
   DEFAULT_SECRET_SCAN_ALLOW_LIST,
   type DefaultScannerOptions,
 } from './rules';
+export {
+  SecretScanAuditLog,
+  hashMatchedText,
+  type SecretScanFindingRecord,
+  type SecretScanFindingRecordInput,
+} from './audit';
