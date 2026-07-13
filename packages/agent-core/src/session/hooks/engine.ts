@@ -7,6 +7,7 @@ import type {
   HookEngineTriggerArgs,
   HookExecutionRecord,
   HookMatcherValue,
+  HookProfile,
   HookResult,
 } from './types';
 
@@ -48,8 +49,12 @@ export class HookEngine {
     return result;
   }
 
-  currentProfile(): string {
+  currentProfile(): HookProfile {
     return this.profileGate.profile;
+  }
+
+  disabledHooks(): readonly string[] {
+    return Array.from(this.profileGate.disabled);
   }
 
   executions(): readonly HookExecutionRecord[] {

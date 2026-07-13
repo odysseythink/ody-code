@@ -13,6 +13,7 @@ import type {
   DesignReviewData,
   GoalSnapshot,
   GoalToolResult,
+  HooksInfo,
   McpServerInfo,
   McpStartupMetrics,
   PermissionMode,
@@ -230,6 +231,11 @@ export class Session {
   async getStatus(): Promise<SessionStatus> {
     this.ensureOpen();
     return this.rpc.getStatus({ sessionId: this.id });
+  }
+
+  async getHooksInfo(): Promise<HooksInfo> {
+    this.ensureOpen();
+    return this.rpc.getHooksInfo({ sessionId: this.id });
   }
 
   async listSkills(options?: { sessionMode?: RuntimeMode }): Promise<readonly SkillSummary[]> {

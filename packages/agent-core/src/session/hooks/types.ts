@@ -80,6 +80,14 @@ export interface BuiltinHookRegistry {
   ids(): readonly string[];
 }
 
+export interface HooksInfo {
+  readonly profile: HookProfile;
+  readonly disabled: readonly string[];
+  readonly summary: Record<string, number>;
+  readonly executions: readonly HookExecutionRecord[];
+  readonly counts: Record<HookExecutionRecord['action'], number>;
+}
+
 export interface HookEngineOptions {
   readonly cwd?: string;
   readonly sessionId?: string;

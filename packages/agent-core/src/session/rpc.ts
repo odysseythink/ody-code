@@ -11,6 +11,7 @@ import type {
   GoalControlPayload,
   GetBackgroundOutputPayload,
   GetBackgroundPayload,
+  HooksInfo,
   McpServerInfo,
   McpStartupMetrics,
   PromptPayload,
@@ -89,6 +90,29 @@ export class SessionAPIImpl implements PromisableMethods<SessionAPI> {
 
   getSessionMetadata(_payload: EmptyPayload): SessionMeta {
     return this.session.metadata;
+  }
+
+  getHooksInfo(_payload: EmptyPayload): HooksInfo {
+    const engine = this.session.hookEngine;
+    const executions = engine.executions();
+    const counts: HooksInfo['counts'] = {
+      allow: 0,
+      block: 0,
+      error: 0,
+      timeout: 0,
+      'skipped-profile': 0,
+      dropped: 0,
+    };
+    for (const record of executions) {
+      counts[record.action] = (counts[record.action] ?? 0) + 1;
+    }
+    return {
+      profile: engine.currentProfile(),
+      disabled: engine.disabledHooks(),
+      summary: engine.summary,
+      executions,
+      counts,
+    };
   }
 
   listSkills(payload: EmptyPayload & { sessionMode?: RuntimeMode }): Promise<readonly SkillSummary[]> {

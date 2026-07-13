@@ -62,6 +62,7 @@ import type {
   GetConfigOptions,
   GoalSnapshot,
   GoalToolResult,
+  HooksInfo,
   OdyConfig,
   OdyConfigPatch,
   ListSessionsOptions,
@@ -882,6 +883,11 @@ export class SDKRpcClient {
       usage: hasUsage ? usage : undefined,
       userLanguage,
     };
+  }
+
+  async getHooksInfo(input: SessionIdRpcInput): Promise<HooksInfo> {
+    const rpc = await this.getRpc();
+    return rpc.getHooksInfo({ sessionId: input.sessionId });
   }
 
   async listSkills(input: SessionIdRpcInput & { sessionMode?: RuntimeMode }): Promise<readonly SkillSummary[]> {

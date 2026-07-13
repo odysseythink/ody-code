@@ -430,6 +430,7 @@ export interface SessionAPI extends AgentAPIWithId {
   pauseGoal: (payload: GoalControlPayload) => GoalSnapshot;
   resumeGoal: (payload: GoalControlPayload) => GoalSnapshot;
   cancelGoal: (payload: GoalControlPayload) => GoalSnapshot;
+  getHooksInfo: (payload: EmptyPayload) => HooksInfo;
 }
 
 type SessionAPIWithId = WithSessionId<SessionAPI>;
@@ -459,6 +460,8 @@ export interface CoreAPI extends SessionAPIWithId {
   chatStreamEnd: (payload: ChatStreamEndPayload) => void;
   chatStreamError: (payload: ChatStreamErrorPayload) => void;
 }
+
+export type { HooksInfo } from '../session/hooks/types';
 
 export type CoreAPIProtocol = {
   [K in keyof CoreAPI]: {

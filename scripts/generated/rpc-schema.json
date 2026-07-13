@@ -276,11 +276,34 @@
                           "Notification"
                         ]
                       },
+                      "matcher": {
+                        "type": "string"
+                      },
                       "command": {
                         "type": "string"
                       },
-                      "matcher": {
+                      "builtin": {
                         "type": "string"
+                      },
+                      "commands": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "id": {
+                        "type": "string"
+                      },
+                      "profiles": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "enum": [
+                            "minimal",
+                            "standard",
+                            "strict"
+                          ]
+                        }
                       },
                       "timeout": {
                         "type": "number"
@@ -288,8 +311,7 @@
                     },
                     "additionalProperties": false,
                     "required": [
-                      "event",
-                      "command"
+                      "event"
                     ]
                   }
                 },
@@ -907,11 +929,34 @@
                           "Notification"
                         ]
                       },
+                      "matcher": {
+                        "type": "string"
+                      },
                       "command": {
                         "type": "string"
                       },
-                      "matcher": {
+                      "builtin": {
                         "type": "string"
+                      },
+                      "commands": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "id": {
+                        "type": "string"
+                      },
+                      "profiles": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "enum": [
+                            "minimal",
+                            "standard",
+                            "strict"
+                          ]
+                        }
                       },
                       "timeout": {
                         "type": "number"
@@ -919,8 +964,7 @@
                     },
                     "additionalProperties": false,
                     "required": [
-                      "event",
-                      "command"
+                      "event"
                     ]
                   }
                 },
@@ -1438,11 +1482,34 @@
                           "Notification"
                         ]
                       },
+                      "matcher": {
+                        "type": "string"
+                      },
                       "command": {
                         "type": "string"
                       },
-                      "matcher": {
+                      "builtin": {
                         "type": "string"
+                      },
+                      "commands": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "id": {
+                        "type": "string"
+                      },
+                      "profiles": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "enum": [
+                            "minimal",
+                            "standard",
+                            "strict"
+                          ]
+                        }
                       },
                       "timeout": {
                         "type": "number"
@@ -1450,8 +1517,7 @@
                     },
                     "additionalProperties": false,
                     "required": [
-                      "event",
-                      "command"
+                      "event"
                     ]
                   }
                 },
@@ -2081,11 +2147,34 @@
                           "Notification"
                         ]
                       },
+                      "matcher": {
+                        "type": "string"
+                      },
                       "command": {
                         "type": "string"
                       },
-                      "matcher": {
+                      "builtin": {
                         "type": "string"
+                      },
+                      "commands": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "id": {
+                        "type": "string"
+                      },
+                      "profiles": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "enum": [
+                            "minimal",
+                            "standard",
+                            "strict"
+                          ]
+                        }
                       },
                       "timeout": {
                         "type": "number"
@@ -2093,8 +2182,7 @@
                     },
                     "additionalProperties": false,
                     "required": [
-                      "event",
-                      "command"
+                      "event"
                     ]
                   }
                 },
@@ -3027,6 +3115,26 @@
           "returns": {
             "kind": "ref",
             "name": "GoalSnapshot"
+          }
+        },
+        "getHooksInfo": {
+          "payload": {
+            "kind": "inline",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "sessionId": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false,
+              "required": [
+                "sessionId"
+              ]
+            }
+          },
+          "returns": {
+            "kind": "unknown"
           }
         },
         "prompt": {
@@ -4259,8 +4367,8 @@
                       "enum": [
                         "project",
                         "user",
-                        "extra",
-                        "builtin"
+                        "builtin",
+                        "extra"
                       ]
                     },
                     "agentId": {

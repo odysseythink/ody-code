@@ -188,6 +188,8 @@ export interface SessionStatus {
   readonly userLanguage?: 'en' | 'zh' | undefined;
 }
 
+export type { HooksInfo } from '@odysseythink/agent-core';
+
 export interface SessionSummary {
   readonly id: string;
   readonly title?: string | undefined;

@@ -68,6 +68,7 @@ import type {
   GoalControlPayload,
   GoalSnapshot,
   GoalToolResult,
+  HooksInfo,
   ExportSessionPayload,
   ExportSessionResult,
   ForkSessionPayload,
@@ -835,6 +836,10 @@ export class KimiCore implements PromisableMethods<CoreAPI> {
     ...payload
   }: SessionScopedPayload<GoalControlPayload>): Promise<GoalSnapshot> {
     return Promise.resolve(this.sessionApi(sessionId).cancelGoal(payload));
+  }
+
+  getHooksInfo({ sessionId, ...payload }: SessionScopedPayload<EmptyPayload>): HooksInfo {
+    return this.sessionApi(sessionId).getHooksInfo(payload);
   }
 
   async installPlugin(payload: InstallPluginPayload): Promise<PluginSummary> {
