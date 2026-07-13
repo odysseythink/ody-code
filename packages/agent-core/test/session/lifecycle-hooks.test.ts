@@ -11,6 +11,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import type { SDKSessionRPC } from '../../src/rpc';
 import { Session } from '../../src/session';
+import { AGENT_WIRE_PROTOCOL_VERSION } from '../../src/agent/records';
 import { ProcessBackgroundTask } from '../../src/agent/background';
 
 
@@ -160,6 +161,63 @@ describe('Session lifecycle hooks', () => {
     });
 
     expect(session.hookEngine.summary).toEqual({});
+  });
+
+  it('sets isResumeSession to false on startup and true on resume', async () => {
+    const { sessionDir: startupDir, workDir } = await hookFixture();
+
+    const startupSession = new Session({
+      kaos: testKaos.withCwd(workDir),
+      id: 'session-startup',
+      homedir: startupDir,
+      rpc: createSessionRpc(),
+      skills: { explicitDirs: [join(workDir, 'missing-skills')] },
+    });
+    const startupMain = await startupSession.createMain();
+    expect(startupMain.isResumeSession).toBe(false);
+
+    // Prepare a separate session tree with persisted main-agent metadata so resume reconstructs it.
+    const { sessionDir: resumeDir } = await hookFixture();
+    const agentDir = join(resumeDir, 'agents', 'main');
+    await mkdir(agentDir, { recursive: true });
+    await writeFile(
+      join(resumeDir, 'state.json'),
+      JSON.stringify({
+        createdAt: '2026-01-01T00:00:00.000Z',
+        updatedAt: '2026-01-01T00:00:00.000Z',
+        title: 'Resumed Session',
+        isCustomTitle: false,
+        agents: {
+          main: {
+            homedir: agentDir,
+            type: 'main',
+            parentAgentId: null,
+          },
+        },
+        custom: {},
+      }),
+      'utf-8',
+    );
+    // A minimal wire so the agent replay does not choke.
+    await writeFile(
+      join(agentDir, 'wire.jsonl'),
+      JSON.stringify({
+        type: 'metadata',
+        protocol_version: AGENT_WIRE_PROTOCOL_VERSION,
+        created_at: Date.now(),
+      }) + '\n',
+      'utf-8',
+    );
+
+    const resumeSession = new Session({
+      kaos: testKaos.withCwd(workDir),
+      id: 'session-resume',
+      homedir: resumeDir,
+      rpc: createSessionRpc(),
+      skills: { explicitDirs: [join(workDir, 'missing-skills')] },
+    });
+    await resumeSession.resume();
+    expect(resumeSession.agents.get('main')?.isResumeSession).toBe(true);
   });
 
   it('lets the environment override config when deciding background task cleanup', async () => {

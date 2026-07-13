@@ -210,7 +210,10 @@ export class Session {
   }
 
   async createMain() {
-    const { agent } = await this.createAgent({ type: 'main' }, DEFAULT_AGENT_PROFILES['agent']);
+    const { agent } = await this.createAgent(
+      { type: 'main', isResumeSession: false },
+      DEFAULT_AGENT_PROFILES['agent'],
+    );
     this.attachCheckpointCoordinator(agent);
     // The main-agent audit sink now exists; flush any goal records queued before it.
     this.goals.flushPendingRecords();
@@ -598,7 +601,13 @@ export class Session {
       this.ensureResumeAgentInstantiated(parentAgentId, agents, [...stack, id]);
     }
 
-    const agent = this.instantiateAgent(id, meta.homedir, meta.type, {}, parentAgentId);
+    const agent = this.instantiateAgent(
+      id,
+      meta.homedir,
+      meta.type,
+      { isResumeSession: true },
+      parentAgentId,
+    );
     this.agents.set(id, agent);
     return agent;
   }
