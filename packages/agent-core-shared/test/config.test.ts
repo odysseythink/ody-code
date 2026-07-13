@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { HookDefSchema, HOOK_PROFILES } from '../src/config';
+import { HookDefSchema, HOOK_PROFILES, OdyConfigSchema } from '../src/config';
 
 describe('HookDefSchema', () => {
   it('accepts legacy hook with command only', () => {
@@ -43,5 +43,38 @@ describe('HookDefSchema', () => {
 
   it('exports the three profile names', () => {
     expect(HOOK_PROFILES).toEqual(['minimal', 'standard', 'strict']);
+  });
+});
+
+describe('sessionMemory config schema', () => {
+  it('accepts config without sessionMemory', () => {
+    const parsed = OdyConfigSchema.parse({});
+    expect(parsed.sessionMemory).toBeUndefined();
+  });
+
+  it('accepts full sessionMemory values', () => {
+    const parsed = OdyConfigSchema.parse({
+      sessionMemory: { maxChars: 4000, retentionDays: 7 },
+    });
+    expect(parsed.sessionMemory).toEqual({ maxChars: 4000, retentionDays: 7 });
+  });
+
+  it('accepts partial sessionMemory values', () => {
+    const parsed = OdyConfigSchema.parse({
+      sessionMemory: { maxChars: 12000 },
+    });
+    expect(parsed.sessionMemory).toEqual({ maxChars: 12000 });
+  });
+
+  it('rejects negative maxChars', () => {
+    expect(() =>
+      OdyConfigSchema.parse({ sessionMemory: { maxChars: -1 } }),
+    ).toThrow();
+  });
+
+  it('rejects negative retentionDays', () => {
+    expect(() =>
+      OdyConfigSchema.parse({ sessionMemory: { retentionDays: -1 } }),
+    ).toThrow();
   });
 });

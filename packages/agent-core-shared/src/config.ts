@@ -338,6 +338,13 @@ export const MicroagentBudgetConfigSchema = z.object({
 
 export type MicroagentBudgetConfig = z.infer<typeof MicroagentBudgetConfigSchema>;
 
+export const SessionMemoryConfigSchema = z.object({
+  maxChars: z.number().int().min(0).optional(),
+  retentionDays: z.number().int().min(0).optional(),
+});
+
+export type SessionMemoryConfig = z.infer<typeof SessionMemoryConfigSchema>;
+
 export const OdyConfigSchema = z.object({
   providers: z.record(z.string(), ProviderConfigSchema).default({}),
   defaultProvider: z.string().optional(),
@@ -372,6 +379,7 @@ export const OdyConfigSchema = z.object({
   e2e: E2EConfigSchema.optional(),
   testReview: TestReviewConfigSchema.optional(),
   microagentBudget: MicroagentBudgetConfigSchema.optional(),
+  sessionMemory: SessionMemoryConfigSchema.optional(),
   raw: z.record(z.string(), z.unknown()).optional(),
 });
 
@@ -428,6 +436,7 @@ export const OdyConfigPatchSchema = z
     }).optional(),
     browser: BrowserConfigSchema.optional(),
     microagentBudget: MicroagentBudgetConfigSchema.optional(),
+    sessionMemory: SessionMemoryConfigSchema.optional(),
   })
   .strict();
 
