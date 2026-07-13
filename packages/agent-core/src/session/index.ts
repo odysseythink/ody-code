@@ -15,6 +15,7 @@ import { Agent, type AgentOptions, type AgentType } from '../agent';
 import { SessionGoalStore, type SessionGoalState } from './goal';
 import { HookEngine, type HookDef } from './hooks';
 import { createBuiltinHookRegistry } from './hooks/builtin/registry';
+import { flags } from '../flags';
 import type { PermissionManagerOptions, PermissionRule } from '../agent/permission';
 import { parseBooleanEnv, resolveConfigValue, resolveOdyHome, type BackgroundConfig } from '../config';
 import { makeErrorPayload } from '../errors';
@@ -143,7 +144,22 @@ export class Session {
       this.logHandle?.logger ??
       (options.id === undefined ? log : log.createChild({ sessionId: options.id }));
     this.rpc = options.rpc;
-    this.hookEngine = new HookEngine(options.hooks, {
+    const hooks: readonly HookDef[] = flags.enabled('session-memory')
+      ? [
+          ...(options.hooks ?? []),
+          {
+            event: 'Stop',
+            builtin: 'session-memory-writer',
+            id: 'session-memory-writer:stop',
+          },
+          {
+            event: 'SessionEnd',
+            builtin: 'session-memory-writer',
+            id: 'session-memory-writer:end',
+          },
+        ]
+      : (options.hooks ?? []);
+    this.hookEngine = new HookEngine(hooks, {
       cwd: options.kaos.getcwd(),
       sessionId: options.id,
       env: process.env,

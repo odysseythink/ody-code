@@ -132,6 +132,36 @@ describe('Session lifecycle hooks', () => {
     expect(agent.background.getTask(taskId)?.status).toBe('killed');
   });
 
+  it('registers synthetic session-memory Stop and SessionEnd builtins when the flag is enabled', async () => {
+    vi.stubEnv('ODY_CODE_EXPERIMENTAL_SESSION_MEMORY', '1');
+    const { sessionDir, workDir } = await hookFixture();
+    const session = new Session({
+      kaos: testKaos.withCwd(workDir),
+      id: 'session-synthetic-hooks',
+      homedir: sessionDir,
+      rpc: createSessionRpc(),
+      skills: { explicitDirs: [join(workDir, 'missing-skills')] },
+    });
+
+    expect(session.hookEngine.summary).toMatchObject({
+      Stop: 1,
+      SessionEnd: 1,
+    });
+  });
+
+  it('does not register synthetic session-memory hooks when the flag is disabled', async () => {
+    const { sessionDir, workDir } = await hookFixture();
+    const session = new Session({
+      kaos: testKaos.withCwd(workDir),
+      id: 'session-no-hooks',
+      homedir: sessionDir,
+      rpc: createSessionRpc(),
+      skills: { explicitDirs: [join(workDir, 'missing-skills')] },
+    });
+
+    expect(session.hookEngine.summary).toEqual({});
+  });
+
   it('lets the environment override config when deciding background task cleanup', async () => {
     vi.stubEnv('ODY_CODE_BACKGROUND_KEEP_ALIVE_ON_EXIT', '0');
     const { sessionDir, workDir } = await hookFixture();
