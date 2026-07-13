@@ -163,7 +163,7 @@ export class Session {
       cwd: options.kaos.getcwd(),
       sessionId: options.id,
       env: process.env,
-      builtins: createBuiltinHookRegistry(),
+      builtins: createBuiltinHookRegistry({ secretScan: options.config?.secretScan }),
     });
     this.telemetry = options.telemetry ?? noopTelemetryClient;
     this.goals = new SessionGoalStore({
