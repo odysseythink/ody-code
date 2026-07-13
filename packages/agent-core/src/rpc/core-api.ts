@@ -1,4 +1,5 @@
 import type { Confidence } from '../agent/session-mode/reviewer';
+import type { HooksInfo } from '../session/hooks/types';
 import type { AgentConfigData } from '#agent/config';
 import type { AgentContextData } from '#agent/context';
 import type { BackgroundTaskInfo } from '#agent/background';
@@ -461,7 +462,7 @@ export interface CoreAPI extends SessionAPIWithId {
   chatStreamError: (payload: ChatStreamErrorPayload) => void;
 }
 
-export type { HooksInfo } from '../session/hooks/types';
+export type { HooksInfo };
 
 export type CoreAPIProtocol = {
   [K in keyof CoreAPI]: {
