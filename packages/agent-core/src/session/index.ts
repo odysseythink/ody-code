@@ -14,6 +14,7 @@ import type { RuntimeMode } from '../agent/session-mode';
 import { Agent, type AgentOptions, type AgentType } from '../agent';
 import { SessionGoalStore, type SessionGoalState } from './goal';
 import { HookEngine, type HookDef } from './hooks';
+import { createBuiltinHookRegistry } from './hooks/builtin/registry';
 import type { PermissionManagerOptions, PermissionRule } from '../agent/permission';
 import { parseBooleanEnv, resolveConfigValue, resolveOdyHome, type BackgroundConfig } from '../config';
 import { makeErrorPayload } from '../errors';
@@ -146,6 +147,7 @@ export class Session {
       cwd: options.kaos.getcwd(),
       sessionId: options.id,
       env: process.env,
+      builtins: createBuiltinHookRegistry(),
     });
     this.telemetry = options.telemetry ?? noopTelemetryClient;
     this.goals = new SessionGoalStore({

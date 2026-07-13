@@ -19,9 +19,9 @@ export class EditAccumulatorBuiltin implements BuiltinHook {
       readonly timeout: number;
     },
   ): Promise<HookResult> {
-    const toolName = typeof input.toolName === 'string' ? input.toolName : '';
-    const toolInput = isRecord(input.toolInput) ? input.toolInput : {};
-    const path = typeof toolInput.path === 'string' ? toolInput.path : undefined;
+    const toolName = typeof input['toolName'] === 'string' ? input['toolName'] : '';
+    const toolInput = isRecord(input['toolInput']) ? input['toolInput'] : {};
+    const path = typeof toolInput['path'] === 'string' ? toolInput['path'] : undefined;
 
     if (path !== undefined && (toolName === 'Edit' || toolName === 'Write')) {
       this.paths.add(resolve(ctx.cwd ?? '.', path));
