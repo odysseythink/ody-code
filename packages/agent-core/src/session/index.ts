@@ -145,6 +145,7 @@ export class Session {
     this.hookEngine = new HookEngine(options.hooks, {
       cwd: options.kaos.getcwd(),
       sessionId: options.id,
+      env: process.env,
     });
     this.telemetry = options.telemetry ?? noopTelemetryClient;
     this.goals = new SessionGoalStore({
@@ -280,6 +281,7 @@ export class Session {
       await this.triggerSessionEnd('exit');
     } finally {
       try {
+        await this.hookEngine.drain();
         await this.mcp.shutdown();
       } finally {
         await this.logHandle?.close();
