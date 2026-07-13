@@ -89,6 +89,49 @@ describe('TodoPanelComponent', () => {
     const out = strip(panel.render(80).join('\n'));
     expect(out).toMatch(/\+2 more/);
   });
+
+  it('shows finished/left counts in the overflow footer for mixed statuses', () => {
+    const panel = new TodoPanelComponent(darkColors);
+    panel.setTodos([
+      { title: 'd0', status: 'done' },
+      { title: 'd1', status: 'done' },
+      { title: 'ip', status: 'in_progress' },
+      { title: 'p0', status: 'pending' },
+      { title: 'p1', status: 'pending' },
+      { title: 'p2', status: 'pending' },
+      { title: 'p3', status: 'pending' },
+    ]);
+    const out = strip(panel.render(80).join('\n'));
+    expect(out).toMatch(/\+2 more, 2 finished, 5 left/);
+  });
+
+  it('shows 0 finished when all overflow items are pending', () => {
+    const panel = new TodoPanelComponent(darkColors);
+    panel.setTodos([
+      { title: 'p0', status: 'pending' },
+      { title: 'p1', status: 'pending' },
+      { title: 'p2', status: 'pending' },
+      { title: 'p3', status: 'pending' },
+      { title: 'p4', status: 'pending' },
+      { title: 'p5', status: 'pending' },
+    ]);
+    const out = strip(panel.render(80).join('\n'));
+    expect(out).toMatch(/\+1 more, 0 finished, 6 left/);
+  });
+
+  it('shows 0 left when all overflow items are done', () => {
+    const panel = new TodoPanelComponent(darkColors);
+    panel.setTodos([
+      { title: 'd0', status: 'done' },
+      { title: 'd1', status: 'done' },
+      { title: 'd2', status: 'done' },
+      { title: 'd3', status: 'done' },
+      { title: 'd4', status: 'done' },
+      { title: 'd5', status: 'done' },
+    ]);
+    const out = strip(panel.render(80).join('\n'));
+    expect(out).toMatch(/\+1 more, 6 finished, 0 left/);
+  });
 });
 
 describe('selectVisibleTodos', () => {

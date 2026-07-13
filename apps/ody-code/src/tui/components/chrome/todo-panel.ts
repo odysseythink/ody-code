@@ -138,11 +138,21 @@ export class TodoPanelComponent implements Component {
       lines.push(renderRow(todo, c));
     }
     if (hidden > 0) {
-      lines.push(chalk.hex(c.textDim)(`  … +${hidden} more`));
+      lines.push(chalk.hex(c.textDim)(formatSummaryLine(this.todos, hidden)));
     }
 
     return lines.map((line) => truncateToWidth(line, width));
   }
+}
+
+function formatSummaryLine(todos: readonly TodoItem[], hidden: number): string {
+  let finished = 0;
+  let left = 0;
+  for (const todo of todos) {
+    if (todo.status === 'done') finished += 1;
+    else left += 1;
+  }
+  return `  … +${hidden} more, ${finished} finished, ${left} left`;
 }
 
 function renderRow(todo: TodoItem, colors: ColorPalette): string {
