@@ -345,6 +345,17 @@ export const SessionMemoryConfigSchema = z.object({
 
 export type SessionMemoryConfig = z.infer<typeof SessionMemoryConfigSchema>;
 
+export const SecretScanConfigSchema = z.object({
+  enabled: z.boolean().optional(),
+  blockOnMatch: z.boolean().optional(),
+  maxScanBytes: z.number().int().min(1).optional(),
+  entropyThreshold: z.number().min(0).max(8).optional(),
+  allowList: z.array(z.string().min(1)).optional(),
+  profiles: z.array(z.enum(HOOK_PROFILES)).optional(),
+});
+
+export type SecretScanConfig = z.infer<typeof SecretScanConfigSchema>;
+
 export const OdyConfigSchema = z.object({
   providers: z.record(z.string(), ProviderConfigSchema).default({}),
   defaultProvider: z.string().optional(),
@@ -380,6 +391,7 @@ export const OdyConfigSchema = z.object({
   testReview: TestReviewConfigSchema.optional(),
   microagentBudget: MicroagentBudgetConfigSchema.optional(),
   sessionMemory: SessionMemoryConfigSchema.optional(),
+  secretScan: SecretScanConfigSchema.optional(),
   raw: z.record(z.string(), z.unknown()).optional(),
 });
 
@@ -437,6 +449,7 @@ export const OdyConfigPatchSchema = z
     browser: BrowserConfigSchema.optional(),
     microagentBudget: MicroagentBudgetConfigSchema.optional(),
     sessionMemory: SessionMemoryConfigSchema.optional(),
+    secretScan: SecretScanConfigSchema.optional(),
   })
   .strict();
 

@@ -78,3 +78,46 @@ describe('sessionMemory config schema', () => {
     ).toThrow();
   });
 });
+
+describe('secretScan config schema', () => {
+  it('accepts config without secretScan', () => {
+    const parsed = OdyConfigSchema.parse({});
+    expect(parsed.secretScan).toBeUndefined();
+  });
+
+  it('accepts full secretScan values', () => {
+    const parsed = OdyConfigSchema.parse({
+      secretScan: {
+        enabled: true,
+        blockOnMatch: false,
+        maxScanBytes: 8192,
+        entropyThreshold: 4.5,
+        allowList: ['EXAMPLE_KEY'],
+        profiles: ['strict'],
+      },
+    });
+    expect(parsed.secretScan).toEqual({
+      enabled: true,
+      blockOnMatch: false,
+      maxScanBytes: 8192,
+      entropyThreshold: 4.5,
+      allowList: ['EXAMPLE_KEY'],
+      profiles: ['strict'],
+    });
+  });
+
+  it('accepts partial secretScan values', () => {
+    const parsed = OdyConfigSchema.parse({
+      secretScan: { enabled: true },
+    });
+    expect(parsed.secretScan).toEqual({ enabled: true });
+  });
+
+  it('rejects negative maxScanBytes', () => {
+    expect(() => OdyConfigSchema.parse({ secretScan: { maxScanBytes: -1 } })).toThrow();
+  });
+
+  it('rejects entropyThreshold above 8', () => {
+    expect(() => OdyConfigSchema.parse({ secretScan: { entropyThreshold: 8.1 } })).toThrow();
+  });
+});
