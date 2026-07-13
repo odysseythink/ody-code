@@ -1,4 +1,6 @@
-import { open, stat } from 'node:fs/promises';
+import { execFile } from 'node:child_process';
+import { chmod, mkdir, open, readFile, rename, stat, writeFile } from 'node:fs/promises';
+import { basename, join } from 'pathe';
 
 export interface WireScanState {
   offset: number;
@@ -45,7 +47,7 @@ export function createEmptyScanState(): WireScanState {
   };
 }
 
-const ANSI_PATTERN = /\u001b\[[0-9;]*m/g;
+const ANSI_PATTERN = /\u001B\[[0-9;]*m/g;
 
 function stripAnsi(text: string): string {
   return text.replace(ANSI_PATTERN, '');
@@ -152,7 +154,7 @@ export function renderSummary(
 }
 
 function escapeBackticks(text: string): string {
-  return text.replace(/`/g, '\\`');
+  return text.replaceAll('`', '\\`');
 }
 
 function formatDate(ts: number): string {
@@ -170,17 +172,19 @@ export function applyRecord(
   state: WireScanState,
   cfg: SessionMemoryConfig,
 ): void {
-  if (!isRecord(rec) || typeof rec.type !== 'string') return;
+  if (!isRecord(rec) || typeof rec['type'] !== 'string') return;
 
-  switch (rec.type) {
+  switch (rec['type']) {
     case 'turn.prompt':
     case 'turn.steer': {
-      const origin = rec.origin;
-      if (!isRecord(origin) || origin.kind !== 'user') return;
-      const input = rec.input;
+      const origin = rec['origin'];
+      if (!isRecord(origin) || origin['kind'] !== 'user') return;
+      const input = rec['input'];
       if (!Array.isArray(input)) return;
       const text = input
-        .filter((part) => isRecord(part) && part.type === 'text' && typeof part.text === 'string')
+        .filter(
+          (part) => isRecord(part) && part['type'] === 'text' && typeof part['text'] === 'string',
+        )
         .map((part) => (part as { text: string }).text)
         .join(' ');
       const cleaned = stripAnsi(text).trim();
@@ -190,17 +194,17 @@ export function applyRecord(
       return;
     }
     case 'context.append_message': {
-      const message = rec.message;
-      if (!isRecord(message) || message.role !== 'assistant') return;
-      const toolCalls = message.toolCalls;
+      const message = rec['message'];
+      if (!isRecord(message) || message['role'] !== 'assistant') return;
+      const toolCalls = message['toolCalls'];
       if (!Array.isArray(toolCalls)) return;
       for (const tc of toolCalls) {
         if (!isRecord(tc)) continue;
-        const name = typeof tc.name === 'string' ? tc.name : '';
+        const name = typeof tc['name'] === 'string' ? tc['name'] : '';
         if (name.length === 0) continue;
         pushUnique(state.toolsUsed, name);
         if (name === 'Edit' || name === 'Write' || name === 'NotebookEdit') {
-          const argsText = tc.arguments;
+          const argsText = tc['arguments'];
           if (typeof argsText !== 'string') continue;
           let args: unknown;
           try {
@@ -208,8 +212,8 @@ export function applyRecord(
           } catch {
             continue;
           }
-          if (isRecord(args) && typeof args.file_path === 'string') {
-            pushUnique(state.filesModified, args.file_path);
+          if (isRecord(args) && typeof args['file_path'] === 'string') {
+            pushUnique(state.filesModified, args['file_path']);
           }
         }
       }
@@ -218,4 +222,103 @@ export function applyRecord(
     default:
       return;
   }
+}
+
+export async function writeSummary(sessionDir: string, content: string): Promise<boolean> {
+  const target = join(sessionDir, 'summary.md');
+  await mkdir(sessionDir, { recursive: true, mode: 0o700 });
+
+  let final = content;
+  try {
+    const old = await readFile(target, 'utf8');
+    if (old.includes(SUMMARY_START) && old.includes(SUMMARY_END)) {
+      final = rebuildSummary(old, content);
+    }
+  } catch {
+    // Missing or unreadable file: use the freshly rendered content.
+  }
+
+  const tmp = `${target}.tmp-${process.pid}`;
+  await writeFile(tmp, final, { mode: 0o600 });
+  await rename(tmp, target);
+  await chmod(target, 0o600);
+  return true;
+}
+
+function rebuildSummary(old: string, newContent: string): string {
+  const oldDate = extractHeaderField(old, 'Date');
+  const oldStarted = extractHeaderField(old, 'Started');
+
+  const newHeaderEnd = newContent.indexOf('\n---\n');
+  if (newHeaderEnd < 0) return newContent;
+  let header = newContent.slice(0, newHeaderEnd);
+  if (oldDate !== undefined) header = setHeaderField(header, 'Date', oldDate);
+  if (oldStarted !== undefined) header = setHeaderField(header, 'Started', oldStarted);
+
+  const newBlock = extractBlock(newContent);
+  if (newBlock === null) return newContent;
+
+  const oldBodyStart = old.indexOf('---\n');
+  if (oldBodyStart < 0) return newContent;
+  const oldBody = old.slice(oldBodyStart + 4);
+  const replacedBody = oldBody.replace(
+    new RegExp(`${escapeRegex(SUMMARY_START)}[\\s\\S]*?${escapeRegex(SUMMARY_END)}\\n?`),
+    () => newBlock,
+  );
+  return `${header.trimEnd()}\n\n---\n${replacedBody.replace(/^\n+/, '')}`;
+}
+
+function extractBlock(content: string): string | null {
+  const match = content.match(
+    new RegExp(`${escapeRegex(SUMMARY_START)}[\\s\\S]*?${escapeRegex(SUMMARY_END)}\\n?`),
+  );
+  return match?.[0] ?? null;
+}
+
+function extractHeaderField(header: string, name: string): string | undefined {
+  const match = new RegExp(`^\\*\\*${name}:\\*\\* (.+)$`, 'm').exec(header);
+  return match?.[1];
+}
+
+function setHeaderField(header: string, name: string, value: string): string {
+  return header.replace(new RegExp(`^(\\*\\*${name}:\\*\\* ).+$`, 'm'), `$1${value}`);
+}
+
+function escapeRegex(text: string): string {
+  return text.replaceAll(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+const GIT_TIMEOUT_MS = 5_000;
+
+export async function collectMetadata(
+  cwd: string,
+  sessionId: string,
+  startedAt: number,
+): Promise<SessionMetadata> {
+  const [project, branch] = await Promise.all([
+    runGit(cwd, ['rev-parse', '--show-toplevel']).then((out) =>
+      out !== null ? basename(out) : 'unknown',
+    ),
+    runGit(cwd, ['rev-parse', '--abbrev-ref', 'HEAD']).then((out) => out ?? 'unknown'),
+  ]);
+  return {
+    startedAt,
+    project,
+    branch,
+    worktree: cwd,
+    sessionId,
+  };
+}
+
+function runGit(cwd: string, args: readonly string[]): Promise<string | null> {
+  return new Promise((resolve) => {
+    execFile(
+      'git',
+      ['-C', cwd, ...args],
+      { encoding: 'utf8', signal: AbortSignal.timeout(GIT_TIMEOUT_MS) },
+      (error, stdout) => {
+        resolve(error ? null : stdout.trim());
+      },
+    );
+  });
 }

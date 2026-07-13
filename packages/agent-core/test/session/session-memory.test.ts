@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { appendFile, mkdir, writeFile } from 'node:fs/promises';
+import { appendFile, mkdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'pathe';
@@ -8,6 +8,7 @@ import {
   applyRecord,
   createEmptyScanState,
   renderSummary,
+  writeSummary,
   DEFAULT_SESSION_MEMORY_CONFIG,
   SUMMARY_START,
   SUMMARY_END,
@@ -188,6 +189,72 @@ describe('renderSummary', () => {
     };
     const rendered = renderSummary(state, meta);
     expect(rendered).toContain('- run \\`git status\\`');
+  });
+});
+
+describe('writeSummary', () => {
+  it('writes summary.md with mode 0600 on first call', async () => {
+    const dir = await makeTmpDir();
+    const content = renderSummary(
+      { ...createEmptyScanState(), userMessages: ['x'], totalUserMessages: 1 },
+      { startedAt: Date.now(), project: 'p', branch: 'b', worktree: '/w', sessionId: 's' },
+    );
+    await writeSummary(dir, content);
+    const file = join(dir, 'summary.md');
+    expect(await readFile(file, 'utf8')).toContain('## Auto Summary');
+    expect((await stat(file)).mode & 0o777).toBe(0o600);
+  });
+
+  it('preserves handwritten content and freezes Date/Started on update', async () => {
+    const dir = await makeTmpDir();
+    const old = renderSummary(
+      { ...createEmptyScanState(), userMessages: ['old'], totalUserMessages: 1 },
+      { startedAt: new Date('2026-07-01T10:00:00Z').getTime(), project: 'p', branch: 'b', worktree: '/w', sessionId: 's' },
+    );
+    const oldDate = /\*\*Date:\*\* (.+)/.exec(old)?.[1];
+    const oldStarted = /\*\*Started:\*\* (.+)/.exec(old)?.[1];
+    await writeSummary(dir, old);
+    const file = join(dir, 'summary.md');
+    await appendFile(file, '\n\n## Handwritten Notes\nKeep this.\n');
+
+    await new Promise((r) => setTimeout(r, 10));
+    const updated = renderSummary(
+      { ...createEmptyScanState(), userMessages: ['new'], totalUserMessages: 2 },
+      { startedAt: Date.now(), project: 'p', branch: 'b', worktree: '/w', sessionId: 's' },
+    );
+    await writeSummary(dir, updated);
+    const text = await readFile(file, 'utf8');
+    expect(text).toContain('Keep this.');
+    expect(text).toContain(`**Date:** ${oldDate}`);
+    expect(text).toContain(`**Started:** ${oldStarted}`);
+    expect(text).toContain('Total user messages: 2');
+  });
+
+  it('uses a function replacer so $& in user text is not corrupted', async () => {
+    const dir = await makeTmpDir();
+    const content = renderSummary(
+      { ...createEmptyScanState(), userMessages: ['cost $& and `tick`'], totalUserMessages: 1 },
+      { startedAt: Date.now(), project: 'p', branch: 'b', worktree: '/w', sessionId: 's' },
+    );
+    await writeSummary(dir, content);
+    await writeSummary(dir, content);
+    const text = await readFile(join(dir, 'summary.md'), 'utf8');
+    expect(text).toContain('cost $& and \\`tick\\`');
+    expect(text.split(SUMMARY_START)).toHaveLength(2);
+    expect(text.split(SUMMARY_END)).toHaveLength(2);
+  });
+
+  it('rebuilds corrupted files that lack markers', async () => {
+    const dir = await makeTmpDir();
+    await writeFile(join(dir, 'summary.md'), '# Handwritten only\nno markers.\n', 'utf8');
+    const content = renderSummary(
+      { ...createEmptyScanState(), userMessages: ['x'], totalUserMessages: 1 },
+      { startedAt: Date.now(), project: 'p', branch: 'b', worktree: '/w', sessionId: 's' },
+    );
+    await writeSummary(dir, content);
+    const text = await readFile(join(dir, 'summary.md'), 'utf8');
+    expect(text).toContain(SUMMARY_START);
+    expect(text).toContain('## Auto Summary');
   });
 });
 
