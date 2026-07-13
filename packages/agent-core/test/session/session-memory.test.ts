@@ -15,6 +15,9 @@ import {
   type WireScanState,
   type SessionMetadata,
 } from '../../src/session/memory/store';
+import { encodeWorkDirKey } from '../../src/session/store/workdir-key';
+import { SessionMemoryWriterBuiltin } from '../../src/session/hooks/builtin/session-memory-writer';
+import { createBuiltinHookRegistry } from '../../src/session/hooks/builtin/registry';
 
 function userPrompt(text: string) {
   return {
@@ -255,6 +258,109 @@ describe('writeSummary', () => {
     const text = await readFile(join(dir, 'summary.md'), 'utf8');
     expect(text).toContain(SUMMARY_START);
     expect(text).toContain('## Auto Summary');
+  });
+});
+
+async function makeSessionTree(homeDir: string, cwd: string, sessionId: string) {
+  const wdKey = encodeWorkDirKey(cwd);
+  const sessionDir = join(homeDir, 'sessions', wdKey, sessionId);
+  const wireDir = join(sessionDir, 'agents', 'main');
+  await mkdir(wireDir, { recursive: true });
+  return { sessionDir, wirePath: join(wireDir, 'wire.jsonl') };
+}
+
+function metadataRecord(createdAt: number) {
+  return { type: 'metadata', protocol_version: '1', created_at: createdAt };
+}
+
+describe('SessionMemoryWriterBuiltin', () => {
+  it('writes summary.md on Stop and returns allow', async () => {
+    const homeDir = join(tmpdir(), `memory-writer-${Date.now()}`);
+    const cwd = join(tmpdir(), `cwd-${Date.now()}`);
+    const sessionId = `session_${Date.now()}`;
+    const { sessionDir, wirePath } = await makeSessionTree(homeDir, cwd, sessionId);
+    const createdAt = new Date('2026-07-13T14:02:00Z').getTime();
+    await writeFile(
+      wirePath,
+      [
+        metadataRecord(createdAt),
+        { type: 'turn.prompt', input: [{ type: 'text', text: 'hello world' }], origin: { kind: 'user' } },
+      ]
+        .map((r) => JSON.stringify(r))
+        .join('\n') + '\n',
+      'utf8',
+    );
+
+    const writer = new SessionMemoryWriterBuiltin();
+    const result = await writer.run(
+      { session_id: sessionId },
+      { cwd, env: { ODY_CODE_HOME: homeDir }, timeout: 30 },
+    );
+
+    expect(result.action).toBe('allow');
+    const summary = await readFile(join(sessionDir, 'summary.md'), 'utf8');
+    expect(summary).toContain('## Auto Summary');
+    expect(summary).toContain('- hello world');
+    expect(summary).toContain('Total user messages: 1');
+    const started = new Date(createdAt);
+    const expectedTime = `${String(started.getHours()).padStart(2, '0')}:${String(started.getMinutes()).padStart(2, '0')}`;
+    expect(summary).toContain(`**Started:** ${expectedTime}`);
+  });
+
+  it('increments state across multiple runs without re-scanning from offset zero', async () => {
+    const homeDir = join(tmpdir(), `memory-writer-inc-${Date.now()}`);
+    const cwd = join(tmpdir(), `cwd-inc-${Date.now()}`);
+    const sessionId = `session_${Date.now()}`;
+    const { sessionDir, wirePath } = await makeSessionTree(homeDir, cwd, sessionId);
+    const writer = new SessionMemoryWriterBuiltin();
+
+    await writeFile(
+      wirePath,
+      [metadataRecord(Date.now()), userPrompt('first')].map((r) => JSON.stringify(r)).join('\n') + '\n',
+      'utf8',
+    );
+    await writer.run({ session_id: sessionId }, { cwd, env: { ODY_CODE_HOME: homeDir }, timeout: 30 });
+
+    await writeFile(wirePath, JSON.stringify(userPrompt('second')) + '\n', { flag: 'a' });
+    await writer.run({ session_id: sessionId }, { cwd, env: { ODY_CODE_HOME: homeDir }, timeout: 30 });
+
+    const summary = await readFile(join(sessionDir, 'summary.md'), 'utf8');
+    expect(summary).toContain('- first');
+    expect(summary).toContain('- second');
+    expect(summary).toContain('Total user messages: 2');
+  });
+
+  it('skips writing when there are no user messages', async () => {
+    const homeDir = join(tmpdir(), `memory-writer-empty-${Date.now()}`);
+    const cwd = join(tmpdir(), `cwd-empty-${Date.now()}`);
+    const sessionId = `session_${Date.now()}`;
+    const { sessionDir, wirePath } = await makeSessionTree(homeDir, cwd, sessionId);
+    await writeFile(wirePath, JSON.stringify(metadataRecord(Date.now())) + '\n', 'utf8');
+
+    const writer = new SessionMemoryWriterBuiltin();
+    const result = await writer.run(
+      { session_id: sessionId },
+      { cwd, env: { ODY_CODE_HOME: homeDir }, timeout: 30 },
+    );
+
+    expect(result.action).toBe('allow');
+    await expect(readFile(join(sessionDir, 'summary.md'), 'utf8')).rejects.toThrow();
+  });
+
+  it('always returns allow even when the session directory does not exist', async () => {
+    const writer = new SessionMemoryWriterBuiltin();
+    const result = await writer.run(
+      { session_id: 'session_missing' },
+      { cwd: '/nonexistent/cwd', env: {}, timeout: 30 },
+    );
+    expect(result.action).toBe('allow');
+  });
+
+  it('is registered in the builtin hook registry', () => {
+    const registry = createBuiltinHookRegistry();
+    const builtin = registry.get('session-memory-writer');
+    expect(builtin).toBeDefined();
+    expect(builtin?.id).toBe('session-memory-writer');
   });
 });
 
