@@ -1,6 +1,8 @@
 import { release as osRelease, type as osType } from 'node:os';
 
-import type { McpServerInfo, SessionStatus, SessionUsage } from '@odysseythink/ody-code-sdk';
+import chalk from 'chalk';
+
+import type { HooksInfo, McpServerInfo, SessionStatus, SessionUsage } from '@odysseythink/ody-code-sdk';
 
 import { buildMcpStatusReportLines } from '../components/messages/mcp-status-panel';
 import { buildStatusReportLines } from '../components/messages/status-panel';
@@ -17,6 +19,7 @@ import {
   withFeedbackVersionPrefix,
 } from '../constant/feedback';
 import { isManagedUsageProvider } from '../constant/ody-tui';
+import type { ColorPalette } from '../theme/colors';
 import { formatErrorMessage } from '../utils/event-payload';
 import { openUrl } from '../utils/open-url';
 import { promptFeedbackInput } from './prompts';
@@ -147,6 +150,102 @@ export async function showMcpServers(host: SlashCommandHost): Promise<void> {
   });
   const title = servers.length > 0 ? ` MCP (${servers.length}) ` : ' MCP ';
   const panel = new UsagePanelComponent(lines, host.state.theme.colors.primary, title);
+  host.state.transcriptContainer.addChild(panel);
+  host.state.ui.requestRender();
+}
+
+interface HooksReportOptions {
+  readonly colors: ColorPalette;
+  readonly info: HooksInfo;
+}
+
+function actionColor(action: HooksInfo['executions'][number]['action'], colors: ColorPalette): string {
+  switch (action) {
+    case 'allow':
+      return colors.success;
+    case 'block':
+      return colors.error;
+    case 'error':
+    case 'timeout':
+    case 'dropped':
+      return colors.warning;
+    case 'skipped-profile':
+      return colors.textDim;
+    default:
+      return colors.text;
+  }
+}
+
+export function buildHooksReportLines(options: HooksReportOptions): string[] {
+  const { colors, info } = options;
+  const accent = chalk.hex(colors.primary).bold;
+  const value = chalk.hex(colors.text);
+  const muted = chalk.hex(colors.textDim);
+  const lines: string[] = [accent('Hooks')];
+
+  lines.push(`  ${muted('profile')}  ${value(info.profile)}`);
+  lines.push(
+    `  ${muted('disabled')}  ${
+      info.disabled.length > 0 ? value(info.disabled.join(', ')) : muted('none')
+    }`,
+  );
+
+  const summaryEntries = Object.entries(info.summary);
+  if (summaryEntries.length === 0) {
+    lines.push(`  ${muted('summary')}  ${muted('no hooks registered')}`);
+  } else {
+    const summaryText = summaryEntries
+      .map(([event, count]) => `${muted(event)}:${value(String(count))}`)
+      .join('  ');
+    lines.push(`  ${muted('summary')}  ${summaryText}`);
+  }
+
+  lines.push('');
+  lines.push(accent('Recent executions'));
+  if (info.executions.length === 0) {
+    lines.push(muted('  no executions recorded'));
+  } else {
+    const recent = info.executions.slice(-20);
+    const maxId = Math.max(16, ...recent.map((r) => r.hookId.length));
+    for (const r of recent) {
+      const ts = new Date(r.ts).toLocaleTimeString();
+      const color = actionColor(r.action, colors);
+      lines.push(
+        `  ${muted(ts)}  ` +
+          `${value(r.event.padEnd(16))}  ` +
+          `${chalk.hex(color)(r.action.padEnd(16))}  ` +
+          `${value(r.hookId.padEnd(maxId))}  ` +
+          `${muted(`${String(r.durationMs).padStart(5)}ms`)}`,
+      );
+    }
+  }
+
+  lines.push('');
+  lines.push(accent('Counts'));
+  const countEntries = Object.entries(info.counts).filter(([, count]) => count > 0);
+  if (countEntries.length === 0) {
+    lines.push(muted('  no executions recorded'));
+  } else {
+    const countsText = countEntries
+      .map(([action, count]) => `${muted(action)}: ${value(String(count))}`)
+      .join('  ');
+    lines.push(`  ${countsText}`);
+  }
+
+  return lines;
+}
+
+export async function showHooksReport(host: SlashCommandHost): Promise<void> {
+  let info: HooksInfo;
+  try {
+    info = await host.requireSession().getHooksInfo();
+  } catch (error) {
+    host.showError(`Failed to load hooks info: ${formatErrorMessage(error)}`);
+    return;
+  }
+
+  const lines = buildHooksReportLines({ colors: host.state.theme.colors, info });
+  const panel = new UsagePanelComponent(lines, host.state.theme.colors.primary, ' Hooks ');
   host.state.transcriptContainer.addChild(panel);
   host.state.ui.requestRender();
 }

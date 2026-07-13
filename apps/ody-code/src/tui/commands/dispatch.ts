@@ -39,7 +39,13 @@ import { handleDesignReviewCommand, handlePlanReviewCommand } from './design-rev
 import { handleReviewCommand } from './review';
 import { handleGoalCommand } from './goal';
 import { handleProviderCommand } from './provider';
-import { handleFeedbackCommand, showMcpServers, showStatusReport, showUsage } from './info';
+import {
+  handleFeedbackCommand,
+  showHooksReport,
+  showMcpServers,
+  showStatusReport,
+  showUsage,
+} from './info';
 import { handlePluginsCommand } from './plugins';
 import {
   handleExportDebugZipCommand,
@@ -76,6 +82,7 @@ export {
 } from './config';
 export {
   handleFeedbackCommand,
+  showHooksReport,
   showMcpServers,
   showStatusReport,
   showUsage,
@@ -272,6 +279,9 @@ async function handleBuiltInSlashCommand(
       return;
     case 'status':
       void showStatusReport(host);
+      return;
+    case 'hooks':
+      void showHooksReport(host);
       return;
     case 'feedback':
       await handleFeedbackCommand(host);

@@ -242,6 +242,14 @@ export const BUILTIN_SLASH_COMMANDS = [
     hiddenInModes: SPECIAL_MODE_HIDDEN,
   },
   {
+    name: 'hooks',
+    aliases: [],
+    description: 'Show hook profile, summary, and recent executions',
+    priority: 60,
+    availability: 'always',
+    hiddenInModes: SPECIAL_MODE_HIDDEN,
+  },
+  {
     name: 'feedback',
     aliases: [],
     description: 'Send feedback to make Ody Code better',
