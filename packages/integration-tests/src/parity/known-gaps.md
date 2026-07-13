@@ -21,7 +21,7 @@ This document is the single source of truth for gaps discovered during Phase 4 p
 | G5 | agent | Compaction tokenizer alignment | L1/L3 | C | phase-1-a-team | Tracked in Phase 1-A; Phase 4 uses mock/snapshot fallback. |
 | G6 | agent | `SessionGoalStore` not split in agent-rs | L2/L3 | A | rust-host-team | Ported to agent-rs; goal/state tools pass L2/L3. |
 | G7 | tools | `RequestCodeReviewTool` in external `@odysseythink/code-review` | L1/L3 | B | ts-core-team | Remains TS; Rust host can invoke via TS worker RPC. |
-| G8 | tools | Design/office-hours/game-design artifact sync (`rpc.openExternal`, gbrain CLI) | L3 | B | ts-core-team | Host exposes required RPC bridge; TS tools remain canonical. |
+| G8 | tools | Design/product/game-design artifact sync (`rpc.openExternal`, gbrain CLI) | L3 | B | ts-core-team | Host exposes required RPC bridge; TS tools remain canonical. |
 | G9 | parity | L4 cross-host resume not exercised end-to-end | L4 | A | rust-host-team | `resume-cross-host.ts` passes TS→Rust→TS and joins CI. |
 | G10 | parity | Session lifecycle event type mismatch (`session.created`/`session.closed` vs `agent.status.updated`) | L3 | A | rust-host-team | Event streams match after normalization. |
 | G11 | parity | Rust mock provider missing `turn.ended` | L3 | A | rust-host-team | `turn.ended` emitted; hello-world/mock-prompt/file-edit/multi-turn-tool pass. |

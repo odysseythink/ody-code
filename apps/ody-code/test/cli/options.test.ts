@@ -37,7 +37,7 @@ function base(): CLIOptions {
     yolo: false,
     auto: false,
     sessionMode: 'normal',
-    officeHours: false,
+    product: false,
     gameDesign: false,
     model: undefined,
     outputFormat: undefined,
@@ -331,46 +331,46 @@ describe('CLI options parsing', () => {
     });
   });
 
-  describe('--office-hours', () => {
-    it('defaults officeHours to false', () => {
-      expect(parse([]).officeHours).toBe(false);
+  describe('--product', () => {
+    it('defaults product to false', () => {
+      expect(parse([]).product).toBe(false);
     });
 
-    it('--office-hours sets officeHours to true', () => {
-      expect(parse(['--office-hours']).officeHours).toBe(true);
+    it('--product sets product to true', () => {
+      expect(parse(['--product']).product).toBe(true);
     });
 
-    it('--office-hours forces uiMode to shell', () => {
-      const opts = parse(['--office-hours']);
+    it('--product forces uiMode to shell', () => {
+      const opts = parse(['--product']);
       expect(validateOptions(opts).uiMode).toBe('shell');
     });
 
-    it('rejects --office-hours combined with --prompt', () => {
-      expect(() => parse(['--office-hours', '--prompt', 'x'])).toThrow(CommanderError);
+    it('rejects --product combined with --prompt', () => {
+      expect(() => parse(['--product', '--prompt', 'x'])).toThrow(CommanderError);
     });
 
-    it('rejects --office-hours combined with --session', () => {
-      expect(() => parse(['--office-hours', '--session', 'abc'])).toThrow(CommanderError);
+    it('rejects --product combined with --session', () => {
+      expect(() => parse(['--product', '--session', 'abc'])).toThrow(CommanderError);
     });
 
-    it('rejects --office-hours combined with --continue', () => {
-      expect(() => parse(['--office-hours', '--continue'])).toThrow(CommanderError);
+    it('rejects --product combined with --continue', () => {
+      expect(() => parse(['--product', '--continue'])).toThrow(CommanderError);
     });
 
-    it('rejects --office-hours combined with --session-mode', () => {
-      expect(() => parse(['--office-hours', '--session-mode', 'plan'])).toThrow(CommanderError);
+    it('rejects --product combined with --session-mode', () => {
+      expect(() => parse(['--product', '--session-mode', 'plan'])).toThrow(CommanderError);
     });
 
-    it('rejects --office-hours combined with --yolo', () => {
-      expect(() => parse(['--office-hours', '--yolo'])).toThrow(CommanderError);
+    it('rejects --product combined with --yolo', () => {
+      expect(() => parse(['--product', '--yolo'])).toThrow(CommanderError);
     });
 
-    it('rejects --office-hours combined with --auto', () => {
-      expect(() => parse(['--office-hours', '--auto'])).toThrow(CommanderError);
+    it('rejects --product combined with --auto', () => {
+      expect(() => parse(['--product', '--auto'])).toThrow(CommanderError);
     });
 
-    it('rejects --office-hours combined with --game-design', () => {
-      expect(() => parse(['--office-hours', '--game-design'])).toThrow(CommanderError);
+    it('rejects --product combined with --game-design', () => {
+      expect(() => parse(['--product', '--game-design'])).toThrow(CommanderError);
     });
   });
 

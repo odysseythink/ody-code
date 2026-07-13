@@ -11,7 +11,7 @@ describe('SessionMode L3 — TS↔Rust parity', () => {
     // Placeholder
   });
 
-  it.skip('office-hours-enter-exit parity', async () => {
+  it.skip('product-enter-exit parity', async () => {
     // Placeholder
   });
 

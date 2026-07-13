@@ -5,7 +5,7 @@ import type { DynamicInjector } from './injector';
 import { PermissionModeInjector } from './permission-mode';
 import { PlanModeInjector } from './plan-mode';
 import { DesignModeInjector } from './design-mode';
-import { OfficeHoursInjector } from './office-hours';
+import { ProductInjector } from './product';
 import { GameDesignInjector } from './game-design';
 import { PluginSessionStartInjector } from './plugin-session-start';
 import { TodoListReminderInjector } from './todo-list';
@@ -26,7 +26,7 @@ export class InjectionManager {
       new TodoListReminderInjector(agent),
       new PlanModeInjector(agent),
       new DesignModeInjector(agent),
-      new OfficeHoursInjector(agent),
+      new ProductInjector(agent),
       new GameDesignInjector(agent),
       new PermissionModeInjector(agent),
       ...(flags.enabled('repo-knowledge') ? [new KnowledgeMicroagentInjector(agent)] : []),

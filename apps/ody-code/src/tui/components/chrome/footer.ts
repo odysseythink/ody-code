@@ -29,7 +29,7 @@ import { t } from '@odysseythink/ody-code-sdk';
 const MAX_CWD_SEGMENTS = 3;
 const GOAL_TIMER_INTERVAL_MS = 1_000;
 
-const EMOJIS: Record<string, string> = { normal: '⚒️', plan: '📝', design: '✏️', 'office-hours': '🏢', 'game-design': '🎮' };
+const EMOJIS: Record<string, string> = { normal: '⚒️', plan: '📝', design: '✏️', 'product': '🏢', 'game-design': '🎮' };
 
 function planFileName(path: string | null | undefined): string | null {
   if (!path) return null;
@@ -60,7 +60,7 @@ function renderModeBadge(
       ? colors.accent
       : mode === 'plan'
         ? colors.primary
-        : mode === 'office-hours'
+        : mode === 'product'
           ? colors.warning
           : mode === 'game-design'
             ? colors.accent
@@ -73,8 +73,8 @@ function renderModeBadge(
     textColor = '#ffffff';
   }
 
-  const displayLabel = mode === 'office-hours'
-    ? t('tui.footer.officeHours', userLanguage)
+  const displayLabel = mode === 'product'
+    ? t('tui.footer.product', userLanguage)
     : mode === 'game-design'
       ? t('tui.footer.gameDesign', userLanguage)
       : mode;
@@ -117,7 +117,7 @@ export interface ToolbarTip {
 }
 
 const TOOLBAR_TIPS: readonly ToolbarTip[] = [
-  { text: 'shift+tab: cycle plan/design mode', hiddenInModes: ['office-hours', 'game-design'] },
+  { text: 'shift+tab: cycle plan/design mode', hiddenInModes: ['product', 'game-design'] },
   { text: '/model: switch model' },
   { text: 'ctrl+s: steer mid-turn', priority: 2 },
   { text: '/compact: compact context', priority: 2 },
@@ -168,7 +168,7 @@ function currentTipIndex(): number {
 }
 
 /** Build the weighted tip rotation for a session mode, suppressing tips that
- *  do not apply in that mode (e.g. mode-cycling hints in office-hours). */
+ *  do not apply in that mode (e.g. mode-cycling hints in product). */
 export function tipsForMode(mode: SessionMode): readonly ToolbarTip[] {
   const visible = TOOLBAR_TIPS.filter((tip) => !tip.hiddenInModes?.includes(mode));
   return buildWeightedTips(visible);

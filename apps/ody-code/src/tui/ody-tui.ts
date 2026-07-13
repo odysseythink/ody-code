@@ -142,7 +142,7 @@ export interface OdyTUIStartupInput {
   readonly startupNotice?: string;
   readonly resolvedTheme?: ResolvedTheme;
   readonly authIntent?: { readonly kind: 'login' | 'logout'; readonly providerType: string };
-  readonly officeHours: boolean;
+  readonly product: boolean;
   readonly gameDesign: boolean;
   /** If true, bypass the interactive terminal UI (smoke-test mode). */
   readonly smokeTest?: boolean;
@@ -163,8 +163,8 @@ function createInitialAppState(input: OdyTUIStartupInput): AppState {
     permissionMode: startupPermission,
     sessionMode: input.gameDesign
       ? 'game-design'
-      : input.officeHours
-        ? 'office-hours'
+      : input.product
+        ? 'product'
         : input.cliOptions.sessionMode,
     thinking: false,
     contextUsage: 0,
@@ -274,7 +274,7 @@ export class OdyTUI {
         yolo: startupInput.cliOptions.yolo,
         auto: startupInput.cliOptions.auto,
         sessionMode: startupInput.cliOptions.sessionMode,
-        officeHours: startupInput.officeHours,
+        product: startupInput.product,
         gameDesign: startupInput.gameDesign,
         model: startupInput.cliOptions.model,
         startupNotice: startupInput.startupNotice,
@@ -327,10 +327,10 @@ export class OdyTUI {
     const builtins = sortSlashCommands(BUILTIN_SLASH_COMMANDS)
       .filter((command) => isCommandVisibleInMode(command, mode))
       .filter((command) => isExperimentalFlagEnabled(command.experimentalFlag));
-    // Office-hours is a restricted mode: only built-in /exit is exposed.
+    // product is a restricted mode: only built-in /exit is exposed.
     // Game-design exposes only its own built-in skills as slash commands.
     const skillCommands =
-      mode === 'office-hours'
+      mode === 'product'
         ? []
         : mode === 'game-design'
           ? this.skillCommands.filter((cmd) => cmd.name.startsWith('skill:game-design/'))
@@ -505,8 +505,8 @@ export class OdyTUI {
       sessionMode:
         startup.gameDesign
           ? 'game-design'
-          : startup.officeHours
-            ? 'office-hours'
+          : startup.product
+            ? 'product'
             : startup.sessionMode === 'normal'
               ? undefined
               : startup.sessionMode,
@@ -570,8 +570,8 @@ export class OdyTUI {
 
     if (session !== undefined && startup.gameDesign) {
       await session.setSessionMode('game-design');
-    } else if (session !== undefined && startup.officeHours) {
-      await session.setSessionMode('office-hours');
+    } else if (session !== undefined && startup.product) {
+      await session.setSessionMode('product');
     }
 
     if (session === undefined) {
@@ -1071,17 +1071,17 @@ export class OdyTUI {
       }
     }
 
-    const isOfficeHours = this.state.appState.sessionMode === 'office-hours';
+    const isProduct = this.state.appState.sessionMode === 'product';
     const isGameDesign = this.state.appState.sessionMode === 'game-design';
     this.setAppState({
       sessionId: session.id,
       model: status.model ?? '',
       thinking: status.thinkingLevel !== 'off',
       permissionMode: status.permission,
-      sessionMode: isOfficeHours ? 'office-hours'
+      sessionMode: isProduct ? 'product'
         : isGameDesign ? 'game-design'
         : (status.sessionMode ?? 'normal'),
-      sessionModeFilePath: (isOfficeHours || isGameDesign) ? null : (sessionModeFilePath ?? null),
+      sessionModeFilePath: (isProduct || isGameDesign) ? null : (sessionModeFilePath ?? null),
       contextTokens: status.contextTokens,
       maxContextTokens: status.maxContextTokens,
       contextUsage: status.contextUsage,
@@ -1780,7 +1780,7 @@ export class OdyTUI {
   showHelpPanel(): void {
     this.state.activeDialog = 'help';
     const shortcuts =
-      this.state.appState.sessionMode === 'office-hours' ||
+      this.state.appState.sessionMode === 'product' ||
       this.state.appState.sessionMode === 'game-design'
         ? DEFAULT_KEYBOARD_SHORTCUTS.filter((s) => !s.description.toLowerCase().includes('cycle mode'))
         : DEFAULT_KEYBOARD_SHORTCUTS;

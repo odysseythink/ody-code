@@ -34,7 +34,7 @@ function makeStartupInput(): OdyTUIStartupInput {
       yolo: false,
       auto: false,
       sessionMode: 'normal',
-      officeHours: false,
+      product: false,
       gameDesign: false,
       model: undefined,
       outputFormat: undefined,
@@ -58,7 +58,7 @@ function makeStartupInput(): OdyTUIStartupInput {
     version: '0.0.0-test',
     workDir: '/tmp/proj-a',
     resolvedTheme: 'dark',
-    officeHours: false,
+    product: false,
     gameDesign: false,
   };
 }

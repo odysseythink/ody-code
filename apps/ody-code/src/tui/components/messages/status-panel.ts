@@ -108,7 +108,7 @@ export function buildStatusReportLines(options: StatusReportOptions): string[] {
     { label: 'Permissions', value: permission },
     { label: 'Plan mode', value: sessionMode === 'plan' ? 'on' : 'off' },
     { label: 'Design mode', value: sessionMode === 'design' ? 'on' : 'off' },
-    { label: t('tui.statusPanel.officeHours', lang), value: sessionMode === 'office-hours' ? t('tui.statusPanel.on', lang) : t('tui.statusPanel.off', lang) },
+    { label: t('tui.statusPanel.product', lang), value: sessionMode === 'product' ? t('tui.statusPanel.on', lang) : t('tui.statusPanel.off', lang) },
     { label: t('tui.statusPanel.gameDesign', lang), value: sessionMode === 'game-design' ? t('tui.statusPanel.on', lang) : t('tui.statusPanel.off', lang) },
     { label: 'Session', value: sessionId },
   ];

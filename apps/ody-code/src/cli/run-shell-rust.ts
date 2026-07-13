@@ -135,7 +135,7 @@ export async function runShellWithRustHost(opts: CLIOptions, version: string): P
     workDir: process.cwd(),
     startupNotice: configWarning,
     resolvedTheme,
-    officeHours: false,
+    product: false,
     gameDesign: false,
     smokeTest: opts.smokeTest,
   });

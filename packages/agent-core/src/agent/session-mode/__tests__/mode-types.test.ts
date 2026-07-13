@@ -10,7 +10,7 @@ import type { SessionModeKind, RuntimeMode } from '../index';
 
 describe('mode types', () => {
   it('SESSION_MODE_KINDS has exactly the four interaction phases', () => {
-    expect(SESSION_MODE_KINDS).toEqual(['plan', 'design', 'office-hours', 'game-design']);
+    expect(SESSION_MODE_KINDS).toEqual(['plan', 'design', 'product', 'game-design']);
   });
 
   it('RUNTIME_MODES appends normal to session mode kinds', () => {
@@ -19,7 +19,7 @@ describe('mode types', () => {
 
   it('isSessionModeKind accepts the four kinds and rejects others', () => {
     expect(isSessionModeKind('plan')).toBe(true);
-    expect(isSessionModeKind('office-hours')).toBe(true);
+    expect(isSessionModeKind('product')).toBe(true);
     expect(isSessionModeKind('normal')).toBe(false);
     expect(isSessionModeKind('foo')).toBe(false);
   });

@@ -246,32 +246,32 @@ describe('mode visibility blocking', () => {
     });
   });
 
-  it('allows /model in office-hours mode (per-mode model switching)', () => {
-    const result = resolve('/model', { sessionMode: 'office-hours' });
+  it('allows /model in product mode (per-mode model switching)', () => {
+    const result = resolve('/model', { sessionMode: 'product' });
     expect(result.kind).toBe('builtin');
     expect((result as { name?: string }).name).toBe('model');
   });
 
-  it('blocks non-exit commands in office-hours mode', () => {
-    expect(resolve('/help', { sessionMode: 'office-hours' })).toEqual({
+  it('blocks non-exit commands in product mode', () => {
+    expect(resolve('/help', { sessionMode: 'product' })).toEqual({
       kind: 'blocked',
       commandName: 'help',
       reason: 'mode-unavailable',
     });
-    expect(resolve('/plan', { sessionMode: 'office-hours' })).toEqual({
+    expect(resolve('/plan', { sessionMode: 'product' })).toEqual({
       kind: 'blocked',
       commandName: 'plan',
       reason: 'mode-unavailable',
     });
-    expect(resolve('/design', { sessionMode: 'office-hours' })).toEqual({
+    expect(resolve('/design', { sessionMode: 'product' })).toEqual({
       kind: 'blocked',
       commandName: 'design',
       reason: 'mode-unavailable',
     });
   });
 
-  it('allows /exit in office-hours mode', () => {
-    expect(resolve('/exit', { sessionMode: 'office-hours' })).toMatchObject({
+  it('allows /exit in product mode', () => {
+    expect(resolve('/exit', { sessionMode: 'product' })).toMatchObject({
       kind: 'builtin',
       name: 'exit',
     });

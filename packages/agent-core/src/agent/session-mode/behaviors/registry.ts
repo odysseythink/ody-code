@@ -2,7 +2,7 @@ import { ErrorCodes, OdyError } from '@odysseythink/agent-core-shared';
 import type { SessionModeKind } from '../types';
 import { DesignModeBehavior } from './design';
 import { GameDesignModeBehavior } from './game-design';
-import { OfficeHoursModeBehavior } from './office-hours';
+import { ProductModeBehavior } from './product';
 import { PlanModeBehavior } from './plan';
 import type { SessionModeBehavior } from './types';
 
@@ -30,7 +30,7 @@ export function createDefaultModeBehaviorRegistry(): ModeBehaviorRegistry {
   const registry = new ModeBehaviorRegistry();
   registry.register(new PlanModeBehavior());
   registry.register(new DesignModeBehavior());
-  registry.register(new OfficeHoursModeBehavior());
+  registry.register(new ProductModeBehavior());
   registry.register(new GameDesignModeBehavior());
   return registry;
 }

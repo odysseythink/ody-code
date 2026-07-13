@@ -32,8 +32,8 @@ describe('isCommandVisibleInMode', () => {
     expect(isCommandVisibleInMode({ hiddenInModes }, 'normal')).toBe(false);
   });
 
-  it('hides commands in office-hours mode', () => {
-    expect(isCommandVisibleInMode({ hiddenInModes: ['office-hours'] }, 'office-hours')).toBe(false);
-    expect(isCommandVisibleInMode({ hiddenInModes: ['office-hours'] }, 'normal')).toBe(true);
+  it('hides commands in product mode', () => {
+    expect(isCommandVisibleInMode({ hiddenInModes: ['product'] }, 'product')).toBe(false);
+    expect(isCommandVisibleInMode({ hiddenInModes: ['product'] }, 'normal')).toBe(true);
   });
 });

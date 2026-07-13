@@ -15,7 +15,7 @@ description: >
 hiddenInModes:
   - plan
   - design
-  - office-hours
+  - product
   - game-design
 ---
 

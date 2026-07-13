@@ -3,9 +3,9 @@ import { isCommandVisibleInMode } from '../../../src/tui/commands/visibility';
 import type { KimiSlashCommand } from '../../../src/tui/commands/types';
 
 describe('isCommandVisibleInMode with game-design', () => {
-  it('hides most commands in game-design mode (like office-hours)', () => {
+  it('hides most commands in game-design mode (like product)', () => {
     const cmd: Pick<KimiSlashCommand, 'hiddenInModes'> = {
-      hiddenInModes: ['office-hours', 'game-design'],
+      hiddenInModes: ['product', 'game-design'],
     };
     expect(isCommandVisibleInMode(cmd, 'game-design')).toBe(false);
   });

@@ -23,7 +23,7 @@ function makeAgent(overrides: {
     replayBuilder: { push: vi.fn() },
     records: { logRecord: vi.fn() },
     context: { history: undefined },
-    contexts: { normal: { history: [] }, plan: { history: [] }, design: { history: [] }, 'office-hours': { history: [] }, 'game-design': { history: [] } },
+    contexts: { normal: { history: [] }, plan: { history: [] }, design: { history: [] }, 'product': { history: [] }, 'game-design': { history: [] } },
     kaos: {
       mkdir: vi.fn().mockResolvedValue(undefined),
       stat: vi.fn(async (p: string) => {

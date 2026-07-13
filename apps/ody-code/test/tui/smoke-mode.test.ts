@@ -79,7 +79,7 @@ describe('OdyTUI.runSmokeTest', () => {
       tuiConfig: { theme: 'dark', editorCommand: null, notifications: { enabled: false }, upgrade: { check: false } } as any,
       version: '0.0.0',
       workDir: '/tmp',
-      officeHours: false,
+      product: false,
       gameDesign: false,
       smokeTest: true,
     });

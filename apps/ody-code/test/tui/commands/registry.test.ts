@@ -124,25 +124,25 @@ describe('built-in slash command registry', () => {
   });
 
   it('declares hiddenInModes for mode-specific commands', () => {
-    expect(findBuiltInSlashCommand('plan')?.hiddenInModes).toEqual(['plan', 'office-hours', 'game-design']);
-    expect(findBuiltInSlashCommand('design')?.hiddenInModes).toEqual(['design', 'office-hours', 'game-design']);
+    expect(findBuiltInSlashCommand('plan')?.hiddenInModes).toEqual(['plan', 'product', 'game-design']);
+    expect(findBuiltInSlashCommand('design')?.hiddenInModes).toEqual(['design', 'product', 'game-design']);
     expect(findBuiltInSlashCommand('design-review')?.hiddenInModes).toEqual([
       'plan',
       'normal',
-      'office-hours',
+      'product',
       'game-design',
     ]);
     expect(findBuiltInSlashCommand('plan-review')?.hiddenInModes).toEqual([
       'design',
       'normal',
-      'office-hours',
+      'product',
       'game-design',
     ]);
   });
 
-  it('hides universal commands in office-hours mode except exit and model', () => {
-    expect(findBuiltInSlashCommand('help')?.hiddenInModes).toContain('office-hours');
-    expect(findBuiltInSlashCommand('version')?.hiddenInModes).toContain('office-hours');
+  it('hides universal commands in product mode except exit and model', () => {
+    expect(findBuiltInSlashCommand('help')?.hiddenInModes).toContain('product');
+    expect(findBuiltInSlashCommand('version')?.hiddenInModes).toContain('product');
     expect(findBuiltInSlashCommand('exit')?.hiddenInModes).toBeUndefined();
     // /model is exempt: special modes can be pinned to their own model, so the
     // user must be able to switch models from inside the mode.

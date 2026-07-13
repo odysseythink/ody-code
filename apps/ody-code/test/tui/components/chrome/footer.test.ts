@@ -145,8 +145,8 @@ describe('FooterComponent mode badge', () => {
     expect(line2).not.toContain('·');
   });
 
-  it('renders inverted office-hours badge without filename on Line 2', () => {
-    const state: AppState = { ...baseAppState, sessionMode: 'office-hours' };
+  it('renders inverted product badge without filename on Line 2', () => {
+    const state: AppState = { ...baseAppState, sessionMode: 'product' };
     const footer = new FooterComponent(state, darkColors);
     const lines = footer.render(120);
     const line2 = stripAnsi(lines[1]!);
@@ -155,21 +155,21 @@ describe('FooterComponent mode badge', () => {
     expect(line2).not.toContain('·');
   });
 
-  it('renders localized Chinese office-hours badge when userLanguage is zh', () => {
+  it('renders localized Chinese product badge when userLanguage is zh', () => {
     const state: AppState = {
       ...baseAppState,
-      sessionMode: 'office-hours',
+      sessionMode: 'product',
       userLanguage: 'zh',
     };
     const footer = new FooterComponent(state, darkColors);
     const lines = footer.render(120);
     const line2 = stripAnsi(lines[1]!);
     expect(line2).toContain('办公时间');
-    expect(line2).not.toContain('office-hours');
+    expect(line2).not.toContain('product');
   });
 
-  it('hides the shift+tab mode-cycling tip in office-hours mode', () => {
-    const state: AppState = { ...baseAppState, sessionMode: 'office-hours' };
+  it('hides the shift+tab mode-cycling tip in product mode', () => {
+    const state: AppState = { ...baseAppState, sessionMode: 'product' };
     const footer = new FooterComponent(state, darkColors);
     const lines = footer.render(120);
     const line1 = stripAnsi(lines[0]!);
@@ -182,9 +182,9 @@ describe('FooterComponent mode badge', () => {
     expect(normalTips).toContain('shift+tab: cycle plan/design mode');
   });
 
-  it('excludes the shift+tab mode-cycling tip from the office-hours rotation', () => {
-    const officeHoursTips = tipsForMode('office-hours').map((t) => t.text);
-    expect(officeHoursTips).not.toContain('shift+tab: cycle plan/design mode');
+  it('excludes the shift+tab mode-cycling tip from the product rotation', () => {
+    const productTips = tipsForMode('product').map((t) => t.text);
+    expect(productTips).not.toContain('shift+tab: cycle plan/design mode');
   });
 
   it('renders normal badge without filename when no sessionModeFilePath is set', () => {

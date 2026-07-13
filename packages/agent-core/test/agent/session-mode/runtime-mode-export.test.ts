@@ -6,7 +6,7 @@ it('RuntimeMode is exported and includes all five values', () => {
   expect(isRuntimeMode('normal')).toBe(true);
   expect(isRuntimeMode('plan')).toBe(true);
   expect(isRuntimeMode('design')).toBe(true);
-  expect(isRuntimeMode('office-hours')).toBe(true);
+  expect(isRuntimeMode('product')).toBe(true);
   expect(isRuntimeMode('game-design')).toBe(true);
   expect(isRuntimeMode('foo')).toBe(false);
   expect(normalizeRuntimeMode('foo')).toBe('normal');

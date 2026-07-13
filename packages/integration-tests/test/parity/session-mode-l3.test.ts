@@ -4,7 +4,7 @@ import { normalizeSessionModeEvents } from '../../src/parity/normalize-session-m
 import type { SessionModeFixture } from '../../src/parity/session-mode-fixture';
 import planEnterExit from '../../src/parity/fixtures/session-mode/plan-enter-exit.json';
 import designEnterExit from '../../src/parity/fixtures/session-mode/design-enter-exit.json';
-import officeHoursEnterExit from '../../src/parity/fixtures/session-mode/office-hours-enter-exit.json';
+import productEnterExit from '../../src/parity/fixtures/session-mode/product-enter-exit.json';
 import gameDesignEnterExit from '../../src/parity/fixtures/session-mode/game-design-enter-exit.json';
 import handoff from '../../src/parity/fixtures/session-mode/handoff.json';
 import injectionContent from '../../src/parity/fixtures/session-mode/injection-content.json';
@@ -12,7 +12,7 @@ import injectionContent from '../../src/parity/fixtures/session-mode/injection-c
 const fixtures = [
   ['plan-enter-exit', planEnterExit],
   ['design-enter-exit', designEnterExit],
-  ['office-hours-enter-exit', officeHoursEnterExit],
+  ['product-enter-exit', productEnterExit],
   ['game-design-enter-exit', gameDesignEnterExit],
   ['handoff', handoff],
   ['injection-content', injectionContent],

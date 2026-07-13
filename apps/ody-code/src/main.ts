@@ -25,7 +25,7 @@ import { createProgram } from './cli/commands';
 import type { CLIOptions } from './cli/options';
 import { runShellWithRustHost } from './cli/run-shell-rust';
 import { OptionConflictError, validateOptions } from './cli/options';
-import { runOfficeHours } from './cli/run-office-hours';
+import { runProduct } from './cli/run-product';
 import { runGameDesign } from './cli/run-game-design';
 import { runPrompt } from './cli/run-prompt';
 import { runShell } from './cli/run-shell';
@@ -83,8 +83,8 @@ export async function handleMainCommand(opts: CLIOptions, version: string): Prom
     return;
   }
 
-  if (validated.options.officeHours) {
-    await runOfficeHours(validated.options, version);
+  if (validated.options.product) {
+    await runProduct(validated.options, version);
     return;
   }
 

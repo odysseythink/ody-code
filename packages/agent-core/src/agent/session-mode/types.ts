@@ -1,4 +1,4 @@
-export const SESSION_MODE_KINDS = ['plan', 'design', 'office-hours', 'game-design'] as const;
+export const SESSION_MODE_KINDS = ['plan', 'design', 'product', 'game-design'] as const;
 export type SessionModeKind = typeof SESSION_MODE_KINDS[number];
 
 export const RUNTIME_MODES = [...SESSION_MODE_KINDS, 'normal'] as const;

@@ -3,7 +3,7 @@ import type { Agent } from '../..';
 import type { SessionModeKind } from './types';
 
 export function getModeOutputSubdirectory(kind: SessionModeKind): string {
-  if (kind === 'office-hours') return 'products';
+  if (kind === 'product') return 'products';
   if (kind === 'game-design') return 'game-design';
   if (kind === 'design') return 'designs';
   return 'plans';

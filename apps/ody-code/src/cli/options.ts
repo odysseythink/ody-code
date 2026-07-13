@@ -1,4 +1,4 @@
-export type CLIRuntimeMode = 'normal' | 'plan' | 'design' | 'office-hours' | 'game-design';
+export type CLIRuntimeMode = 'normal' | 'plan' | 'design' | 'product' | 'game-design';
 export type UIMode = 'shell' | 'print';
 export type PromptOutputFormat = 'text' | 'stream-json';
 
@@ -8,7 +8,7 @@ export interface CLIOptions {
   yolo: boolean;
   auto: boolean;
   sessionMode: CLIRuntimeMode;
-  officeHours: boolean;
+  product: boolean;
   gameDesign: boolean;
   model: string | undefined;
   outputFormat: PromptOutputFormat | undefined;
@@ -55,8 +55,8 @@ export function validateOptions(opts: CLIOptions): ValidatedOptions {
   if (promptMode && opts.auto) {
     throw new OptionConflictError('Cannot combine --prompt with --auto.');
   }
-  if (!['normal', 'plan', 'design', 'office-hours', 'game-design'].includes(opts.sessionMode)) {
-    throw new OptionConflictError(`Invalid --session-mode: ${opts.sessionMode}. Must be normal, plan, design, office-hours, or game-design.`);
+  if (!['normal', 'plan', 'design', 'product', 'game-design'].includes(opts.sessionMode)) {
+    throw new OptionConflictError(`Invalid --session-mode: ${opts.sessionMode}. Must be normal, plan, design, product, or game-design.`);
   }
   if (promptMode && opts.sessionMode !== 'normal') {
     throw new OptionConflictError('Cannot combine --prompt with --session-mode.');
@@ -79,21 +79,21 @@ export function validateOptions(opts: CLIOptions): ValidatedOptions {
   if (!promptMode && (opts.continue || opts.session !== undefined) && opts.sessionMode !== 'normal') {
     throw new OptionConflictError('Cannot combine --session-mode with --continue or --session.');
   }
-  if (opts.officeHours) {
+  if (opts.product) {
     if (opts.prompt !== undefined) {
-      throw new OptionConflictError('Cannot combine --office-hours with --prompt.');
+      throw new OptionConflictError('Cannot combine --product with --prompt.');
     }
     if (opts.session !== undefined) {
-      throw new OptionConflictError('Cannot combine --office-hours with --session.');
+      throw new OptionConflictError('Cannot combine --product with --session.');
     }
     if (opts.continue) {
-      throw new OptionConflictError('Cannot combine --office-hours with --continue.');
+      throw new OptionConflictError('Cannot combine --product with --continue.');
     }
     if (opts.sessionMode !== 'normal') {
-      throw new OptionConflictError('Cannot combine --office-hours with --session-mode.');
+      throw new OptionConflictError('Cannot combine --product with --session-mode.');
     }
     if (opts.yolo || opts.auto) {
-      throw new OptionConflictError('Permission mode is fixed to manual in office-hours mode.');
+      throw new OptionConflictError('Permission mode is fixed to manual in product mode.');
     }
     return { options: opts, uiMode: 'shell' };
   }
@@ -114,8 +114,8 @@ export function validateOptions(opts: CLIOptions): ValidatedOptions {
     if (opts.yolo || opts.auto) {
       throw new OptionConflictError('Permission mode is fixed to manual in game-design mode.');
     }
-    if (opts.officeHours) {
-      throw new OptionConflictError('Cannot combine --game-design with --office-hours.');
+    if (opts.product) {
+      throw new OptionConflictError('Cannot combine --game-design with --product.');
     }
     return { options: opts, uiMode: 'shell' };
   }
@@ -130,8 +130,8 @@ export function validateOptions(opts: CLIOptions): ValidatedOptions {
     if (opts.prompt !== undefined) {
       throw new OptionConflictError('Cannot combine --host=rust with --prompt.');
     }
-    if (opts.officeHours || opts.gameDesign) {
-      throw new OptionConflictError('Cannot combine --host=rust with --office-hours or --game-design.');
+    if (opts.product || opts.gameDesign) {
+      throw new OptionConflictError('Cannot combine --host=rust with --product or --game-design.');
     }
     if (opts.hostStdio && opts.hostSocket !== undefined) {
       throw new OptionConflictError('Cannot combine --host-stdio with --host-socket.');

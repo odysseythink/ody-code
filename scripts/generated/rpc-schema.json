@@ -551,7 +551,7 @@
                     "design": {
                       "type": "string"
                     },
-                    "officeHours": {
+                    "product": {
                       "type": "string"
                     },
                     "gameDesign": {
@@ -1195,7 +1195,7 @@
                     "design": {
                       "type": "string"
                     },
-                    "officeHours": {
+                    "product": {
                       "type": "string"
                     },
                     "gameDesign": {
@@ -1757,7 +1757,7 @@
                     "design": {
                       "type": "string"
                     },
-                    "officeHours": {
+                    "product": {
                       "type": "string"
                     },
                     "gameDesign": {
@@ -2422,7 +2422,7 @@
                     "design": {
                       "type": "string"
                     },
-                    "officeHours": {
+                    "product": {
                       "type": "string"
                     },
                     "gameDesign": {
@@ -2858,7 +2858,7 @@
                   "enum": [
                     "plan",
                     "design",
-                    "office-hours",
+                    "product",
                     "game-design",
                     "normal"
                   ]
@@ -3412,7 +3412,7 @@
                   "enum": [
                     "plan",
                     "design",
-                    "office-hours",
+                    "product",
                     "game-design"
                   ]
                 },
@@ -3871,7 +3871,7 @@
                   "enum": [
                     "plan",
                     "design",
-                    "office-hours",
+                    "product",
                     "game-design"
                   ]
                 }
@@ -4232,7 +4232,7 @@
                       "enum": [
                         "plan",
                         "design",
-                        "office-hours",
+                        "product",
                         "game-design",
                         "normal"
                       ]
@@ -7951,7 +7951,7 @@
           "enum": [
             "plan",
             "design",
-            "office-hours",
+            "product",
             "game-design",
             "normal"
           ]
@@ -7961,7 +7961,7 @@
           "enum": [
             "plan",
             "design",
-            "office-hours",
+            "product",
             "game-design"
           ]
         },
@@ -14995,7 +14995,7 @@
           "enum": [
             "plan",
             "design",
-            "office-hours",
+            "product",
             "game-design",
             "normal"
           ]
@@ -15005,7 +15005,7 @@
           "enum": [
             "plan",
             "design",
-            "office-hours",
+            "product",
             "game-design"
           ]
         },
@@ -17824,7 +17824,7 @@
           "enum": [
             "plan",
             "design",
-            "office-hours",
+            "product",
             "game-design",
             "normal"
           ]
@@ -17834,7 +17834,7 @@
           "enum": [
             "plan",
             "design",
-            "office-hours",
+            "product",
             "game-design"
           ]
         },
@@ -17936,7 +17936,7 @@
           "enum": [
             "plan",
             "design",
-            "office-hours",
+            "product",
             "game-design",
             "normal"
           ]
@@ -17951,7 +17951,7 @@
           "enum": [
             "plan",
             "design",
-            "office-hours",
+            "product",
             "game-design"
           ]
         }
@@ -18161,7 +18161,7 @@
           "enum": [
             "plan",
             "design",
-            "office-hours",
+            "product",
             "game-design"
           ]
         }

@@ -39,7 +39,7 @@ function makeHarness(session = makeSession()) {
 type EffectiveMode = RuntimeMode;
 
 function makeStartupInput(mode: EffectiveMode = 'normal'): OdyTUIStartupInput {
-  const officeHours = mode === 'office-hours';
+  const product = mode === 'product';
   const gameDesign = mode === 'game-design';
   return {
     cliOptions: {
@@ -47,8 +47,8 @@ function makeStartupInput(mode: EffectiveMode = 'normal'): OdyTUIStartupInput {
       continue: false,
       yolo: false,
       auto: false,
-      sessionMode: officeHours || gameDesign ? 'normal' : mode,
-      officeHours,
+      sessionMode: product || gameDesign ? 'normal' : mode,
+      product,
       gameDesign,
       model: undefined,
       outputFormat: undefined,
@@ -72,7 +72,7 @@ function makeStartupInput(mode: EffectiveMode = 'normal'): OdyTUIStartupInput {
     version: '0.0.0-test',
     workDir: '/tmp/proj-a',
     resolvedTheme: 'dark',
-    officeHours,
+    product,
     gameDesign,
   };
 }
@@ -119,15 +119,15 @@ describe('OdyTUI skill slash command mode filtering', () => {
     expect(session.listSkills).toHaveBeenCalledWith({ sessionMode: 'design' });
   });
 
-  it('passes sessionMode office-hours to listSkills', async () => {
+  it('passes sessionMode product to listSkills', async () => {
     const session = makeSession({
       listSkills: vi.fn(async () => []),
     });
-    const { driver } = makeDriver(session, 'office-hours');
+    const { driver } = makeDriver(session, 'product');
 
     await driver.refreshSkillCommands(session as never);
 
-    expect(session.listSkills).toHaveBeenCalledWith({ sessionMode: 'office-hours' });
+    expect(session.listSkills).toHaveBeenCalledWith({ sessionMode: 'product' });
   });
 
   it('passes sessionMode game-design to listSkills', async () => {

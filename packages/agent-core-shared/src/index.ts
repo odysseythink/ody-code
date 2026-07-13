@@ -162,4 +162,4 @@ export {
   type StringAllocation,
 } from './wasm-string';
 
-export * from './office-hours-state';
+export * from './product-state';

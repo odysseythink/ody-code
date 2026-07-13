@@ -1,0 +1,13 @@
+{
+  "description": "Enter product mode then exit — verifies model switch, WAL records, mode restore",
+  "steps": [
+    { "action": "enter", "kind": "product", "id": "oh-fixture-1" },
+    { "action": "assert", "isActive": true, "kind": "product" },
+    { "action": "exit" },
+    { "action": "assert", "isActive": false, "kind": null }
+  ],
+  "expectedEvents": [
+    { "type": "session_mode.enter", "id": "oh-fixture-1", "kind": "product" },
+    { "type": "session_mode.exit", "id": "oh-fixture-1" }
+  ]
+}

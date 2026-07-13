@@ -72,18 +72,18 @@ export function createProgram(
     )
     .addOption(new Option('--yes').hideHelp().default(false))
     .addOption(new Option('--auto-approve').hideHelp().default(false))
-    .option('--session-mode <mode>', 'Start in session mode: normal, plan, design, office-hours, or game-design.', 'normal')
+    .option('--session-mode <mode>', 'Start in session mode: normal, plan, design, product, or game-design.', 'normal')
     .addOption(
       new Option(
-        '--office-hours',
-        'Start Ody Code in YC Office Hours mode. Exits after the design doc is written.',
+        '--product',
+        'Start Ody Code in product mode. Exits after the design doc is written.',
       ).conflicts(['prompt', 'session', 'continue', 'sessionMode', 'yolo', 'auto']),
     )
     .addOption(
       new Option(
         '--game-design',
         'Start Ody Code in Game Design mode. Guided game design workflow based on the 100 Principles of Game Design. Exits after the design doc is written.',
-      ).conflicts(['prompt', 'session', 'continue', 'sessionMode', 'yolo', 'auto', 'officeHours']),
+      ).conflicts(['prompt', 'session', 'continue', 'sessionMode', 'yolo', 'auto', 'product']),
     )
     .addOption(
       new Option(
@@ -142,7 +142,7 @@ export function createProgram(
       yolo: yoloValue,
       auto: autoValue,
       sessionMode: (raw['sessionMode'] as CLIOptions['sessionMode']) ?? 'normal',
-      officeHours: (raw['officeHours'] as boolean) ?? false,
+      product: (raw['product'] as boolean) ?? false,
       gameDesign: (raw['gameDesign'] as boolean) ?? false,
       model: raw['model'] as string | undefined,
       outputFormat: raw['outputFormat'] as CLIOptions['outputFormat'],

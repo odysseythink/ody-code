@@ -23,7 +23,7 @@ describe('directory utilities', () => {
   it('returns the correct subdirectory for each kind', () => {
     expect(getModeOutputSubdirectory('plan')).toBe('plans');
     expect(getModeOutputSubdirectory('design')).toBe('designs');
-    expect(getModeOutputSubdirectory('office-hours')).toBe('products');
+    expect(getModeOutputSubdirectory('product')).toBe('products');
     expect(getModeOutputSubdirectory('game-design')).toBe('game-design');
   });
 

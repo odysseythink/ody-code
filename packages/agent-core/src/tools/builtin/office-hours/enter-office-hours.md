@@ -1,1 +1,0 @@
-Use this tool when the user explicitly asks to start office hours mode. Office hours mode provides structured YC-style startup/builder diagnostic workflow. It should only be used as the very first action in a session — once active, it locks the session into the diagnostic flow and exits after producing a design document.

@@ -40,7 +40,7 @@ describe('createTUIState', () => {
         yolo: false,
         auto: false,
         sessionMode: 'normal',
-        officeHours: false,
+        product: false,
         gameDesign: false,
       },
     };

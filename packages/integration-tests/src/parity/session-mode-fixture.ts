@@ -5,7 +5,7 @@ export interface SessionModeFixture {
 }
 
 export type SessionModeStep =
-  | { action: 'enter'; kind: 'plan' | 'design' | 'office-hours' | 'game-design'; id?: string }
+  | { action: 'enter'; kind: 'plan' | 'design' | 'product' | 'game-design'; id?: string }
   | { action: 'exit'; id?: string }
   | { action: 'cancel'; id?: string }
   | { action: 'handoff'; target: 'plan' | 'normal' }

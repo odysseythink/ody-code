@@ -13,7 +13,7 @@ interface NormalizedToolInfo {
 }
 
 // Focus L2 parity on a small set of tools that exist on both TS and Rust backends.
-// TS registers additional mode-specific tools (game-design, office-hours, etc.) that
+// TS registers additional mode-specific tools (game-design, product, etc.) that
 // the Rust host does not expose yet; comparing the full inventory would be a parity
 // gap unrelated to the register/active/unregister shapes we are testing.
 const COMMON_TOOLS = new Set(['Echo', 'Read', 'Write']);

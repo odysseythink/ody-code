@@ -13,12 +13,12 @@ export class PlanModeGuardDenyPermissionPolicy implements PermissionPolicy {
     if (!this.agent.sessionMode.isActive) return;
 
     const kind = this.agent.sessionMode.kind;
-    const isOfficeHours = kind === 'office-hours';
+    const isProduct = kind === 'product';
     const isGameDesign = kind === 'game-design';
     const isDesign = kind === 'design';
-    const modeLabel = isOfficeHours ? 'office-hours' : isGameDesign ? 'game-design' : isDesign ? 'design' : 'plan';
-    const exitTool = isOfficeHours
-      ? 'ExitOfficeHoursMode'
+    const modeLabel = isProduct ? 'product' : isGameDesign ? 'game-design' : isDesign ? 'design' : 'plan';
+    const exitTool = isProduct
+      ? 'ExitProductMode'
       : isGameDesign
         ? 'ExitGameDesignMode'
         : isDesign
@@ -74,7 +74,7 @@ function modeWriteDeniedMessage(modeLabel: string, sessionModeFilePath: string |
   const Mode = modeLabel === 'game-design'
     ? 'Game-design'
     : modeLabel.charAt(0).toUpperCase() + modeLabel.slice(1);
-  const exitTool = modeLabel === 'office-hours' ? 'ExitOfficeHoursMode'
+  const exitTool = modeLabel === 'product' ? 'ExitProductMode'
     : modeLabel === 'game-design' ? 'ExitGameDesignMode'
     : modeLabel === 'design' ? 'ExitDesignMode'
     : 'ExitPlanMode';

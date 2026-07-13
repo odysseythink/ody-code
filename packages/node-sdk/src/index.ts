@@ -83,7 +83,7 @@ export type {
   SDKRpcClientOptions,
 } from '#rpc';
 
-// i18n for office-hours language adaptation
+// i18n for product language adaptation
 export { t, isSupportedLanguage, normalizeLanguage } from '@odysseythink/agent-core';
 export type { SupportedLanguage, MessageKey } from '@odysseythink/agent-core';
 

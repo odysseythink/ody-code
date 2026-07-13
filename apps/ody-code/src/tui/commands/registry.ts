@@ -5,7 +5,7 @@ import type { KimiSlashCommand, SessionMode, SlashCommandAvailability } from './
 
 /** Commands hidden in restricted modes: the mode is intentionally restricted
  *  to a single `/exit` command, so no mode toggles or general utilities appear. */
-const SPECIAL_MODE_HIDDEN: readonly SessionMode[] = ['office-hours', 'game-design'];
+const SPECIAL_MODE_HIDDEN: readonly SessionMode[] = ['product', 'game-design'];
 
 /** Subcommands offered when autocompleting `/goal <…>`. */
 const GOAL_ARG_COMPLETIONS: readonly ArgCompletionSpec[] = [
@@ -95,8 +95,8 @@ export const BUILTIN_SLASH_COMMANDS = [
     hiddenInModes: ['design', 'normal', ...SPECIAL_MODE_HIDDEN],
   },
   {
-    // `/model` is exempt from the special-mode lockdown: office-hours and
-    // game-design can be pinned to their own model (modeModels.officeHours /
+    // `/model` is exempt from the special-mode lockdown: product and
+    // game-design can be pinned to their own model (modeModels.product /
     // gameDesign), so the user must be able to switch models from inside the
     // mode. Visible and runnable in every mode.
     name: 'model',
@@ -315,7 +315,7 @@ export const BUILTIN_SLASH_COMMANDS = [
     description: 'Code review：请求 review 或处理收到的反馈',
     priority: 80,
     availability: 'idle-only',
-    hiddenInModes: ['plan', 'design', 'office-hours', 'game-design'],
+    hiddenInModes: ['plan', 'design', 'product', 'game-design'],
   },
   {
     name: 'exit',

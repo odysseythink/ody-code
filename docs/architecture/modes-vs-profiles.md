@@ -1,6 +1,6 @@
 # Modes vs Profiles
 
-> **One-sentence definition**: A **mode** is an interaction phase (plan, design, office-hours, game-design, or normal); a **profile** is a role/tool-set/system-prompt configuration loaded from `.ody-code/profiles/`.
+> **One-sentence definition**: A **mode** is an interaction phase (plan, design, product, game-design, or normal); a **profile** is a role/tool-set/system-prompt configuration loaded from `.ody-code/profiles/`.
 
 ## Responsibility split
 
@@ -17,7 +17,7 @@
 
 ```
         ┌─────────────────┐
-        │   office-hours  │
+        │   product  │
         └────────┬────────┘
                  │ enter/exit
                  ▼
@@ -44,7 +44,7 @@
 - **normal**: free-form implementation; default partition.
 - **plan**: write an implementation plan before coding; output goes to `.ody-code/plans/`.
 - **design**: brainstorm/spec exploration; output goes to `.ody-code/designs/`; can hand off to `plan`.
-- **office-hours**: startup/builder diagnostic flow; output goes to `.ody-code/products/`.
+- **product**: startup/builder diagnostic flow; output goes to `.ody-code/products/`.
 - **game-design**: guided game-design session; output goes to `.ody-code/game-design/`.
 
 ## `SystemPromptContext.sessionMode` usage rules

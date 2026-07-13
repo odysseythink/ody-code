@@ -52,8 +52,8 @@ import { SessionMarkdownExport } from './export/markdown-export';
 import { runSetupScriptIfNeeded, writeSetupScriptTemplate } from './setup-script';
 import type { ToolServices } from '../tools/support/services';
 import {
-  FileSystemOfficeHoursStateStore,
-  type OfficeHoursStateStore,
+  FileSystemProductStateStore,
+  type ProductStateStore,
 } from '@odysseythink/agent-core-shared';
 
 export interface SessionOptions {
@@ -115,7 +115,7 @@ export class Session {
   private readonly logHandle: SessionLogHandle | undefined;
   readonly hookEngine: HookEngine;
   readonly goals: SessionGoalStore;
-  readonly officeHoursStateStore: OfficeHoursStateStore;
+  readonly productStateStore: ProductStateStore;
   private agentIdCounter = 0;
   private readonly skillsReady: Promise<void>;
   metadata: SessionMeta = {
@@ -168,7 +168,7 @@ export class Session {
       },
       telemetry: this.telemetry,
     });
-    this.officeHoursStateStore = new FileSystemOfficeHoursStateStore(
+    this.productStateStore = new FileSystemProductStateStore(
       options.kaos,
       resolveOdyHome(options.kimiHomeDir),
     );
@@ -529,7 +529,7 @@ export class Session {
       log: this.log.createChild({ agentId: id }),
       pluginSessionStarts: type === 'main' ? this.options.pluginSessionStarts : undefined,
       appVersion: this.options.appVersion,
-      officeHoursStateStore: this.officeHoursStateStore,
+      productStateStore: this.productStateStore,
       userLanguage: this.metadata.custom?.['userLanguage'],
       setUserLanguage: (lang) => {
         this.metadata.custom ??= {};

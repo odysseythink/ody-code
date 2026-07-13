@@ -6,7 +6,7 @@
  * Uses an inline interface to avoid a runtime dependency on agent-core.
  */
 
-type RuntimeMode = 'plan' | 'design' | 'office-hours' | 'game-design' | 'normal';
+type RuntimeMode = 'plan' | 'design' | 'product' | 'game-design' | 'normal';
 
 interface McpConfigSkillDefinition {
   readonly name: string;

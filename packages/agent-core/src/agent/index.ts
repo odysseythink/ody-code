@@ -69,8 +69,8 @@ import { UsageRecorder } from './usage';
 import { resolveCompletionBudget } from '../utils/completion-budget';
 import type { Kaos } from '@odysseythink/kaos';
 import type { ToolServices } from '../tools/support/services';
-import type { OfficeHoursStateStore, GameDesignStateStore } from '@odysseythink/agent-core-shared';
-import { NoopOfficeHoursStateStore, NoopGameDesignStateStore } from '@odysseythink/agent-core-shared';
+import type { ProductStateStore, GameDesignStateStore } from '@odysseythink/agent-core-shared';
+import { NoopProductStateStore, NoopGameDesignStateStore } from '@odysseythink/agent-core-shared';
 import type { SupportedLanguage } from '#i18n';
 
 
@@ -104,7 +104,7 @@ export interface AgentOptions {
   readonly telemetry?: TelemetryClient | undefined;
   readonly pluginSessionStarts?: readonly EnabledPluginSessionStart[];
   readonly appVersion?: string;
-  readonly officeHoursStateStore?: OfficeHoursStateStore;
+  readonly productStateStore?: ProductStateStore;
   readonly gameDesignStateStore?: GameDesignStateStore;
   /** User language restored from Session metadata on resume. */
   readonly userLanguage?: SupportedLanguage | undefined;
@@ -165,7 +165,7 @@ export class Agent {
   readonly background: BackgroundManager;
   readonly cron: CronManager | null;
   readonly replayBuilder: ReplayBuilder;
-  readonly officeHoursStateStore!: OfficeHoursStateStore;
+  readonly productStateStore!: ProductStateStore;
   readonly gameDesignStateStore!: GameDesignStateStore;
   userLanguage?: SupportedLanguage;
   private readonly _setUserLanguageCallback?: ((lang: SupportedLanguage) => void) | undefined;
@@ -212,21 +212,21 @@ export class Agent {
       normal: new ContextMemory(this),
       plan: new ContextMemory(this),
       design: new ContextMemory(this),
-      'office-hours': new ContextMemory(this),
+      'product': new ContextMemory(this),
       'game-design': new ContextMemory(this),
     } as Record<RuntimeMode, ContextMemory>;
     this._fullCompactions = {
       normal: new FullCompaction(this, options.compactionStrategy),
       plan: new FullCompaction(this, options.compactionStrategy),
       design: new FullCompaction(this, options.compactionStrategy),
-      'office-hours': new FullCompaction(this, options.compactionStrategy),
+      'product': new FullCompaction(this, options.compactionStrategy),
       'game-design': new FullCompaction(this, options.compactionStrategy),
     } as Record<RuntimeMode, FullCompaction>;
     this._microCompactions = {
       normal: new MicroCompaction(this, options.microCompaction),
       plan: new MicroCompaction(this, options.microCompaction),
       design: new MicroCompaction(this, options.microCompaction),
-      'office-hours': new MicroCompaction(this, options.microCompaction),
+      'product': new MicroCompaction(this, options.microCompaction),
       'game-design': new MicroCompaction(this, options.microCompaction),
     } as Record<RuntimeMode, MicroCompaction>;
     this.splitPlanCheckpoint = new SplitPlanCheckpoint(this);
@@ -245,7 +245,7 @@ export class Agent {
     );
     this.cron = this.type === 'sub' ? null : new CronManager(this);
     this.replayBuilder = new ReplayBuilder(this);
-    this.officeHoursStateStore = options.officeHoursStateStore ?? new NoopOfficeHoursStateStore();
+    this.productStateStore = options.productStateStore ?? new NoopProductStateStore();
     this.gameDesignStateStore = options.gameDesignStateStore ?? new NoopGameDesignStateStore();
     this.userLanguage = options.userLanguage;
     this._setUserLanguageCallback = options.setUserLanguage;
@@ -612,7 +612,7 @@ export class Agent {
           }
           content = data.content;
           path = data.path;
-          kind = payload.kind ?? (data.kind === 'office-hours' || data.kind === 'game-design' ? 'design' : data.kind);
+          kind = payload.kind ?? (data.kind === 'product' || data.kind === 'game-design' ? 'design' : data.kind);
         }
         if (content.trim().length === 0) {
           throw new OdyError(ErrorCodes.SESSION_PLAN_MODE_INVALID, `Document is empty: ${path}`);

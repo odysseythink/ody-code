@@ -1,7 +1,7 @@
 /**
  * Game Design mode runner.
  *
- * Mirrors run-office-hours.ts: creates OdyTUI with sessionMode='game-design',
+ * Mirrors run-product.ts: creates OdyTUI with sessionMode='game-design',
  * tracks telemetry events, and handles exit.
  */
 import { basename } from 'node:path';
@@ -69,7 +69,7 @@ export async function runGameDesign(opts: CLIOptions, version: string): Promise<
     workDir,
     startupNotice: configWarning,
     resolvedTheme,
-    officeHours: false,
+    product: false,
     gameDesign: true,
   });
 

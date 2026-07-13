@@ -1,1 +1,0 @@
-Append a builder profile entry after completing Phase 4.5 (Founder Signal Synthesis). This persists the session profile data to the local office-hours state store for tier computation and resource selection. Only available while office hours mode is active.

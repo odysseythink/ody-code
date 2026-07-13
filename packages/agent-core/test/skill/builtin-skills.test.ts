@@ -46,7 +46,7 @@ describe('built-in skills', () => {
     expect(skill.description.length).toBeGreaterThan(0);
     if (name === 'idea-generator' || name === 'idea-evaluator') {
       expect(skill.metadata.hiddenInModes).toEqual(
-        expect.arrayContaining(['plan', 'design', 'office-hours', 'game-design']),
+        expect.arrayContaining(['plan', 'design', 'product', 'game-design']),
       );
     }
   });

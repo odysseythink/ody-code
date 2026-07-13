@@ -122,7 +122,7 @@ export class EditorKeyboardController {
         return;
       }
       const mode = host.state.appState.sessionMode;
-      if (mode === 'office-hours' || mode === 'game-design') {
+      if (mode === 'product' || mode === 'game-design') {
         // Restricted single-mode sessions; mode cycling is disabled.
         return;
       }

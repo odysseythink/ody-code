@@ -55,15 +55,15 @@ function makeHarness(session = makeSession()) {
   };
 }
 
-function makeStartupInput(officeHours = false): OdyTUIStartupInput {
+function makeStartupInput(product = false): OdyTUIStartupInput {
   return {
     cliOptions: {
       session: undefined,
       continue: false,
       yolo: false,
       auto: false,
-      sessionMode: officeHours ? 'office-hours' : 'normal',
-      officeHours,
+      sessionMode: product ? 'product' : 'normal',
+      product,
       gameDesign: false,
       model: undefined,
       outputFormat: undefined,
@@ -87,7 +87,7 @@ function makeStartupInput(officeHours = false): OdyTUIStartupInput {
     version: '0.0.0-test',
     workDir: '/tmp/proj-a',
     resolvedTheme: 'dark',
-    officeHours,
+    product,
     gameDesign: false,
   };
 }
@@ -121,7 +121,7 @@ describe('OdyTUI syncRuntimeState', () => {
     expect(driver.state.appState.sessionModeFilePath).toBeNull();
   });
 
-  it('preserves office-hours mode when status reports normal', async () => {
+  it('preserves product mode when status reports normal', async () => {
     const session = makeSession({
       getStatus: vi.fn(async () => ({
         model: 'k2',
@@ -141,7 +141,7 @@ describe('OdyTUI syncRuntimeState', () => {
 
     await driver.syncRuntimeState(session as never);
 
-    expect(driver.state.appState.sessionMode).toBe('office-hours');
+    expect(driver.state.appState.sessionMode).toBe('product');
     expect(driver.state.appState.sessionModeFilePath).toBeNull();
   });
 });

@@ -179,7 +179,7 @@ export interface SessionStatus {
   readonly model?: string;
   readonly thinkingLevel: string;
   readonly permission: PermissionMode;
-  readonly sessionMode: 'plan' | 'design' | 'office-hours' | 'game-design' | 'normal';
+  readonly sessionMode: 'plan' | 'design' | 'product' | 'game-design' | 'normal';
   readonly sessionModeFilePath?: string | null;
   readonly contextTokens: number;
   readonly maxContextTokens: number;

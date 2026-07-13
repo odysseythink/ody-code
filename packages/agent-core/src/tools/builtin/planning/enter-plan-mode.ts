@@ -33,17 +33,17 @@ export class EnterPlanModeTool implements BuiltinTool<EnterPlanModeInput> {
       execute: async () => {
         // Guard: already in a session mode. Name the ACTUAL active mode and its
         // exit tool so the model doesn't think it is in plan mode when it is
-        // really in office-hours/game-design/design.
+        // really in product/game-design/design.
         if (this.agent.sessionMode.isActive) {
           const kind = this.agent.sessionMode.kind;
           const active =
             kind === 'design' ? 'Design' :
-            kind === 'office-hours' ? 'Office-hours' :
+            kind === 'product' ? 'Product' :
             kind === 'game-design' ? 'Game-design' :
             'Plan';
           const exitTool =
             kind === 'design' ? 'ExitDesignMode' :
-            kind === 'office-hours' ? 'ExitOfficeHoursMode' :
+            kind === 'product' ? 'ExitProductMode' :
             kind === 'game-design' ? 'ExitGameDesignMode' :
             'ExitPlanMode';
           return {

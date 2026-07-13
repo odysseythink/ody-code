@@ -88,7 +88,7 @@ These capabilities remain implemented in TypeScript for the foreseeable future. 
 |---|---|---|
 | SSH remote execution (`packages/kaos/src/ssh.ts`) | High implementation cost (jump host, agent forwarding, process-group semantics) relative to usage; TS implementation is mature. | ts-core-team |
 | `RequestCodeReviewTool` (`@odysseythink/code-review`) | Lives outside `agent-core`; moving it across package boundary would require a separate migration project. | ts-core-team |
-| Design / office-hours / game-design artifact sync (`rpc.openExternal`, gbrain CLI) | Tight coupling to TS-side RPC and external CLI tools; Rust host exposes the bridge. | ts-core-team |
+| Design / product / game-design artifact sync (`rpc.openExternal`, gbrain CLI) | Tight coupling to TS-side RPC and external CLI tools; Rust host exposes the bridge. | ts-core-team |
 | Any provider that fails L1 SSE parity review | Per-provider decision; if a provider's protocol cannot be aligned cost-effectively, it stays TS. | rust-host-team |
 
 ### Deferred to Phase 4.5.x (Decision A)

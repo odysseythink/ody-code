@@ -89,7 +89,7 @@ function makeStartupInput(): OdyTUIStartupInput {
       yolo: false,
       auto: false,
       sessionMode: 'normal',
-      officeHours: false,
+      product: false,
       gameDesign: false,
       model: undefined,
       outputFormat: undefined,
@@ -113,7 +113,7 @@ function makeStartupInput(): OdyTUIStartupInput {
     version: '0.0.0-test',
     workDir: '/tmp/proj-a',
     resolvedTheme: 'dark',
-    officeHours: false,
+    product: false,
     gameDesign: false,
   };
 }
@@ -551,9 +551,9 @@ describe('OdyTUI message flow', () => {
     expect(harness.track).toHaveBeenCalledWith('shortcut_mode_switch', { to_mode: 'plan' });
   });
 
-  it('ignores Shift-Tab while in office-hours mode', async () => {
+  it('ignores Shift-Tab while in product mode', async () => {
     const { driver, session, harness } = await makeDriver();
-    driver.state.appState.sessionMode = 'office-hours';
+    driver.state.appState.sessionMode = 'product';
     harness.track.mockClear();
 
     driver.state.editor.onShiftTab?.();

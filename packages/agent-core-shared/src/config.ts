@@ -7,9 +7,9 @@ import { z } from 'zod';
  * Runtime modes mirror packages/agent-core/src/agent/session-mode/types.ts.
  * Keep these two sources in sync — agent-core-shared cannot import from agent-core.
  */
-export const RUNTIME_MODES = ['plan', 'design', 'office-hours', 'game-design', 'normal'] as const;
+export const RUNTIME_MODES = ['plan', 'design', 'product', 'game-design', 'normal'] as const;
 export type RuntimeMode = typeof RUNTIME_MODES[number];
-export const SESSION_MODE_KINDS = RUNTIME_MODES.slice(0, -1) as ['plan', 'design', 'office-hours', 'game-design'];
+export const SESSION_MODE_KINDS = RUNTIME_MODES.slice(0, -1) as ['plan', 'design', 'product', 'game-design'];
 
 export const ProviderTypeSchema = z.enum([
   'anthropic',
@@ -360,7 +360,7 @@ export const OdyConfigSchema = z.object({
   modeModels: z.object({
     plan: z.string().optional(),
     design: z.string().optional(),
-    officeHours: z.string().optional(),
+    product: z.string().optional(),
     gameDesign: z.string().optional(),
     review: z.string().optional(),
     testReview: z.string().optional(),
@@ -418,7 +418,7 @@ export const OdyConfigPatchSchema = z
     modeModels: z.object({
       plan: z.string().optional(),
       design: z.string().optional(),
-      officeHours: z.string().optional(),
+      product: z.string().optional(),
       gameDesign: z.string().optional(),
       review: z.string().optional(),
       testReview: z.string().optional(),

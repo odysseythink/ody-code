@@ -132,7 +132,7 @@ function opts(overrides: Partial<CLIOptions> = {}): CLIOptions {
     yolo: false,
     auto: false,
     sessionMode: 'normal',
-    officeHours: false,
+    product: false,
     gameDesign: false,
     model: undefined,
     outputFormat: undefined,

@@ -48,7 +48,7 @@ export interface AppState {
   /** Current goal snapshot for the footer badge; null/undefined when no active goal. */
   goal?: GoalSnapshot | null;
   mcpServersSummary: string | null;
-  /** User language detected in office-hours mode. */
+  /** User language detected in product mode. */
   userLanguage?: 'en' | 'zh' | undefined;
   /** /review 接收反馈分支的模型切换状态。当 active 时，下一条普通消息前恢复原模型。 */
   receiveCodeReview?: {
@@ -194,8 +194,8 @@ export interface TUIStartupOptions {
   readonly continueLast: boolean;
   readonly yolo: boolean;
   readonly auto: boolean;
-  readonly sessionMode: 'normal' | 'plan' | 'design' | 'office-hours' | 'game-design';
-  readonly officeHours: boolean;
+  readonly sessionMode: 'normal' | 'plan' | 'design' | 'product' | 'game-design';
+  readonly product: boolean;
   readonly gameDesign: boolean;
   readonly model?: string;
   readonly startupNotice?: string;

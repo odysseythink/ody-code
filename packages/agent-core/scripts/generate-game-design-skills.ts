@@ -77,7 +77,7 @@ export const ${varName}: SkillDefinition = {
   source: 'builtin' as const,
   metadata: {
     type: 'prompt',
-    hiddenInModes: ['normal', 'plan', 'design', 'office-hours'] as const,
+    hiddenInModes: ['normal', 'plan', 'design', 'product'] as const,
   },
 };
 `;

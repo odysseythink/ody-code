@@ -15,7 +15,7 @@ export const GAME_DESIGN_CHARACTEROPTIMIZATIONDESIGN_SKILL: SkillDefinition = {
   source: 'builtin' as const,
   metadata: {
     type: 'prompt',
-    hiddenInModes: ['normal', 'plan', 'design', 'office-hours'] as const,
+    hiddenInModes: ['normal', 'plan', 'design', 'product'] as const,
   },
 };
 
@@ -29,7 +29,7 @@ export const GAME_DESIGN_DOUBLINGHALVINGBALANCE_SKILL: SkillDefinition = {
   source: 'builtin' as const,
   metadata: {
     type: 'prompt',
-    hiddenInModes: ['normal', 'plan', 'design', 'office-hours'] as const,
+    hiddenInModes: ['normal', 'plan', 'design', 'product'] as const,
   },
 };
 
@@ -43,7 +43,7 @@ export const GAME_DESIGN_DYNAMICDIFFICULTYADJUSTMENT_SKILL: SkillDefinition = {
   source: 'builtin' as const,
   metadata: {
     type: 'prompt',
-    hiddenInModes: ['normal', 'plan', 'design', 'office-hours'] as const,
+    hiddenInModes: ['normal', 'plan', 'design', 'product'] as const,
   },
 };
 
@@ -57,7 +57,7 @@ export const GAME_DESIGN_ENVIRONMENTALSTORYTELLINGTECHNIQUE_SKILL: SkillDefiniti
   source: 'builtin' as const,
   metadata: {
     type: 'prompt',
-    hiddenInModes: ['normal', 'plan', 'design', 'office-hours'] as const,
+    hiddenInModes: ['normal', 'plan', 'design', 'product'] as const,
   },
 };
 
@@ -71,7 +71,7 @@ export const GAME_DESIGN_EXPERIENCEPACINGSTRUCTURE_SKILL: SkillDefinition = {
   source: 'builtin' as const,
   metadata: {
     type: 'prompt',
-    hiddenInModes: ['normal', 'plan', 'design', 'office-hours'] as const,
+    hiddenInModes: ['normal', 'plan', 'design', 'product'] as const,
   },
 };
 
@@ -85,7 +85,7 @@ export const GAME_DESIGN_FITTSLAWUIAIMING_SKILL: SkillDefinition = {
   source: 'builtin' as const,
   metadata: {
     type: 'prompt',
-    hiddenInModes: ['normal', 'plan', 'design', 'office-hours'] as const,
+    hiddenInModes: ['normal', 'plan', 'design', 'product'] as const,
   },
 };
 
@@ -99,7 +99,7 @@ export const GAME_DESIGN_FLOWSTATEDESIGNFRAMEWORK_SKILL: SkillDefinition = {
   source: 'builtin' as const,
   metadata: {
     type: 'prompt',
-    hiddenInModes: ['normal', 'plan', 'design', 'office-hours'] as const,
+    hiddenInModes: ['normal', 'plan', 'design', 'product'] as const,
   },
 };
 
@@ -113,7 +113,7 @@ export const GAME_DESIGN_FUNDAMENTALATTRIBUTIONERRORTESTING_SKILL: SkillDefiniti
   source: 'builtin' as const,
   metadata: {
     type: 'prompt',
-    hiddenInModes: ['normal', 'plan', 'design', 'office-hours'] as const,
+    hiddenInModes: ['normal', 'plan', 'design', 'product'] as const,
   },
 };
 
@@ -127,7 +127,7 @@ export const GAME_DESIGN_GAMECOMPETENCYPUZZLEDESIGN_SKILL: SkillDefinition = {
   source: 'builtin' as const,
   metadata: {
     type: 'prompt',
-    hiddenInModes: ['normal', 'plan', 'design', 'office-hours'] as const,
+    hiddenInModes: ['normal', 'plan', 'design', 'product'] as const,
   },
 };
 
@@ -141,7 +141,7 @@ export const GAME_DESIGN_GAMEDESIGNMETHODOLOGY_SKILL: SkillDefinition = {
   source: 'builtin' as const,
   metadata: {
     type: 'prompt',
-    hiddenInModes: ['normal', 'plan', 'design', 'office-hours'] as const,
+    hiddenInModes: ['normal', 'plan', 'design', 'product'] as const,
   },
 };
 
@@ -155,7 +155,7 @@ export const GAME_DESIGN_GAMEDESIGNPRINCIPLESREFERENCE_SKILL: SkillDefinition = 
   source: 'builtin' as const,
   metadata: {
     type: 'prompt',
-    hiddenInModes: ['normal', 'plan', 'design', 'office-hours'] as const,
+    hiddenInModes: ['normal', 'plan', 'design', 'product'] as const,
   },
 };
 
@@ -169,7 +169,7 @@ export const GAME_DESIGN_GAMEDEVELOPMENTPLANNING_SKILL: SkillDefinition = {
   source: 'builtin' as const,
   metadata: {
     type: 'prompt',
-    hiddenInModes: ['normal', 'plan', 'design', 'office-hours'] as const,
+    hiddenInModes: ['normal', 'plan', 'design', 'product'] as const,
   },
 };
 
@@ -183,7 +183,7 @@ export const GAME_DESIGN_GAMEPROTOTYPINGTESTING_SKILL: SkillDefinition = {
   source: 'builtin' as const,
   metadata: {
     type: 'prompt',
-    hiddenInModes: ['normal', 'plan', 'design', 'office-hours'] as const,
+    hiddenInModes: ['normal', 'plan', 'design', 'product'] as const,
   },
 };
 
@@ -197,7 +197,7 @@ export const GAME_DESIGN_GAMETEAMMANAGEMENT_SKILL: SkillDefinition = {
   source: 'builtin' as const,
   metadata: {
     type: 'prompt',
-    hiddenInModes: ['normal', 'plan', 'design', 'office-hours'] as const,
+    hiddenInModes: ['normal', 'plan', 'design', 'product'] as const,
   },
 };
 
@@ -211,7 +211,7 @@ export const GAME_DESIGN_GOLDENRATIODESIGN_SKILL: SkillDefinition = {
   source: 'builtin' as const,
   metadata: {
     type: 'prompt',
-    hiddenInModes: ['normal', 'plan', 'design', 'office-hours'] as const,
+    hiddenInModes: ['normal', 'plan', 'design', 'product'] as const,
   },
 };
 
@@ -225,7 +225,7 @@ export const GAME_DESIGN_HICKSLAWDECISIONOPTIMIZATION_SKILL: SkillDefinition = {
   source: 'builtin' as const,
   metadata: {
     type: 'prompt',
-    hiddenInModes: ['normal', 'plan', 'design', 'office-hours'] as const,
+    hiddenInModes: ['normal', 'plan', 'design', 'product'] as const,
   },
 };
 
@@ -239,7 +239,7 @@ export const GAME_DESIGN_PLAYERERRORHANDLING_SKILL: SkillDefinition = {
   source: 'builtin' as const,
   metadata: {
     type: 'prompt',
-    hiddenInModes: ['normal', 'plan', 'design', 'office-hours'] as const,
+    hiddenInModes: ['normal', 'plan', 'design', 'product'] as const,
   },
 };
 
@@ -253,7 +253,7 @@ export const GAME_DESIGN_PLAYERPSYCHOLOGYDECISIONS_SKILL: SkillDefinition = {
   source: 'builtin' as const,
   metadata: {
     type: 'prompt',
-    hiddenInModes: ['normal', 'plan', 'design', 'office-hours'] as const,
+    hiddenInModes: ['normal', 'plan', 'design', 'product'] as const,
   },
 };
 
@@ -267,7 +267,7 @@ export const GAME_DESIGN_REINFORCEMENTFEEDBACKSYSTEMS_SKILL: SkillDefinition = {
   source: 'builtin' as const,
   metadata: {
     type: 'prompt',
-    hiddenInModes: ['normal', 'plan', 'design', 'office-hours'] as const,
+    hiddenInModes: ['normal', 'plan', 'design', 'product'] as const,
   },
 };
 
@@ -281,7 +281,7 @@ export const GAME_DESIGN_SKILL_SKILL: SkillDefinition = {
   source: 'builtin' as const,
   metadata: {
     type: 'prompt',
-    hiddenInModes: ['normal', 'plan', 'design', 'office-hours'] as const,
+    hiddenInModes: ['normal', 'plan', 'design', 'product'] as const,
   },
 };
 
@@ -295,7 +295,7 @@ export const GAME_DESIGN_SYNERGYTHEMATICDESIGN_SKILL: SkillDefinition = {
   source: 'builtin' as const,
   metadata: {
     type: 'prompt',
-    hiddenInModes: ['normal', 'plan', 'design', 'office-hours'] as const,
+    hiddenInModes: ['normal', 'plan', 'design', 'product'] as const,
   },
 };
 
@@ -309,7 +309,7 @@ export const GAME_DESIGN_USERCENTEREDDESIGN_SKILL: SkillDefinition = {
   source: 'builtin' as const,
   metadata: {
     type: 'prompt',
-    hiddenInModes: ['normal', 'plan', 'design', 'office-hours'] as const,
+    hiddenInModes: ['normal', 'plan', 'design', 'product'] as const,
   },
 };
 
@@ -323,7 +323,7 @@ export const GAME_DESIGN_VISUALPLAYERGUIDANCE_SKILL: SkillDefinition = {
   source: 'builtin' as const,
   metadata: {
     type: 'prompt',
-    hiddenInModes: ['normal', 'plan', 'design', 'office-hours'] as const,
+    hiddenInModes: ['normal', 'plan', 'design', 'product'] as const,
   },
 };
 
