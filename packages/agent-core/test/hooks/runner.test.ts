@@ -2,20 +2,22 @@ import { describe, expect, it } from 'vitest';
 
 const RUNNER_MODULE = '../../src/session/hooks/runner' as string;
 
-interface HookResult {
+type HookResult = {
   action: 'allow' | 'block';
   message?: string;
   reason?: string;
   stdout?: string;
   stderr?: string;
+  exitCode?: number;
   timedOut?: boolean;
   structuredOutput?: boolean;
-}
+  errorKind?: 'spawn' | 'timeout' | 'exit' | 'parse' | 'abort';
+};
 
 type RunHook = (
   command: string,
   input: Record<string, unknown>,
-  options: { timeout: number; cwd?: string },
+  options: { timeout: number; cwd?: string; signal?: AbortSignal },
 ) => Promise<HookResult>;
 
 async function importRunHook(): Promise<RunHook> {
@@ -96,5 +98,30 @@ describe('runHook process runner', () => {
       'node -e "let s=\\"\\";process.stdin.on(\\"data\\",d=>s+=d);process.stdin.on(\\"end\\",()=>{const o=JSON.parse(s);process.stdout.write(o.tool_name);})"';
     const result = await runHook(cmd, { tool_name: 'WriteFile' }, { timeout: 5 });
     expect(result.stdout?.trim()).toBe('WriteFile');
+  });
+
+  it('tags spawn failures with errorKind spawn', async () => {
+    const runHook = await importRunHook();
+    const result = await runHook('__definitely_missing_command_xyz__', {}, { timeout: 5 });
+    expect(result.action).toBe('allow');
+    expect(result.errorKind).toBe('spawn');
+  });
+
+  it('tags timeout with errorKind timeout', async () => {
+    const runHook = await importRunHook();
+    const result = await runHook('sleep 10', {}, { timeout: 1 });
+    expect(result.action).toBe('allow');
+    expect(result.timedOut).toBe(true);
+    expect(result.errorKind).toBe('timeout');
+  });
+
+  it('tags abort with errorKind abort', async () => {
+    const runHook = await importRunHook();
+    const abortController = new AbortController();
+    const promise = runHook('sleep 10', {}, { timeout: 5, signal: abortController.signal });
+    setTimeout(() => abortController.abort(), 50);
+    const result = await promise;
+    expect(result.action).toBe('allow');
+    expect(result.errorKind).toBe('abort');
   });
 });

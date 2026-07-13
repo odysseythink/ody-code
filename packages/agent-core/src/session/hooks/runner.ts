@@ -52,7 +52,7 @@ export async function runHook(
       detached: process.platform !== 'win32',
     });
   } catch (error) {
-    return allowResult({ stderr: errorMessage(error) });
+    return allowResult({ stderr: errorMessage(error), errorKind: 'spawn' });
   }
 
   return new Promise<HookResult>((resolve) => {
@@ -75,12 +75,12 @@ export async function runHook(
 
     const timeout = setTimeout(() => {
       killProcess(child);
-      settle(allowResult({ stdout, stderr, timedOut: true }));
+      settle(allowResult({ stdout, stderr, timedOut: true, errorKind: 'timeout' }));
     }, timeoutMs);
 
     const onAbort = (): void => {
       killProcess(child);
-      settle(allowResult({ stdout, stderr }));
+      settle(allowResult({ stdout, stderr, errorKind: 'abort' }));
     };
 
     options.signal?.addEventListener('abort', onAbort, { once: true });
@@ -98,7 +98,7 @@ export async function runHook(
       stderr += chunk;
     });
     child.on('error', (error) => {
-      settle(allowResult({ stdout, stderr: stderr + errorMessage(error) }));
+      settle(allowResult({ stdout, stderr: stderr + errorMessage(error), errorKind: 'exit' }));
     });
     child.on('close', (code) => {
       settle(resultFromExitCode(code ?? 0, stdout, stderr));
@@ -145,6 +145,7 @@ function resultFromExitCode(exitCode: number, stdout: string, stderr: string): H
     stderr,
     exitCode,
     structuredOutput: structured?.structuredOutput,
+    errorKind: exitCode === 127 ? 'spawn' : undefined,
   });
 }
 
@@ -185,6 +186,7 @@ function allowResult(input: {
   readonly exitCode?: number;
   readonly timedOut?: boolean;
   readonly structuredOutput?: boolean;
+  readonly errorKind?: 'spawn' | 'timeout' | 'exit' | 'abort';
 }): HookResult {
   return {
     action: 'allow',
@@ -194,6 +196,7 @@ function allowResult(input: {
     exitCode: input.exitCode,
     timedOut: input.timedOut,
     structuredOutput: input.structuredOutput,
+    errorKind: input.errorKind,
   };
 }
 
