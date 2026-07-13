@@ -703,6 +703,41 @@
                   },
                   "additionalProperties": false
                 },
+                "secretScan": {
+                  "type": "object",
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean"
+                    },
+                    "blockOnMatch": {
+                      "type": "boolean"
+                    },
+                    "maxScanBytes": {
+                      "type": "number"
+                    },
+                    "entropyThreshold": {
+                      "type": "number"
+                    },
+                    "allowList": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "profiles": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "minimal",
+                          "standard",
+                          "strict"
+                        ]
+                      }
+                    }
+                  },
+                  "additionalProperties": false
+                },
                 "raw": {
                   "type": "object",
                   "properties": {},
@@ -1266,6 +1301,41 @@
                     },
                     "retentionDays": {
                       "type": "number"
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "secretScan": {
+                  "type": "object",
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean"
+                    },
+                    "blockOnMatch": {
+                      "type": "boolean"
+                    },
+                    "maxScanBytes": {
+                      "type": "number"
+                    },
+                    "entropyThreshold": {
+                      "type": "number"
+                    },
+                    "allowList": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "profiles": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "minimal",
+                          "standard",
+                          "strict"
+                        ]
+                      }
                     }
                   },
                   "additionalProperties": false
@@ -1929,6 +1999,41 @@
                     },
                     "retentionDays": {
                       "type": "number"
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "secretScan": {
+                  "type": "object",
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean"
+                    },
+                    "blockOnMatch": {
+                      "type": "boolean"
+                    },
+                    "maxScanBytes": {
+                      "type": "number"
+                    },
+                    "entropyThreshold": {
+                      "type": "number"
+                    },
+                    "allowList": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "profiles": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "minimal",
+                          "standard",
+                          "strict"
+                        ]
+                      }
                     }
                   },
                   "additionalProperties": false
@@ -2606,6 +2711,41 @@
                     },
                     "retentionDays": {
                       "type": "number"
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "secretScan": {
+                  "type": "object",
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean"
+                    },
+                    "blockOnMatch": {
+                      "type": "boolean"
+                    },
+                    "maxScanBytes": {
+                      "type": "number"
+                    },
+                    "entropyThreshold": {
+                      "type": "number"
+                    },
+                    "allowList": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "profiles": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "minimal",
+                          "standard",
+                          "strict"
+                        ]
+                      }
                     }
                   },
                   "additionalProperties": false
