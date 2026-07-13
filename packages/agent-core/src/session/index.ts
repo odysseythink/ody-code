@@ -144,21 +144,29 @@ export class Session {
       this.logHandle?.logger ??
       (options.id === undefined ? log : log.createChild({ sessionId: options.id }));
     this.rpc = options.rpc;
-    const hooks: readonly HookDef[] = flags.enabled('session-memory')
-      ? [
-          ...(options.hooks ?? []),
-          {
-            event: 'Stop',
-            builtin: 'session-memory-writer',
-            id: 'session-memory-writer:stop',
-          },
-          {
-            event: 'SessionEnd',
-            builtin: 'session-memory-writer',
-            id: 'session-memory-writer:end',
-          },
-        ]
-      : (options.hooks ?? []);
+    const experimentalHooks: HookDef[] = [];
+    if (flags.enabled('session-memory')) {
+      experimentalHooks.push(
+        {
+          event: 'Stop',
+          builtin: 'session-memory-writer',
+          id: 'session-memory-writer:stop',
+        },
+        {
+          event: 'SessionEnd',
+          builtin: 'session-memory-writer',
+          id: 'session-memory-writer:end',
+        },
+      );
+    }
+    if (flags.enabled('secret-leak-scan')) {
+      experimentalHooks.push({
+        event: 'PreToolUse',
+        builtin: 'secret-leak-scanner',
+        id: 'secret-leak-scanner:pre-tool',
+      });
+    }
+    const hooks: readonly HookDef[] = [...(options.hooks ?? []), ...experimentalHooks];
     this.hookEngine = new HookEngine(hooks, {
       cwd: options.kaos.getcwd(),
       sessionId: options.id,

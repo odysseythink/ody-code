@@ -31,8 +31,10 @@ export class SecretLeakScannerBuiltin implements BuiltinHook {
       readonly timeout: number;
     },
   ): Promise<HookResult> {
-    const toolName = typeof input['toolName'] === 'string' ? input['toolName'] : '';
-    const toolInput = isRecord(input['toolInput']) ? input['toolInput'] : {};
+    const toolNameValue = input['toolName'] ?? input['tool_name'];
+    const toolName = typeof toolNameValue === 'string' ? toolNameValue : '';
+    const toolInputValue = input['toolInput'] ?? input['tool_input'];
+    const toolInput = isRecord(toolInputValue) ? toolInputValue : {};
     const text = extractScanText(toolName, toolInput);
     if (text.length === 0) {
       return { action: 'allow' };
