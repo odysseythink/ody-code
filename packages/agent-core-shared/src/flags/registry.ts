@@ -53,6 +53,12 @@ export const FLAG_DEFINITIONS = [
     default: false,
     surface: 'core',
   },
+  {
+    id: 'session-memory',
+    env: 'ODY_CODE_EXPERIMENTAL_SESSION_MEMORY',
+    default: false,
+    surface: 'core',
+  },
 ] as const satisfies readonly FlagDefinitionInput[];
 
 /** Literal union of registered flag ids. */
