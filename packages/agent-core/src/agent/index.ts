@@ -104,6 +104,8 @@ export interface AgentOptions {
   readonly telemetry?: TelemetryClient | undefined;
   readonly pluginSessionStarts?: readonly EnabledPluginSessionStart[];
   readonly appVersion?: string;
+  /** True when this agent is being created as part of resuming an existing session. */
+  readonly isResumeSession?: boolean;
   readonly productStateStore?: ProductStateStore;
   readonly gameDesignStateStore?: GameDesignStateStore;
   /** User language restored from Session metadata on resume. */
@@ -130,6 +132,7 @@ export class Agent {
   readonly log: Logger;
   readonly telemetry: TelemetryClient;
   readonly appVersion?: string;
+  readonly isResumeSession: boolean;
 
   readonly blobStore: BlobStore | undefined;
   readonly records: AgentRecords;
@@ -190,6 +193,7 @@ export class Agent {
     this.goals = options.goals;
     this.hooks = options.hookEngine;
     this.appVersion = options.appVersion;
+    this.isResumeSession = options.isResumeSession ?? false;
     this.log = options.log ?? log;
     this.telemetry = options.telemetry ?? noopTelemetryClient;
 

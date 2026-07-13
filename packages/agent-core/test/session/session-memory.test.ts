@@ -18,6 +18,8 @@ import {
 import { encodeWorkDirKey } from '../../src/session/store/workdir-key';
 import { SessionMemoryWriterBuiltin } from '../../src/session/hooks/builtin/session-memory-writer';
 import { createBuiltinHookRegistry } from '../../src/session/hooks/builtin/registry';
+import { Agent } from '../../src/agent';
+import { testKaos } from '../fixtures/test-kaos';
 
 function userPrompt(text: string) {
   return {
@@ -388,3 +390,15 @@ function scanWireFromRecords(records: unknown[], state: ReturnType<typeof create
   writeFileSync(wirePath, text, 'utf8');
   return scanWire(wirePath, state);
 }
+
+describe('Agent isResumeSession', () => {
+  it('defaults isResumeSession to false', () => {
+    const agent = new Agent({ kaos: testKaos });
+    expect(agent.isResumeSession).toBe(false);
+  });
+
+  it('reflects isResumeSession: true when provided', () => {
+    const agent = new Agent({ kaos: testKaos, isResumeSession: true });
+    expect(agent.isResumeSession).toBe(true);
+  });
+});
