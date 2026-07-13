@@ -90,7 +90,7 @@ describe('AgentBackgroundTask — timeoutMs', () => {
 
   // Decision (confirmed with team, 2026-05-19): background tasks in
   // kimi-code do NOT carry an implicit default timeout. The Python
-  // kimi-cli enforced a 30-min default because its agents were
+  // ody enforced a 30-min default because its agents were
   // expected to be short-lived; kimi-code's agents may legitimately
   // run a dev server, a long compile, or a watch loop, and an
   // auto-kill would be a footgun. The shutdown wait-cap that reads

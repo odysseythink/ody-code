@@ -292,7 +292,7 @@ export function logMigrationDone(outcomes, pm) {
       pad('   We couldn\'t save the old ody as `ody-legacy` because'),
       pad('   that name was already taken by a file you\'d created.'),
       pad('   If you need the old ody back, install it again with'),
-      pad('   `uv tool install kimi-cli` (or pipx / pip).'),
+      pad('   `uv tool install ody` (or pipx / pip).'),
       '',
       pad('   If typing `ody` still runs the old version, open a new'),
       pad('   terminal window — your current one may have remembered'),

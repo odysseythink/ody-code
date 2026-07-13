@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <defs>
+    <linearGradient id="leafGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#4ADE80"/>
+      <stop offset="1" stop-color="#16A34A"/>
+    </linearGradient>
+  </defs>
+
+  <!-- stem -->
+  <path d="M100 96 C112 122 116 148 106 172"
+        fill="none" stroke="#15803D" stroke-width="7" stroke-linecap="round"/>
+
+  <!-- three leaves: heart-shaped, notch outward, tips meeting at center -->
+  <g transform="translate(100 92)">
+    <defs>
+      <path id="leaf"
+            d="M0 4
+               C-5 -16 -28 -16 -28 -36
+               C-28 -52 -9 -52 0 -41
+               C9 -52 28 -52 28 -36
+               C28 -16 5 -16 0 4 Z"/>
+    </defs>
+    <use href="#leaf" fill="url(#leafGrad)"/>
+    <use href="#leaf" fill="url(#leafGrad)" transform="rotate(120)"/>
+    <use href="#leaf" fill="url(#leafGrad)" transform="rotate(240)"/>
+  </g>
+</svg>

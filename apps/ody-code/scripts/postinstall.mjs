@@ -60,10 +60,10 @@
  *      shell can't be probed). Sharing one probe keeps detection
  *      and reachability symmetric and avoids running `$SHELL -l`
  *      twice.
- *   5. Detect EVERY previous Python `kimi-cli` shim on the detection
+ *   5. Detect EVERY previous Python `ody` shim on the detection
  *      PATH (`detectLegacyShims`). Returns `[]` for fresh-install /
  *      no-op. Multiple results happen when the user has installed
- *      `kimi-cli` through more than one Python tool (uv + pipx, or
+ *      `ody` through more than one Python tool (uv + pipx, or
  *      sudo-pip + pip-user). PATH order is preserved.
  *   6. Pre-flight classify each shim (`classifyShim`) — pure
  *      filesystem inspection, no writes. Each shim ends up
@@ -143,7 +143,7 @@ async function main() {
   // installer's env).
   const paths = await postinstallPaths();
 
-  // Step 4: detect EVERY previous Python `kimi-cli` shim on the
+  // Step 4: detect EVERY previous Python `ody` shim on the
   // detection PATH. A user with both `uv tool install` and `pipx
   // install` would have two; we must address all of them or the
   // survivor still shadows the new CLI.

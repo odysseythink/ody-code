@@ -22,8 +22,8 @@ let oldHome: string | undefined;
 
 beforeEach(async () => {
   await __resetRootLoggerForTest();
-  homeDir = await mkdtemp(join(tmpdir(), 'kimi-cli-log-home-'));
-  workDir = await mkdtemp(join(tmpdir(), 'kimi-cli-log-work-'));
+  homeDir = await mkdtemp(join(tmpdir(), 'ody-log-home-'));
+  workDir = await mkdtemp(join(tmpdir(), 'ody-log-work-'));
   oldHome = process.env['ODY_CODE_HOME'];
   process.env['ODY_CODE_HOME'] = homeDir;
 });

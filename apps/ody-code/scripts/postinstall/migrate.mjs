@@ -1,5 +1,5 @@
 /**
- * Detection of the previous Python `kimi-cli` shim and the actual
+ * Detection of the previous Python `ody` shim and the actual
  * filesystem operations that perform (or refuse) the rename.
  *
  * Detection:
@@ -11,7 +11,7 @@
  *     entry-point format produced by `uv tool install`,
  *     `pipx install`, `pip install`, etc. Returning all hits (not
  *     just the first) matters because a user with both uv- and
- *     pipx-installed `kimi-cli` has two legacy shims in different
+ *     pipx-installed `ody` has two legacy shims in different
  *     dirs, and renaming only the earlier one leaves the later one
  *     shadowing our new CLI. Callers should pass the `detection`
  *     field from `postinstallPaths()` so detection sees the union of
@@ -172,7 +172,7 @@ export async function detectLegacyShims(ownRoot, pathString) {
 }
 
 /**
- * Does the file at `p` look like the legacy Python `kimi-cli`?
+ * Does the file at `p` look like the legacy Python `ody`?
  *
  * Same criterion as {@link detectLegacyShim} uses to recognize the
  * original shim: realpath-resolvable and the first 4 KiB of the
@@ -221,7 +221,7 @@ function renameTargetFor(shimPath) {
  * the current user can't write to?
  *
  * POSIX: dir owned by uid 0 (root) — captures
- *   `sudo pip install kimi-cli` → `/usr/local/bin/`.
+ *   `sudo pip install ody` → `/usr/local/bin/`.
  *
  * Windows: dir under one of the well-known system roots
  *   (`C:\Program Files`, `C:\ProgramData`, `C:\Windows`). uv tool
