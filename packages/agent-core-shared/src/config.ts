@@ -116,14 +116,25 @@ export const BackgroundConfigSchema = z.object({
 
 export type BackgroundConfig = z.infer<typeof BackgroundConfigSchema>;
 
+export const HOOK_PROFILES = ['minimal', 'standard', 'strict'] as const;
+export type HookProfile = (typeof HOOK_PROFILES)[number];
+
 export const HookDefSchema = z
   .object({
     event: z.enum(HOOK_EVENT_TYPES),
     matcher: z.string().optional(),
-    command: z.string().min(1),
+    command: z.string().min(1).optional(),
+    builtin: z.string().min(1).optional(),
+    commands: z.array(z.string().min(1)).min(2).optional(),
+    id: z.string().optional(),
+    profiles: z.array(z.enum(HOOK_PROFILES)).optional(),
     timeout: z.number().int().min(1).max(600).optional(),
   })
-  .strict();
+  .strict()
+  .refine(
+    (d) => [d.command, d.builtin, d.commands].filter((x) => x !== undefined).length === 1,
+    { message: 'hook: exactly one of command / builtin / commands' },
+  );
 
 export type HookDefConfig = z.infer<typeof HookDefSchema>;
 

@@ -86,6 +86,8 @@ export {
   BackgroundConfigSchema,
   type BackgroundConfig,
   HookDefSchema,
+  HOOK_PROFILES,
+  type HookProfile,
   type HookDefConfig,
   MoonshotServiceConfigSchema,
   type MoonshotServiceConfig,

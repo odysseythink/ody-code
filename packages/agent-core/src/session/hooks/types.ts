@@ -1,13 +1,18 @@
 import type { ContentPart } from '@odysseythink/kosong';
 
-import { type HookEventType } from '@odysseythink/agent-core-shared';
+import { type HookEventType, type HookProfile } from '@odysseythink/agent-core-shared';
 
 export { HOOK_EVENT_TYPES, type HookEventType } from '@odysseythink/agent-core-shared';
+export { HOOK_PROFILES, type HookProfile } from '@odysseythink/agent-core-shared';
 
 export interface HookDef {
   readonly event: HookEventType;
   readonly matcher?: string;
-  readonly command: string;
+  readonly command?: string;
+  readonly builtin?: string;
+  readonly commands?: readonly string[];
+  readonly id?: string;
+  readonly profiles?: readonly HookProfile[];
   readonly timeout?: number;
 }
 
@@ -20,6 +25,17 @@ export interface HookResult {
   readonly exitCode?: number;
   readonly timedOut?: boolean;
   readonly structuredOutput?: boolean;
+  readonly errorKind?: 'spawn' | 'timeout' | 'exit' | 'parse' | 'abort';
+}
+
+export interface HookExecutionRecord {
+  readonly ts: number;
+  readonly event: string;
+  readonly hookId: string;
+  readonly kind: 'command' | 'builtin';
+  readonly action: 'allow' | 'block' | 'error' | 'timeout' | 'skipped-profile' | 'dropped';
+  readonly durationMs: number;
+  readonly reason?: string;
 }
 
 export interface HookBlockDecision {
@@ -48,6 +64,7 @@ export type HookResolvedCallback = (
 export interface HookEngineOptions {
   readonly cwd?: string;
   readonly sessionId?: string;
+  readonly env?: Readonly<Record<string, string | undefined>>;
   readonly onTriggered?: HookTriggeredCallback;
   readonly onResolved?: HookResolvedCallback;
 }

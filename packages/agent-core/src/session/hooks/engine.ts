@@ -95,15 +95,19 @@ export class HookEngine {
     return results;
   }
 
-  private matchingHooks(event: string, matcherValue: string): HookDef[] {
+  private matchingHooks(
+    event: string,
+    matcherValue: string,
+  ): Array<HookDef & { readonly command: string }> {
     const seenCommands = new Set<string>();
-    const matched: HookDef[] = [];
+    const matched: Array<HookDef & { readonly command: string }> = [];
 
     for (const hook of this.byEvent.get(event) ?? []) {
+      if (hook.command === undefined) continue;
       if (!matches(hook.matcher ?? '', matcherValue)) continue;
       if (seenCommands.has(hook.command)) continue;
       seenCommands.add(hook.command);
-      matched.push(hook);
+      matched.push({ ...hook, command: hook.command });
     }
 
     return matched;

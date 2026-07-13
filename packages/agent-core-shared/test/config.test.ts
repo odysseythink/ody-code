@@ -1,0 +1,47 @@
+import { describe, expect, it } from 'vitest';
+import { HookDefSchema, HOOK_PROFILES } from '../src/config';
+
+describe('HookDefSchema', () => {
+  it('accepts legacy hook with command only', () => {
+    const parsed = HookDefSchema.parse({ event: 'PreToolUse', matcher: 'Shell', command: 'echo ok' });
+    expect(parsed.command).toBe('echo ok');
+    expect(parsed.profiles).toBeUndefined();
+  });
+
+  it('accepts builtin hook', () => {
+    const parsed = HookDefSchema.parse({
+      event: 'Stop',
+      builtin: 'stop-format-typecheck',
+      profiles: ['standard'],
+    });
+    expect(parsed.builtin).toBe('stop-format-typecheck');
+  });
+
+  it('accepts commands array', () => {
+    const parsed = HookDefSchema.parse({
+      event: 'PreToolUse',
+      commands: ['shellcheck "$ODY_TOOL_INPUT"', 'node checks/no-verify.js'],
+      id: 'pre:bash:quality',
+    });
+    expect(parsed.commands).toEqual(['shellcheck "$ODY_TOOL_INPUT"', 'node checks/no-verify.js']);
+  });
+
+  it.each([
+    [{ command: 'a', builtin: 'b' }, 'command+builtin'],
+    [{ command: 'a', commands: ['b'] }, 'command+commands'],
+    [{ builtin: 'b', commands: ['c'] }, 'builtin+commands'],
+    [{}, 'none'],
+  ])('rejects %s (%s)', (extra, _label) => {
+    expect(() => HookDefSchema.parse({ event: 'Stop', ...extra })).toThrow(
+      'hook: exactly one of command / builtin / commands',
+    );
+  });
+
+  it('rejects single-element commands array', () => {
+    expect(() => HookDefSchema.parse({ event: 'Stop', commands: ['a'] })).toThrow();
+  });
+
+  it('exports the three profile names', () => {
+    expect(HOOK_PROFILES).toEqual(['minimal', 'standard', 'strict']);
+  });
+});
