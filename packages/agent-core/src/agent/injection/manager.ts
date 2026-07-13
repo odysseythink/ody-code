@@ -7,6 +7,7 @@ import { PlanModeInjector } from './plan-mode';
 import { DesignModeInjector } from './design-mode';
 import { ProductInjector } from './product';
 import { GameDesignInjector } from './game-design';
+import { MemorySummaryInjector } from './memory-summary';
 import { PluginSessionStartInjector } from './plugin-session-start';
 import { TodoListReminderInjector } from './todo-list';
 import { KnowledgeMicroagentInjector } from './knowledge-microagent';
@@ -23,6 +24,9 @@ export class InjectionManager {
   constructor(protected readonly agent: Agent) {
     this.injectors = [
       new PluginSessionStartInjector(agent),
+      ...(flags.enabled('session-memory') && agent.type === 'main'
+        ? [new MemorySummaryInjector(agent)]
+        : []),
       new TodoListReminderInjector(agent),
       new PlanModeInjector(agent),
       new DesignModeInjector(agent),

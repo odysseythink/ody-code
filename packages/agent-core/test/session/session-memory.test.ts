@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest';
-import { appendFile, mkdir, readFile, stat, writeFile } from 'node:fs/promises';
+import { describe, expect, it, vi } from 'vitest';
+import { appendFile, mkdir, readFile, stat, utimes, writeFile } from 'node:fs/promises';
 import { writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'pathe';
@@ -20,6 +20,14 @@ import { SessionMemoryWriterBuiltin } from '../../src/session/hooks/builtin/sess
 import { createBuiltinHookRegistry } from '../../src/session/hooks/builtin/registry';
 import { Agent } from '../../src/agent';
 import { testKaos } from '../fixtures/test-kaos';
+import {
+  MemorySummaryInjector,
+  findLatestSummary,
+  staleReplayFrame,
+  truncateToBudget,
+} from '../../src/agent/injection/memory-summary';
+import { InjectionManager } from '../../src/agent/injection/manager';
+import type { DynamicInjector } from '../../src/agent/injection/injector';
 
 function userPrompt(text: string) {
   return {
@@ -400,5 +408,232 @@ describe('Agent isResumeSession', () => {
   it('reflects isResumeSession: true when provided', () => {
     const agent = new Agent({ kaos: testKaos, isResumeSession: true });
     expect(agent.isResumeSession).toBe(true);
+  });
+});
+
+describe('MemorySummaryInjector helpers', () => {
+  it('finds the latest summary and deletes expired ones', async () => {
+    const bucketDir = join(tmpdir(), `memory-inject-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+    const oldDir = join(bucketDir, 'session_old');
+    const newDir = join(bucketDir, 'session_new');
+    await mkdir(oldDir, { recursive: true });
+    await mkdir(newDir, { recursive: true });
+
+    const now = Date.now();
+    const oldPath = join(oldDir, 'summary.md');
+    const newPath = join(newDir, 'summary.md');
+    await writeFile(oldPath, 'old summary', 'utf8');
+    await writeFile(newPath, 'new summary', 'utf8');
+
+    // Set mtime: old = 31 days ago, new = 1 day ago.
+    const oneDay = 24 * 60 * 60 * 1000;
+    await utimes(oldPath, new Date(now - 31 * oneDay), new Date(now - 31 * oneDay));
+    await utimes(newPath, new Date(now - 1 * oneDay), new Date(now - 1 * oneDay));
+
+    const result = await findLatestSummary(bucketDir, 30, now);
+    expect(result).toBe('new summary');
+    await expect(readFile(oldPath)).rejects.toThrow();
+  });
+
+  it('does not delete expired summaries when retentionDays is 0', async () => {
+    const bucketDir = join(tmpdir(), `memory-inject-no-ttl-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+    const dir = join(bucketDir, 'session_old');
+    await mkdir(dir, { recursive: true });
+    const path = join(dir, 'summary.md');
+    await writeFile(path, 'old summary', 'utf8');
+    const now = Date.now();
+    await utimes(
+      path,
+      new Date(now - 31 * 24 * 60 * 60 * 1000),
+      new Date(now - 31 * 24 * 60 * 60 * 1000),
+    );
+
+    const result = await findLatestSummary(bucketDir, 0, now);
+    expect(result).toBe('old summary');
+    expect(await readFile(path, 'utf8')).toBe('old summary');
+  });
+
+  it('keeps a summary exactly at the TTL boundary', async () => {
+    const bucketDir = join(tmpdir(), `memory-inject-boundary-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+    const dir = join(bucketDir, 'session_boundary');
+    await mkdir(dir, { recursive: true });
+    const path = join(dir, 'summary.md');
+    await writeFile(path, 'boundary summary', 'utf8');
+    // Round to whole seconds: filesystems store mtimes at second/sub-second
+    // precision, and float conversion shaves ~1ms off non-whole-second values,
+    // which would push an exact-boundary file just past the cutoff.
+    const now = Math.floor(Date.now() / 1000) * 1000;
+    const cutoff = now - 30 * 24 * 60 * 60 * 1000;
+    await utimes(path, new Date(cutoff), new Date(cutoff));
+
+    const result = await findLatestSummary(bucketDir, 30, now);
+    expect(result).toBe('boundary summary');
+  });
+
+  it('returns undefined for an empty bucket', async () => {
+    const bucketDir = join(tmpdir(), `memory-inject-empty-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+    await mkdir(bucketDir, { recursive: true });
+    expect(await findLatestSummary(bucketDir, 30, Date.now())).toBeUndefined();
+  });
+
+  it('returns undefined for an empty summary file', async () => {
+    const bucketDir = join(tmpdir(), `memory-inject-blank-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+    const dir = join(bucketDir, 'session_blank');
+    await mkdir(dir, { recursive: true });
+    await writeFile(join(dir, 'summary.md'), '  \n', 'utf8');
+    expect(await findLatestSummary(bucketDir, 30, Date.now())).toBeUndefined();
+  });
+
+  it('frames a raw summary with stale-replay guard', () => {
+    const framed = staleReplayFrame('raw content');
+    expect(framed).toContain('HISTORICAL REFERENCE ONLY');
+    expect(framed).toContain('--- BEGIN PRIOR-SESSION SUMMARY ---');
+    expect(framed).toContain('raw content');
+    expect(framed).toContain('--- END PRIOR-SESSION SUMMARY ---');
+  });
+
+  it('truncates text to maxChars and appends the marker', () => {
+    const text = 'a'.repeat(9000);
+    const result = truncateToBudget(text, 8000);
+    expect(result.length).toBeLessThanOrEqual(8000);
+    expect(result).toContain('[SessionStart truncated context');
+  });
+
+  it('does not truncate text that already fits', () => {
+    const text = 'short';
+    expect(truncateToBudget(text, 8000)).toBe('short');
+  });
+});
+
+function makeMockAgent(overrides: {
+  homedir?: string;
+  isResumeSession?: boolean;
+  history?: { origin?: { kind: 'injection'; variant: string } }[];
+  sessionMemory?: { maxChars?: number; retentionDays?: number };
+  type?: 'main' | 'sub' | 'independent';
+}) {
+  const appendSystemReminder = vi.fn();
+  const agent = {
+    type: overrides.type ?? 'main',
+    homedir: overrides.homedir,
+    isResumeSession: overrides.isResumeSession ?? false,
+    kimiConfig: { sessionMemory: overrides.sessionMemory },
+    context: {
+      history: overrides.history ?? [],
+      appendSystemReminder,
+    },
+    log: { warn: vi.fn() },
+  } as unknown as Agent;
+  return { agent, appendSystemReminder };
+}
+
+describe('MemorySummaryInjector', () => {
+  it('injects the latest summary on startup', async () => {
+    const bucketDir = join(tmpdir(), `injector-startup-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+    const sessionDir = join(bucketDir, 'session_xyz');
+    const agentDir = join(sessionDir, 'agents', 'main');
+    await mkdir(agentDir, { recursive: true });
+    const priorDir = join(bucketDir, 'session_prior');
+    await mkdir(priorDir, { recursive: true });
+    await writeFile(join(priorDir, 'summary.md'), '# Prior Summary\ncontent', 'utf8');
+
+    const { agent, appendSystemReminder } = makeMockAgent({ homedir: agentDir });
+    const injector = new MemorySummaryInjector(agent);
+    await injector.inject();
+
+    expect(appendSystemReminder).toHaveBeenCalledOnce();
+    const injected = appendSystemReminder.mock.calls[0]?.[0] as string;
+    expect(injected).toContain('HISTORICAL REFERENCE ONLY');
+    expect(injected).toContain('content');
+  });
+
+  it('does not inject on resume sessions', async () => {
+    const { agent, appendSystemReminder } = makeMockAgent({
+      homedir: '/tmp/x/agents/main',
+      isResumeSession: true,
+    });
+    const injector = new MemorySummaryInjector(agent);
+    await injector.inject();
+    expect(appendSystemReminder).not.toHaveBeenCalled();
+  });
+
+  it('does not inject when history already contains a memory_summary injection', async () => {
+    const { agent, appendSystemReminder } = makeMockAgent({
+      homedir: '/tmp/x/agents/main',
+      history: [{ origin: { kind: 'injection', variant: 'memory_summary' } }],
+    });
+    const injector = new MemorySummaryInjector(agent);
+    await injector.inject();
+    expect(appendSystemReminder).not.toHaveBeenCalled();
+  });
+
+  it('does not inject when maxChars is 0', async () => {
+    const bucketDir = join(tmpdir(), `injector-disabled-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+    const priorDir = join(bucketDir, 'session_prior');
+    await mkdir(priorDir, { recursive: true });
+    await writeFile(join(priorDir, 'summary.md'), 'content', 'utf8');
+    const sessionDir = join(bucketDir, 'session_xyz');
+    const agentDir = join(sessionDir, 'agents', 'main');
+    await mkdir(agentDir, { recursive: true });
+
+    const { agent, appendSystemReminder } = makeMockAgent({
+      homedir: agentDir,
+      sessionMemory: { maxChars: 0 },
+    });
+    const injector = new MemorySummaryInjector(agent);
+    await injector.inject();
+    expect(appendSystemReminder).not.toHaveBeenCalled();
+  });
+
+  it('does not inject when homedir is undefined', async () => {
+    const { agent, appendSystemReminder } = makeMockAgent({});
+    const injector = new MemorySummaryInjector(agent);
+    await injector.inject();
+    expect(appendSystemReminder).not.toHaveBeenCalled();
+  });
+
+  it('is idempotent across inject calls', async () => {
+    const bucketDir = join(tmpdir(), `injector-idem-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+    const priorDir = join(bucketDir, 'session_prior');
+    await mkdir(priorDir, { recursive: true });
+    await writeFile(join(priorDir, 'summary.md'), 'content', 'utf8');
+    const agentDir = join(bucketDir, 'session_xyz', 'agents', 'main');
+    await mkdir(agentDir, { recursive: true });
+
+    const { agent, appendSystemReminder } = makeMockAgent({ homedir: agentDir });
+    const injector = new MemorySummaryInjector(agent);
+    await injector.inject();
+    await injector.inject();
+    expect(appendSystemReminder).toHaveBeenCalledOnce();
+  });
+});
+
+describe('InjectionManager wiring', () => {
+  function managerInjectors(manager: InjectionManager): DynamicInjector[] {
+    return (manager as unknown as { injectors: DynamicInjector[] }).injectors;
+  }
+
+  it('includes MemorySummaryInjector when the session-memory flag is enabled', () => {
+    vi.stubEnv('ODY_CODE_EXPERIMENTAL_SESSION_MEMORY', '1');
+    const { agent } = makeMockAgent({ homedir: '/tmp/x/agents/main' });
+    const manager = new InjectionManager(agent);
+    expect(managerInjectors(manager).some((i) => i instanceof MemorySummaryInjector)).toBe(true);
+    vi.unstubAllEnvs();
+  });
+
+  it('omits MemorySummaryInjector when the flag is disabled', () => {
+    vi.stubEnv('ODY_CODE_EXPERIMENTAL_SESSION_MEMORY', '0');
+    const { agent } = makeMockAgent({ homedir: '/tmp/x/agents/main' });
+    const manager = new InjectionManager(agent);
+    expect(managerInjectors(manager).some((i) => i instanceof MemorySummaryInjector)).toBe(false);
+    vi.unstubAllEnvs();
+  });
+
+  it('omits MemorySummaryInjector for sub agents even when the flag is enabled', () => {
+    vi.stubEnv('ODY_CODE_EXPERIMENTAL_SESSION_MEMORY', '1');
+    const { agent } = makeMockAgent({ homedir: '/tmp/x/agents/main', type: 'sub' });
+    const manager = new InjectionManager(agent);
+    expect(managerInjectors(manager).some((i) => i instanceof MemorySummaryInjector)).toBe(false);
+    vi.unstubAllEnvs();
   });
 });
