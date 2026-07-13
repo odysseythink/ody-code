@@ -691,6 +691,18 @@
                   },
                   "additionalProperties": false
                 },
+                "sessionMemory": {
+                  "type": "object",
+                  "properties": {
+                    "maxChars": {
+                      "type": "number"
+                    },
+                    "retentionDays": {
+                      "type": "number"
+                    }
+                  },
+                  "additionalProperties": false
+                },
                 "raw": {
                   "type": "object",
                   "properties": {},
@@ -1241,6 +1253,18 @@
                   "type": "object",
                   "properties": {
                     "maxTokens": {
+                      "type": "number"
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "sessionMemory": {
+                  "type": "object",
+                  "properties": {
+                    "maxChars": {
+                      "type": "number"
+                    },
+                    "retentionDays": {
                       "type": "number"
                     }
                   },
@@ -1892,6 +1916,18 @@
                   "type": "object",
                   "properties": {
                     "maxTokens": {
+                      "type": "number"
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "sessionMemory": {
+                  "type": "object",
+                  "properties": {
+                    "maxChars": {
+                      "type": "number"
+                    },
+                    "retentionDays": {
                       "type": "number"
                     }
                   },
@@ -2562,6 +2598,18 @@
                   },
                   "additionalProperties": false
                 },
+                "sessionMemory": {
+                  "type": "object",
+                  "properties": {
+                    "maxChars": {
+                      "type": "number"
+                    },
+                    "retentionDays": {
+                      "type": "number"
+                    }
+                  },
+                  "additionalProperties": false
+                },
                 "raw": {
                   "type": "object",
                   "properties": {},
@@ -3134,7 +3182,8 @@
             }
           },
           "returns": {
-            "kind": "unknown"
+            "kind": "ref",
+            "name": "HooksInfo"
           }
         },
         "prompt": {
@@ -9968,6 +10017,135 @@
           ],
           "additionalProperties": false,
           "description": "Computed budget view exposed through snapshots and tools."
+        }
+      }
+    },
+    "HooksInfo": {
+      "root": "#/definitions/HooksInfo",
+      "definitions": {
+        "HooksInfo": {
+          "type": "object",
+          "properties": {
+            "profile": {
+              "$ref": "#/definitions/HookProfile"
+            },
+            "disabled": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "summary": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "number"
+              }
+            },
+            "executions": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/HookExecutionRecord"
+              }
+            },
+            "counts": {
+              "type": "object",
+              "properties": {
+                "allow": {
+                  "type": "number"
+                },
+                "block": {
+                  "type": "number"
+                },
+                "error": {
+                  "type": "number"
+                },
+                "timeout": {
+                  "type": "number"
+                },
+                "skipped-profile": {
+                  "type": "number"
+                },
+                "dropped": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "allow",
+                "block",
+                "error",
+                "timeout",
+                "skipped-profile",
+                "dropped"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "profile",
+            "disabled",
+            "summary",
+            "executions",
+            "counts"
+          ],
+          "additionalProperties": false
+        },
+        "HookProfile": {
+          "type": "string",
+          "enum": [
+            "minimal",
+            "standard",
+            "strict"
+          ]
+        },
+        "HookExecutionRecord": {
+          "type": "object",
+          "properties": {
+            "ts": {
+              "type": "number"
+            },
+            "event": {
+              "type": "string"
+            },
+            "hookId": {
+              "type": "string"
+            },
+            "kind": {
+              "type": "string",
+              "enum": [
+                "command",
+                "builtin"
+              ]
+            },
+            "action": {
+              "type": "string",
+              "enum": [
+                "allow",
+                "block",
+                "error",
+                "timeout",
+                "skipped-profile",
+                "dropped"
+              ]
+            },
+            "durationMs": {
+              "type": "number"
+            },
+            "reason": {
+              "type": "string"
+            },
+            "stdout": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "ts",
+            "event",
+            "hookId",
+            "kind",
+            "action",
+            "durationMs"
+          ],
+          "additionalProperties": false
         }
       }
     },
@@ -19095,6 +19273,74 @@
           ],
           "additionalProperties": false,
           "description": "Computed budget view exposed through snapshots and tools."
+        }
+      }
+    },
+    "HookProfile": {
+      "root": "#/definitions/HookProfile",
+      "definitions": {
+        "HookProfile": {
+          "type": "string",
+          "enum": [
+            "minimal",
+            "standard",
+            "strict"
+          ]
+        }
+      }
+    },
+    "HookExecutionRecord": {
+      "root": "#/definitions/HookExecutionRecord",
+      "definitions": {
+        "HookExecutionRecord": {
+          "type": "object",
+          "properties": {
+            "ts": {
+              "type": "number"
+            },
+            "event": {
+              "type": "string"
+            },
+            "hookId": {
+              "type": "string"
+            },
+            "kind": {
+              "type": "string",
+              "enum": [
+                "command",
+                "builtin"
+              ]
+            },
+            "action": {
+              "type": "string",
+              "enum": [
+                "allow",
+                "block",
+                "error",
+                "timeout",
+                "skipped-profile",
+                "dropped"
+              ]
+            },
+            "durationMs": {
+              "type": "number"
+            },
+            "reason": {
+              "type": "string"
+            },
+            "stdout": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "ts",
+            "event",
+            "hookId",
+            "kind",
+            "action",
+            "durationMs"
+          ],
+          "additionalProperties": false
         }
       }
     },
