@@ -1,4 +1,4 @@
-import { mkdtempSync, writeFileSync, chmodSync } from 'node:fs';
+import { mkdtempSync, writeFileSync, readFileSync, chmodSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'pathe';
 
@@ -14,7 +14,11 @@ const CONFIG_MODULE = '../../src/config' as string;
 type HookDef = {
   event: string;
   matcher?: string;
-  command: string;
+  command?: string;
+  builtin?: string;
+  commands?: string[];
+  id?: string;
+  profiles?: string[];
   timeout?: number;
 };
 
@@ -161,6 +165,41 @@ timeout = 5
     expect(parsed.hooks?.[0]?.event).toBe('PreToolUse');
     expect(parsed.hooks?.[1]?.event).toBe('Notification');
     expect(parsed.hooks?.[1]?.timeout).toBe(5);
+  });
+
+  it('round-trips hook definitions with builtin/commands/id/profiles through TOML', async () => {
+    const config = (await import(CONFIG_MODULE)) as {
+      parseConfigString: (text: string, source?: string) => { hooks?: HookDef[] };
+      writeConfigFile: (path: string, config: { hooks?: HookDef[] }) => Promise<void>;
+    };
+    const dir = mkdtempSync(join(tmpdir(), 'kimi-hooks-rt-'));
+    const file = join(dir, 'config.toml');
+    const toml = `
+[[hooks]]
+event = "PreToolUse"
+matcher = "Shell"
+commands = ["shellcheck \\"$ODY_TOOL_INPUT\\"", "node checks/no-verify.js"]
+id = "pre:bash:quality"
+profiles = ["standard", "strict"]
+
+[[hooks]]
+event = "PostToolUse"
+matcher = "Edit|Write"
+builtin = "edit-accumulator"
+id = "post:edit:accumulator"
+profiles = ["standard", "strict"]
+`;
+    const parsed = config.parseConfigString(toml, 'hooks.toml');
+    expect(parsed.hooks).toHaveLength(2);
+    expect(parsed.hooks?.[0]?.commands).toEqual([
+      'shellcheck "$ODY_TOOL_INPUT"',
+      'node checks/no-verify.js',
+    ]);
+    expect(parsed.hooks?.[1]?.builtin).toBe('edit-accumulator');
+
+    await config.writeConfigFile(file, parsed);
+    const roundTripped = config.parseConfigString(readFileSync(file, 'utf-8'), file);
+    expect(roundTripped.hooks).toEqual(parsed.hooks);
   });
 
   it('exposes a summary map of event name to registered hook count', async () => {
