@@ -18,7 +18,7 @@ type HookDef = {
   builtin?: string;
   commands?: string[];
   id?: string;
-  profiles?: string[];
+  profiles?: readonly ('minimal' | 'standard' | 'strict')[];
   timeout?: number;
 };
 

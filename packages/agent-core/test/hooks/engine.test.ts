@@ -8,7 +8,11 @@ const ENGINE_MODULE = '../../src/session/hooks/engine' as string;
 type HookDef = {
   event: string;
   matcher?: string;
-  command: string;
+  command?: string;
+  builtin?: string;
+  commands?: string[];
+  id?: string;
+  profiles?: readonly ('minimal' | 'standard' | 'strict')[];
   timeout?: number;
 };
 
@@ -33,6 +37,7 @@ interface HookEngineCtor {
     options?: {
       cwd?: string;
       sessionId?: string;
+      env?: Readonly<Record<string, string | undefined>>;
       onTriggered?: (event: string, target: string, count: number) => void;
       onResolved?: (
         event: string,
@@ -68,6 +73,18 @@ interface HookEngineCtor {
       },
     ) => Promise<HookResult[]>;
     summary: Record<string, number>;
+    currentProfile: () => string;
+    executions: () => ReadonlyArray<{
+      ts: number;
+      event: string;
+      hookId: string;
+      kind: 'command' | 'builtin';
+      action: 'allow' | 'block' | 'error' | 'timeout' | 'skipped-profile' | 'dropped';
+      durationMs: number;
+      reason?: string;
+      stdout?: string;
+    }>;
+    drain: (timeoutMs?: number) => Promise<void>;
   };
 }
 
@@ -348,5 +365,89 @@ describe('HookEngine', () => {
     } finally {
       spy?.mockRestore();
     }
+  });
+
+  it('skips hooks whose profiles exclude the active profile and records skipped-profile', async () => {
+    const { HookEngine } = await importEngine();
+    const engine = new HookEngine(
+      [
+        { event: 'Stop', command: 'echo hidden', profiles: ['minimal'] },
+        { event: 'Stop', command: 'echo visible', profiles: ['strict'] },
+      ],
+      { env: { ODY_CODE_HOOK_PROFILE: 'strict' } },
+    );
+    const results = await engine.trigger('Stop', { inputData: {} });
+    expect(results).toHaveLength(1);
+    expect(results[0]?.stdout?.trim()).toBe('visible');
+    expect(engine.executions().some((r) => r.action === 'skipped-profile')).toBe(true);
+  });
+
+  it('runs commands sequentially and short-circuits on the first block', async () => {
+    const { HookEngine } = await importEngine();
+    const engine = new HookEngine([
+      {
+        event: 'PreToolUse',
+        matcher: 'Shell',
+        commands: ['echo first', "echo 'blocked' >&2; exit 2", 'echo third'],
+      },
+    ]);
+    const results = await engine.trigger('PreToolUse', {
+      matcherValue: 'Shell',
+      inputData: {},
+    });
+    expect(results).toHaveLength(2);
+    expect(results[0]?.action).toBe('allow');
+    expect(results[0]?.stdout?.trim()).toBe('first');
+    expect(results[1]?.action).toBe('block');
+    expect(results[1]?.reason).toContain('blocked');
+  });
+
+  it('dedupes hooks by id instead of command', async () => {
+    const { HookEngine } = await importEngine();
+    const engine = new HookEngine([
+      { event: 'Stop', id: 'a', command: 'echo one' },
+      { event: 'Stop', id: 'a', command: 'echo two' },
+      { event: 'Stop', id: 'b', command: 'echo one' },
+    ]);
+    const results = await engine.trigger('Stop', { inputData: {} });
+    expect(results).toHaveLength(2);
+  });
+
+  it('keeps at most 200 execution records', async () => {
+    const { HookEngine } = await importEngine();
+    const engine = new HookEngine(
+      Array.from({ length: 250 }, (_, i) => ({
+        event: 'Stop',
+        id: `hook-${i}`,
+        command: 'echo x',
+      })),
+    );
+    await engine.trigger('Stop', { inputData: {} });
+    expect(engine.executions()).toHaveLength(200);
+    expect(engine.executions()[0]?.hookId).toBe('hook-50');
+  });
+
+  it('drains waits for fire-and-forget hooks and records them', async () => {
+    const { HookEngine } = await importEngine();
+    const engine = new HookEngine([
+      { event: 'Stop', command: 'sleep 0.05; echo done', timeout: 5 },
+    ]);
+    void engine.fireAndForgetTrigger('Stop', { inputData: {} });
+    expect(engine.executions()).toHaveLength(0);
+    await engine.drain(2000);
+    const recs = engine.executions();
+    expect(recs).toHaveLength(1);
+    expect(recs[0]?.action).toBe('allow');
+    expect(recs[0]?.stdout?.trim()).toBe('done');
+  });
+
+  it('records dropped when drain times out', async () => {
+    const { HookEngine } = await importEngine();
+    const engine = new HookEngine([
+      { event: 'Stop', command: 'sleep 10', timeout: 5 },
+    ]);
+    void engine.fireAndForgetTrigger('Stop', { inputData: {} });
+    await engine.drain(50);
+    expect(engine.executions()[0]?.action).toBe('dropped');
   });
 });

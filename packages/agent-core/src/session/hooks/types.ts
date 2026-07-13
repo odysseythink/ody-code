@@ -36,6 +36,7 @@ export interface HookExecutionRecord {
   readonly action: 'allow' | 'block' | 'error' | 'timeout' | 'skipped-profile' | 'dropped';
   readonly durationMs: number;
   readonly reason?: string;
+  readonly stdout?: string;
 }
 
 export interface HookBlockDecision {
@@ -61,10 +62,29 @@ export type HookResolvedCallback = (
   durationMs: number,
 ) => void;
 
+export interface BuiltinHook {
+  readonly id: string;
+  run(
+    input: Record<string, unknown>,
+    ctx: {
+      readonly cwd: string | undefined;
+      readonly env: Readonly<Record<string, string | undefined>>;
+      readonly signal?: AbortSignal;
+      readonly timeout: number;
+    },
+  ): Promise<HookResult>;
+}
+
+export interface BuiltinHookRegistry {
+  get(id: string): BuiltinHook | undefined;
+  ids(): readonly string[];
+}
+
 export interface HookEngineOptions {
   readonly cwd?: string;
   readonly sessionId?: string;
   readonly env?: Readonly<Record<string, string | undefined>>;
+  readonly builtins?: BuiltinHookRegistry;
   readonly onTriggered?: HookTriggeredCallback;
   readonly onResolved?: HookResolvedCallback;
 }
