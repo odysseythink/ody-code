@@ -12,6 +12,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { SDKSessionRPC } from '../../src/rpc';
 import { Session } from '../../src/session';
 import { AGENT_WIRE_PROTOCOL_VERSION } from '../../src/agent/records';
+import { encodeWorkDirKey } from '../../src/session/store/workdir-key';
 import { ProcessBackgroundTask } from '../../src/agent/background';
 
 
@@ -218,6 +219,51 @@ describe('Session lifecycle hooks', () => {
     });
     await resumeSession.resume();
     expect(resumeSession.agents.get('main')?.isResumeSession).toBe(true);
+  });
+
+  it('writes summary.md on SessionEnd when the flag is enabled and the wire has user messages', async () => {
+    vi.stubEnv('ODY_CODE_EXPERIMENTAL_SESSION_MEMORY', '1');
+    const homeDir = await makeTempDir();
+    vi.stubEnv('ODY_CODE_HOME', homeDir);
+    const { workDir } = await hookFixture();
+    const sessionId = 'session-summary-e2e';
+    // The session-memory-writer builtin derives the session directory from
+    // ODY_CODE_HOME + the workdir key, not from SessionOptions.homedir.
+    const sessionDir = join(homeDir, 'sessions', encodeWorkDirKey(workDir), sessionId);
+    const session = new Session({
+      kaos: testKaos.withCwd(workDir),
+      id: sessionId,
+      homedir: sessionDir,
+      rpc: createSessionRpc(),
+      skills: { explicitDirs: [join(workDir, 'missing-skills')] },
+    });
+
+    await session.createMain();
+    const agentDir = join(sessionDir, 'agents', 'main');
+    await mkdir(agentDir, { recursive: true });
+    await writeFile(
+      join(agentDir, 'wire.jsonl'),
+      [
+        JSON.stringify({
+          type: 'metadata',
+          protocol_version: AGENT_WIRE_PROTOCOL_VERSION,
+          created_at: Date.now(),
+        }),
+        JSON.stringify({
+          type: 'turn.prompt',
+          input: [{ type: 'text', text: 'write a summary test' }],
+          origin: { kind: 'user' },
+        }),
+      ].join('\n') + '\n',
+      'utf-8',
+    );
+
+    await session.close();
+
+    const summary = await readFile(join(sessionDir, 'summary.md'), 'utf8');
+    expect(summary).toContain('## Auto Summary');
+    expect(summary).toContain('- write a summary test');
+    expect(summary).toContain('Total user messages: 1');
   });
 
   it('lets the environment override config when deciding background task cleanup', async () => {
