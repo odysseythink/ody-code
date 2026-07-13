@@ -125,6 +125,8 @@ export {
   type TestReviewConfig,
   MicroagentBudgetConfigSchema,
   type MicroagentBudgetConfig,
+  SecretScanConfigSchema,
+  type SecretScanConfig,
   OdyConfigSchema,
   type OdyConfig,
   OdyConfigPatchSchema,
