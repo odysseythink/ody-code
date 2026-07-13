@@ -32,3 +32,26 @@ describe('session-memory flag', () => {
     expect(resolver.enabled('session-memory')).toBe(true);
   });
 });
+
+describe('secret-leak-scan flag', () => {
+  it('is registered with the correct env name and defaults to off', () => {
+    const def = FLAG_DEFINITIONS.find((d) => d.id === 'secret-leak-scan');
+    expect(def).toBeDefined();
+    expect(def!.env).toBe('ODY_CODE_EXPERIMENTAL_SECRET_LEAK_SCAN');
+    expect(def!.default).toBe(false);
+    expect(def!.surface).toBe('core');
+  });
+
+  it('can be enabled via env override', () => {
+    const resolver = new FlagResolver(
+      { ODY_CODE_EXPERIMENTAL_SECRET_LEAK_SCAN: 'true' },
+      FLAG_DEFINITIONS,
+    );
+    expect(resolver.enabled('secret-leak-scan')).toBe(true);
+  });
+
+  it('defaults to off when env is absent', () => {
+    const resolver = new FlagResolver({}, FLAG_DEFINITIONS);
+    expect(resolver.enabled('secret-leak-scan')).toBe(false);
+  });
+});

@@ -59,6 +59,12 @@ export const FLAG_DEFINITIONS = [
     default: false,
     surface: 'core',
   },
+  {
+    id: 'secret-leak-scan',
+    env: 'ODY_CODE_EXPERIMENTAL_SECRET_LEAK_SCAN',
+    default: false,
+    surface: 'core',
+  },
 ] as const satisfies readonly FlagDefinitionInput[];
 
 /** Literal union of registered flag ids. */
